@@ -1,0 +1,156 @@
+/* ============================================================
+   RESPONSIVE: TRANSFORMACIÓN A CARDS (PRODUCTOS Y CATEGORÍAS)
+   ============================================================ */
+@media (max-width: 768px) {
+    /* 1. Reset Estructural */
+    .luxury-table, .luxury-table tbody, .luxury-table tr, .luxury-table td {
+        display: block !important;
+        width: 100% !important;
+    }
+    .luxury-table thead { display: none !important; }
+
+    /* 2. La Tarjeta */
+    .luxury-table tr {
+        margin-bottom: 25px !important;
+        background: #fff;
+        border-radius: 15px;
+        box-shadow: 0 8px 15px rgba(0, 0, 0, 0.05);
+        border-left: 5px solid #0d6efd;
+        overflow: hidden;
+    }
+
+    /* 3. Alineación General y Fix de Alturas */
+    .luxury-table td {
+        display: flex !important;
+        justify-content: flex-start !important;
+        align-items: center !important; /* Centra verticalmente etiqueta y contenido */
+        padding: 10px 15px !important;
+        border-bottom: 1px solid #f8f9fa !important;
+        min-height: 55px; /* Altura mínima consistente para evitar saltos entre filas */
+    }
+
+    /* 4. Columna Izquierda (Etiquetas) */
+    table.luxury-table td[data-label]::before {
+        content: attr(data-label) !important;
+        display: flex !important;
+        align-items: center !important;
+        font-weight: 800 !important;
+        text-transform: uppercase !important;
+        font-size: 0.65rem !important;
+        color: #94a3b8 !important;
+        flex: 0 0 110px !important; /* Ancho fijo para la "columna invisible" */
+        margin-right: 15px !important;
+        position: static !important;
+        visibility: visible !important;
+        opacity: 1 !important;
+    }
+
+    /* 5. Columna Derecha (Contenido: Badges, Switches, Texto) */
+    /* Forzamos a que el contenido interno también se alinee al centro */
+    .luxury-table td > span, 
+    .luxury-table td > div, 
+    .luxury-table td > .badge,
+    .luxury-table td > .form-check {
+        display: inline-flex !important;
+        align-items: center !important;
+        margin-top: 0 !important;
+        margin-bottom: 0 !important;
+    }
+
+    /* 6. ELIMINAR INTERFERENCIAS DE DATATABLES */
+    .luxury-table td.dtr-control::before {
+        content: none !important;
+        display: none !important;
+    }
+    .luxury-table td.dtr-control {
+        padding-left: 15px !important;
+    }
+
+    /* 7. Sección de Acciones (Fondo diferenciado) */
+    .luxury-table td:last-child {
+        background-color: #f8fafc !important;
+        border-bottom: none !important;
+    }
+
+    /* 8. Icono de los 3 Puntos (Dropdown) */
+    .luxury-table td:last-child .dropdown,
+    .luxury-table td:last-child i {
+        margin: 0 !important;
+        color: #0d0d0e !important;
+        display: inline-flex !important;
+        align-items: center;
+        cursor: pointer;
+    }
+}
+
+/* ============================================================
+   ESTÁNDAR UNIFICADO: BOTÓN KEBAB CIRCULAR
+   ============================================================ */
+
+/* 1. Definición del Círculo */
+.btn-kebab-luxury {
+    width: 38px !important;
+    height: 38px !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    border-radius: 50% !important; /* Esto garantiza que sea circular */
+    background: transparent !important;
+    color: #0d6efd !important; /* Azul inicial */
+    transition: all 0.2s ease-in-out !important;
+    border: none !important;
+    padding: 0 !important;
+}
+
+/* 2. Efecto al pasar el cursor (Hover individual sobre el botón) */
+.btn-kebab-luxury:hover {
+    background-color: #0d6efd !important; /* Fondo azul */
+    color: #0f0101 !important;           /* Puntos blancos */
+    transform: scale(1.1);
+}
+
+/* 3. Efecto cuando pasas el cursor por LA FILA (PC) */
+/* Si quieres que se resalte al pasar por la fila, usamos esto: */
+.luxury-table tr:hover .btn-kebab-luxury {
+    background-color: rgba(13, 110, 253, 0.1); /* Fondo azul muy suave */
+}
+
+/* 4. Ajuste para los iconos internos */
+.btn-kebab-luxury i {
+    font-size: 1.3rem !important;
+    line-height: 1 !important;
+}
+
+/* ============================================================
+   ESTÁNDAR UNIFICADO: CIRCULAR Y CAMBIO DE COLOR
+   ============================================================ */
+
+.btn-kebab-luxury {
+    width: 35px !important;
+    height: 35px !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    border-radius: 50% !important; /* Círculo perfecto */
+    background: transparent !important;
+    transition: all 0.2s ease-in-out !important;
+    border: none !important;
+    padding: 0 !important;
+}
+
+/* Color de los puntos en estado normal */
+.btn-kebab-luxury i {
+    color: #090a0c !important; /* Azul estándar */
+    font-size: 1.3rem !important;
+    transition: color 0.2s ease !important;
+}
+
+/* 1. Al pasar el cursor DIRECTO sobre el botón */
+.btn-kebab-luxury:hover {
+    background-color: #0d6efd !important; /* Fondo azul */
+}
+
+.btn-kebab-luxury:hover i {
+    color: #ffffff !important; /* Puntos blancos */
+}
+

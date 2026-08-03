@@ -1,0 +1,242 @@
+:root {
+  --color-luxury: #1a1a1a;
+  --color-gold: #d4af37;
+}
+
+/* Hero Section */
+.hero {
+  background-image: url("http://localhost/AXStore2026_1/app/views/assets/images/logo.png");
+  background-size: 100%;
+  background-position: center 40%;
+  background-repeat: no-repeat;
+  background-attachment: fixed;
+  position: relative;
+  background-color: #FFFFFF;
+}
+
+.hero-overlay {
+  background: linear-gradient(
+    135deg,
+    rgba(0, 0, 0, 0.75) 0%,
+    rgba(26, 26, 26, 0.65) 50%,
+    rgba(0, 0, 0, 0.75) 100%
+  );
+  top: 0;
+  left: 0;
+  z-index: 1;
+}
+
+.hero-content {
+  z-index: 2;
+}
+
+.hero-title {
+  font-weight: 700;
+  letter-spacing: 6px;
+  text-shadow: 0 5px 20px rgba(0, 0, 0, 0.9);
+  animation: fadeInUp 1s ease 0.2s both;
+  line-height: 1.2;
+}
+
+.hero-subtitle {
+  font-size: 1.3rem;
+  font-weight: 300;
+  letter-spacing: 3px;
+  opacity: 0.95;
+  text-shadow: 0 3px 15px rgba(0, 0, 0, 0.8);
+  animation: fadeInUp 1s ease 0.4s both;
+  text-align: center;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.hero-button {
+  font-weight: 600;
+  letter-spacing: 2px;
+  border: 2px solid white;
+  transition: all 0.4s ease;
+  animation: fadeInUp 1s ease 0.6s both;
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+}
+
+.hero-button:hover {
+  background-color: white;
+  color: var(--color-luxury);
+  transform: translateY(-5px);
+  box-shadow: 0 15px 35px rgba(255, 255, 255, 0.4);
+}
+
+/* Shipping Section */
+.shipping-icon-bg {
+  font-size: 180px;
+  right: -30px;
+  bottom: -30px;
+  color: var(--color-luxury);
+}
+
+.shipping-card {
+  transition:
+    transform 0.3s ease,
+    box-shadow 0.3s ease;
+  border-radius: 0;
+  animation: fadeInUp 0.6s ease forwards;
+}
+
+.shipping-card:nth-child(2) {
+  animation-delay: 0.2s;
+}
+
+.shipping-card:nth-child(3) {
+  animation-delay: 0.4s;
+}
+
+.shipping-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15) !important;
+}
+
+.shipping-icon {
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.15);
+}
+
+.zone-detail {
+  border-radius: 0;
+  transition: all 0.3s ease;
+}
+
+.zone-detail:hover {
+  background-color: #f8f9fa !important;
+  border-color: var(--color-luxury) !important;
+}
+
+.text-luxury {
+  color: var(--color-luxury) !important;
+}
+
+.bg-luxury {
+  background-color: var(--color-luxury) !important;
+}
+
+.text-gold,
+.bg-gold {
+  color: var(--color-gold) !important;
+}
+
+.bg-gold {
+  background-color: var(--color-gold) !important;
+}
+
+.delivery-process {
+  border-radius: 0;
+}
+
+.step-number {
+  font-size: 1.2rem;
+}
+
+.accordion-button {
+  border-radius: 0 !important;
+  box-shadow: none !important;
+  font-weight: 500;
+}
+
+.accordion-button:not(.collapsed) {
+  background-color: var(--color-luxury) !important;
+  color: white !important;
+}
+
+.accordion-button:not(.collapsed) .fas {
+  color: var(--color-gold) !important;
+}
+
+.accordion-button:focus {
+  border-color: transparent;
+  box-shadow: none;
+}
+
+.accordion-item {
+  border-radius: 0 !important;
+}
+
+.departments-container .badge {
+  font-weight: 500;
+  font-size: 0.75rem;
+  transition: all 0.2s ease;
+}
+
+.departments-container .badge:hover {
+  transform: scale(1.1);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+}
+
+.alert {
+  border-radius: 0;
+}
+
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(50px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@media (max-width: 991px) {
+  .hero-title {
+    font-size: 2.8rem !important;
+    letter-spacing: 4px;
+  }
+
+  .hero-subtitle {
+    font-size: 1.1rem !important;
+    letter-spacing: 2px;
+  }
+
+  .shipping-icon-bg {
+    font-size: 120px;
+    right: -20px;
+    bottom: -20px;
+  }
+
+  .step-number {
+    width: 35px !important;
+    height: 35px !important;
+    font-size: 1rem;
+  }
+}
+
+@media (max-width: 767px) {
+  .hero-title {
+    font-size: 2rem !important;
+    letter-spacing: 3px;
+  }
+
+  .hero-subtitle {
+    font-size: 1rem !important;
+    letter-spacing: 1px;
+  }
+
+  .hero-button {
+    padding: 0.75rem 2.5rem !important;
+    font-size: 0.9rem;
+  }
+
+  .shipping-icon {
+    width: 50px !important;
+    height: 50px !important;
+  }
+
+  .shipping-icon i {
+    font-size: 1.2rem !important;
+  }
+}
+
+@media (max-width: 576px) {
+  .hero-title {
+    font-size: 1.75rem !important;
+    letter-spacing: 2px;
+  }
+}

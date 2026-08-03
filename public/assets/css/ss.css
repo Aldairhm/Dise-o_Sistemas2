@@ -1,0 +1,434 @@
+/* ============================================
+   CATÁLOGO ORIGINAL - SMART TOOLBAR (BLUE)
+   ============================================ */
+
+:root {
+    --brand-blue: #0b5ee1;
+    --brand-dark: #0a0a0a;
+    --brand-gray: #f1f5f9;
+}
+
+/* El Dock Flotante (Smart Toolbar) */
+.smart-toolbar {
+    background: #fff;
+    border-radius: 100px;
+    padding: 0.6rem 0.8rem 0.6rem 1.5rem;
+    box-shadow: 0 15px 35px rgba(11, 94, 225, 0.1);
+    display: flex;
+    align-items: center;
+    gap: 0;
+    border: 1px solid rgba(11, 94, 225, 0.1);
+    margin-bottom: 3rem;
+    transition: all 0.4s cubic-bezier(0.165, 0.84, 0.44, 1);
+}
+
+.smart-toolbar:focus-within {
+    box-shadow: 0 20px 40px rgba(11, 94, 225, 0.15);
+    border-color: var(--brand-blue);
+    transform: translateY(-2px);
+}
+
+/* Área de Búsqueda Integrada */
+.search-focus {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    position: relative;
+}
+
+.search-focus i {
+    color: var(--brand-blue);
+    font-size: 1.1rem;
+    margin-right: 1rem;
+}
+
+.search-focus input {
+    border: none;
+    background: transparent;
+    width: 100%;
+    padding: 0.6rem 0;
+    font-size: 1rem;
+    font-weight: 500;
+    color: var(--brand-dark);
+    outline: none !important;
+}
+
+.search-focus input::placeholder {
+    color: #94a3b8;
+    font-weight: 400;
+}
+
+/* Divisor elegante */
+.toolbar-divider {
+    width: 1px;
+    height: 30px;
+    background: #e2e8f0;
+    margin: 0 1.5rem;
+}
+
+/* Selector de Categorías Estilizado */
+.pill-select-wrapper {
+    position: relative;
+    min-width: 180px;
+}
+
+.pill-select {
+    border: none;
+    background: transparent;
+    font-weight: 600;
+    color: var(--brand-dark);
+    cursor: pointer;
+    font-size: 0.9rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    padding-right: 1.5rem;
+    appearance: none;
+    width: 100%;
+    outline: none !important;
+}
+
+.pill-select-wrapper::after {
+    content: '\f078';
+    font-family: 'Font Awesome 5 Free';
+    font-weight: 900;
+    position: absolute;
+    right: 0;
+    top: 50%;
+    transform: translateY(-50%);
+    color: var(--brand-blue);
+    pointer-events: none;
+    font-size: 0.8rem;
+}
+
+/* Botones Iconográficos */
+.action-hub {
+    display: flex;
+    gap: 0.5rem;
+    margin-left: 1rem;
+}
+
+.btn-pill-action {
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: none;
+    background: var(--brand-gray);
+    color: var(--brand-dark);
+    transition: all 0.3s ease;
+    text-decoration: none;
+    position: relative;
+}
+
+.btn-pill-action i {
+    font-size: 1.1rem;
+}
+
+.btn-pill-action:hover {
+    background: var(--brand-blue);
+    color: #fff;
+    transform: scale(1.1);
+}
+
+.btn-pill-action.primary {
+    background: var(--brand-blue);
+    color: #fff;
+}
+
+.btn-pill-action.primary:hover {
+    background: var(--brand-dark);
+}
+
+/* Tooltip simple */
+.btn-pill-action::after {
+    content: attr(data-tooltip);
+    position: absolute;
+    bottom: -35px;
+    left: 50%;
+    transform: translateX(-50%) translateY(10px);
+    background: var(--brand-dark);
+    color: #fff;
+    padding: 4px 10px;
+    border-radius: 4px;
+    font-size: 0.7rem;
+    white-space: nowrap;
+    opacity: 0;
+    visibility: hidden;
+    transition: all 0.3s ease;
+}
+
+.btn-pill-action:hover::after {
+    opacity: 1;
+    visibility: visible;
+    transform: translateX(-50%) translateY(0);
+}
+
+/* Animaciones */
+.slide-in-pill {
+    animation: slideInPill 0.8s cubic-bezier(0.165, 0.84, 0.44, 1);
+}
+
+@keyframes slideInPill {
+    from {
+        opacity: 0;
+        transform: translateY(30px) scale(0.95);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
+}
+
+/* NAVEGACIÓN DE CATEGORÍAS (PILL SCROLL) */
+.category-segment-container {
+    margin-bottom: 2.5rem;
+}
+
+.category-divider-line {
+    height: 1px;
+    background: linear-gradient(to right, #e2e8f0, transparent);
+}
+
+.category-pill-wrapper {
+    display: flex;
+    gap: 0.8rem;
+    overflow-x: auto;
+    padding: 0.5rem 0.2rem 1rem;
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+}
+
+.category-pill-wrapper::-webkit-scrollbar {
+    display: none;
+}
+
+.catalog-pill {
+    padding: 0.7rem 1.5rem;
+    background: #fff;
+    border: 1px solid #e2e8f0;
+    border-radius: 50px;
+    color: #64748b;
+    font-size: 0.85rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    white-space: nowrap;
+    cursor: pointer;
+    transition: all 0.3s cubic-bezier(0.165, 0.84, 0.44, 1);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.02);
+}
+
+.catalog-pill:hover {
+    border-color: var(--brand-blue);
+    color: var(--brand-blue);
+    transform: translateY(-2px);
+    box-shadow: 0 5px 15px rgba(11, 94, 225, 0.05);
+}
+
+.catalog-pill.active {
+    background: var(--brand-blue);
+    border-color: var(--brand-blue);
+    color: #fff;
+    box-shadow: 0 8px 20px rgba(11, 94, 225, 0.2);
+}
+
+.category-pill-skeleton {
+    height: 38px;
+    width: 100px;
+    background: #f1f5f9;
+    border-radius: 50px;
+    animation: skeletonPulse 1.5s infinite;
+}
+
+@keyframes skeletonPulse {
+    0% {
+        opacity: 0.5;
+    }
+
+    50% {
+        opacity: 0.8;
+    }
+
+    100% {
+        opacity: 0.5;
+    }
+}
+
+/* ============================================================
+   ESTILOS PREMIUM DEL CATÁLOGO (NUEVAS FUNCIONES)
+============================================================ */
+
+/* ETIQUETAS DINÁMICAS (BADGES FLOTANTES) */
+.product-badge-container {
+    position: absolute;
+    top: 15px;
+    left: 15px;
+    z-index: 10;
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+}
+
+.badge-premium {
+    padding: 6px 14px;
+    font-size: 11px;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 1.2px;
+    border-radius: 6px;
+    box-shadow: 0 6px 15px rgba(0, 0, 0, 0.2);
+    color: white;
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    display: inline-flex;
+    align-items: center;
+}
+
+.badge-new {
+    background: linear-gradient(45deg, #0b5ee1, #00d2ff);
+}
+
+.badge-top {
+    background: linear-gradient(45deg, #ffc107, #ff9800);
+}
+
+.badge-low-stock {
+    background: linear-gradient(45deg, #dc3545, #ff5e62);
+}
+
+.badge-stock {
+    background: linear-gradient(135deg, #00b09b 0%, #96c93d 100%);
+}
+
+.badge-reserva {
+    background: linear-gradient(135deg, #f12711 0%, #f5af19 100%);
+}
+
+/* IMAGEN CONTAINER Y HOVER EFFECT */
+.product-image-container {
+    position: relative;
+    overflow: hidden;
+    height: 250px;
+    background: #fff;
+    border-radius: 12px 12px 0 0;
+}
+
+.product-img-main,
+.product-img-hover {
+    width: 100%;
+    height: 100% !important;
+    transition: all 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+    object-fit: contain !important;
+    padding: 15px;
+}
+
+.product-img-hover {
+    position: absolute;
+    top: 0;
+    left: 0;
+    opacity: 0;
+    transform: scale(1.1);
+}
+
+.product-card:hover .product-img-main {
+    opacity: 0;
+    transform: scale(0.9);
+}
+
+.product-card:hover .product-img-hover {
+    opacity: 1;
+    transform: scale(1);
+}
+
+/* BOTONES FLOTANTES DE ACCIÓN */
+.product-quick-actions {
+    position: absolute;
+    top: 15px;
+    right: -50px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    transition: all 0.3s cubic-bezier(0.165, 0.84, 0.44, 1);
+    z-index: 11;
+}
+
+.product-card:hover .product-quick-actions {
+    right: 15px;
+}
+
+.btn-action-premium {
+    width: 38px;
+    height: 38px;
+    border-radius: 50%;
+    background: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #333;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+    transition: all 0.2s;
+    border: none;
+    cursor: pointer;
+}
+
+.btn-action-premium:hover {
+    background: #0b5ee1;
+    color: white;
+    transform: rotate(15deg) scale(1.1);
+}
+
+
+/* QUICK VIEW MODAL */
+.modal-quickview .modal-content {
+    border-radius: 20px;
+    overflow: hidden;
+    border: none;
+}
+
+.quickview-img-large {
+    height: 400px;
+    background: #fff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+}
+
+.quickview-img-large img {
+    max-width: 100%;
+    max-height: 100%;
+    object-fit: contain;
+}
+
+.quick-view-gallery {
+    display: flex;
+    gap: 10px;
+    overflow-x: auto;
+    padding: 10px 0;
+    scrollbar-width: thin;
+}
+
+.quick-view-thumb {
+    width: 60px;
+    height: 60px;
+    min-width: 60px;
+    border: 2px solid #eee;
+    border-radius: 10px;
+    cursor: pointer;
+    overflow: hidden;
+    transition: 0.2s;
+}
+
+.quick-view-thumb.active {
+    border-color: #0b5ee1;
+    background: #ebf3ff;
+}
+
+.quick-view-thumb img {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+}
