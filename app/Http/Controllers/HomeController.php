@@ -29,4 +29,9 @@ class HomeController extends Controller
         $products = \App\Models\Product::all();
         return view('variant_apple', compact('products'));
     }
+
+    public function inventario()
+    {
+        return view('productos');
+    }
 }
