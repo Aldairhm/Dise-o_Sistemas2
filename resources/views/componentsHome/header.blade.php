@@ -15,8 +15,9 @@
                   <nav class="hidden lg:flex items-center gap-8">
                     <a href="/home" class="text-sm font-semibold text-blue-600 flex items-center gap-2"><i class="fas fa-home"></i> Inicio</a>
                     <a href="#productos" class="text-sm font-medium text-gray-600 hover:text-blue-600 transition-colors flex items-center gap-2"><i class="fas fa-shopping-bag"></i> Productos</a>
-                    <a href="#entregas" class="text-sm font-medium text-gray-600 hover:text-blue-600 transition-colors flex items-center gap-2"><i class="fas fa-truck"></i> Entregas</a>
+                    <a href="/proveedores" class="text-sm font-medium text-gray-600 hover:text-blue-600 transition-colors flex items-center gap-2"><i class="fas fa-truck"></i> Proveedores</a>
                     <a href="#categorias" class="text-sm font-medium text-gray-600 hover:text-blue-600 transition-colors flex items-center gap-2"><i class="fas fa-folder-open"></i> Categorías</a>
+                    
                 </nav>
 
                  <!-- Icons -->
