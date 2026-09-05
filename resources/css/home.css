@@ -46,3 +46,19 @@ body { font-family: 'Inter', sans-serif; }
         .wa-bg-pink { background-color: #ec4899; }
         .wa-bg-orange { background-color: #f97316; }
         .wa-bg-red { background-color: #ef4444; }
+
+        /* User Profile & Logout Dropdown */
+        .user-dropdown { position: relative; display: inline-flex; align-items: center; }
+        .user-dropdown-menu {
+            position: absolute; top: calc(100% + 8px); right: 0; width: 240px;
+            background: #ffffff; border-radius: 16px; box-shadow: 0 12px 35px -5px rgba(0,0,0,0.15);
+            border: 1px solid #f1f5f9; overflow: hidden; z-index: 9999;
+            opacity: 0; visibility: hidden; transform: translateY(8px);
+            transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+            text-align: left;
+        }
+        .user-dropdown:hover .user-dropdown-menu,
+        .user-dropdown:focus-within .user-dropdown-menu,
+        .user-dropdown.active .user-dropdown-menu {
+            opacity: 1; visibility: visible; transform: translateY(0);
+        }
