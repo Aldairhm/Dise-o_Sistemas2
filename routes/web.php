@@ -5,6 +5,7 @@ use App\Http\Controllers\HomeController;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\CategoriaController;
+use App\Http\Controllers\ProfileController;
 
 // ── Autenticación ────────────────────────────────────────────
 Route::get('/login',  [AuthController::class, 'showLogin'])->name('login');
@@ -25,6 +26,10 @@ Route::middleware('auth')->group(function () {
     Route::get('/home', [HomeController::class, 'index'])->name('home.alias');
     Route::view('/proveedores', 'proveedores.index');
 
+    // ── Perfil del usuario autenticado ─────────────────────────────
+    Route::get('/perfil',          [ProfileController::class, 'show'])->name('perfil.show');
+    Route::put('/perfil',          [ProfileController::class, 'update'])->name('perfil.update');
+    Route::put('/perfil/password', [ProfileController::class, 'updatePassword'])->name('perfil.password');
     // ── Módulo de Gestión de Usuarios (CRUD) - Solo Administradores ──
     Route::middleware('admin')->group(function () {
         Route::get('/usuarios', [UserController::class, 'index'])->name('usuarios.index');

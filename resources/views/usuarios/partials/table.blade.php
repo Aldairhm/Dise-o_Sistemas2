@@ -4,6 +4,7 @@
             <tr class="border-b border-gray-200/80 bg-gray-50/75 text-[11px] font-black uppercase tracking-wider text-gray-500">
                 <th class="py-3.5 px-4 sm:px-6">Usuario</th>
                 <th class="py-3.5 px-4">Nombre Real</th>
+                <th class="py-3.5 px-4 hidden sm:table-cell">Teléfono</th>
                 <th class="py-3.5 px-4 text-center">Rol</th>
                 <th class="py-3.5 px-4 text-center">Estado</th>
                 <th class="py-3.5 px-4 sm:px-6 text-right">Acciones</th>
@@ -30,6 +31,13 @@
                     <td class="py-4 px-4 whitespace-nowrap">
                         <span class="font-medium text-gray-800">
                             {{ $user->nombre_real ?: '—' }}
+                        </span>
+                    </td>
+
+                    <!-- Teléfono -->
+                    <td class="py-4 px-4 whitespace-nowrap hidden sm:table-cell">
+                        <span class="font-medium text-gray-800">
+                            {{ $user->telefono ?: '—' }}
                         </span>
                     </td>
 
@@ -90,7 +98,7 @@
                 </tr>
             @empty
                 <tr>
-                    <td colspan="5" class="py-12 px-4 text-center">
+                    <td colspan="6" class="py-12 px-4 text-center">
                         <div class="max-w-xs mx-auto flex flex-col items-center">
                             <div class="w-16 h-16 rounded-full bg-blue-50 text-blue-500 flex items-center justify-center text-2xl mb-3">
                                 <i class="fas fa-users-slash"></i>

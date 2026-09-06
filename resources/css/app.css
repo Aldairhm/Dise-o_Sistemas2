@@ -9,3 +9,93 @@
     --font-sans: 'Instrument Sans', ui-sans-serif, system-ui, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji',
         'Segoe UI Symbol', 'Noto Color Emoji';
 }
+
+/* ─── DARK MODE GLOBAL (PANEL) ─── */
+:root {
+    --bg-page:    #f8fafc;
+    --bg-card:    #ffffff;
+    --text-main:  #0f172a;
+    --text-muted: #64748b;
+    --border:     #e2e8f0;
+}
+
+html.dark {
+    --bg-page:    #0f172a;
+    --bg-card:    #1e293b;
+    --text-main:  #f1f5f9;
+    --text-muted: #94a3b8;
+    --border:     #334155;
+}
+
+/* Base overrides para dark mode */
+html.dark body, html.dark main {
+    background-color: var(--bg-page) !important;
+    color: var(--text-main) !important;
+}
+
+html.dark .bg-white {
+    background-color: var(--bg-card) !important;
+}
+
+html.dark .text-slate-800,
+html.dark .text-slate-900,
+html.dark .text-gray-900,
+html.dark .text-gray-800 {
+    color: var(--text-main) !important;
+}
+
+html.dark .text-slate-500,
+html.dark .text-slate-400,
+html.dark .text-gray-500,
+html.dark .text-gray-600 {
+    color: var(--text-muted) !important;
+}
+
+html.dark .border-slate-200,
+html.dark .border-gray-200,
+html.dark .border-slate-100,
+html.dark .border-gray-100 {
+    border-color: var(--border) !important;
+}
+
+html.dark header, html.dark .bg-white\/85 {
+    background-color: rgba(30, 41, 59, 0.95) !important;
+    border-bottom-color: #334155 !important;
+}
+
+html.dark .bg-slate-50,
+html.dark .bg-gray-50,
+html.dark .bg-gray-50\/60,
+html.dark .bg-gray-50\/80 {
+    background-color: #1e293b !important;
+}
+
+html.dark .hover\:bg-slate-50:hover {
+    background-color: #334155 !important;
+}
+
+html.dark table thead tr {
+    background-color: #1e293b !important;
+}
+
+html.dark table tbody tr {
+    background-color: var(--bg-card) !important;
+    border-bottom-color: #334155 !important;
+}
+
+html.dark table tbody tr:hover {
+    background-color: #334155 !important;
+}
+
+html.dark input.custom-input,
+html.dark select,
+html.dark .form-control {
+    background-color: #1e293b !important;
+    border-color: #334155 !important;
+    color: #f1f5f9 !important;
+}
+
+html.dark input.custom-input:focus,
+html.dark select:focus {
+    border-color: #3b82f6 !important;
+}

@@ -5,6 +5,15 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="csrf-token" content="{{ csrf_token() }}">
     <title>Gestión de Usuarios — AXStore</title>
+    <!-- Dark mode init -->
+    <script>
+        (function() {
+            var t = localStorage.getItem('ax_theme') || 'system';
+            if (t === 'dark' || (t === 'system' && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+                document.documentElement.classList.add('dark');
+            }
+        })();
+    </script>
 
     <!-- Google Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -29,7 +38,7 @@
     <!-- ─── CONTENIDO PRINCIPAL ─── -->
     <main class="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8">
 
-        <!-- 1. ENCABEZADO DE SECCIÓN Y BREADCRUMB -->
+        <!-- ENCABEZADO DE SECCION Y BREADCRUMB -->
         <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8">
             <div>
                 <div class="flex items-center gap-2 text-xs font-bold text-blue-600 uppercase tracking-widest mb-1.5">
@@ -164,12 +173,28 @@
                             title="Restablecer filtros">
                         <i class="fas fa-rotate-right text-xs"></i>
                     </button>
+
+                    <!-- Tabla / Tarjetas -->
+                    <div class="flex items-center bg-slate-100 rounded-xl p-1 gap-1">
+                        <button type="button" id="btnViewTable"
+                                onclick="setView('table')"
+                                class="usr-view-btn p-2 rounded-lg text-slate-400 hover:text-slate-700 transition-colors cursor-pointer"
+                                title="Vista de tabla">
+                            <i class="fas fa-table-list text-sm"></i>
+                        </button>
+                        <button type="button" id="btnViewCards"
+                                onclick="setView('cards')"
+                                class="usr-view-btn p-2 rounded-lg text-slate-400 hover:text-slate-700 transition-colors cursor-pointer"
+                                title="Vista de tarjetas">
+                            <i class="fas fa-grip text-sm"></i>
+                        </button>
+                    </div>
                 </div>
 
             </div>
         </div>
 
-        <!-- CONTENEDOR DE LA TABLA -->
+        <!-- CONTENEDOR DE LA TABLA / CARDS -->
         <div class="bg-white rounded-2xl border border-slate-200/80 shadow-xs overflow-hidden relative" id="tableContainer">
             <!-- Loader de busqueda AJAX -->
             <div id="tableLoading" class="absolute inset-0 bg-white/70 backdrop-blur-xs flex items-center justify-center z-20 hidden">
@@ -179,9 +204,16 @@
                 </div>
             </div>
 
-            <!-- Tabla de Usuarios -->
+            <!-- Vista Tabla -->
             <div id="usersTableWrapper">
                 @include('usuarios.partials.table', ['users' => $users])
+            </div>
+
+            <!-- Vista Tarjetas -->
+            <div id="usersCardsWrapper" class="hidden">
+                <div class="p-5 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4" id="usersCardsGrid">
+                    @include('usuarios.partials.cards', ['users' => $users])
+                </div>
             </div>
         </div>
 

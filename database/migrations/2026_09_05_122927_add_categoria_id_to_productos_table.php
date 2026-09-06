@@ -8,18 +8,18 @@ return new class extends Migration
 {
     public function up(): void
     {
-        Schema::table('productos', function (Blueprint $table) {
-            $table->unsignedBigInteger('categoria_id')->nullable()->after('id');
-            // Si la tabla categoria usa id como bigIncrements, esto vincula la FK.
-            // Si no requieres FK estricta aún, esto es suficiente para el conteo.
-            // $table->foreign('categoria_id')->references('id')->on('categoria')->onDelete('set null');
+        Schema::table('producto', function (Blueprint $table) {
+            // La columna id_categoria ya existe en la BD, se omite si ya existe
+            if (!Schema::hasColumn('producto', 'id_categoria')) {
+                $table->unsignedBigInteger('id_categoria')->nullable()->after('id');
+            }
         });
     }
 
     public function down(): void
     {
-        Schema::table('productos', function (Blueprint $table) {
-            $table->dropColumn('categoria_id');
+        Schema::table('producto', function (Blueprint $table) {
+            $table->dropColumn('id_categoria');
         });
     }
 };

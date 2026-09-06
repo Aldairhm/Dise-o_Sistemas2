@@ -104,7 +104,7 @@
                                         <div>
                                             <label class="block text-sm font-bold text-slate-700 mb-2">Color representativo <span class="text-red-500">*</span></label>
                                             <input type="hidden" name="color" id="inputColor" value="#3b82f6">
-                                            <div class="grid grid-cols-6 gap-2" id="colorPalette">
+                                            <div class="grid grid-cols-4 sm:grid-cols-6 gap-2" id="colorPalette">
                                                 <!-- Swatches dinámicos -->
                                             </div>
                                             <p class="mt-2 text-xs text-slate-400">Identificador de color visual.</p>
@@ -114,7 +114,7 @@
                                         <div>
                                             <label class="block text-sm font-bold text-slate-700 mb-2">Ícono representativo <span class="text-red-500">*</span></label>
                                             <input type="hidden" name="icono" id="inputIcono" value="fa-tag">
-                                            <div class="grid grid-cols-6 gap-2 max-h-[140px] overflow-y-auto p-1.5 rounded-xl bg-slate-50 border border-slate-200" id="iconPalette">
+                                            <div class="grid grid-cols-4 sm:grid-cols-6 gap-2 max-h-[140px] overflow-y-auto p-1.5 rounded-xl bg-slate-50 border border-slate-200" id="iconPalette">
                                                 <!-- Iconos dinámicos -->
                                             </div>
                                             <p class="mt-2 text-xs text-slate-400">Ícono gráfico para la categoría.</p>

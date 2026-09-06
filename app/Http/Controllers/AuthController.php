@@ -76,8 +76,8 @@ class AuthController extends Controller
             if ($usuario->estado != 1) {
                 Auth::logout();
                 return back()->with('swal_error', [
-                    'title' => 'Cuenta Desactivada',
-                    'text'  => 'Tu cuenta se encuentra inactiva. Contacta al administrador.',
+                    'title' => 'Cuenta Inactiva',
+                    'text'  => 'Tu cuenta está desactivada y no puede acceder al sistema. Comunícate con el administrador o soporte técnico para solicitar la reactivación de tu cuenta.',
                 ])->withInput();
             }
 
