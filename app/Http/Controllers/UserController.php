@@ -48,11 +48,11 @@ class UserController extends Controller
             'inactivos'    => User::where('estado', 0)->count(),
         ];
 
-        // Si es petición AJAX, devolver solo la tabla o JSON
         if ($request->ajax()) {
             return response()->json([
                 'success' => true,
                 'html'    => view('usuarios.partials.table', compact('users'))->render(),
+                'cards'   => view('usuarios.partials.cards', compact('users'))->render(),
                 'stats'   => $stats,
             ]);
         }
@@ -67,12 +67,14 @@ class UserController extends Controller
     {
         $validated = $request->validate([
             'nombre_real' => ['required', 'string', 'max:255'],
+            'telefono'    => ['nullable', 'string', 'regex:/^[267]\d{3}-\d{4}$/'],
             'username'    => ['required', 'string', 'email', 'max:255', Rule::unique('usuario', 'username')],
             'rol'         => ['required', 'string', Rule::in(['admin', 'vendedor'])],
             'estado'      => ['required', 'integer', Rule::in([0, 1])],
             'password'    => ['required', 'string', 'min:8', 'confirmed'],
         ], [
             'nombre_real.required' => 'El nombre real es obligatorio.',
+            'telefono.regex'       => 'El teléfono debe tener el formato de El Salvador: XXXX-XXXX (ej: 7890-1234). El primer dígito debe ser 2, 6 o 7.',
             'username.required'    => 'El correo electrónico es obligatorio.',
             'username.email'       => 'Debes ingresar un correo electrónico válido (ej: usuario@correo.com).',
             'username.unique'      => 'Este correo ya se encuentra registrado.',
@@ -85,6 +87,7 @@ class UserController extends Controller
 
         $user = User::create([
             'nombre_real' => $validated['nombre_real'],
+            'telefono'    => $validated['telefono'] ?? null,
             'username'    => $validated['username'],
             'rol'         => $validated['rol'],
             'estado'      => (int) $validated['estado'],
@@ -109,12 +112,14 @@ class UserController extends Controller
     {
         $validated = $request->validate([
             'nombre_real' => ['required', 'string', 'max:255'],
+            'telefono'    => ['nullable', 'string', 'regex:/^[267]\d{3}-\d{4}$/'],
             'username'    => ['required', 'string', 'email', 'max:255', Rule::unique('usuario', 'username')->ignore($user->id)],
             'rol'         => ['required', 'string', Rule::in(['admin', 'vendedor'])],
             'estado'      => ['required', 'integer', Rule::in([0, 1])],
             'password'    => ['nullable', 'string', 'min:8', 'confirmed'],
         ], [
             'nombre_real.required' => 'El nombre real es obligatorio.',
+            'telefono.regex'       => 'El teléfono debe tener el formato de El Salvador: XXXX-XXXX (ej: 7890-1234). El primer dígito debe ser 2, 6 o 7.',
             'username.required'    => 'El correo electrónico es obligatorio.',
             'username.email'       => 'Debes ingresar un correo electrónico válido (ej: usuario@correo.com).',
             'username.unique'      => 'Este correo ya se encuentra registrado por otra cuenta.',
@@ -126,6 +131,7 @@ class UserController extends Controller
 
         $updateData = [
             'nombre_real' => $validated['nombre_real'],
+            'telefono'    => $validated['telefono'] ?? null,
             'username'    => $validated['username'],
             'rol'         => $validated['rol'],
             'estado'      => (int) $validated['estado'],

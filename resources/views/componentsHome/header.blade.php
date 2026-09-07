@@ -16,7 +16,7 @@
                     <a href="/home" class="text-sm font-semibold text-blue-600 flex items-center gap-2"><i class="fas fa-home"></i> Inicio</a>
                     <a href="#productos" class="text-sm font-medium text-gray-600 hover:text-blue-600 transition-colors flex items-center gap-2"><i class="fas fa-shopping-bag"></i> Productos</a>
                     <a href="/proveedores" class="text-sm font-medium text-gray-600 hover:text-blue-600 transition-colors flex items-center gap-2"><i class="fas fa-truck"></i> Proveedores</a>
-                    <a href="#categorias" class="text-sm font-medium text-gray-600 hover:text-blue-600 transition-colors flex items-center gap-2"><i class="fas fa-folder-open"></i> Categorías</a>
+                    <a href="{{ route('categorias.index') }}" class="text-sm font-medium text-gray-600 hover:text-blue-600 transition-colors flex items-center gap-2"><i class="fas fa-folder-open"></i> Categorías</a>              
                     <a href="{{ route('usuarios.index') }}" class="text-sm font-medium text-gray-600 hover:text-blue-600 transition-colors flex items-center gap-2"><i class="fas fa-users-gear"></i> Usuarios</a>
                 </nav>
 
@@ -92,7 +92,7 @@
                     <!-- Usuario Dropdown con Cerrar Sesión -->
                     @auth
                     <div class="user-dropdown">
-                        <button type="button" id="userMenuBtn" class="p-2 text-blue-600 hover:text-blue-700 transition-transform hover:scale-105 hidden sm:flex items-center gap-2 rounded-full focus:outline-none" title="Mi Cuenta">
+                        <button type="button" id="userMenuBtn" class="p-2 text-blue-600 hover:text-blue-700 transition-transform hover:scale-105 flex items-center gap-2 rounded-full focus:outline-none" title="Mi Cuenta">
                             <i class="fas fa-user-circle text-2xl text-blue-600"></i>
                         </button>
                         
@@ -111,9 +111,9 @@
                                 </div>
                             </div>
                             <div class="p-1.5 space-y-1">
-                                <a href="{{ route('usuarios.index') }}" class="w-full text-left px-3 py-2 text-xs font-bold text-gray-700 hover:bg-blue-50 hover:text-blue-600 rounded-lg flex items-center gap-2 transition-colors">
-                                    <i class="fas fa-users-gear text-blue-500"></i>
-                                    <span>Gestión de Usuarios</span>
+                                <a href="{{ route('perfil.show') }}" class="w-full text-left px-3 py-2 text-xs font-bold text-gray-700 hover:bg-blue-50 hover:text-blue-600 rounded-lg flex items-center gap-2 transition-colors">
+                                    <i class="fas fa-user-gear text-blue-500"></i>
+                                    <span>Configurar Perfil</span>
                                 </a>
                                 <form method="POST" action="{{ route('logout') }}" class="m-0">
                                     @csrf
@@ -126,7 +126,7 @@
                         </div>
                     </div>
                     @else
-                    <a href="{{ route('login') }}" class="p-2 text-gray-600 hover:text-blue-600 transition-colors hidden sm:block" title="Iniciar Sesión">
+                    <a href="{{ route('login') }}" class="p-2 text-gray-600 hover:text-blue-600 transition-colors block" title="Iniciar Sesión">
                         <i class="fas fa-user-circle text-2xl"></i>
                     </a>
                     @endauth

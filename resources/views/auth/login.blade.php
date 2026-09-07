@@ -174,5 +174,45 @@
         </div>
 
     </div>
+    @if(session('swal_error'))
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            Swal.fire({
+                icon: 'error',
+                title: '{{ session('swal_error.title') }}',
+                html:  '<p style="color:#475569;font-size:0.95rem;line-height:1.6;">{{ session('swal_error.text') }}</p>',
+                confirmButtonText: 'Entendido',
+                confirmButtonColor: '#2563eb',
+                customClass: {
+                    popup:          'swal-login-popup',
+                    title:          'swal-login-title',
+                    confirmButton:  'swal-login-btn',
+                },
+                showClass: {
+                    popup: 'animate__animated animate__fadeInDown animate__faster'
+                },
+            });
+        });
+    </script>
+    @endif
+
+    @if(session('swal_warning'))
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            Swal.fire({
+                icon: 'warning',
+                title: '{{ session('swal_warning.title') }}',
+                html:  '<p style="color:#475569;font-size:0.95rem;line-height:1.6;">{{ session('swal_warning.text') }}</p>',
+                confirmButtonText: 'Entendido',
+                confirmButtonColor: '#f59e0b',
+                customClass: {
+                    popup: 'swal-login-popup',
+                    title: 'swal-login-title',
+                },
+            });
+        });
+    </script>
+    @endif
+
 </body>
 </html>

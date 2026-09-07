@@ -12,7 +12,6 @@ class HomeController extends Controller
     {
         $products = Producto::all();
 
-        // Cargar vista según el rol del usuario autenticado
         if (Auth::check() && Auth::user()->rol === 'vendedor') {
             return view('home-vendedor', compact('products'));
         }

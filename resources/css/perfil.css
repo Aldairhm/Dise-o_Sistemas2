@@ -1,0 +1,262 @@
+/* ═══════════════════════════════════════════════════════════════════════ */
+/* MODULO DE CONFIGURACION DE PERFIL — AXSTORE                            */
+/* ═══════════════════════════════════════════════════════════════════════ */
+
+/* ─── TABS ─── */
+.profile-tab {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.65rem 1.1rem;
+    border-radius: 0.75rem;
+    font-size: 0.82rem;
+    font-weight: 700;
+    color: #64748b;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    border: none;
+    background: transparent;
+    white-space: nowrap;
+}
+
+.profile-tab:hover {
+    background: #f1f5f9;
+    color: #1e293b;
+}
+
+.profile-tab.active {
+    background: #2563eb;
+    color: #ffffff;
+    box-shadow: 0 4px 12px rgba(37, 99, 235, 0.3);
+}
+
+.profile-tab-content {
+    display: none;
+}
+
+.profile-tab-content.active {
+    display: block;
+    animation: tabFadeIn 0.25s ease;
+}
+
+@keyframes tabFadeIn {
+    from { opacity: 0; transform: translateY(6px); }
+    to   { opacity: 1; transform: translateY(0); }
+}
+
+/* ─── INPUT FIELDS ─── */
+.profile-input {
+    width: 100%;
+    border-radius: 0.75rem;
+    border: 1.5px solid #e2e8f0;
+    padding: 0.65rem 1rem;
+    font-size: 0.875rem;
+    color: #1e293b;
+    transition: border-color 0.2s, box-shadow 0.2s;
+    outline: none;
+    background: #fff;
+}
+
+.profile-input:focus {
+    border-color: #2563eb;
+    box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.12);
+}
+
+.profile-input.error {
+    border-color: #ef4444;
+    box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.1);
+}
+
+.profile-input.success {
+    border-color: #10b981;
+    box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.1);
+}
+
+/* ─── PASSWORD STRENGTH METER ─── */
+.strength-bar {
+    height: 4px;
+    border-radius: 999px;
+    background: #e2e8f0;
+    overflow: hidden;
+    transition: all 0.3s ease;
+}
+
+.strength-fill {
+    height: 100%;
+    border-radius: 999px;
+    transition: width 0.4s ease, background-color 0.3s ease;
+    width: 0%;
+}
+
+.strength-fill.weak   { width: 25%; background: #ef4444; }
+.strength-fill.fair   { width: 50%; background: #f59e0b; }
+.strength-fill.good   { width: 75%; background: #3b82f6; }
+.strength-fill.strong { width: 100%; background: #10b981; }
+
+/* ─── THEME SELECTOR ─── */
+.theme-option {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 1rem 0.75rem;
+    border-radius: 1rem;
+    border: 2px solid #e2e8f0;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    background: #fff;
+    min-width: 90px;
+}
+
+.theme-option:hover {
+    border-color: #93c5fd;
+    background: #eff6ff;
+}
+
+.theme-option.selected {
+    border-color: #2563eb;
+    background: #eff6ff;
+    box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.12);
+}
+
+.theme-option .theme-icon {
+    width: 2.75rem;
+    height: 2.75rem;
+    border-radius: 0.75rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.2rem;
+}
+
+.theme-option .theme-label {
+    font-size: 0.75rem;
+    font-weight: 700;
+    color: #475569;
+}
+
+.theme-option.selected .theme-label {
+    color: #2563eb;
+}
+
+/* ─── AVATAR CIRCLE ─── */
+.profile-avatar {
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.profile-avatar:hover {
+    transform: scale(1.05);
+}
+
+/* ─── DARK MODE SUPPORT ─── */
+:root {
+    --bg-page:    #f8fafc;
+    --bg-card:    #ffffff;
+    --text-main:  #0f172a;
+    --text-muted: #64748b;
+    --border:     #e2e8f0;
+}
+
+html.dark {
+    --bg-page:    #0f172a;
+    --bg-card:    #1e293b;
+    --text-main:  #f1f5f9;
+    --text-muted: #94a3b8;
+    --border:     #334155;
+}
+
+/* Panel pages dark mode via CSS variables */
+html.dark body {
+    background-color: var(--bg-page) !important;
+    color: var(--text-main) !important;
+}
+
+html.dark .bg-white {
+    background-color: var(--bg-card) !important;
+}
+
+html.dark .text-slate-800,
+html.dark .text-slate-900,
+html.dark .text-gray-900,
+html.dark .text-gray-800 {
+    color: var(--text-main) !important;
+}
+
+html.dark .text-slate-500,
+html.dark .text-slate-400,
+html.dark .text-gray-500,
+html.dark .text-gray-600 {
+    color: var(--text-muted) !important;
+}
+
+html.dark .border-slate-200,
+html.dark .border-gray-200,
+html.dark .border-slate-100,
+html.dark .border-gray-100 {
+    border-color: var(--border) !important;
+}
+
+html.dark header {
+    background-color: rgba(30, 41, 59, 0.92) !important;
+    border-bottom-color: #334155 !important;
+}
+
+html.dark .bg-slate-50,
+html.dark .bg-gray-50 {
+    background-color: #1e293b !important;
+}
+
+html.dark .hover\:bg-slate-50:hover {
+    background-color: #334155 !important;
+}
+
+html.dark table thead tr {
+    background-color: #1e293b !important;
+}
+
+html.dark table tbody tr {
+    background-color: var(--bg-card) !important;
+    border-bottom-color: #334155 !important;
+}
+
+html.dark table tbody tr:hover {
+    background-color: #334155 !important;
+}
+
+html.dark .profile-input {
+    background-color: #1e293b;
+    border-color: #334155;
+    color: #f1f5f9;
+}
+
+html.dark .profile-input:focus {
+    border-color: #3b82f6;
+}
+
+html.dark .theme-option {
+    background: #1e293b;
+    border-color: #334155;
+}
+
+html.dark .theme-option:hover {
+    border-color: #3b82f6;
+    background: #1e3a6e;
+}
+
+html.dark .theme-option.selected {
+    border-color: #3b82f6;
+    background: #1e3a6e;
+}
+
+/* ─── RESPONSIVE ─── */
+@media (max-width: 640px) {
+    .profile-tab {
+        padding: 0.5rem 0.75rem;
+        font-size: 0.75rem;
+    }
+
+    .theme-option {
+        min-width: 70px;
+        padding: 0.75rem 0.5rem;
+    }
+}

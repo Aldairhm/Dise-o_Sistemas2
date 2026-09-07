@@ -11,9 +11,24 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::table('usuario', function (Blueprint $table) {
-            $table->softDeletes();
-        });
+        if (! Schema::hasTable('usuario')) {
+            Schema::create('usuario', function (Blueprint $table) {
+                $table->id();
+                $table->string('nombre_real');
+                $table->string('username')->unique();
+                $table->string('password');
+                $table->string('rol')->default('usuario');
+                $table->boolean('estado')->default(true);
+                $table->string('token')->nullable();
+                $table->rememberToken();
+                $table->timestamps();
+                $table->softDeletes();
+            });
+        } elseif (! Schema::hasColumn('usuario', 'deleted_at')) {
+            Schema::table('usuario', function (Blueprint $table) {
+                $table->softDeletes();
+            });
+        }
     }
 
     /**
@@ -21,9 +36,11 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::table('usuario', function (Blueprint $table) {
-            $table->dropSoftDeletes();
-        });
+        if (Schema::hasTable('usuario') && Schema::hasColumn('usuario', 'deleted_at')) {
+            Schema::table('usuario', function (Blueprint $table) {
+                $table->dropSoftDeletes();
+            });
+        }
     }
 };
 

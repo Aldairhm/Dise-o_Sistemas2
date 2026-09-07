@@ -1,11 +1,41 @@
 const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
 let searchTimeout = null;
+let currentView = localStorage.getItem('usr_view') ?? 'table';
+
+// ─── TOGGLE VISTA TABLA / TARJETAS ───
+function setView(view) {
+    currentView = view;
+    localStorage.setItem('usr_view', view);
+
+    const tw = document.getElementById('usersTableWrapper');
+    const cw = document.getElementById('usersCardsWrapper');
+    const bt = document.getElementById('btnViewTable');
+    const bc = document.getElementById('btnViewCards');
+
+    if (view === 'table') {
+        tw.classList.remove('hidden'); cw.classList.add('hidden');
+        bt.classList.add('usr-view-active'); bc.classList.remove('usr-view-active');
+    } else {
+        tw.classList.add('hidden'); cw.classList.remove('hidden');
+        bc.classList.add('usr-view-active'); bt.classList.remove('usr-view-active');
+    }
+}
+
+// Inicializar vista guardada al cargar
+document.addEventListener('DOMContentLoaded', () => setView(currentView));
 
 // ─── GESTION DEL MODAL ───
 function openCreateUserModal() {
     const form = document.getElementById('userForm');
     form.reset();
     document.getElementById('userId').value = '';
+    
+    // Limpiar validacion visual del telefono
+    const inputTelefono = document.getElementById('input_telefono');
+    if(inputTelefono) {
+        formatTelefonoInput(inputTelefono);
+    }
+
     document.getElementById('_method').value = 'POST';
     document.getElementById('modalTitle').textContent = 'Registrar Nuevo Usuario';
     document.getElementById('btnSubmitText').textContent = 'REGISTRAR USUARIO';
@@ -34,9 +64,13 @@ function openEditUserModal(user) {
     document.getElementById('modalHeaderIcon').className = 'fas fa-pen-to-square';
 
     document.getElementById('input_nombre_real').value = user.nombre_real || '';
+    document.getElementById('input_telefono').value = user.telefono || '';
     document.getElementById('input_username').value = user.username || '';
     document.getElementById('input_rol').value = user.rol || 'vendedor';
     document.getElementById('input_estado').value = user.estado !== undefined ? user.estado : '1';
+    
+    // Validar visualmente el telefono
+    formatTelefonoInput(document.getElementById('input_telefono'));
 
     // Contraseña opcional al editar
     const pwdInput = document.getElementById('input_password');
@@ -64,6 +98,7 @@ function closeUserModal() {
 // Previsualizacion
 function updatePreviewCard() {
     const name = document.getElementById('input_nombre_real').value.trim() || 'Nuevo Usuario';
+    const telefono = document.getElementById('input_telefono').value.trim();
     const username = document.getElementById('input_username').value.trim() || 'usuario@axstore.com';
     const role = document.getElementById('input_rol').value;
     const status = document.getElementById('input_estado').value;
@@ -85,6 +120,17 @@ function updatePreviewCard() {
         document.getElementById('previewAvatar').className = 'w-24 h-24 sm:w-28 sm:h-28 rounded-2xl bg-gradient-to-tr from-blue-600 to-cyan-500 text-white flex items-center justify-center text-4xl font-black shadow-lg shadow-blue-500/25 mb-4 transition-transform hover:scale-105';
     }
 
+    // Telefono
+    const phoneBadge = document.getElementById('previewPhoneBadge');
+    const phoneText = document.getElementById('previewPhoneText');
+    if (telefono) {
+        phoneBadge.style.display = 'inline-flex';
+        phoneText.textContent = telefono;
+    } else {
+        phoneBadge.style.display = 'none';
+        phoneText.textContent = '';
+    }
+
     // Estado
     const statusBadge = document.getElementById('previewStatusBadge');
     const statusText = document.getElementById('previewStatusText');
@@ -94,6 +140,39 @@ function updatePreviewCard() {
     } else {
         statusBadge.className = 'inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-bold bg-rose-100 text-rose-700 border border-rose-200';
         statusBadge.innerHTML = '<span class="w-1.5 h-1.5 rounded-full bg-rose-500"></span><span>Inactivo</span>';
+    }
+}
+
+// Validacion de Telefono El Salvador
+function formatTelefonoInput(input) {
+    let val = input.value.replace(/\D/g, '');
+    if (val.length > 4) {
+        val = val.slice(0, 4) + '-' + val.slice(4, 8);
+    }
+    input.value = val;
+    
+    const msgEl = document.getElementById('modal-telefono-msg');
+    const iconEl = document.getElementById('modal-telefono-icon');
+    
+    if (!val) {
+        input.classList.remove('border-rose-500', 'border-emerald-500');
+        if (msgEl) msgEl.innerHTML = 'Formato: XXXX-XXXX (ej: 7890-1234)';
+        if (iconEl) iconEl.innerHTML = '';
+        return true;
+    }
+    
+    if (/^[267]\d{3}-\d{4}$/.test(val)) {
+        input.classList.remove('border-rose-500');
+        input.classList.add('border-emerald-500');
+        if (msgEl) msgEl.innerHTML = '<span class="text-emerald-500">Número válido ✓</span>';
+        if (iconEl) iconEl.innerHTML = '<i class="fas fa-check text-emerald-500"></i>';
+        return true;
+    } else {
+        input.classList.remove('border-emerald-500');
+        input.classList.add('border-rose-500');
+        if (msgEl) msgEl.innerHTML = '<span class="text-rose-500">Formato incorrecto. Inicia con 2, 6 o 7.</span>';
+        if (iconEl) iconEl.innerHTML = '<i class="fas fa-triangle-exclamation text-rose-500"></i>';
+        return false;
     }
 }
 
@@ -136,10 +215,18 @@ async function handleUserSubmit(event) {
     const payload = {
         _token: csrfToken,
         nombre_real: document.getElementById('input_nombre_real').value,
+        telefono: document.getElementById('input_telefono').value,
         username: document.getElementById('input_username').value,
         rol: document.getElementById('input_rol').value,
         estado: document.getElementById('input_estado').value,
     };
+    
+    if (payload.telefono && !/^[267]\d{3}-\d{4}$/.test(payload.telefono)) {
+        showModalAlert('El teléfono ingresado no tiene un formato válido para El Salvador (XXXX-XXXX).');
+        submitBtn.disabled = false;
+        submitBtn.classList.remove('opacity-75');
+        return;
+    }
 
     const pwd = document.getElementById('input_password').value;
     const pwdConf = document.getElementById('input_password_confirmation').value;
@@ -248,6 +335,7 @@ async function applyFilters() {
         const data = await response.json();
         if (data.success) {
             document.getElementById('usersTableWrapper').innerHTML = data.html;
+            document.getElementById('usersCardsGrid').innerHTML = data.cards ?? '';
 
             // Actualizar KPIs
             if (data.stats) {
@@ -397,6 +485,7 @@ document.getElementById('usersTableWrapper').addEventListener('click', function 
         .then(data => {
             if (data.success) {
                 document.getElementById('usersTableWrapper').innerHTML = data.html;
+                document.getElementById('usersCardsGrid').innerHTML = data.cards ?? '';
                 if (data.stats) {
                     document.getElementById('kpiTotal').textContent = data.stats.total;
                     document.getElementById('kpiAdmins').textContent = data.stats.admins;
@@ -409,10 +498,7 @@ document.getElementById('usersTableWrapper').addEventListener('click', function 
         .finally(() => loader.classList.add('hidden'));
 });
 
-// ─── EXPORTAR FUNCIONES AL SCOPE GLOBAL (VITE) ───
-// Al compilar con Vite, las funciones quedan encapsuladas en un módulo.
-// Para que los eventos inline del HTML (onclick, oninput, etc.) puedan llamarlas,
-// necesitamos exponerlas explícitamente en el objeto window.
+
 window.openCreateUserModal = openCreateUserModal;
 window.openEditUserModal = openEditUserModal;
 window.closeUserModal = closeUserModal;
@@ -424,4 +510,6 @@ window.clearSearch = clearSearch;
 window.resetAllFilters = resetAllFilters;
 window.applyFilters = applyFilters;
 window.toggleUserStatus = toggleUserStatus;
-window.confirmDeleteUser = confirmDeleteUser;
+window.confirmDeleteUser = confirmDeleteUser;
+window.setView = setView;
+window.formatTelefonoInput = formatTelefonoInput;

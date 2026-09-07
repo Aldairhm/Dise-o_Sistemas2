@@ -6,10 +6,16 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\HomeController;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\UserController;
+use App\Http\Controllers\CategoriaController;
+use App\Http\Controllers\ProfileController;
+
+// ── Autenticación ────────────────────────────────────────────
+
 use App\Http\Controllers\ProveedorController;
 use App\Http\Controllers\CatalogoController;
 
 // ── Autenticación (Rutas públicas) ───────────────────────────
+
 Route::get('/login',  [AuthController::class, 'showLogin'])->name('login');
 Route::post('/login', [AuthController::class, 'login'])->name('login.post');
 Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
@@ -28,6 +34,13 @@ Route::middleware('auth')->group(function () {
     // Inicio
     Route::get('/', [HomeController::class, 'index'])->name('home');
     Route::get('/home', [HomeController::class, 'index'])->name('home.alias');
+    Route::view('/proveedores', 'proveedores.index');
+
+
+    // ── Perfil del usuario autenticado ─────────────────────────────
+    Route::get('/perfil',          [ProfileController::class, 'show'])->name('perfil.show');
+    Route::put('/perfil',          [ProfileController::class, 'update'])->name('perfil.update');
+    Route::put('/perfil/password', [ProfileController::class, 'updatePassword'])->name('perfil.password');
 
     // ── TU MÓDULO DE PROVEEDORES Y CATÁLOGOS ──
     
@@ -50,5 +63,13 @@ Route::middleware('auth')->group(function () {
         Route::put('/usuarios/{user}', [UserController::class, 'update'])->name('usuarios.update');
         Route::delete('/usuarios/{user}', [UserController::class, 'destroy'])->name('usuarios.destroy');
         Route::patch('/usuarios/{user}/toggle-status', [UserController::class, 'toggleStatus'])->name('usuarios.toggleStatus');
+
+        // ── Módulo de Categorías ──
+        Route::get('/categorias', [CategoriaController::class, 'index'])->name('categorias.index');
+        Route::get('/categorias/export', [CategoriaController::class, 'exportPdf'])->name('categorias.export');
+        Route::post('/categorias/reorder', [CategoriaController::class, 'reorder'])->name('categorias.reorder');
+        Route::post('/categorias', [CategoriaController::class, 'store'])->name('categorias.store');
+        Route::put('/categorias/{categoria}', [CategoriaController::class, 'update'])->name('categorias.update');
+        Route::patch('/categorias/{categoria}/toggle-status', [CategoriaController::class, 'toggleStatus'])->name('categorias.toggleStatus');
     });
 });
