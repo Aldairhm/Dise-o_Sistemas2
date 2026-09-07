@@ -15,7 +15,7 @@ class ProveedorService
 
     public function buscar($id)
     {
-        return Proveedor::find($id);
+        return Proveedor::withTrashed()->find($id);
     }
 
     public function crearProveedor(array $datos, $archivo = null)
