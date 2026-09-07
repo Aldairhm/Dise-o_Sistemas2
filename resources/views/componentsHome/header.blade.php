@@ -115,13 +115,31 @@
                                     <i class="fas fa-user-gear text-blue-500"></i>
                                     <span>Configurar Perfil</span>
                                 </a>
-                                <form method="POST" action="{{ route('logout') }}" class="m-0">
+                                <form method="POST" action="{{ route('logout') }}" class="m-0" id="logoutForm">
                                     @csrf
-                                    <button type="submit" class="w-full text-left px-3 py-2 text-xs font-bold text-red-600 hover:bg-red-50 rounded-lg flex items-center gap-2 transition-colors cursor-pointer">
+                                    <button type="button" onclick="confirmLogout(this.closest('form'))" class="w-full text-left px-3 py-2 text-xs font-bold text-red-600 hover:bg-red-50 rounded-lg flex items-center gap-2 transition-colors cursor-pointer">
                                         <i class="fas fa-arrow-right-from-bracket text-red-500"></i>
                                         <span>Cerrar Sesión</span>
                                     </button>
                                 </form>
+                                <script>
+                                    function confirmLogout(form) {
+                                        Swal.fire({
+                                            title: 'Cerrando sesión...',
+                                            html: 'Por favor, espera un momento.',
+                                            timer: 1500,
+                                            timerProgressBar: true,
+                                            allowOutsideClick: false,
+                                            customClass: { popup: 'swal-axstore' },
+                                            didOpen: () => {
+                                                Swal.showLoading();
+                                            },
+                                            willClose: () => {
+                                                form.submit();
+                                            }
+                                        });
+                                    }
+                                </script>
                             </div>
                         </div>
                     </div>

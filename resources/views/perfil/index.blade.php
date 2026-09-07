@@ -185,9 +185,8 @@
                             <!-- Botón -->
                             <div class="flex justify-end pt-2">
                                 <button type="submit" id="btn-save-personal"
-                                        class="inline-flex items-center gap-2 px-6 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-sm font-black transition-all shadow-md hover:shadow-blue-500/30 active:scale-95 cursor-pointer">
-                                    <i class="fas fa-save"></i>
-                                    Guardar Cambios
+                                        class="inline-flex items-center gap-2 px-6 py-2.5 rounded-xl font-black text-sm text-white shadow-lg transition-all duration-300 hover:scale-[1.02] cursor-pointer bg-slate-900 shadow-slate-900/20">
+                                    <i class="fas fa-check"></i> GUARDAR CAMBIOS
                                 </button>
                             </div>
                         </form>
@@ -286,9 +285,8 @@
 
                         <div class="flex justify-end pt-1">
                             <button type="submit" id="btn-save-password"
-                                    class="inline-flex items-center gap-2 px-6 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-sm font-black transition-all shadow-md hover:shadow-blue-500/30 active:scale-95 cursor-pointer">
-                                <i class="fas fa-lock"></i>
-                                Cambiar Contraseña
+                                    class="inline-flex items-center gap-2 px-6 py-2.5 rounded-xl font-black text-sm text-white shadow-lg transition-all duration-300 hover:scale-[1.02] cursor-pointer bg-slate-900 shadow-slate-900/20">
+                                <i class="fas fa-check"></i> CAMBIAR CONTRASEÑA
                             </button>
                         </div>
                     </form>

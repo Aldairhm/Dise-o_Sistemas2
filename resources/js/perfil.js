@@ -23,7 +23,7 @@ function setTheme(theme) {
     document.querySelectorAll('.theme-option').forEach(btn => {
         btn.classList.toggle('selected', btn.dataset.theme === theme);
     });
-    showToast('Tema actualizado', 'success');
+    Toast.fire({ icon: 'success', title: 'Tema actualizado' });
 }
 
 // Exponer para uso global 
@@ -122,7 +122,7 @@ async function savePersonalInfo(event) {
 
     const telInput = document.getElementById('perfil_telefono');
     if (telInput && !validateTelefono(telInput)) {
-        Swal.fire({
+        Swal.fire({ customClass: { popup: 'swal-axstore' },
             icon: 'warning',
             title: 'Teléfono inválido',
             html: '<p style="color:#475569;font-size:0.92rem;">El número de teléfono debe tener el formato de El Salvador:<br><strong>XXXX-XXXX</strong> (ej: 7890-1234).<br>El primer dígito debe ser <strong>2, 6 o 7</strong>.</p>',
@@ -145,16 +145,16 @@ async function savePersonalInfo(event) {
         const json = await res.json();
 
         if (json.success) {
-            showToast(json.message, 'success');
+            Toast.fire({ icon: 'success', title: json.message });
             // Actualizar avatar/nombre 
             const nameEl = document.getElementById('perfil-header-name');
             if (nameEl) nameEl.textContent = document.getElementById('perfil_nombre').value;
         } else {
             const errors = json.errors ? Object.values(json.errors).flat().join('<br>') : json.message;
-            Swal.fire({ icon: 'error', title: 'Error al guardar', html: `<p style="font-size:0.9rem;color:#475569;">${errors}</p>`, confirmButtonColor: '#ef4444' });
+            Swal.fire({ customClass: { popup: 'swal-axstore' }, icon: 'error', title: 'Error al guardar', html: `<p style="font-size:0.9rem;color:#475569;">${errors}</p>`, confirmButtonColor: '#ef4444' });
         }
     } catch (e) {
-        showToast('Error de conexión al guardar el perfil.', 'error');
+        Toast.fire({ icon: 'error', title: 'Error de conexión al guardar el perfil.' });
     } finally {
         btn.disabled = false;
         btn.innerHTML = '<i class="fas fa-save mr-1.5"></i> Guardar Cambios';
@@ -170,7 +170,7 @@ async function savePassword(event) {
     const confPwd = document.getElementById('confirm_password').value;
 
     if (newPwd !== confPwd) {
-        Swal.fire({ icon: 'warning', title: 'Las contraseñas no coinciden', text: 'La nueva contraseña y su confirmación deben ser iguales.', confirmButtonColor: '#f59e0b' });
+        Swal.fire({ customClass: { popup: 'swal-axstore' }, icon: 'warning', title: 'Las contraseñas no coinciden', text: 'La nueva contraseña y su confirmación deben ser iguales.', confirmButtonColor: '#f59e0b' });
         return;
     }
 
@@ -187,16 +187,16 @@ async function savePassword(event) {
         const json = await res.json();
 
         if (json.success) {
-            showToast(json.message, 'success');
+            Toast.fire({ icon: 'success', title: json.message });
             form.reset();
             document.getElementById('pwd-strength-fill').className = 'strength-fill';
             document.getElementById('pwd-strength-label').textContent = '';
         } else {
             const errors = json.errors ? Object.values(json.errors).flat().join('<br>') : json.message;
-            Swal.fire({ icon: 'error', title: 'Error', html: `<p style="font-size:0.9rem;color:#475569;">${errors}</p>`, confirmButtonColor: '#ef4444' });
+            Swal.fire({ customClass: { popup: 'swal-axstore' }, icon: 'error', title: 'Error', html: `<p style="font-size:0.9rem;color:#475569;">${errors}</p>`, confirmButtonColor: '#ef4444' });
         }
     } catch (e) {
-        showToast('Error de conexión.', 'error');
+        Toast.fire({ icon: 'error', title: 'Error de conexión.' });
     } finally {
         btn.disabled = false;
         btn.innerHTML = '<i class="fas fa-lock mr-1.5"></i> Cambiar Contraseña';
@@ -205,15 +205,17 @@ async function savePassword(event) {
 
 // TOAST NOTIFICATION
 
-function showToast(message, type = 'success') {
-    const toast = document.createElement('div');
-    const color = type === 'success' ? 'bg-emerald-500' : 'bg-red-500';
-    const icon = type === 'success' ? 'fa-circle-check' : 'fa-circle-exclamation';
-    toast.className = `fixed bottom-6 right-6 z-[9999] flex items-center gap-3 px-5 py-3.5 rounded-2xl shadow-2xl text-white text-sm font-bold ${color} transition-all`;
-    toast.innerHTML = `<i class="fas ${icon}"></i><span>${message}</span>`;
-    document.body.appendChild(toast);
-    setTimeout(() => { toast.style.opacity = '0'; toast.style.transform = 'translateY(12px)'; setTimeout(() => toast.remove(), 300); }, 3000);
-}
+const Toast = Swal.mixin({
+    toast: true,
+    position: 'top-end',
+    showConfirmButton: false,
+    timer: 3000,
+    timerProgressBar: true,
+    didOpen: (toast) => {
+        toast.onmouseenter = Swal.stopTimer;
+        toast.onmouseleave = Swal.resumeTimer;
+    }
+});
 
 
 // INICIALIZACION

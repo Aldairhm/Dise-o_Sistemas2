@@ -144,18 +144,11 @@
 
         <!-- TABLA / CARDS -->
         <div class="bg-white rounded-2xl border border-slate-200/80 shadow-xs overflow-hidden relative" id="tableContainer">
-            <div id="tableLoading" class="hidden p-5">
-                <!-- Skeletons -->
-                <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
-                    @for($i=0;$i<8;$i++)
-                    <div class="rounded-2xl overflow-hidden border border-slate-100">
-                        <div class="skeleton h-28"></div>
-                        <div class="p-4 space-y-2">
-                            <div class="skeleton h-4 w-3/4 rounded"></div>
-                            <div class="skeleton h-3 w-full rounded"></div>
-                        </div>
-                    </div>
-                    @endfor
+            <!-- Loader de busqueda AJAX -->
+            <div id="tableLoading" class="absolute inset-0 bg-white/70 backdrop-blur-xs flex items-center justify-center z-20 hidden">
+                <div class="flex items-center gap-3 bg-white px-5 py-3 rounded-2xl shadow-xl border border-slate-100 text-blue-600 text-sm font-bold">
+                    <i class="fas fa-spinner fa-spin text-lg"></i>
+                    <span>Buscando categorías...</span>
                 </div>
             </div>
 
@@ -176,12 +169,12 @@
 
     <script>
         window.APP_ROUTES = {
-            index:        '{{ route('categorias.index') }}',
-            store:        '{{ route('categorias.store') }}',
-            update:       '{{ url('categorias') }}',
-            toggleStatus: '{{ url('categorias') }}',
-            reorder:      '{{ route('categorias.reorder') }}',
-            export:       '{{ route('categorias.export') }}',
+            index:        "{{ route('categorias.index') }}",
+            store:        "{{ route('categorias.store') }}",
+            update:       "{{ url('categorias') }}",
+            toggleStatus: "{{ url('categorias') }}",
+            reorder:      "{{ route('categorias.reorder') }}",
+            export:       "{{ route('categorias.export') }}",
         };
     </script>
 </body>

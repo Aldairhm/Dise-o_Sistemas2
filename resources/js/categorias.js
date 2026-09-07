@@ -97,7 +97,7 @@
                 // Mostrar un pequeño toast (sin interrumpir)
                 const Toast = Swal.mixin({
                     toast: true,
-                    position: 'bottom-end',
+                    position: 'top-end',
                     showConfirmButton: false,
                     timer: 2000
                 });
@@ -105,7 +105,7 @@
 
             } catch (err) {
                 console.error(err);
-                Swal.fire({ icon: 'error', title: 'Error', text: 'No se pudo guardar el orden.' });
+                Swal.fire({ customClass: { popup: 'swal-axstore' }, icon: 'error', title: 'Error', text: 'No se pudo guardar el orden.' });
             }
         }
 
@@ -222,14 +222,14 @@
                 if (res.ok && data.success) {
                     closeModal();
                     await refreshContent();
-                    Swal.fire({ icon:'success', title:'¡Listo!', text:data.message, timer:2000, showConfirmButton:false, timerProgressBar:true });
+                    Swal.fire({ customClass: { popup: 'swal-axstore' }, icon:'success', title:'¡Listo!', text:data.message, timer:2000, showConfirmButton:false, timerProgressBar:true });
                 } else if (res.status === 422) {
                     showErrors(data.errors ?? {});
                 } else {
-                    Swal.fire({ icon:'error', title:'Error', text:data.message ?? 'Error inesperado.' });
+                    Swal.fire({ customClass: { popup: 'swal-axstore' }, icon:'error', title:'Error', text:data.message ?? 'Error inesperado.' });
                 }
             } catch {
-                Swal.fire({ icon:'error', title:'Error de red', text:'No se pudo conectar.' });
+                Swal.fire({ customClass: { popup: 'swal-axstore' }, icon:'error', title:'Error de red', text:'No se pudo conectar.' });
             } finally {
                 btn.disabled = false;
                 span.textContent = id ? 'GUARDAR CAMBIOS' : 'GUARDAR CATEGORÍA';
@@ -244,7 +244,7 @@
                 ? `La categoría <strong class="text-slate-800">${nombre}</strong> volverá a estar visible.` 
                 : `La categoría <strong class="text-slate-800">${nombre}</strong> se ocultará temporalmente.`;
 
-            const result = await Swal.fire({
+            const result = await Swal.fire({ customClass: { popup: 'swal-axstore' },
                 title: `¿${actionText.charAt(0).toUpperCase() + actionText.slice(1)} categoría?`,
                 html: `<p class="text-slate-600 text-sm">${htmlText}</p>`,
                 icon: 'warning',
@@ -269,12 +269,12 @@
 
                 if (res.ok && data.success) {
                     await refreshContent();
-                    Swal.fire({ icon:'success', title:'¡Hecho!', text:data.message, timer:2000, showConfirmButton:false, timerProgressBar:true });
+                    Swal.fire({ customClass: { popup: 'swal-axstore' }, icon:'success', title:'¡Hecho!', text:data.message, timer:2000, showConfirmButton:false, timerProgressBar:true });
                 } else {
-                    Swal.fire({ icon:'error', title:'Error', text:data.message ?? `No se pudo ${actionText}.` });
+                    Swal.fire({ customClass: { popup: 'swal-axstore' }, icon:'error', title:'Error', text:data.message ?? `No se pudo ${actionText}.` });
                 }
             } catch {
-                Swal.fire({ icon:'error', title:'Error de red', text:'No se pudo conectar.' });
+                Swal.fire({ customClass: { popup: 'swal-axstore' }, icon:'error', title:'Error de red', text:'No se pudo conectar.' });
             }
         }
 

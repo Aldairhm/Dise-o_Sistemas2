@@ -250,14 +250,14 @@
                     <!-- Botón CANCELAR -->
                     <button type="button" 
                             onclick="closeUserModal()" 
-                            class="px-5 py-2.5 rounded-xl bg-slate-900 hover:bg-slate-800 text-white text-xs font-black uppercase tracking-wider transition-all hover:shadow-md cursor-pointer active:scale-95">
+                            class="px-6 py-2.5 rounded-xl font-bold text-sm text-slate-600 bg-white border border-slate-200 hover:bg-slate-100 hover:text-slate-800 transition-colors shadow-sm cursor-pointer">
                         CANCELAR
                     </button>
 
                     <!-- Boton REGISTRAR / GUARDAR -->
                     <button type="submit" 
                             id="btnSubmitModal"
-                            class="px-6 py-2.5 rounded-xl bg-slate-900 hover:bg-slate-800 text-white text-xs font-black uppercase tracking-wider transition-all hover:shadow-md cursor-pointer active:scale-95 flex items-center gap-2">
+                            class="inline-flex items-center gap-2 px-6 py-2.5 rounded-xl font-black text-sm text-white shadow-lg transition-all duration-300 hover:scale-[1.02] cursor-pointer bg-slate-900 shadow-slate-900/20">
                         <i class="fas fa-check text-xs"></i>
                         <span id="btnSubmitText">REGISTRAR USUARIO</span>
                     </button>

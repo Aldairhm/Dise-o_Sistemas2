@@ -215,7 +215,7 @@ document.addEventListener("alpine:init", () => {
             let colorBoton = esActivo ? "#d33" : "#10b981"; // Rojo para desactivar, Verde para activar
 
             // 4. Reemplazamos el confirm() nativo por un Modal de SweetAlert
-            let confirmacion = await Swal.fire({
+            let confirmacion = await Swal.fire({ customClass: { popup: 'swal-axstore' },
                 title: `¿${accion.charAt(0).toUpperCase() + accion.slice(1)} proveedor?`,
                 text: `Estás a punto de ${accion} a "${proveedor.nombre}"`,
                 icon: "warning",
@@ -366,7 +366,7 @@ document.addEventListener("alpine:init", () => {
 
             // 5. Lógica para eliminar
             async eliminarCatalogo(id) {
-                Swal.fire({
+                Swal.fire({ customClass: { popup: 'swal-axstore' },
                     title: "¿Eliminar recurso?",
                     text: "Esta acción no se puede deshacer.",
                     icon: "warning",

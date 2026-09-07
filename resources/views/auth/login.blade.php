@@ -179,12 +179,12 @@
         document.addEventListener('DOMContentLoaded', function () {
             Swal.fire({
                 icon: 'error',
-                title: '{{ session('swal_error.title') }}',
-                html:  '<p style="color:#475569;font-size:0.95rem;line-height:1.6;">{{ session('swal_error.text') }}</p>',
+                title: '{{ session("swal_error.title") }}',
+                html:  '<p style="color:#475569;font-size:0.95rem;line-height:1.6;">{{ session("swal_error.text") }}</p>',
                 confirmButtonText: 'Entendido',
                 confirmButtonColor: '#2563eb',
                 customClass: {
-                    popup:          'swal-login-popup',
+                    popup:          'swal-axstore swal-login-popup',
                     title:          'swal-login-title',
                     confirmButton:  'swal-login-btn',
                 },
@@ -201,13 +201,35 @@
         document.addEventListener('DOMContentLoaded', function () {
             Swal.fire({
                 icon: 'warning',
-                title: '{{ session('swal_warning.title') }}',
-                html:  '<p style="color:#475569;font-size:0.95rem;line-height:1.6;">{{ session('swal_warning.text') }}</p>',
+                title: '{{ session("swal_warning.title") }}',
+                html:  '<p style="color:#475569;font-size:0.95rem;line-height:1.6;">{{ session("swal_warning.text") }}</p>',
                 confirmButtonText: 'Entendido',
                 confirmButtonColor: '#f59e0b',
                 customClass: {
-                    popup: 'swal-login-popup',
+                    popup: 'swal-axstore swal-login-popup',
                     title: 'swal-login-title',
+                },
+            });
+        });
+    </script>
+    @endif
+
+    @if(session('swal_success'))
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            Swal.fire({
+                icon: 'success',
+                title: '{{ session("swal_success.title") }}',
+                html:  '<p style="color:#475569;font-size:0.95rem;line-height:1.6;">{{ session("swal_success.text") }}</p>',
+                confirmButtonText: 'Entendido',
+                confirmButtonColor: '#10b981',
+                customClass: {
+                    popup: 'swal-axstore swal-login-popup',
+                    title: 'swal-login-title',
+                    confirmButton: 'swal-login-btn',
+                },
+                showClass: {
+                    popup: 'animate__animated animate__fadeInDown animate__faster'
                 },
             });
         });
