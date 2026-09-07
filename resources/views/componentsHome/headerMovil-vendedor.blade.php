@@ -1,11 +1,7 @@
         <div id="mobile-menu" class="hidden lg:hidden border-t border-gray-100 bg-white">
             <nav class="flex flex-col px-4 pt-2 pb-4 space-y-2">
                 <a href="/home" class="text-sm font-semibold text-blue-600 flex items-center gap-2 p-2 rounded-lg hover:bg-gray-50 transition-colors"><i class="fas fa-home w-5 text-center"></i> Inicio</a>
-                <a href="#productos" class="text-sm font-medium text-gray-600 hover:text-blue-600 flex items-center gap-2 p-2 rounded-lg hover:bg-gray-50 transition-colors"><i class="fas fa-shopping-bag w-5 text-center"></i> Productos</a>
-                <a href="#entregas" class="text-sm font-medium text-gray-600 hover:text-blue-600 flex items-center gap-2 p-2 rounded-lg hover:bg-gray-50 transition-colors"><i class="fas fa-truck w-5 text-center"></i> Entregas</a>
-                <a href="#categorias" class="text-sm font-medium text-gray-600 hover:text-blue-600 flex items-center gap-2 p-2 rounded-lg hover:bg-gray-50 transition-colors"><i class="fas fa-folder-open w-5 text-center"></i> Categorías</a>
-                <a href="{{ route('usuarios.index') }}" class="text-sm font-medium text-gray-600 hover:text-blue-600 flex items-center gap-2 p-2 rounded-lg hover:bg-gray-50 transition-colors"><i class="fas fa-users-gear w-5 text-center"></i> Usuarios</a>
-                @auth
+                 @auth
                 <div class="pt-2 border-t border-gray-100">
                     <div class="flex items-center gap-2.5 p-2 bg-gray-50 rounded-lg mb-1.5">
                         <div class="w-8 h-8 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center font-bold text-xs">
