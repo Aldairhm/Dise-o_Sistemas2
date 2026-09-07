@@ -165,7 +165,7 @@
             <div id="cardsWrapper" class="hidden">
                 @include('categorias.partials.cards', ['categorias' => $categorias, 'estado' => $estado])
             </div>
-        </div>
+        </div> 
     </main>
 
     <footer class="bg-white border-t border-slate-200/80 mt-12">
