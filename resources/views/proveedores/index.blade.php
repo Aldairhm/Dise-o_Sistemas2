@@ -194,6 +194,7 @@
                                                 inputmode="numeric"
                                                 :value="form.telefono"
                                                 @input="formatearTelefono($event)"
+                                                @keydown="if(!/[0-9]/.test($event.key) && !['Backspace', 'Tab', 'ArrowLeft', 'ArrowRight', 'Delete'].includes($event.key)) $event.preventDefault()"
                                                 maxlength="9"
                                                 placeholder="0000 0000"
                                                 class="w-full pl-3 pr-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none transition-all"

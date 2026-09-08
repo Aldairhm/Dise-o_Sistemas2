@@ -78,20 +78,31 @@ document.addEventListener("alpine:init", () => {
 
         // ---------- FORMATO DE TELÉFONO EN VIVO ----------
         formatearTelefono(event) {
+            // 1. Limpiamos todo lo que no sea número
             let soloNumeros = event.target.value.replace(/\D/g, "");
             soloNumeros = soloNumeros.slice(0, 8);
+            
             if (soloNumeros.length > 4) {
-                soloNumeros =
-                    soloNumeros.slice(0, 4) + " " + soloNumeros.slice(4);
+                soloNumeros = soloNumeros.slice(0, 4) + " " + soloNumeros.slice(4);
             }
+            
+            // 2. Actualizamos la variable de Alpine
             this.form.telefono = soloNumeros;
+            
+            // 3. EL TRUCO DEFINITIVO: Obligamos al HTML a redibujarse 
+            // justo un milisegundo después de que x-model intente trabarse.
+            this.$nextTick(() => {
+                event.target.value = this.form.telefono;
+            });
+
             if (this.errors.telefono) delete this.errors.telefono;
         },
 
         // ---------- VALIDACIONES ----------
         telefonoValido() {
             if (!this.form.telefono) return true;
-            return /^\d{4} \d{4}$/.test(this.form.telefono);
+            // Valida que empiece con 2, 6 o 7, seguido de 3 dígitos, un espacio y 4 dígitos
+            return /^[267]\d{3} \d{4}$/.test(this.form.telefono);
         },
 
         correoValido() {
@@ -121,7 +132,7 @@ document.addEventListener("alpine:init", () => {
                 ];
             if (this.form.telefono && !this.telefonoValido())
                 this.errors.telefono = [
-                    "El teléfono debe tener el formato 0000 0000.",
+                    "El teléfono debe iniciar con 2, 6 o 7 (formato: 0000 0000).",
                 ];
 
             return Object.keys(this.errors).length === 0;
