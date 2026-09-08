@@ -11,6 +11,8 @@ function toggleVisibility(inputId, eyeId) {
     }
 }
 
+window.toggleVisibility = toggleVisibility;
+
 const passwordInput = document.getElementById('password');
 const confirmInput = document.getElementById('password_confirmation');
 const strengthLabel = document.getElementById('strengthLabel');
@@ -93,7 +95,7 @@ function evaluatePassword() {
         bars[1].style.backgroundColor = '#eab308';
         bars[2].style.backgroundColor = '#eab308';
     } else if (score === 4) {
-        strengthLabel.textContent = 'Excelente y segura ✨';
+        strengthLabel.textContent = 'Excelente y segura';
         strengthLabel.style.color = '#10b981';
         bars.forEach(b => b.style.backgroundColor = '#10b981');
     }

@@ -237,7 +237,7 @@
         });
 
         async function toggleStatus(id, nombre, estadoActivo) {
-            const actionText = estadoActivo ? 'activar' : 'inactivar';
+            const actionText = estadoActivo ? 'habilitar' : 'deshabilitar';
             const actionIcon = estadoActivo ? 'fa-check' : 'fa-ban';
             const btnColor   = estadoActivo ? '#22c55e' : '#f97316';
             const htmlText   = estadoActivo 

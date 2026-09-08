@@ -59,10 +59,11 @@
                         <button type="button" 
                                 onclick="toggleUserStatus('{{ $user->id }}', this)" 
                                 data-current="{{ $user->estado }}"
+                                data-name="{{ $user->username }}"
                                 class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold cursor-pointer transition-all hover:scale-105 active:scale-95 shadow-xs {{ $user->estado == 1 ? 'bg-emerald-100 text-emerald-700 hover:bg-emerald-200 border border-emerald-200' : 'bg-rose-100 text-rose-700 hover:bg-rose-200 border border-rose-200' }}"
                                 title="Haz clic para cambiar estado">
                             <span class="w-2 h-2 rounded-full {{ $user->estado == 1 ? 'bg-emerald-500 animate-pulse' : 'bg-rose-500' }}"></span>
-                            <span class="status-label">{{ $user->estado == 1 ? 'Activo' : 'Inactivo' }}</span>
+                            <span class="status-label">{{ $user->estado == 1 ? 'Habilitado' : 'Deshabilitado' }}</span>
                         </button>
                     </td>
 

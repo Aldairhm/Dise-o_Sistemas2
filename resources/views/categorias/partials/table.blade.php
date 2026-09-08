@@ -98,20 +98,20 @@
                             </button>
 
                             @if($isBaja)
-                                <!-- Activar -->
+                                <!-- Habilitar -->
                                 <button type="button"
                                         onclick="toggleStatus({{ $categoria->id }}, '{{ addslashes($categoria->nombre) }}', 1)"
                                         class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-emerald-50 hover:bg-emerald-100 text-emerald-600 font-bold text-xs transition-colors cursor-pointer border border-emerald-100"
-                                        title="Activar categoría">
+                                        title="Habilitar categoría">
                                     <i class="fas fa-check text-xs"></i>
-                                    <span class="hidden sm:inline">Activar</span>
+                                    <span class="hidden sm:inline">Habilitar</span>
                                 </button>
                             @else
-                                <!-- Inactivar -->
+                                <!-- Deshabilitar -->
                                 <button type="button"
                                         onclick="toggleStatus({{ $categoria->id }}, '{{ addslashes($categoria->nombre) }}', 0)"
                                         class="w-8 h-8 rounded-lg bg-slate-100 hover:bg-amber-100 text-slate-500 hover:text-amber-600 flex items-center justify-center transition-colors cursor-pointer"
-                                        title="Inactivar">
+                                        title="Deshabilitar">
                                     <i class="fas fa-ban text-xs"></i>
                                 </button>
                             @endif

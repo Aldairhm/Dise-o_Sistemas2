@@ -211,8 +211,8 @@ document.addEventListener("alpine:init", () => {
 
         async cambiarEstado(proveedor) {
             let esActivo = !proveedor.deleted_at;
-            let accion = esActivo ? "desactivar" : "activar";
-            let colorBoton = esActivo ? "#d33" : "#10b981"; // Rojo para desactivar, Verde para activar
+            let accion = esActivo ? "deshabilitar" : "habilitar";
+            let colorBoton = esActivo ? "#d33" : "#10b981"; // Rojo para deshabilitar, Verde para habilitar
 
             // 4. Reemplazamos el confirm() nativo por un Modal de SweetAlert
             let confirmacion = await Swal.fire({ customClass: { popup: 'swal-axstore' },

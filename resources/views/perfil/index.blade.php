@@ -103,7 +103,7 @@
                                 <div class="flex justify-between">
                                     <span style="color: var(--text-muted, #64748b);">Estado:</span>
                                     <span class="font-bold {{ auth()->user()->estado ? 'text-emerald-600' : 'text-slate-400' }}">
-                                        {{ auth()->user()->estado ? 'Activo' : 'Inactivo' }}
+                                        {{ auth()->user()->estado ? 'Habilitado' : 'Deshabilitado' }}
                                     </span>
                                 </div>
                                 @if(auth()->user()->telefono)

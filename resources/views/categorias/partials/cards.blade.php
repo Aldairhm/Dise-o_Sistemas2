@@ -42,11 +42,11 @@
                     
                     @if(!$isBaja)
                         <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-bold bg-emerald-50 text-emerald-600">
-                            Activo
+                            Habilitado
                         </span>
                     @else
                         <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-bold bg-slate-100 text-slate-500">
-                            Inactivo
+                            Deshabilitado
                         </span>
                     @endif
                 </div>
@@ -111,14 +111,14 @@
                         onclick="toggleStatus({{ $categoria->id }}, '{{ addslashes($categoria->nombre) }}', 0)"
                         class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md bg-red-50 hover:bg-red-100 text-red-600 font-semibold text-xs transition-colors cursor-pointer">
                     <i class="fas fa-ban"></i>
-                    <span>Inactivar</span>
+                    <span>Deshabilitar</span>
                 </button>
             @else
                 <button type="button"
                         onclick="toggleStatus({{ $categoria->id }}, '{{ addslashes($categoria->nombre) }}', 1)"
                         class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md bg-emerald-50 hover:bg-emerald-100 text-emerald-600 font-semibold text-xs transition-colors cursor-pointer">
                     <i class="fas fa-check"></i>
-                    <span>Activar</span>
+                    <span>Habilitar</span>
                 </button>
             @endif
         </div>

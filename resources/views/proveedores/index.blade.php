@@ -17,7 +17,7 @@
                 </span>
                 <input type="text" x-model="busqueda" @input="paginaActual = 1"
                     placeholder="Buscar por nombre o correo..."
-                    class="w-full pl-10 pr-4 py-2 text-sm border border-gray-300 rounded-lg shadow-sm focus:ring-2 focus:ring-blue-500 outline-none transition-all bg-white">
+                    class="custom-input w-full pl-10 pr-4 py-2 text-sm border border-gray-300 rounded-lg shadow-sm focus:ring-2 focus:ring-blue-500 outline-none transition-all bg-white">
             </div>
 
             <!-- 3. Botón (Derecha) -->
@@ -52,7 +52,7 @@
             <!-- El bucle de Alpine que recorre el arreglo de proveedores -->
             <template x-for="proveedor in proveedoresPaginados" :key="proveedor.id">
                 <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6 hover:shadow-md transition-shadow group relative overflow-hidden flex flex-col h-full"
-                    :class="proveedor.deleted_at ? 'opacity-70 bg-gray-50' : ''"> <!-- Se opaca si está inactivo -->
+                    :class="proveedor.deleted_at ? 'opacity-70 bg-gray-50' : ''"> <!-- Se opaca si está deshabilitado -->
 
                     <!-- Detalle visual lateral -->
                     <div class="absolute top-0 left-0 w-1 h-full transition-colors"
@@ -68,7 +68,7 @@
                             <h3 class="text-lg font-bold text-gray-900 group-hover:text-blue-600 transition-colors" x-text="proveedor.nombre"></h3>
                             <span class="text-xs font-semibold px-2 py-1 rounded-full"
                                 :class="proveedor.deleted_at ? 'bg-red-100 text-red-600' : 'bg-green-100 text-green-600'"
-                                x-text="proveedor.deleted_at ? 'Inactivo' : 'Activo'">
+                                x-text="proveedor.deleted_at ? 'Deshabilitado' : 'Habilitado'">
                             </span>
                         </div>
                     </div>
@@ -96,12 +96,12 @@
                             <i class="fas fa-edit"></i> Editar
                         </button>
 
-                        <!-- Botón Eliminar / Activar -->
+                        <!-- Botón Eliminar / Habilitar -->
                         <button @click="cambiarEstado(proveedor)"
                             class="px-2.5 py-1.5 text-xs font-medium rounded-md transition-colors flex items-center gap-1.5 whitespace-nowrap"
                             :class="proveedor.deleted_at ? 'text-green-700 bg-green-50 hover:bg-green-100' : 'text-red-700 bg-red-50 hover:bg-red-100'">
                             <i class="fas" :class="proveedor.deleted_at ? 'fa-check-circle' : 'fa-trash-alt'"></i>
-                            <span x-text="proveedor.deleted_at ? 'Activar' : 'Eliminar'"></span>
+                            <span x-text="proveedor.deleted_at ? 'Habilitar' : 'Eliminar'"></span>
                         </button>
                     </div>
                 </div>
@@ -179,7 +179,7 @@
                                                 <i class="fas fa-truck"></i> Proveedor
                                             </span>
                                             <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-emerald-50 text-emerald-600 border border-emerald-100">
-                                                <span class="w-1.5 h-1.5 rounded-full bg-emerald-400"></span> Activo
+                                                <span class="w-1.5 h-1.5 rounded-full bg-emerald-400"></span> Habilitado
                                             </span>
                                         </div>
 
@@ -216,7 +216,7 @@
                                                 </div>
                                             </label>
                                             <input type="text" x-model="form.nombre"
-                                                   class="w-full px-4 py-3 bg-white border border-slate-200 focus:border-blue-500 rounded-xl text-sm text-slate-800 placeholder:text-slate-400 focus:ring-2 focus:ring-blue-500/20 focus:outline-none transition-all shadow-sm"
+                                                   class="custom-input w-full px-4 py-3 bg-white border border-slate-200 focus:border-blue-500 rounded-xl text-sm text-slate-800 placeholder:text-slate-400 focus:ring-2 focus:ring-blue-500/20 focus:outline-none transition-all shadow-sm"
                                                    placeholder="Ej: Accesorios Eléctricos S.A.">
                                             <p class="mt-1.5 text-xs text-slate-400">Nombre de la empresa que verán los usuarios (Campo obligatorio)</p>
                                             <template x-if="errors.nombre">
@@ -229,7 +229,7 @@
                                             <div>
                                                 <label class="block text-sm font-bold text-slate-700 mb-1.5">Correo Electrónico</label>
                                                 <input type="email" x-model="form.correo" @blur="validarCorreo"
-                                                       class="w-full px-4 py-3 bg-white border border-slate-200 focus:border-blue-500 rounded-xl text-sm text-slate-800 placeholder:text-slate-400 focus:ring-2 focus:ring-blue-500/20 focus:outline-none transition-all shadow-sm"
+                                                       class="custom-input w-full px-4 py-3 bg-white border border-slate-200 focus:border-blue-500 rounded-xl text-sm text-slate-800 placeholder:text-slate-400 focus:ring-2 focus:ring-blue-500/20 focus:outline-none transition-all shadow-sm"
                                                        placeholder="ventas@empresa.com"
                                                        :class="errors.correo ? 'border-red-400 focus:border-red-500 focus:ring-red-500/20' : ''">
                                                 <template x-if="errors.correo">
@@ -241,7 +241,7 @@
                                             <div>
                                                 <label class="block text-sm font-bold text-slate-700 mb-1.5">Teléfono</label>
                                                 <input type="text" inputmode="numeric" :value="form.telefono" @input="formatearTelefono($event)" maxlength="9"
-                                                       class="w-full px-4 py-3 bg-white border border-slate-200 focus:border-blue-500 rounded-xl text-sm text-slate-800 placeholder:text-slate-400 focus:ring-2 focus:ring-blue-500/20 focus:outline-none transition-all shadow-sm"
+                                                       class="custom-input w-full px-4 py-3 bg-white border border-slate-200 focus:border-blue-500 rounded-xl text-sm text-slate-800 placeholder:text-slate-400 focus:ring-2 focus:ring-blue-500/20 focus:outline-none transition-all shadow-sm"
                                                        placeholder="0000 0000"
                                                        :class="errors.telefono ? 'border-red-400 focus:border-red-500 focus:ring-red-500/20' : ''">
                                                 <template x-if="errors.telefono">

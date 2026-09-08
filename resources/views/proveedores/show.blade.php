@@ -12,7 +12,7 @@
                     <i class="fas fa-building text-blue-600"></i> <span x-text="proveedor.nombre"></span>
                     <span class="text-xs font-semibold px-2 py-1 rounded-full align-middle ml-2"
                         :class="proveedor.deleted_at ? 'bg-red-100 text-red-600' : 'bg-green-100 text-green-600'"
-                        x-text="proveedor.deleted_at ? 'Inactivo' : 'Activo'">
+                        x-text="proveedor.deleted_at ? 'Deshabilitado' : 'Habilitado'">
                     </span>
                 </h1>
             </div>
