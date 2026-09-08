@@ -134,7 +134,10 @@ class AuthController extends Controller
         $request->session()->invalidate();
         $request->session()->regenerateToken();
 
-        return redirect()->route('login');
+        return redirect()->route('login')->with('swal_success', [
+            'title' => 'Sesión Cerrada',
+            'text'  => 'Has cerrado sesión correctamente. ¡Vuelve pronto!'
+        ]);
     }
 
     /** Mostrar formulario para solicitar recuperación de contraseña */

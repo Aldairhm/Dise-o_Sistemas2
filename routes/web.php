@@ -34,7 +34,7 @@ Route::middleware('auth')->group(function () {
     // Inicio
     Route::get('/', [HomeController::class, 'index'])->name('home');
     Route::get('/home', [HomeController::class, 'index'])->name('home.alias');
-    Route::view('/proveedores', 'proveedores.index');
+
 
 
     // ── Perfil del usuario autenticado ─────────────────────────────
@@ -42,19 +42,7 @@ Route::middleware('auth')->group(function () {
     Route::put('/perfil',          [ProfileController::class, 'update'])->name('perfil.update');
     Route::put('/perfil/password', [ProfileController::class, 'updatePassword'])->name('perfil.password');
 
-    // ── TU MÓDULO DE PROVEEDORES Y CATÁLOGOS ──
-    
-    // 1. Estáticas (Catálogos)
-    Route::post('/proveedores/catalogos', [CatalogoController::class, 'store']);
-    Route::delete('/proveedores/catalogos/{id}', [CatalogoController::class, 'destroy']);
-
-    // 2. Dinámicas (Proveedores)
-    Route::get('/proveedores', [ProveedorController::class, 'index'])->name('proveedores.index');
-    Route::post('/proveedores', [ProveedorController::class, 'store'])->name('proveedores.store');
-    Route::post('/proveedores/{proveedor}', [ProveedorController::class, 'update'])->name('proveedores.update');
-    Route::delete('/proveedores/{proveedor}', [ProveedorController::class, 'destroy'])->name('proveedores.destroy');
-    Route::post('/proveedores/{id}/restore', [ProveedorController::class, 'restore'])->name('proveedores.restore');
-    Route::get('/proveedor/{id}', [ProveedorController::class, 'show'])->name('proveedores.show');
+    // Rutas de proveedores movidas a middleware admin
 
     // ── Módulo de Gestión de Usuarios (CRUD) - Solo Administradores ──
     Route::middleware('admin')->group(function () {
@@ -71,5 +59,19 @@ Route::middleware('auth')->group(function () {
         Route::post('/categorias', [CategoriaController::class, 'store'])->name('categorias.store');
         Route::put('/categorias/{categoria}', [CategoriaController::class, 'update'])->name('categorias.update');
         Route::patch('/categorias/{categoria}/toggle-status', [CategoriaController::class, 'toggleStatus'])->name('categorias.toggleStatus');
+
+        // ── TU MÓDULO DE PROVEEDORES Y CATÁLOGOS ──
+        
+        // 1. Estáticas (Catálogos)
+        Route::post('/proveedores/catalogos', [CatalogoController::class, 'store']);
+        Route::delete('/proveedores/catalogos/{id}', [CatalogoController::class, 'destroy']);
+
+        // 2. Dinámicas (Proveedores)
+        Route::get('/proveedores', [ProveedorController::class, 'index'])->name('proveedores.index');
+        Route::post('/proveedores', [ProveedorController::class, 'store'])->name('proveedores.store');
+        Route::post('/proveedores/{proveedor}', [ProveedorController::class, 'update'])->name('proveedores.update');
+        Route::delete('/proveedores/{proveedor}', [ProveedorController::class, 'destroy'])->name('proveedores.destroy');
+        Route::post('/proveedores/{id}/restore', [ProveedorController::class, 'restore'])->name('proveedores.restore');
+        Route::get('/proveedor/{id}', [ProveedorController::class, 'show'])->name('proveedores.show');
     });
 });

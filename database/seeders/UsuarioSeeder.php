@@ -15,10 +15,10 @@ class UsuarioSeeder extends Seeder
     {
         // 1. Usuario Administrador
         User::updateOrCreate(
-            ['username' => 'ar23052@ues.edu.sv'],
+            ['username' => 'steven19denoviembre@gmail.com'],
             [
-                'nombre_real' => 'Edwin Ascencio',
-                'password'    => Hash::make('AR23052_175$'),
+                'nombre_real' => 'Josue',
+                'password'    => Hash::make('123456789'),
                 'rol'         => 'admin',
                 'estado'      => 1,
             ]

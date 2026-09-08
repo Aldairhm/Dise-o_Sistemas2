@@ -136,10 +136,10 @@ function updatePreviewCard() {
     const statusText = document.getElementById('previewStatusText');
     if (status == 1) {
         statusBadge.className = 'inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-bold bg-emerald-100 text-emerald-700 border border-emerald-200';
-        statusBadge.innerHTML = '<span class="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span><span>Activo</span>';
+        statusBadge.innerHTML = '<span class="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span><span>Habilitado</span>';
     } else {
         statusBadge.className = 'inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-bold bg-rose-100 text-rose-700 border border-rose-200';
-        statusBadge.innerHTML = '<span class="w-1.5 h-1.5 rounded-full bg-rose-500"></span><span>Inactivo</span>';
+        statusBadge.innerHTML = '<span class="w-1.5 h-1.5 rounded-full bg-rose-500"></span><span>Deshabilitado</span>';
     }
 }
 
@@ -354,6 +354,32 @@ async function applyFilters() {
 
 // ─── ALTERNAR ESTADO ───
 async function toggleUserStatus(userId, btnElement) {
+    const currentState = parseInt(btnElement.dataset.current);
+    const estadoActivo = (currentState === 0);
+    const nombre = btnElement.dataset.name || 'el usuario';
+
+    const actionText = estadoActivo ? 'habilitar' : 'deshabilitar';
+    const actionIcon = estadoActivo ? 'fa-check' : 'fa-ban';
+    const btnColor   = estadoActivo ? '#22c55e' : '#f97316';
+    const htmlText   = estadoActivo 
+        ? `El usuario <strong class="text-slate-800">${nombre}</strong> volverá a tener acceso al sistema.` 
+        : `El usuario <strong class="text-slate-800">${nombre}</strong> perderá temporalmente el acceso al sistema.`;
+
+    const result = await Swal.fire({ customClass: { popup: 'swal-axstore' },
+        title: `¿${actionText.charAt(0).toUpperCase() + actionText.slice(1)} usuario?`,
+        html: `<p class="text-slate-600 text-sm">${htmlText}</p>`,
+        icon: 'warning',
+        iconColor: btnColor,
+        showCancelButton: true,
+        confirmButtonColor: btnColor,
+        cancelButtonColor: '#94a3b8',
+        confirmButtonText: `<i class="fas ${actionIcon} mr-1"></i> ${actionText.charAt(0).toUpperCase() + actionText.slice(1)}`,
+        cancelButtonText: 'Cancelar',
+        reverseButtons: true,
+    });
+
+    if (!result.isConfirmed) return;
+
     try {
         const response = await fetch(`/usuarios/${userId}/toggle-status`, {
             method: 'PATCH',
@@ -369,7 +395,7 @@ async function toggleUserStatus(userId, btnElement) {
         if (!response.ok) {
             Swal.fire({
                 icon: 'error',
-                title: 'Acción No Permitida',
+                title: 'Error',
                 text: data.message || 'No se pudo cambiar el estado.',
                 customClass: { popup: 'swal-axstore' }
             });

@@ -8,6 +8,16 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>{{ $title }}</title>
 
+    <!-- Dark mode init -->
+    <script>
+        (function() {
+            var t = localStorage.getItem('ax_theme') || 'system';
+            if (t === 'dark' || (t === 'system' && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+                document.documentElement.classList.add('dark');
+            }
+        })();
+    </script>
+
     <link rel="icon" type="image/png" href="{{ asset('assets/images/logo.png') }}">
 
     <!-- 1. Recuperamos la tipografía original (Inter) -->

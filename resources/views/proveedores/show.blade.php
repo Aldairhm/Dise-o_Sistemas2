@@ -12,7 +12,7 @@
                     <i class="fas fa-building text-blue-600"></i> <span x-text="proveedor.nombre"></span>
                     <span class="text-xs font-semibold px-2 py-1 rounded-full align-middle ml-2"
                         :class="proveedor.deleted_at ? 'bg-red-100 text-red-600' : 'bg-green-100 text-green-600'"
-                        x-text="proveedor.deleted_at ? 'Inactivo' : 'Activo'">
+                        x-text="proveedor.deleted_at ? 'Deshabilitado' : 'Habilitado'">
                     </span>
                 </h1>
             </div>
@@ -153,28 +153,40 @@
 
         <!-- MODAL EXCLUSIVO PARA SUBIR CATÁLOGO / ENLACE -->
         <div x-show="modalCatalogo" style="display: none;" class="fixed inset-0 z-50 overflow-y-auto" aria-labelledby="modal-title" role="dialog" aria-modal="true">
-            <div x-show="modalCatalogo" x-transition.opacity class="fixed inset-0 bg-slate-400/40 backdrop-blur-[1px]"></div>
+            <div x-show="modalCatalogo" x-transition.opacity class="fixed inset-0 bg-slate-900/40 backdrop-blur-sm"></div>
 
             <div class="flex items-center justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:p-0">
-                <div x-show="modalCatalogo" @click.away="modalCatalogo = false" x-transition class="relative z-10 bg-white rounded-2xl text-left overflow-hidden shadow-xl transform transition-all sm:max-w-lg w-full p-6">
+                <div x-show="modalCatalogo" @click.away="modalCatalogo = false" x-transition class="relative z-10 bg-white rounded-2xl text-left overflow-hidden shadow-2xl transform transition-all sm:max-w-lg w-full border border-slate-100">
                     
-                    <h3 class="text-lg font-bold text-gray-900 mb-4">Añadir Nuevo Recurso</h3>
-                    
+                    <!-- Header Azul -->
+                    <div class="bg-blue-600 px-6 py-4 flex items-center justify-between">
+                        <div>
+                            <h3 class="text-white font-bold flex items-center gap-2 text-base">
+                                <i class="fas fa-file-circle-plus"></i>
+                                <span>Añadir Nuevo Recurso</span>
+                            </h3>
+                            <p class="text-xs text-blue-100 mt-0.5">Agrega un enlace o sube un archivo (PDF, Excel, Img)</p>
+                        </div>
+                        <button type="button" @click="modalCatalogo = false" class="w-8 h-8 rounded-lg bg-white/10 hover:bg-white/20 text-white flex items-center justify-center transition-all cursor-pointer">
+                            <i class="fas fa-times"></i>
+                        </button>
+                    </div>
+
                     <form @submit.prevent="guardarCatalogo">
-                        <div class="space-y-4">
+                        <div class="p-6 md:p-8 space-y-5">
                             <div>
-                                <label class="block text-sm font-medium text-gray-700 mb-1">Nombre de Referencia <span class="text-red-500">*</span></label>
-                                <input type="text" x-model="formCatalogo.nombre_referencia" placeholder="Ej. Catálogo Verano 2026" class="w-full pl-3 pr-3 py-2 border border-gray-300 rounded-lg outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500" required>
+                                <label class="block text-sm font-bold text-slate-700 mb-1.5">Nombre de Referencia <span class="text-red-500">*</span></label>
+                                <input type="text" x-model="formCatalogo.nombre_referencia" placeholder="Ej. Catálogo Verano 2026" class="w-full px-4 py-3 bg-white border border-slate-200 focus:border-blue-500 rounded-xl text-sm text-slate-800 placeholder:text-slate-400 focus:ring-2 focus:ring-blue-500/20 focus:outline-none transition-all shadow-sm" required>
                             </div>
 
                             <div>
-                                <label class="block text-sm font-medium text-gray-700 mb-1">Tipo de Recurso</label>
+                                <label class="block text-sm font-bold text-slate-700 mb-1.5">Tipo de Recurso</label>
                                 <div class="grid grid-cols-2 gap-2">
-                                    <label class="border rounded-lg px-4 py-2 flex items-center gap-2 cursor-pointer transition-colors" :class="formCatalogo.tipo === 'enlace' ? 'border-blue-500 bg-blue-50 text-blue-700' : 'border-gray-200 hover:bg-gray-50'">
+                                    <label class="border rounded-xl px-4 py-3 flex items-center justify-center gap-2 cursor-pointer transition-colors" :class="formCatalogo.tipo === 'enlace' ? 'border-blue-500 bg-blue-50 text-blue-700 font-bold ring-2 ring-blue-500/20' : 'border-slate-200 bg-white hover:bg-slate-50 text-slate-600 font-medium'">
                                         <input type="radio" x-model="formCatalogo.tipo" value="enlace" class="hidden">
                                         <i class="fas fa-link"></i> Enlace Web
                                     </label>
-                                    <label class="border rounded-lg px-4 py-2 flex items-center gap-2 cursor-pointer transition-colors" :class="formCatalogo.tipo === 'archivo' ? 'border-blue-500 bg-blue-50 text-blue-700' : 'border-gray-200 hover:bg-gray-50'">
+                                    <label class="border rounded-xl px-4 py-3 flex items-center justify-center gap-2 cursor-pointer transition-colors" :class="formCatalogo.tipo === 'archivo' ? 'border-blue-500 bg-blue-50 text-blue-700 font-bold ring-2 ring-blue-500/20' : 'border-slate-200 bg-white hover:bg-slate-50 text-slate-600 font-medium'">
                                         <input type="radio" x-model="formCatalogo.tipo" value="archivo" class="hidden">
                                         <i class="fas fa-file-upload"></i> Subir Archivo
                                     </label>
@@ -182,26 +194,26 @@
                             </div>
 
                             <div x-show="formCatalogo.tipo === 'enlace'" class="mt-3">
-                                <label class="block text-sm font-medium text-gray-700 mb-1">URL / Enlace</label>
-                                <input type="url" x-model="formCatalogo.ruta_destino" placeholder="https://" class="w-full pl-3 pr-3 py-2 border border-gray-300 rounded-lg outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500">
+                                <label class="block text-sm font-bold text-slate-700 mb-1.5">URL / Enlace</label>
+                                <input type="url" x-model="formCatalogo.ruta_destino" placeholder="https://" class="w-full px-4 py-3 bg-white border border-slate-200 focus:border-blue-500 rounded-xl text-sm text-slate-800 placeholder:text-slate-400 focus:ring-2 focus:ring-blue-500/20 focus:outline-none transition-all shadow-sm">
                             </div>
 
                             <div x-show="formCatalogo.tipo === 'archivo'" class="mt-3">
-                                <label class="w-full flex items-center justify-center px-4 py-6 border-2 border-dashed border-gray-300 rounded-xl hover:bg-gray-50 cursor-pointer transition-colors">
+                                <label class="w-full flex items-center justify-center px-4 py-8 border-2 border-dashed border-slate-300 rounded-xl hover:bg-slate-50 hover:border-blue-400 cursor-pointer transition-colors bg-white">
                                     <div class="text-center">
-                                        <i class="fas fa-cloud-upload-alt text-3xl text-gray-400 mb-2"></i>
-                                        <p class="text-sm text-gray-600 font-medium" x-text="archivoSeleccionado ? archivoSeleccionado.name : 'Haz clic para seleccionar archivo'"></p>
-                                        <p class="text-xs text-gray-400 mt-1">PDF, Excel o Imágenes</p>
+                                        <i class="fas fa-cloud-upload-alt text-3xl text-blue-400 mb-3"></i>
+                                        <p class="text-sm text-slate-700 font-bold" x-text="archivoSeleccionado ? archivoSeleccionado.name : 'Haz clic para seleccionar archivo'"></p>
+                                        <p class="text-xs text-slate-400 mt-1">PDF, Excel o Imágenes</p>
                                     </div>
                                     <input type="file" @change="archivoSeleccionado = $event.target.files[0]" accept=".pdf,.xls,.xlsx,.png,.jpg,.jpeg" class="hidden">
                                 </label>
                             </div>
                         </div>
 
-                        <div class="mt-6 flex justify-end gap-3">
-                            <button type="button" @click="modalCatalogo = false" class="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors">Cancelar</button>
-                            <button type="submit" class="px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 transition-colors flex items-center gap-2">
-                                <i class="fas fa-save"></i> Guardar
+                        <div class="px-6 md:px-8 py-5 bg-slate-50 border-t border-slate-100 flex items-center justify-end gap-3 rounded-b-2xl">
+                            <button type="button" @click="modalCatalogo = false" class="w-full sm:w-auto px-6 py-2.5 rounded-xl font-bold text-sm text-slate-600 bg-white border border-slate-200 hover:bg-slate-100 hover:text-slate-800 transition-colors shadow-sm cursor-pointer">CANCELAR</button>
+                            <button type="submit" class="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-6 py-2.5 rounded-xl font-black text-sm text-white shadow-lg transition-all duration-300 hover:scale-[1.02] cursor-pointer bg-slate-900 shadow-slate-900/20">
+                                <i class="fas fa-check text-xs"></i> GUARDAR CAMBIOS
                             </button>
                         </div>
                     </form>

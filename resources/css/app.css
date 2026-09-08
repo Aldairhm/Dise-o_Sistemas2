@@ -40,21 +40,24 @@ html.dark .bg-white {
 html.dark .text-slate-800,
 html.dark .text-slate-900,
 html.dark .text-gray-900,
-html.dark .text-gray-800 {
+html.dark .text-gray-800,
+html.dark .text-slate-700 {
     color: var(--text-main) !important;
 }
 
 html.dark .text-slate-500,
 html.dark .text-slate-400,
 html.dark .text-gray-500,
-html.dark .text-gray-600 {
+html.dark .text-gray-600,
+html.dark .text-gray-700 {
     color: var(--text-muted) !important;
 }
 
 html.dark .border-slate-200,
 html.dark .border-gray-200,
 html.dark .border-slate-100,
-html.dark .border-gray-100 {
+html.dark .border-gray-100,
+html.dark .border-gray-300 {
     border-color: var(--border) !important;
 }
 
@@ -98,4 +101,19 @@ html.dark .form-control {
 html.dark input.custom-input:focus,
 html.dark select:focus {
     border-color: #3b82f6 !important;
+}
+
+/* SweetAlert2 en modo oscuro (Para todas las alertas) */
+html.dark .swal2-popup {
+    background-color: #1e293b !important;
+    color: #f1f5f9 !important;
+}
+html.dark .swal2-popup .swal2-title {
+    color: #f8fafc !important;
+}
+html.dark .swal2-popup .swal2-html-container {
+    color: #94a3b8 !important;
+}
+html.dark .swal2-popup .swal2-html-container strong {
+    color: #e2e8f0 !important;
 }

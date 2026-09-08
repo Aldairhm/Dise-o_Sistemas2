@@ -31,12 +31,12 @@
                 @if($isActivo)
                     <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded text-xs font-bold bg-emerald-50 text-emerald-600">
                         <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
-                        Activo
+                        Habilitado
                     </span>
                 @else
                     <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded text-xs font-bold bg-slate-100 text-slate-500">
                         <span class="w-1.5 h-1.5 rounded-full bg-slate-400"></span>
-                        Inactivo
+                        Deshabilitado
                     </span>
                 @endif
             </div>
@@ -99,10 +99,11 @@
         <button type="button"
                 onclick="toggleUserStatus('{{ $user->id }}', this)"
                 data-current="{{ $user->estado }}"
+                data-name="{{ $user->username }}"
                 class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md font-semibold text-xs transition-colors cursor-pointer {{ $isActivo ? 'bg-amber-50 hover:bg-amber-100 text-amber-600' : 'bg-emerald-50 hover:bg-emerald-100 text-emerald-600' }}"
-                title="{{ $isActivo ? 'Inactivar' : 'Activar' }}">
+                title="{{ $isActivo ? 'Deshabilitar' : 'Habilitar' }}">
             <i class="fas {{ $isActivo ? 'fa-ban' : 'fa-check' }}"></i>
-            <span>{{ $isActivo ? 'Inactivar' : 'Activar' }}</span>
+            <span>{{ $isActivo ? 'Deshabilitar' : 'Habilitar' }}</span>
         </button>
 
         {{-- Eliminar --}}

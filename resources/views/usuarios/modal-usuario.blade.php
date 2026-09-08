@@ -64,7 +64,7 @@
                                 </span>
                                 <span id="previewStatusBadge" class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-bold bg-emerald-100 text-emerald-700 border border-emerald-200">
                                     <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
-                                    <span id="previewStatusText">Activo</span>
+                                    <span id="previewStatusText">Habilitado</span>
                                 </span>
                                 <span id="previewPhoneBadge" class="hidden inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-bold bg-slate-100 text-slate-700 border border-slate-200">
                                     <i class="fas fa-phone text-[9px]"></i> <span id="previewPhoneText"></span>
@@ -190,8 +190,8 @@
                                         required
                                         class="w-full rounded-xl border border-gray-300 px-3 py-2.5 text-sm text-gray-900 focus:border-blue-600 focus:ring-2 focus:ring-blue-600/20 focus:outline-none transition-all bg-white"
                                         onchange="updatePreviewCard()">
-                                    <option value="1" selected>Activo (Habilitado)</option>
-                                    <option value="0">Inactivo (Suspendido)</option>
+                                    <option value="1" selected>Habilitado</option>
+                                    <option value="0">Deshabilitado (Suspendido)</option>
                                 </select>
                                 <p class="text-[11px] text-gray-400 mt-1">Estado de operatividad (Campo obligatorio)</p>
                             </div>
@@ -250,14 +250,14 @@
                     <!-- Botón CANCELAR -->
                     <button type="button" 
                             onclick="closeUserModal()" 
-                            class="px-5 py-2.5 rounded-xl bg-slate-900 hover:bg-slate-800 text-white text-xs font-black uppercase tracking-wider transition-all hover:shadow-md cursor-pointer active:scale-95">
+                            class="px-6 py-2.5 rounded-xl font-bold text-sm text-slate-600 bg-white border border-slate-200 hover:bg-slate-100 hover:text-slate-800 transition-colors shadow-sm cursor-pointer">
                         CANCELAR
                     </button>
 
                     <!-- Boton REGISTRAR / GUARDAR -->
                     <button type="submit" 
                             id="btnSubmitModal"
-                            class="px-6 py-2.5 rounded-xl bg-slate-900 hover:bg-slate-800 text-white text-xs font-black uppercase tracking-wider transition-all hover:shadow-md cursor-pointer active:scale-95 flex items-center gap-2">
+                            class="inline-flex items-center gap-2 px-6 py-2.5 rounded-xl font-black text-sm text-white shadow-lg transition-all duration-300 hover:scale-[1.02] cursor-pointer bg-slate-900 shadow-slate-900/20">
                         <i class="fas fa-check text-xs"></i>
                         <span id="btnSubmitText">REGISTRAR USUARIO</span>
                     </button>
