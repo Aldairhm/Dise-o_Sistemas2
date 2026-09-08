@@ -17,9 +17,7 @@
                 </h1>
             </div>
             
-            <button @click="abrirEditar()" class="bg-white border border-gray-300 hover:bg-gray-50 text-gray-700 font-semibold py-2 px-4 rounded-lg shadow-sm flex items-center gap-2 transition-colors">
-                <i class="fas fa-edit text-blue-600"></i> Editar Datos
-            </button>
+            
         </div>
 
         <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">

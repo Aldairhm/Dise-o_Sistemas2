@@ -96,12 +96,13 @@
                             <i class="fas fa-edit"></i> Editar
                         </button>
 
-                        <!-- Botón Eliminar / Habilitar -->
-                        <button @click="cambiarEstado(proveedor)"
-                            class="px-2.5 py-1.5 text-xs font-medium rounded-md transition-colors flex items-center gap-1.5 whitespace-nowrap"
-                            :class="proveedor.deleted_at ? 'text-green-700 bg-green-50 hover:bg-green-100' : 'text-red-700 bg-red-50 hover:bg-red-100'">
-                            <i class="fas" :class="proveedor.deleted_at ? 'fa-check-circle' : 'fa-trash-alt'"></i>
-                            <span x-text="proveedor.deleted_at ? 'Habilitar' : 'Eliminar'"></span>
+                        <!-- Botón Habilitar / Deshabilitar -->
+                        <button type="button" 
+                            @click="cambiarEstado(proveedor)"
+                            class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md font-semibold text-xs transition-colors cursor-pointer whitespace-nowrap"
+                            :class="proveedor.deleted_at ? 'bg-emerald-50 hover:bg-emerald-100 text-emerald-600' : 'bg-red-50 hover:bg-red-100 text-red-600'">
+                            <i class="fas" :class="proveedor.deleted_at ? 'fa-check-circle' : 'fa-ban'"></i>
+                            <span x-text="proveedor.deleted_at ? 'Habilitar' : 'Deshabilitar'"></span>
                         </button>
                     </div>
                 </div>
@@ -222,32 +223,6 @@
                                             <template x-if="errors.nombre">
                                                 <p class="mt-1 text-xs text-red-500 font-medium" x-text="errors.nombre[0]"></p>
                                             </template>
-                                        </div>
-                                        
-                                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-5">
-                                            <!-- Correo -->
-                                            <div>
-                                                <label class="block text-sm font-bold text-slate-700 mb-1.5">Correo Electrónico</label>
-                                                <input type="email" x-model="form.correo" @blur="validarCorreo"
-                                                       class="custom-input w-full px-4 py-3 bg-white border border-slate-200 focus:border-blue-500 rounded-xl text-sm text-slate-800 placeholder:text-slate-400 focus:ring-2 focus:ring-blue-500/20 focus:outline-none transition-all shadow-sm"
-                                                       placeholder="ventas@empresa.com"
-                                                       :class="errors.correo ? 'border-red-400 focus:border-red-500 focus:ring-red-500/20' : ''">
-                                                <template x-if="errors.correo">
-                                                    <p class="mt-1 text-xs text-red-500 font-medium" x-text="errors.correo[0]"></p>
-                                                </template>
-                                            </div>
-
-                                            <!-- Teléfono -->
-                                            <div>
-                                                <label class="block text-sm font-bold text-slate-700 mb-1.5">Teléfono</label>
-                                                <input type="text" inputmode="numeric" :value="form.telefono" @input="formatearTelefono($event)" maxlength="9"
-                                                       class="custom-input w-full px-4 py-3 bg-white border border-slate-200 focus:border-blue-500 rounded-xl text-sm text-slate-800 placeholder:text-slate-400 focus:ring-2 focus:ring-blue-500/20 focus:outline-none transition-all shadow-sm"
-                                                       placeholder="0000 0000"
-                                                       :class="errors.telefono ? 'border-red-400 focus:border-red-500 focus:ring-red-500/20' : ''">
-                                                <template x-if="errors.telefono">
-                                                    <p class="mt-1 text-xs text-red-500 font-medium" x-text="errors.telefono[0]"></p>
-                                                </template>
-                                            </div>
                                         </div>
 
                                         <!-- Dirección -->
