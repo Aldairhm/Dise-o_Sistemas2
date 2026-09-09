@@ -83,7 +83,7 @@ document.addEventListener("alpine:init", () => {
             soloNumeros = soloNumeros.slice(0, 8);
             
             if (soloNumeros.length > 4) {
-                soloNumeros = soloNumeros.slice(0, 4) + " " + soloNumeros.slice(4);
+                soloNumeros = soloNumeros.slice(0, 4) + "-" + soloNumeros.slice(4);
             }
             
             // 2. Actualizamos la variable de Alpine
@@ -101,13 +101,26 @@ document.addEventListener("alpine:init", () => {
         // ---------- VALIDACIONES ----------
         telefonoValido() {
             if (!this.form.telefono) return true;
-            // Valida que empiece con 2, 6 o 7, seguido de 3 dígitos, un espacio y 4 dígitos
-            return /^[267]\d{3} \d{4}$/.test(this.form.telefono);
+            // Valida que empiece con 2, 6 o 7, seguido de 3 dígitos, un guion y 4 dígitos
+            return /^[267]\d{3}-\d{4}$/.test(this.form.telefono);
         },
 
         correoValido() {
             if (!this.form.correo) return true;
             return /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(this.form.correo);
+        },
+
+        obtenerErrorTelefono() {
+            if (!this.form.telefono) return "";
+            let val = this.form.telefono.replace(/\D/g, '');
+            if (/^[267]/.test(val)) {
+                return 'Debe completar los 8 números (formato: XXXX-XXXX).';
+            }
+            return 'Formato incorrecto. Inicia con 2, 6 o 7.';
+        },
+
+        validarCorreoLive() {
+            if (this.errors.correo) delete this.errors.correo;
         },
 
         validarCorreo() {
@@ -130,10 +143,13 @@ document.addEventListener("alpine:init", () => {
                 this.errors.correo = [
                     "El correo electrónico no tiene un formato válido.",
                 ];
-            if (this.form.telefono && !this.telefonoValido())
-                this.errors.telefono = [
-                    "El teléfono debe iniciar con 2, 6 o 7 (formato: 0000 0000).",
-                ];
+            if (this.form.telefono && !this.telefonoValido()) {
+                let errorMsg = "El teléfono debe iniciar con 2, 6 o 7 (formato: XXXX-XXXX).";
+                if (/^[267]/.test(this.form.telefono.replace(/\D/g, ''))) {
+                    errorMsg = "Debe completar los 8 números (formato: XXXX-XXXX).";
+                }
+                this.errors.telefono = [errorMsg];
+            }
 
             return Object.keys(this.errors).length === 0;
         },

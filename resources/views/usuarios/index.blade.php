@@ -54,7 +54,23 @@
             </div>
 
             <!-- Boton -->
-            <div class="flex items-center gap-3">
+            <div class="flex items-center gap-3 flex-wrap">
+                <!-- Tabla / Tarjetas -->
+                <div class="flex items-center bg-slate-100 rounded-xl p-1 gap-1">
+                    <button type="button" id="btnViewTable"
+                            onclick="setView('table')"
+                            class="usr-view-btn w-9 h-9 rounded-lg flex items-center justify-center text-slate-400 hover:text-slate-700 transition-colors cursor-pointer"
+                            title="Vista de tabla">
+                        <i class="fas fa-table-list text-sm"></i>
+                    </button>
+                    <button type="button" id="btnViewCards"
+                            onclick="setView('cards')"
+                            class="usr-view-btn w-9 h-9 rounded-lg flex items-center justify-center text-slate-400 hover:text-slate-700 transition-colors cursor-pointer"
+                            title="Vista de tarjetas">
+                        <i class="fas fa-grip text-sm"></i>
+                    </button>
+                </div>
+
                 <button type="button" 
                         onclick="openCreateUserModal()" 
                         class="btn-add-user inline-flex items-center justify-center gap-2.5 px-5 py-3 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-extrabold text-sm shadow-lg shadow-blue-500/25 transition-all duration-200 hover:scale-[1.02] active:scale-[0.98] cursor-pointer"
@@ -173,22 +189,6 @@
                             title="Restablecer filtros">
                         <i class="fas fa-rotate-right text-xs"></i>
                     </button>
-
-                    <!-- Tabla / Tarjetas -->
-                    <div class="flex items-center bg-slate-100 rounded-xl p-1 gap-1">
-                        <button type="button" id="btnViewTable"
-                                onclick="setView('table')"
-                                class="usr-view-btn p-2 rounded-lg text-slate-400 hover:text-slate-700 transition-colors cursor-pointer"
-                                title="Vista de tabla">
-                            <i class="fas fa-table-list text-sm"></i>
-                        </button>
-                        <button type="button" id="btnViewCards"
-                                onclick="setView('cards')"
-                                class="usr-view-btn p-2 rounded-lg text-slate-400 hover:text-slate-700 transition-colors cursor-pointer"
-                                title="Vista de tarjetas">
-                            <i class="fas fa-grip text-sm"></i>
-                        </button>
-                    </div>
                 </div>
 
             </div>

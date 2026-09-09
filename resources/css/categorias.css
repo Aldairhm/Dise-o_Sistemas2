@@ -37,15 +37,15 @@
     background:#f1f5f9;
 }
 
-#cardsWrapper {
+#cardsWrapper:not(.hidden) {
     display: grid;
     grid-template-columns: repeat(1, 1fr);
     gap: 1rem;
     padding: 1rem;
 }
-@media (min-width: 640px)  { #cardsWrapper { grid-template-columns: repeat(2, 1fr); padding: 1.25rem; } }
-@media (min-width: 768px)  { #cardsWrapper { grid-template-columns: repeat(3, 1fr); } }
-@media (min-width: 1024px) { #cardsWrapper { grid-template-columns: repeat(4, 1fr); } }
+@media (min-width: 640px)  { #cardsWrapper:not(.hidden) { grid-template-columns: repeat(2, 1fr); padding: 1.25rem; } }
+@media (min-width: 768px)  { #cardsWrapper:not(.hidden) { grid-template-columns: repeat(3, 1fr); } }
+@media (min-width: 1024px) { #cardsWrapper:not(.hidden) { grid-template-columns: repeat(4, 1fr); } }
 
 .skeleton {
     background: linear-gradient(90deg, #f1f5f9 25%, #e2e8f0 50%, #f1f5f9 75%);

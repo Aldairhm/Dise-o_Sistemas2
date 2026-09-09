@@ -148,7 +148,6 @@
                             <div>
                                 <label class="block text-xs font-bold mb-1.5" style="color: var(--text-main, #0f172a);">
                                     Teléfono
-                                    <span class="font-normal text-slate-400 ml-1">(opcional)</span>
                                 </label>
                                 <div class="relative">
                                     <div class="absolute left-3 top-1/2 -translate-y-1/2 flex items-center gap-1 text-slate-400 text-xs font-bold select-none">
@@ -164,8 +163,8 @@
                                            oninput="formatTelefono(this)">
                                     <div class="absolute right-3 top-1/2 -translate-y-1/2" id="telefono-icon"></div>
                                 </div>
-                                <p id="telefono-msg" class="text-xs text-slate-400 mt-1">
-                                    Opcional. Formato: XXXX-XXXX (ej: 7890-1234)
+                                <p id="perfil_telefono_msg" class="text-xs text-slate-500 mt-1">
+                                    Formato: XXXX-XXXX (ej: 7890-1234)
                                 </p>
                             </div>
 

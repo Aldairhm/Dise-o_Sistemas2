@@ -124,7 +124,7 @@
                         <!-- Teléfono -->
                         <div class="form-field-group">
                             <label for="input_telefono" class="block text-xs font-bold text-gray-800 mb-1">
-                                Teléfono <span class="font-normal text-gray-400 ml-1">(opcional)</span>
+                                Teléfono
                             </label>
                             <div class="relative">
                                 <div class="absolute left-3 top-1/2 -translate-y-1/2 flex items-center gap-1 text-gray-400 text-xs font-bold select-none">

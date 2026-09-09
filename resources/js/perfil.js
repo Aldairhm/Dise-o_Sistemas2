@@ -57,22 +57,27 @@ function validateTelefono(input) {
 
     if (!val) {
         // Vacio (campo opcional)
-        input.classList.remove('error', 'success');
-        if (msgEl) msgEl.textContent = 'Opcional. Formato: XXXX-XXXX (ej: 7890-1234)';
+        input.classList.remove('error', 'success', 'text-red-500', 'text-emerald-500', 'bg-red-50', 'bg-emerald-50', 'focus:border-red-500', 'focus:ring-red-500/20', 'focus:border-emerald-500', 'focus:ring-emerald-500/20', 'focus:border-blue-500', 'focus:ring-blue-500/20');
+        input.classList.add('text-gray-900', 'bg-white');
+        if (msgEl) msgEl.textContent = 'Formato: XXXX-XXXX (ej: 7890-1234)';
         if (iconEl) iconEl.innerHTML = '';
         return true;
     }
 
     if (TEL_REGEX.test(val)) {
-        input.classList.remove('error');
-        input.classList.add('success');
+        input.classList.remove('error', 'text-red-500', 'text-gray-900', 'bg-red-50', 'bg-white', 'focus:border-blue-500', 'focus:ring-blue-500/20', 'focus:border-red-500', 'focus:ring-red-500/20');
+        input.classList.add('success', 'text-emerald-500', 'bg-emerald-50', 'focus:border-emerald-500', 'focus:ring-emerald-500/20');
         if (msgEl) { msgEl.textContent = 'Número válido ✓'; msgEl.className = 'text-xs text-emerald-600 mt-1'; }
         if (iconEl) iconEl.innerHTML = '<i class="fas fa-check text-emerald-500"></i>';
         return true;
     } else {
-        input.classList.remove('success');
-        input.classList.add('error');
-        if (msgEl) { msgEl.textContent = 'Formato incorrecto. Debe iniciar con 2, 6 o 7 y tener la forma XXXX-XXXX'; msgEl.className = 'text-xs text-red-500 mt-1'; }
+        input.classList.remove('success', 'text-emerald-500', 'text-gray-900', 'bg-emerald-50', 'bg-white', 'focus:border-blue-500', 'focus:ring-blue-500/20', 'focus:border-emerald-500', 'focus:ring-emerald-500/20');
+        input.classList.add('error', 'text-red-500', 'bg-red-50', 'focus:border-red-500', 'focus:ring-red-500/20');
+        let errorMsg = 'Formato incorrecto. Debe iniciar con 2, 6 o 7 y tener la forma XXXX-XXXX';
+        if (/^[267]/.test(val.replace(/\D/g, ''))) {
+            errorMsg = 'El formato debe ser XXXX-XXXX (8 dígitos).';
+        }
+        if (msgEl) { msgEl.textContent = errorMsg; msgEl.className = 'text-xs text-red-500 mt-1'; }
         if (iconEl) iconEl.innerHTML = '<i class="fas fa-triangle-exclamation text-red-500"></i>';
         return false;
     }
@@ -122,10 +127,12 @@ async function savePersonalInfo(event) {
 
     const telInput = document.getElementById('perfil_telefono');
     if (telInput && !validateTelefono(telInput)) {
+        let val = telInput.value.replace(/\D/g, '');
+        let hint = /^[267]/.test(val) ? 'Complete los 8 dígitos.' : 'El primer dígito debe ser <strong>2, 6 o 7</strong>.';
         Swal.fire({ customClass: { popup: 'swal-axstore' },
             icon: 'warning',
             title: 'Teléfono inválido',
-            html: '<p style="color:#475569;font-size:0.92rem;">El número de teléfono debe tener el formato de El Salvador:<br><strong>XXXX-XXXX</strong> (ej: 7890-1234).<br>El primer dígito debe ser <strong>2, 6 o 7</strong>.</p>',
+            html: `<p style="color:#475569;font-size:0.92rem;">El número de teléfono debe tener el formato de El Salvador:<br><strong>XXXX-XXXX</strong> (ej: 7890-1234).<br>${hint}</p>`,
             confirmButtonText: 'Entendido',
             confirmButtonColor: '#2563eb',
         });

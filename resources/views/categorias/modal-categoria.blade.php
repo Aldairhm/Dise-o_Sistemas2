@@ -104,7 +104,7 @@
                                         <div>
                                             <label class="block text-sm font-bold text-slate-700 mb-2">Color representativo <span class="text-red-500">*</span></label>
                                             <input type="hidden" name="color" id="inputColor" value="#3b82f6">
-                                            <div class="grid grid-cols-4 sm:grid-cols-6 gap-2" id="colorPalette">
+                                            <div class="grid grid-cols-4 sm:grid-cols-6 gap-2 max-h-[140px] overflow-y-auto p-1.5 rounded-xl bg-slate-50 border border-slate-200" id="colorPalette">
                                                 <!-- Swatches dinámicos -->
                                             </div>
                                             <p class="mt-2 text-xs text-slate-400">Identificador de color visual.</p>
@@ -147,17 +147,23 @@
 <script>
 const COLOR_PALETTE = window.COLOR_PALETTE = [
     { hex: '#3b82f6', name: 'Azul',     light: '#eff6ff' },
+    { hex: '#0ea5e9', name: 'Cielo',    light: '#f0f9ff' },
     { hex: '#6366f1', name: 'Índigo',   light: '#eef2ff' },
     { hex: '#8b5cf6', name: 'Violeta',  light: '#f5f3ff' },
+    { hex: '#a855f7', name: 'Púrpura',  light: '#faf5ff' },
+    { hex: '#d946ef', name: 'Fucsia',   light: '#fdf4ff' },
     { hex: '#ec4899', name: 'Rosa',     light: '#fdf2f8' },
     { hex: '#f43f5e', name: 'Rosa Vivo',light: '#fff1f2' },
     { hex: '#ef4444', name: 'Rojo',     light: '#fef2f2' },
     { hex: '#f97316', name: 'Naranja',  light: '#fff7ed' },
+    { hex: '#f59e0b', name: 'Ámbar',    light: '#fffbeb' },
     { hex: '#eab308', name: 'Amarillo', light: '#fefce8' },
     { hex: '#84cc16', name: 'Lima',     light: '#f7fee7' },
     { hex: '#22c55e', name: 'Verde',    light: '#f0fdf4' },
+    { hex: '#10b981', name: 'Esmeralda',light: '#ecfdf5' },
     { hex: '#14b8a6', name: 'Teal',     light: '#f0fdfa' },
-    { hex: '#06b6d4', name: 'Cyan',     light: '#ecfeff' }
+    { hex: '#06b6d4', name: 'Cyan',     light: '#ecfeff' },
+    { hex: '#64748b', name: 'Pizarra',  light: '#f8fafc' },
 ];
 
 const ICON_PALETTE = window.ICON_PALETTE = [
@@ -165,7 +171,13 @@ const ICON_PALETTE = window.ICON_PALETTE = [
     'fa-shoe-prints', 'fa-camera', 'fa-headphones', 'fa-gamepad', 'fa-book',
     'fa-dumbbell', 'fa-basketball', 'fa-car', 'fa-motorcycle', 'fa-couch',
     'fa-utensils', 'fa-mug-hot', 'fa-gift', 'fa-star', 'fa-heart',
-    'fa-bolt', 'fa-crown', 'fa-gem', 'fa-music'
+    'fa-bolt', 'fa-crown', 'fa-gem', 'fa-music',
+    'fa-clock', 'fa-glasses', 'fa-hat-cowboy', 'fa-baby-carriage', 'fa-paw',
+    'fa-spray-can', 'fa-blender', 'fa-tv', 'fa-chair', 'fa-bed',
+    'fa-football', 'fa-baseball-bat-ball', 'fa-tools', 'fa-hammer', 'fa-seedling',
+    'fa-guitar', 'fa-palette', 'fa-paint-roller', 'fa-video', 'fa-microphone',
+    'fa-plane', 'fa-suitcase', 'fa-shopping-bag', 'fa-store', 'fa-pills',
+    'fa-tooth', 'fa-leaf', 'fa-bicycle', 'fa-campground', 'fa-camera-retro'
 ];
 
 function renderColorPalette() {

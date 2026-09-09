@@ -230,14 +230,34 @@
                                             <label class="block text-sm font-medium text-gray-700 mb-1">
                                                 <i class="fas fa-envelope text-gray-400 mr-1"></i> Correo Electrónico
                                             </label>
-                                            <input type="email"
-                                                x-model="form.correo"
-                                                @blur="validarCorreo"
-                                                placeholder="ventas@empresa.com"
-                                                class="w-full pl-3 pr-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none transition-all"
-                                                :class="errors.correo ? 'border-red-400' : 'border-gray-300'">
-                                            <template x-if="errors.correo">
-                                                <p class="text-red-500 text-xs mt-1" x-text="errors.correo[0]"></p>
+                                            <div class="relative">
+                                                <input type="email"
+                                                    x-model="form.correo"
+                                                    @input="validarCorreoLive"
+                                                    placeholder="ventas@empresa.com"
+                                                    class="w-full pl-3 pr-9 py-2 border rounded-lg outline-none transition-all focus:ring-2"
+                                                    :class="{
+                                                        'border-emerald-500 bg-emerald-50 text-emerald-500 focus:border-emerald-500 focus:ring-emerald-500/20': form.correo && correoValido(),
+                                                        'border-rose-500 bg-rose-50 text-rose-500 focus:border-rose-500 focus:ring-rose-500/20': form.correo && !correoValido(),
+                                                        'border-gray-300 text-gray-900 bg-white focus:ring-blue-500 focus:border-blue-500': !form.correo
+                                                    }">
+                                                <div class="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none">
+                                                    <template x-if="form.correo && correoValido()">
+                                                        <i class="fas fa-check text-emerald-500"></i>
+                                                    </template>
+                                                    <template x-if="form.correo && !correoValido()">
+                                                        <i class="fas fa-triangle-exclamation text-rose-500"></i>
+                                                    </template>
+                                                </div>
+                                            </div>
+                                            <template x-if="form.correo && correoValido()">
+                                                <p class="mt-1 text-xs text-emerald-500 font-medium">Correo válido ✓</p>
+                                            </template>
+                                            <template x-if="form.correo && !correoValido()">
+                                                <p class="mt-1 text-xs text-rose-500 font-medium">Formato incorrecto. Ej: usuario@dominio.com</p>
+                                            </template>
+                                            <template x-if="!form.correo && errors.correo">
+                                                <p class="text-rose-500 text-xs mt-1" x-text="errors.correo[0]"></p>
                                             </template>
                                         </div>
 
@@ -246,17 +266,42 @@
                                             <label class="block text-sm font-medium text-gray-700 mb-1">
                                                 <i class="fas fa-phone text-gray-400 mr-1"></i> Teléfono
                                             </label>
-                                            <input type="text"
-                                                inputmode="numeric"
-                                                :value="form.telefono"
-                                                @input="formatearTelefono($event)"
-                                                @keydown="if(!/[0-9]/.test($event.key) && !['Backspace', 'Tab', 'ArrowLeft', 'ArrowRight', 'Delete'].includes($event.key)) $event.preventDefault()"
-                                                maxlength="9"
-                                                placeholder="0000 0000"
-                                                class="w-full pl-3 pr-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none transition-all"
-                                                :class="errors.telefono ? 'border-red-400' : 'border-gray-300'">
-                                            <template x-if="errors.telefono">
-                                                <p class="text-red-500 text-xs mt-1" x-text="errors.telefono[0]"></p>
+                                            <div class="relative">
+                                                <div class="absolute left-3 top-1/2 -translate-y-1/2 flex items-center gap-1 text-gray-400 text-xs font-bold select-none">
+                                                    <img src="https://flagcdn.com/w20/sv.png" alt="SV" class="h-3.5 rounded-sm opacity-90">
+                                                    <span>+503</span>
+                                                </div>
+                                                <input type="text"
+                                                    inputmode="numeric"
+                                                    :value="form.telefono"
+                                                    @input="formatearTelefono($event)"
+                                                    @keydown="if(!/[0-9]/.test($event.key) && !['Backspace', 'Tab', 'ArrowLeft', 'ArrowRight', 'Delete'].includes($event.key)) $event.preventDefault()"
+                                                    maxlength="9"
+                                                    placeholder="XXXX-XXXX"
+                                                    class="w-full pr-9 py-2 border rounded-lg outline-none transition-all focus:ring-2"
+                                                    style="padding-left: 5.2rem;"
+                                                    :class="{
+                                                        'border-emerald-500 bg-emerald-50 text-emerald-500 focus:border-emerald-500 focus:ring-emerald-500/20': form.telefono && telefonoValido(),
+                                                        'border-rose-500 bg-rose-50 text-rose-500 focus:border-rose-500 focus:ring-rose-500/20': form.telefono && !telefonoValido(),
+                                                        'border-gray-300 text-gray-900 bg-white focus:ring-blue-500 focus:border-blue-500': !form.telefono
+                                                    }">
+                                                <div class="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none">
+                                                    <template x-if="form.telefono && telefonoValido()">
+                                                        <i class="fas fa-check text-emerald-500"></i>
+                                                    </template>
+                                                    <template x-if="form.telefono && !telefonoValido()">
+                                                        <i class="fas fa-triangle-exclamation text-rose-500"></i>
+                                                    </template>
+                                                </div>
+                                            </div>
+                                            <template x-if="form.telefono && telefonoValido()">
+                                                <p class="mt-1 text-xs text-emerald-500 font-medium">Número válido ✓</p>
+                                            </template>
+                                            <template x-if="form.telefono && !telefonoValido()">
+                                                <p class="mt-1 text-xs text-rose-500 font-medium" x-text="obtenerErrorTelefono()"></p>
+                                            </template>
+                                            <template x-if="!form.telefono && errors.telefono">
+                                                <p class="text-rose-500 text-xs mt-1" x-text="errors.telefono[0]"></p>
                                             </template>
                                         </div>
 

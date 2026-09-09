@@ -155,22 +155,27 @@ function formatTelefonoInput(input) {
     const iconEl = document.getElementById('modal-telefono-icon');
     
     if (!val) {
-        input.classList.remove('border-rose-500', 'border-emerald-500');
+        input.classList.remove('border-rose-500', 'border-emerald-500', 'text-rose-500', 'text-emerald-500', 'bg-rose-50', 'bg-emerald-50', 'focus:border-rose-600', 'focus:ring-rose-600/20', 'focus:border-emerald-600', 'focus:ring-emerald-600/20');
+        input.classList.add('text-gray-900', 'bg-white', 'focus:border-blue-600', 'focus:ring-blue-600/20');
         if (msgEl) msgEl.innerHTML = 'Formato: XXXX-XXXX (ej: 7890-1234)';
         if (iconEl) iconEl.innerHTML = '';
         return true;
     }
     
     if (/^[267]\d{3}-\d{4}$/.test(val)) {
-        input.classList.remove('border-rose-500');
-        input.classList.add('border-emerald-500');
+        input.classList.remove('border-rose-500', 'text-rose-500', 'text-gray-900', 'bg-rose-50', 'bg-white', 'focus:border-blue-600', 'focus:ring-blue-600/20', 'focus:border-rose-600', 'focus:ring-rose-600/20');
+        input.classList.add('border-emerald-500', 'text-emerald-500', 'bg-emerald-50', 'focus:border-emerald-600', 'focus:ring-emerald-600/20');
         if (msgEl) msgEl.innerHTML = '<span class="text-emerald-500">Número válido ✓</span>';
         if (iconEl) iconEl.innerHTML = '<i class="fas fa-check text-emerald-500"></i>';
         return true;
     } else {
-        input.classList.remove('border-emerald-500');
-        input.classList.add('border-rose-500');
-        if (msgEl) msgEl.innerHTML = '<span class="text-rose-500">Formato incorrecto. Inicia con 2, 6 o 7.</span>';
+        input.classList.remove('border-emerald-500', 'text-emerald-500', 'text-gray-900', 'bg-emerald-50', 'bg-white', 'focus:border-blue-600', 'focus:ring-blue-600/20', 'focus:border-emerald-600', 'focus:ring-emerald-600/20');
+        input.classList.add('border-rose-500', 'text-rose-500', 'bg-rose-50', 'focus:border-rose-600', 'focus:ring-rose-600/20');
+        let errorMsg = 'Formato incorrecto. Inicia con 2, 6 o 7.';
+        if (/^[267]/.test(val.replace(/\D/g, ''))) {
+            errorMsg = 'Debe completar los 8 números.';
+        }
+        if (msgEl) msgEl.innerHTML = `<span class="text-rose-500">${errorMsg}</span>`;
         if (iconEl) iconEl.innerHTML = '<i class="fas fa-triangle-exclamation text-rose-500"></i>';
         return false;
     }
