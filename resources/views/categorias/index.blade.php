@@ -15,6 +15,8 @@
         })();
     </script>
 
+    <link rel="icon" type="image/png" href="{{ asset('assets/images/logo.png') }}">
+
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=Space+Grotesk:wght@600;700&display=swap" rel="stylesheet">
@@ -50,12 +52,6 @@
             </div>
 
             <div class="flex items-center gap-3 flex-wrap">
-                <!-- Exportar PDF -->
-                <a href="{{ route('categorias.export', ['estado' => $estado]) }}" id="btnExport"
-                   class="inline-flex items-center gap-2 px-4 py-3 rounded-xl bg-red-50 hover:bg-red-100 text-red-700 font-bold text-sm transition-colors duration-200 shadow-xs cursor-pointer border border-red-200">
-                    <i class="fas fa-file-pdf text-red-600"></i>
-                    <span class="hidden sm:inline">Exportar PDF</span>
-                </a>
 
                 <!-- Toggle tabla / cards -->
                 <div class="flex items-center bg-slate-100 rounded-xl p-1 gap-1">

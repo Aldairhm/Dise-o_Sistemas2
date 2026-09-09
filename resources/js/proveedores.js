@@ -19,31 +19,71 @@ document.addEventListener("alpine:init", () => {
         errors: {},
         editando: false,
         archivo: null,
+
+        // ---------- BÚSQUEDA / FILTRO / VISTA (nuevo, igual que Categorías) ----------
         busqueda: "",
+        estadoFiltro: "todas", // 'todas' | 'habilitados' | 'deshabilitados'
+        vista: "cards", // 'cards' | 'table'
         paginaActual: 1,
         porPagina: 6,
 
+        setEstado(estado) {
+            this.estadoFiltro = estado;
+            this.paginaActual = 1;
+        },
+
+        setVista(vista) {
+            this.vista = vista;
+        },
+
+        clearSearch() {
+            this.busqueda = "";
+            this.paginaActual = 1;
+        },
+
+        // ---------- KPIs (igual que las tarjetas de métricas de Categorías) ----------
+        get kpiTotal() {
+            return this.proveedores.length;
+        },
+
+        get kpiHabilitados() {
+            return this.proveedores.filter((p) => !p.deleted_at).length;
+        },
+
+        get kpiDeshabilitados() {
+            return this.proveedores.filter((p) => p.deleted_at).length;
+        },
+
         get proveedoresFiltrados() {
-            if (this.busqueda === "") {
-                return this.proveedores;
+            let lista = this.proveedores;
+
+            // 1. Filtro por estado
+            if (this.estadoFiltro === "habilitados") {
+                lista = lista.filter((p) => !p.deleted_at);
+            } else if (this.estadoFiltro === "deshabilitados") {
+                lista = lista.filter((p) => p.deleted_at);
             }
 
-            // Función auxiliar para quitar tildes/acentos y pasar a minúsculas
-            const normalizar = (texto) => {
-                if (!texto) return "";
-                return texto
-                    .toLowerCase()
-                    .normalize("NFD")
-                    .replace(/[\u0300-\u036f]/g, "");
-            };
+            // 2. Filtro por búsqueda (nombre o correo, sin tildes)
+            if (this.busqueda !== "") {
+                const normalizar = (texto) => {
+                    if (!texto) return "";
+                    return texto
+                        .toLowerCase()
+                        .normalize("NFD")
+                        .replace(/[\u0300-\u036f]/g, "");
+                };
 
-            const b = normalizar(this.busqueda);
+                const b = normalizar(this.busqueda);
 
-            return this.proveedores.filter(
-                (p) =>
-                    normalizar(p.nombre).includes(b) ||
-                    normalizar(p.correo).includes(b),
-            );
+                lista = lista.filter(
+                    (p) =>
+                        normalizar(p.nombre).includes(b) ||
+                        normalizar(p.correo).includes(b),
+                );
+            }
+
+            return lista;
         },
 
         // 2. Calcular cuántas páginas hay en total según los filtrados
@@ -81,15 +121,16 @@ document.addEventListener("alpine:init", () => {
             // 1. Limpiamos todo lo que no sea número
             let soloNumeros = event.target.value.replace(/\D/g, "");
             soloNumeros = soloNumeros.slice(0, 8);
-            
+
             if (soloNumeros.length > 4) {
-                soloNumeros = soloNumeros.slice(0, 4) + "-" + soloNumeros.slice(4);
+                soloNumeros =
+                    soloNumeros.slice(0, 4) + "-" + soloNumeros.slice(4);
             }
-            
+
             // 2. Actualizamos la variable de Alpine
             this.form.telefono = soloNumeros;
-            
-            // 3. EL TRUCO DEFINITIVO: Obligamos al HTML a redibujarse 
+
+            // 3. EL TRUCO DEFINITIVO: Obligamos al HTML a redibujarse
             // justo un milisegundo después de que x-model intente trabarse.
             this.$nextTick(() => {
                 event.target.value = this.form.telefono;
@@ -112,11 +153,11 @@ document.addEventListener("alpine:init", () => {
 
         obtenerErrorTelefono() {
             if (!this.form.telefono) return "";
-            let val = this.form.telefono.replace(/\D/g, '');
+            let val = this.form.telefono.replace(/\D/g, "");
             if (/^[267]/.test(val)) {
-                return 'Debe completar los 8 números (formato: XXXX-XXXX).';
+                return "Debe completar los 8 números (formato: XXXX-XXXX).";
             }
-            return 'Formato incorrecto. Inicia con 2, 6 o 7.';
+            return "Formato incorrecto. Inicia con 2, 6 o 7.";
         },
 
         validarCorreoLive() {
@@ -144,9 +185,11 @@ document.addEventListener("alpine:init", () => {
                     "El correo electrónico no tiene un formato válido.",
                 ];
             if (this.form.telefono && !this.telefonoValido()) {
-                let errorMsg = "El teléfono debe iniciar con 2, 6 o 7 (formato: XXXX-XXXX).";
-                if (/^[267]/.test(this.form.telefono.replace(/\D/g, ''))) {
-                    errorMsg = "Debe completar los 8 números (formato: XXXX-XXXX).";
+                let errorMsg =
+                    "El teléfono debe iniciar con 2, 6 o 7 (formato: XXXX-XXXX).";
+                if (/^[267]/.test(this.form.telefono.replace(/\D/g, ""))) {
+                    errorMsg =
+                        "Debe completar los 8 números (formato: XXXX-XXXX).";
                 }
                 this.errors.telefono = [errorMsg];
             }
@@ -192,7 +235,6 @@ document.addEventListener("alpine:init", () => {
             try {
                 let response;
                 if (this.editando) {
-                    //formData.append('_method', 'PUT');
                     response = await axios.post(
                         `/proveedores/${this.editando}`,
                         formData,
@@ -215,7 +257,6 @@ document.addEventListener("alpine:init", () => {
                 this.openModal = false;
                 this.limpiarFormulario();
 
-                // 2. Toast de Éxito al guardar/editar
                 Toast.fire({
                     icon: "success",
                     title: response.data.message,
@@ -225,7 +266,6 @@ document.addEventListener("alpine:init", () => {
                     this.errors = error.response.data.errors;
                 } else {
                     console.error("Error del servidor:", error);
-                    // 3. Toast de Error general
                     Toast.fire({
                         icon: "error",
                         title: "Ocurrió un error inesperado al guardar.",
@@ -239,18 +279,19 @@ document.addEventListener("alpine:init", () => {
         async cambiarEstado(proveedor) {
             let esActivo = !proveedor.deleted_at;
             let accion = esActivo ? "deshabilitar" : "habilitar";
-            let colorBoton = esActivo ? "#d33" : "#10b981"; // Rojo para deshabilitar, Verde para habilitar
+            let colorBoton = esActivo ? "#d33" : "#10b981";
 
-            // 4. Reemplazamos el confirm() nativo por un Modal de SweetAlert
-            let confirmacion = await Swal.fire({ customClass: { popup: 'swal-axstore' },
+            let confirmacion = await Swal.fire({
+                customClass: { popup: "swal-axstore" },
                 title: `¿${accion.charAt(0).toUpperCase() + accion.slice(1)} proveedor?`,
                 text: `Estás a punto de ${accion} a "${proveedor.nombre}"`,
                 icon: "warning",
                 showCancelButton: true,
                 confirmButtonColor: colorBoton,
-                cancelButtonColor: "#6b7280",
-                confirmButtonText: `Sí, ${accion}`,
+                cancelButtonColor: "#6b7280", // Color gris neutro
+                confirmButtonText: `<i class="fas ${esActivo ? 'fa-ban' : 'fa-check-circle'} mr-1"></i> Sí, ${accion}`,
                 cancelButtonText: "Cancelar",
+                reverseButtons: true, // Cancelar a la izquierda
             });
 
             if (!confirmacion.isConfirmed) return;
@@ -266,7 +307,6 @@ document.addEventListener("alpine:init", () => {
                 if (index !== -1)
                     this.proveedores[index] = response.data.proveedor;
 
-                // 5. Toast de Éxito al cambiar estado
                 Toast.fire({
                     icon: "success",
                     title: response.data.message,
@@ -393,37 +433,38 @@ document.addEventListener("alpine:init", () => {
 
             // 5. Lógica para eliminar
             async eliminarCatalogo(id) {
-                Swal.fire({ customClass: { popup: 'swal-axstore' },
+                let confirmacion = await Swal.fire({
+                    customClass: { popup: "swal-axstore" },
                     title: "¿Eliminar recurso?",
                     text: "Esta acción no se puede deshacer.",
                     icon: "warning",
                     showCancelButton: true,
                     confirmButtonColor: "#d33",
-                    cancelButtonColor: "#3085d6",
-                    confirmButtonText: "Sí, eliminar",
-                }).then(async (result) => {
-                    if (result.isConfirmed) {
-                        try {
-                            // Ajusta esta ruta a tu backend
-                            await axios.delete(`/proveedores/catalogos/${id}`);
-
-                            // Sacamos el elemento eliminado de la lista visual
-                            this.catalogos = this.catalogos.filter(
-                                (c) => c.id !== id,
-                            );
-
-                            Toast.fire({
-                                icon: "success",
-                                title: "Recurso eliminado",
-                            });
-                        } catch (error) {
-                            Toast.fire({
-                                icon: "error",
-                                title: "No se pudo eliminar",
-                            });
-                        }
-                    }
+                    cancelButtonColor: "#6b7280", // Color gris neutro
+                    confirmButtonText: '<i class="fas fa-trash-alt mr-1"></i> Sí, eliminar',
+                    cancelButtonText: "Cancelar",
+                    reverseButtons: true, // Cancelar a la izquierda
                 });
+
+                if (!confirmacion.isConfirmed) return;
+
+                try {
+                    // Ajusta esta ruta a tu backend
+                    await axios.delete(`/proveedores/catalogos/${id}`);
+
+                    // Sacamos el elemento eliminado de la lista visual
+                    this.catalogos = this.catalogos.filter((c) => c.id !== id);
+
+                    Toast.fire({
+                        icon: "success",
+                        title: "Recurso eliminado",
+                    });
+                } catch (error) {
+                    Toast.fire({
+                        icon: "error",
+                        title: "No se pudo eliminar",
+                    });
+                }
             },
         }),
     );
