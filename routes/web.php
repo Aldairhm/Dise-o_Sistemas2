@@ -60,6 +60,24 @@ Route::middleware('auth')->group(function () {
         Route::put('/categorias/{categoria}', [CategoriaController::class, 'update'])->name('categorias.update');
         Route::patch('/categorias/{categoria}/toggle-status', [CategoriaController::class, 'toggleStatus'])->name('categorias.toggleStatus');
 
+        // Cascarón visual para validar el flujo de registro de compras.
+        Route::get('/compras/nueva', function () {
+            return view('compras.create', [
+                'proveedores' => [
+                    ['id' => 1, 'nombre' => 'Distribuidora Central', 'correo' => 'compras@central.test'],
+                    ['id' => 2, 'nombre' => 'Importadora Nova', 'correo' => 'ventas@nova.test'],
+                    ['id' => 3, 'nombre' => 'Tecno Suministros', 'correo' => 'contacto@tecno.test'],
+                ],
+                'variantes' => [
+                    ['id' => 1, 'producto' => 'Audífonos Bluetooth X1', 'variante' => 'Negro / Estándar', 'sku' => 'AUD-X1-NEG', 'unidad' => 'unidad'],
+                    ['id' => 2, 'producto' => 'Teclado mecánico K2', 'variante' => 'Switch azul / Español', 'sku' => 'TEC-K2-ESP', 'unidad' => 'unidad'],
+                    ['id' => 3, 'producto' => 'Mouse inalámbrico M5', 'variante' => 'Gris / 1600 DPI', 'sku' => 'MOU-M5-GRI', 'unidad' => 'unidad'],
+                    ['id' => 4, 'producto' => 'Cable USB-C reforzado', 'variante' => '2 metros / Negro', 'sku' => 'CAB-USBC-2M', 'unidad' => 'unidad'],
+                    ['id' => 5, 'producto' => 'Base para laptop', 'variante' => 'Aluminio / Ajustable', 'sku' => 'BAS-LAP-ALU', 'unidad' => 'unidad'],
+                ],
+            ]);
+        })->name('compras.create');
+
         // ── TU MÓDULO DE PROVEEDORES Y CATÁLOGOS ──
         
         // 1. Estáticas (Catálogos)
