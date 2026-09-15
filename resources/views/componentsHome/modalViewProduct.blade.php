@@ -13,15 +13,23 @@
                     <i class="fas fa-times"></i>
                 </button>
 
-                <!-- Panel Izquierdo (Imagen) -->
-                <div class="w-full md:w-1/2 bg-gray-50/50 p-8 sm:p-10 flex items-center justify-center min-h-[250px] md:min-h-[400px] relative overflow-hidden group border-b md:border-b-0 md:border-r border-gray-100">
-                    <div class="absolute inset-0 bg-blue-50 opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
-                    <img id="v-modal-img" src="" alt="Product" class="max-h-[200px] md:max-h-[350px] object-contain drop-shadow-xl transform group-hover:scale-105 transition-transform duration-700 z-10 relative">
+                <!-- Panel Izquierdo (Imagen y Galería) -->
+                <div class="w-full md:w-1/2 bg-gray-50/50 p-6 sm:p-8 flex flex-col items-center relative overflow-hidden group border-b md:border-b-0 md:border-r border-gray-100">
+                    <div class="absolute inset-0 bg-blue-50 opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none"></div>
                     
-                    <!-- Botón Descargar Imagen -->
-                    <a id="v-modal-download" href="#" download="imagen.jpg" class="absolute bottom-4 md:bottom-8 left-1/2 transform -translate-x-1/2 z-20 bg-white/95 backdrop-blur text-gray-800 hover:text-blue-600 hover:bg-white font-bold py-2 sm:py-2.5 px-5 sm:px-6 rounded-full shadow-[0_8px_30px_rgb(0,0,0,0.12)] md:opacity-0 md:group-hover:opacity-100 transition-all duration-300 flex items-center gap-2 text-xs sm:text-sm border border-gray-100 whitespace-nowrap" title="Descargar Imagen">
-                        <i class="fas fa-download"></i> Descargar
-                    </a>
+                    <!-- Contenedor Imagen Principal -->
+                    <div class="flex-1 flex items-center justify-center w-full relative z-10 min-h-[200px] md:min-h-[300px] mb-4">
+                        <img id="v-modal-img" src="" alt="Product" class="max-h-[200px] md:max-h-[300px] object-contain drop-shadow-xl transform transition-transform duration-700">
+                        <!-- Botón Descargar Imagen Principal -->
+                        <a id="v-modal-download" href="#" download="imagen.jpg" class="absolute bottom-2 left-1/2 transform -translate-x-1/2 z-20 bg-white/95 backdrop-blur text-gray-800 hover:text-blue-600 hover:bg-white font-bold py-2 px-5 rounded-full shadow-[0_8px_30px_rgb(0,0,0,0.12)] md:opacity-0 md:group-hover:opacity-100 transition-all duration-300 flex items-center gap-2 text-xs sm:text-sm border border-gray-100 whitespace-nowrap" title="Descargar Imagen">
+                            <i class="fas fa-download"></i> Descargar
+                        </a>
+                    </div>
+
+                    <!-- Miniaturas -->
+                    <div id="v-modal-gallery" class="w-full flex justify-center gap-3 z-20 flex-wrap pb-2">
+                        <!-- Se llenan con JS -->
+                    </div>
                 </div>
 
                 <!-- Panel Derecho (Info Light) -->
@@ -43,15 +51,23 @@
                     
                     <p id="v-modal-description" class="text-gray-500 mb-6 sm:mb-8 leading-relaxed text-xs sm:text-sm">Descripción</p>
 
-                    <!-- Tarjetas de Stock Estilo Minimalista -->
-                    <div class="flex gap-3 sm:gap-4 mb-8 sm:mb-10">
-                        <div class="flex-1 bg-white rounded-xl sm:rounded-2xl p-3 sm:p-4 border border-gray-100 shadow-sm shadow-gray-100/50 flex flex-col items-center justify-center text-center group hover:border-green-200 transition-colors">
-                            <i class="fas fa-box text-green-500 mb-1 sm:mb-2 text-lg sm:text-xl group-hover:scale-110 transition-transform"></i>
-                            <p id="v-modal-stock" class="text-lg sm:text-xl font-black text-gray-800">0</p>
-                            <p class="text-[9px] sm:text-[10px] text-gray-400 uppercase tracking-wider font-bold">Disp.</p>
+                    <!-- Selector de Variantes (Estilo Shein/Temu) -->
+                    <div id="v-modal-variants-container" class="mb-6 hidden">
+                        <p class="text-xs font-bold text-gray-700 uppercase tracking-widest mb-3">Variantes Disponibles:</p>
+                        <div id="v-modal-variants-list" class="flex flex-wrap gap-2 sm:gap-3">
+                            <!-- JS inserta las variantes aquí -->
                         </div>
-                        <div class="flex-1 bg-white rounded-xl sm:rounded-2xl p-3 sm:p-4 border border-gray-100 shadow-sm shadow-gray-100/50 flex flex-col items-center justify-center text-center group hover:border-orange-200 transition-colors">
-                            <i class="fas fa-clock text-orange-500 mb-1 sm:mb-2 text-lg sm:text-xl group-hover:scale-110 transition-transform"></i>
+                    </div>
+
+                    <!-- Información de Inventario y Reserva (Dinámico según variante) -->
+                    <div class="flex gap-3 sm:gap-4 mb-8 sm:mb-10">
+                        <div class="flex-1 bg-white rounded-xl sm:rounded-2xl p-3 sm:p-4 border border-gray-100 shadow-sm shadow-gray-100/50 flex flex-col items-center justify-center text-center">
+                            <i class="fas fa-box text-green-500 mb-1 sm:mb-2 text-lg sm:text-xl"></i>
+                            <p id="v-modal-stock" class="text-lg sm:text-xl font-black text-gray-800">0</p>
+                            <p class="text-[9px] sm:text-[10px] text-gray-400 uppercase tracking-wider font-bold">Stock</p>
+                        </div>
+                        <div class="flex-1 bg-white rounded-xl sm:rounded-2xl p-3 sm:p-4 border border-gray-100 shadow-sm shadow-gray-100/50 flex flex-col items-center justify-center text-center">
+                            <i class="fas fa-clock text-orange-500 mb-1 sm:mb-2 text-lg sm:text-xl"></i>
                             <p id="v-modal-reserva" class="text-lg sm:text-xl font-black text-gray-800">0</p>
                             <p class="text-[9px] sm:text-[10px] text-gray-400 uppercase tracking-wider font-bold">Reserva</p>
                         </div>
@@ -113,26 +129,121 @@
         }
 
         function openModal(btn) {
-            // Extraer los datos del botón
+            // Extraer los datos básicos del botón
             const name = btn.getAttribute('data-name') || '';
-            const price = (btn.getAttribute('data-price') || '').replace('$', '');
             const category = btn.getAttribute('data-category') || '';
-            const sku = btn.getAttribute('data-sku') || '';
-            const stock = (btn.getAttribute('data-stock') || '').replace(' un.', '');
-            const reserva = (btn.getAttribute('data-reserva') || '').replace(' un.', '');
-            const image = btn.getAttribute('data-image') || '';
             const desc = btn.getAttribute('data-description') || '';
 
-            // Asignar los valores a los elementos del modal
+            // Extraer JSON de variantes
+            let variants = [];
+            try {
+                variants = JSON.parse(btn.getAttribute('data-variants') || '[]');
+            } catch(e) {
+                console.error("Error al parsear variantes", e);
+            }
+
+            // Asignar los valores estáticos
             document.getElementById('v-modal-name').innerText = name;
-            document.getElementById('v-modal-price-val').innerText = price;
             document.getElementById('v-modal-category').innerText = category;
-            document.getElementById('v-modal-sku').innerText = sku;
-            document.getElementById('v-modal-stock').innerText = stock;
-            document.getElementById('v-modal-reserva').innerText = reserva;
-            document.getElementById('v-modal-img').src = image;
-            document.getElementById('v-modal-download').href = image;
             document.getElementById('v-modal-description').innerText = desc;
+
+            const variantsContainer = document.getElementById('v-modal-variants-container');
+            const variantsList = document.getElementById('v-modal-variants-list');
+            
+            variantsList.innerHTML = ''; // Limpiar lista
+            
+            if (variants && variants.length > 0) {
+                // Hay variantes, mostramos el contenedor
+                variantsContainer.classList.remove('hidden');
+                
+                // Función para actualizar modal según variante seleccionada
+                const selectVariant = (variant, btnElement) => {
+                    // Actualizar UI de botones de variante
+                    Array.from(variantsList.children).forEach(c => {
+                        c.classList.remove('border-blue-600', 'bg-blue-50', 'text-blue-700');
+                        c.classList.add('border-gray-200', 'bg-white', 'text-gray-600');
+                    });
+                    btnElement.classList.add('border-blue-600', 'bg-blue-50', 'text-blue-700');
+                    btnElement.classList.remove('border-gray-200', 'bg-white', 'text-gray-600');
+                    
+                    // Actualizar datos en modal
+                    document.getElementById('v-modal-price-val').innerText = parseFloat(variant.precio).toFixed(2);
+                    document.getElementById('v-modal-sku').innerText = variant.sku || 'N/A';
+                    document.getElementById('v-modal-stock').innerText = variant.stock || '0';
+                    document.getElementById('v-modal-reserva').innerText = variant.reserva || '0';
+                    
+                    // Manejar imágenes de la variante
+                    const mainImg = document.getElementById('v-modal-img');
+                    const downloadBtn = document.getElementById('v-modal-download');
+                    const gallery = document.getElementById('v-modal-gallery');
+                    gallery.innerHTML = '';
+                    
+                    if (variant.imagenes && variant.imagenes.length > 0) {
+                        mainImg.src = variant.imagenes[0];
+                        downloadBtn.href = variant.imagenes[0];
+                        
+                        if (variant.imagenes.length > 1) {
+                            variant.imagenes.forEach((imgUrl, index) => {
+                                const thumb = document.createElement('img');
+                                thumb.src = imgUrl;
+                                thumb.className = `w-14 h-14 rounded-xl object-cover cursor-pointer border-2 transition-all duration-300 shadow-sm ${index === 0 ? 'border-blue-500 scale-105' : 'border-transparent hover:border-blue-300 opacity-60 hover:opacity-100'}`;
+                                
+                                thumb.onclick = () => {
+                                    mainImg.src = imgUrl;
+                                    downloadBtn.href = imgUrl;
+                                    
+                                    Array.from(gallery.children).forEach(c => {
+                                        c.classList.remove('border-blue-500', 'scale-105');
+                                        c.classList.add('border-transparent', 'opacity-60');
+                                    });
+                                    thumb.classList.add('border-blue-500', 'scale-105');
+                                    thumb.classList.remove('border-transparent', 'opacity-60');
+                                };
+                                gallery.appendChild(thumb);
+                            });
+                        }
+                    } else if (variant.imgUrl) {
+                        mainImg.src = variant.imgUrl;
+                        downloadBtn.href = variant.imgUrl;
+                    } else {
+                        mainImg.src = '';
+                        downloadBtn.href = '#';
+                    }
+                };
+                
+                // Renderizar botones de variantes
+                variants.forEach((v, idx) => {
+                    const btn = document.createElement('button');
+                    // Estilos pill similares a Shein/Temu
+                    btn.className = 'px-4 py-2 text-xs sm:text-sm font-semibold border-2 rounded-full transition-all duration-200 border-gray-200 bg-white text-gray-600 hover:border-blue-300 focus:outline-none';
+                    btn.innerText = v.nombre;
+                    btn.onclick = () => selectVariant(v, btn);
+                    variantsList.appendChild(btn);
+                });
+                
+                // Seleccionar la primera variante por defecto
+                selectVariant(variants[0], variantsList.firstElementChild);
+                
+            } else {
+                // Fallback por si acaso el producto no tiene variantes (no debería pasar)
+                variantsContainer.classList.add('hidden');
+                document.getElementById('v-modal-price-val').innerText = (btn.getAttribute('data-price') || '').replace('$', '');
+                document.getElementById('v-modal-sku').innerText = btn.getAttribute('data-sku') || '';
+                document.getElementById('v-modal-stock').innerText = (btn.getAttribute('data-stock') || '').replace(' un.', '');
+                document.getElementById('v-modal-reserva').innerText = (btn.getAttribute('data-reserva') || '').replace(' un.', '');
+                
+                const mainImg = document.getElementById('v-modal-img');
+                const downloadBtn = document.getElementById('v-modal-download');
+                const img = btn.getAttribute('data-image') || '';
+                if(img) {
+                    mainImg.src = img;
+                    downloadBtn.href = img;
+                } else {
+                    mainImg.src = '';
+                    downloadBtn.href = '#';
+                }
+                document.getElementById('v-modal-gallery').innerHTML = '';
+            }
 
             const modal = document.getElementById('modal');
             modal.classList.remove('hidden');

@@ -1,0 +1,94 @@
+/* ─── productos.css ───────────────────────────────────────────── */
+
+/* ── Área Drag & Drop ── */
+.drag-drop-area {
+    border: 2px dashed #93c5fd;
+    border-radius: 12px;
+    padding: 28px 20px;
+    text-align: center;
+    background-color: #f8faff;
+    transition: background-color 0.2s ease, border-color 0.2s ease;
+    cursor: pointer;
+}
+
+.drag-drop-area:hover,
+.drag-drop-area.dragover {
+    background-color: #eff6ff;
+    border-color: #3b82f6;
+}
+
+/* ── Previews de imágenes ── */
+.preview-zone .preview-img-container {
+    position: relative;
+    width: 72px;
+    height: 72px;
+    border-radius: 10px;
+    overflow: hidden;
+    border: 2px solid #e2e8f0;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+    transition: transform 0.15s ease;
+}
+
+.preview-zone .preview-img-container:hover {
+    transform: scale(1.04);
+}
+
+.preview-zone .preview-img-container img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+}
+
+.preview-zone .btn-remove-img {
+    position: absolute;
+    top: 3px;
+    right: 3px;
+    background: rgba(239, 68, 68, 0.9);
+    color: white;
+    border: none;
+    border-radius: 50%;
+    width: 18px;
+    height: 18px;
+    font-size: 9px;
+    font-weight: 900;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    line-height: 1;
+    transition: background 0.15s;
+}
+
+.preview-zone .btn-remove-img:hover {
+    background: #dc2626;
+}
+
+/* ── Animación de apertura/cierre del modal ── */
+#modalVariante {
+    transition: visibility 0s linear 0.3s;
+}
+
+#modalVariante.modal-open {
+    transition: visibility 0s;
+}
+
+#modalVarianteBackdrop {
+    transition: opacity 0.3s ease;
+    opacity: 0;
+}
+
+#modalVariante.modal-open #modalVarianteBackdrop {
+    opacity: 1;
+}
+
+#modalVariantePanel {
+    transition: opacity 0.3s ease, transform 0.3s ease;
+    opacity: 0;
+    transform: scale(0.95);
+}
+
+#modalVariante.modal-open #modalVariantePanel {
+    opacity: 1;
+    transform: scale(1);
+}
