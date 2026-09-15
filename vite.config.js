@@ -20,6 +20,8 @@ export default defineConfig({
                 'resources/js/perfil.js',
                 'resources/css/categorias.css',
                 'resources/js/categorias.js',
+                'resources/css/productos.css',
+                'resources/js/productos.js',
             ],
             refresh: true,
         }),

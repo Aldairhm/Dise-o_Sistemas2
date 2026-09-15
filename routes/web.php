@@ -8,6 +8,8 @@ use App\Http\Controllers\AuthController;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\CategoriaController;
 use App\Http\Controllers\ProfileController;
+use App\Http\Controllers\ProductoController;
+use App\Http\Controllers\VarianteController;
 
 // ── Autenticación ────────────────────────────────────────────
 
@@ -91,5 +93,21 @@ Route::middleware('auth')->group(function () {
         Route::delete('/proveedores/{proveedor}', [ProveedorController::class, 'destroy'])->name('proveedores.destroy');
         Route::post('/proveedores/{id}/restore', [ProveedorController::class, 'restore'])->name('proveedores.restore');
         Route::get('/proveedor/{id}', [ProveedorController::class, 'show'])->name('proveedores.show');
+
+        // ── Productos: CRUD solo Admin ──
+        Route::get('/productos/create', [ProductoController::class, 'create'])->name('productos.create');
+        Route::post('/productos', [ProductoController::class, 'store'])->name('productos.store');
+        Route::get('/productos/{producto}/edit', [ProductoController::class, 'edit'])->name('productos.edit');
+        Route::put('/productos/{producto}', [ProductoController::class, 'update'])->name('productos.update');
+        Route::delete('/productos/{producto}', [ProductoController::class, 'destroy'])->name('productos.destroy');
+
+        // ── Variantes AJAX: solo Admin ──
+        Route::post('/productos/{producto}/variantes', [VarianteController::class, 'store'])->name('variantes.store');
+        Route::get('/variantes/{id}', [VarianteController::class, 'show'])->name('variantes.show');
+        Route::put('/variantes/{id}', [VarianteController::class, 'update'])->name('variantes.update');
+        Route::delete('/variantes/{id}', [VarianteController::class, 'destroy'])->name('variantes.destroy');
     });
+
+    // ── Productos: índice visible para todos los usuarios autenticados ──
+    Route::get('/productos', [ProductoController::class, 'index'])->name('productos.index');
 });

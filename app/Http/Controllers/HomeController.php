@@ -10,12 +10,24 @@ class HomeController extends Controller
 {
     public function index()
     {
-        $products = Producto::all();
+        // Productos activos con su variante de mayor stock (más vendida/disponible)
+        // ordenados de mayor a menor stock total de variantes
+        $products = Producto::where('estado', 1)
+            ->with(['variantes' => function ($q) {
+                $q->orderByDesc('stock');
+            }, 'categoria'])
+            ->withSum('variantes', 'stock')
+            ->orderByDesc('variantes_sum_stock')
+            ->get();
+
+        $categorias = \App\Models\Categoria::whereHas('productos', function($q) {
+            $q->where('estado', 1);
+        })->get();
 
         if (Auth::check() && Auth::user()->rol === 'vendedor') {
-            return view('home-vendedor', compact('products'));
+            return view('home-vendedor', compact('products', 'categorias'));
         }
 
-        return view('home', compact('products'));
+        return view('home', compact('products', 'categorias'));
     }
 }
