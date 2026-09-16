@@ -17,7 +17,6 @@ class VarianteController extends Controller
             'precio_venta' => 'required|numeric',
             'stock' => 'required|integer',
             'reserva' => 'required|integer',
-            'comision' => 'required|numeric',
             'estado' => 'nullable|integer|in:0,1'
         ]);
 
@@ -66,7 +65,6 @@ class VarianteController extends Controller
             'precio_venta' => 'required|numeric',
             'stock' => 'required|integer',
             'reserva' => 'required|integer',
-            'comision' => 'required|numeric',
             'estado' => 'nullable|integer|in:0,1'
         ]);
 
