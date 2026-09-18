@@ -17,6 +17,7 @@ class Variante extends Model
         'sku',
         'nombre_variante',
         'precio_venta',
+        'comision',
         'stock',
         'reserva',
         'hash_combinacion'

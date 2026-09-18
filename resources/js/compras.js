@@ -7,10 +7,6 @@ document.addEventListener("alpine:init", () => {
         referencia: "",
         observaciones: "",
         busqueda: "",
-        comisionTipo: "porcentaje",
-        margenTipo: "porcentaje",
-        comisionValor: 5,
-        margenValor: 30,
         lineas: [],
         guardado: false,
 
@@ -38,20 +34,12 @@ document.addEventListener("alpine:init", () => {
             return this.lineas.reduce((total, linea) => total + Number(linea.cantidad || 0), 0);
         },
 
-        get totalComision() {
-            return this.lineas.reduce((total, linea) => total + this.comisionLinea(linea), 0);
+        get totalVenta() {
+            return this.lineas.reduce((total, linea) => total + this.precioVentaLinea(linea), 0);
         },
 
-        get totalMargen() {
-            return this.lineas.reduce((total, linea) => total + this.margenLinea(linea), 0);
-        },
-
-        get totalCompra() {
-            return this.subtotal;
-        },
-
-        get precioVentaTotal() {
-            return this.lineas.reduce((total, linea) => total + this.precioVenta(linea), 0);
+        get totalUtilidad() {
+            return this.lineas.reduce((total, linea) => total + this.utilidadLinea(linea), 0);
         },
 
         agregarVariante(variante) {
@@ -59,23 +47,8 @@ document.addEventListener("alpine:init", () => {
                 ...variante,
                 cantidad: 1,
                 costo: 0,
-                personalizado: false,
-                comisionTipo: this.comisionTipo,
-                comisionValor: this.comisionValor,
-                margenTipo: this.margenTipo,
-                margenValor: this.margenValor,
             });
             this.busqueda = "";
-        },
-
-        alternarPersonalizacion(linea) {
-            linea.personalizado = !linea.personalizado;
-            if (linea.personalizado) {
-                linea.comisionTipo = this.comisionTipo;
-                linea.comisionValor = this.comisionValor;
-                linea.margenTipo = this.margenTipo;
-                linea.margenValor = this.margenValor;
-            }
         },
 
         quitarLinea(id) {
@@ -86,44 +59,65 @@ document.addEventListener("alpine:init", () => {
             return Math.max(0, Number(linea.cantidad || 0)) * Math.max(0, Number(linea.costo || 0));
         },
 
-        porcentajeOValor(valor, tipo, base) {
-            const cantidad = Math.max(0, Number(valor || 0));
-            return tipo === "porcentaje" ? base * (cantidad / 100) : cantidad;
+        precioVentaUnidad(linea) {
+            return Math.max(0, Number(linea.precio_venta || 0));
         },
 
-        comisionLinea(linea) {
-            const tipo = linea.personalizado ? linea.comisionTipo : this.comisionTipo;
-            const valor = linea.personalizado ? linea.comisionValor : this.comisionValor;
-            return this.porcentajeOValor(valor, tipo, this.costoLinea(linea));
+        precioVentaLinea(linea) {
+            return this.precioVentaUnidad(linea) * Math.max(0, Number(linea.cantidad || 0));
         },
 
-        margenLinea(linea) {
-            const base = this.costoLinea(linea) + this.comisionLinea(linea);
-            const tipo = linea.personalizado ? linea.margenTipo : this.margenTipo;
-            const valor = linea.personalizado ? linea.margenValor : this.margenValor;
-            return this.porcentajeOValor(valor, tipo, base);
-        },
-
-        precioVenta(linea) {
-            return this.costoLinea(linea) + this.comisionLinea(linea) + this.margenLinea(linea);
+        utilidadLinea(linea) {
+            return this.precioVentaLinea(linea) - this.costoLinea(linea);
         },
 
         moneda(valor) {
             return new Intl.NumberFormat("es-SV", { style: "currency", currency: "USD" }).format(Number(valor || 0));
         },
 
-        porcentaje(valor) {
-            return `${Number(valor || 0).toFixed(2)}%`;
-        },
-
         formularioValido() {
             return this.proveedorId && this.fecha && this.lineas.length > 0 && this.lineas.every((linea) => Number(linea.cantidad) > 0 && Number(linea.costo) >= 0);
         },
 
-        guardarDemo() {
+        async guardarCompra() {
             if (!this.formularioValido()) return;
-            this.guardado = true;
-            window.setTimeout(() => { this.guardado = false; }, 4500);
+
+            const token = document.querySelector('meta[name="csrf-token"]')?.content;
+            const payload = {
+                id_proveedor: this.proveedorId,
+                fecha_compra: this.fecha,
+                referencia: this.referencia || null,
+                observaciones: this.observaciones || null,
+                lineas: this.lineas.map((linea) => ({
+                    id_variante: linea.id,
+                    cantidad: Number(linea.cantidad),
+                    costo: Number(linea.costo),
+                })),
+            };
+
+            try {
+                const storeUrl = document.querySelector('meta[name="compras-store-url"]')?.content;
+                const response = await fetch(storeUrl, {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json",
+                        "Accept": "application/json",
+                        "X-CSRF-TOKEN": token,
+                    },
+                    body: JSON.stringify(payload),
+                });
+
+                const data = await response.json();
+                if (!response.ok) {
+                    throw new Error(data.message || "No se pudo registrar la compra.");
+                }
+
+                this.guardado = true;
+                this.lineas = [];
+                window.setTimeout(() => { this.guardado = false; }, 4500);
+            } catch (error) {
+                window.alert(error.message);
+            }
         },
     }));
 });

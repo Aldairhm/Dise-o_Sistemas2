@@ -7,8 +7,11 @@ use App\Http\Controllers\HomeController;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\CategoriaController;
+use App\Http\Controllers\CompraController;
+use App\Http\Controllers\MovimientoBodegaController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\ProductoController;
+use App\Http\Controllers\ProductoPropuestaController;
 use App\Http\Controllers\VarianteController;
 
 // ── Autenticación ────────────────────────────────────────────
@@ -62,23 +65,9 @@ Route::middleware('auth')->group(function () {
         Route::put('/categorias/{categoria}', [CategoriaController::class, 'update'])->name('categorias.update');
         Route::patch('/categorias/{categoria}/toggle-status', [CategoriaController::class, 'toggleStatus'])->name('categorias.toggleStatus');
 
-        // Cascarón visual para validar el flujo de registro de compras.
-        Route::get('/compras/nueva', function () {
-            return view('compras.create', [
-                'proveedores' => [
-                    ['id' => 1, 'nombre' => 'Distribuidora Central', 'correo' => 'compras@central.test'],
-                    ['id' => 2, 'nombre' => 'Importadora Nova', 'correo' => 'ventas@nova.test'],
-                    ['id' => 3, 'nombre' => 'Tecno Suministros', 'correo' => 'contacto@tecno.test'],
-                ],
-                'variantes' => [
-                    ['id' => 1, 'producto' => 'Audífonos Bluetooth X1', 'variante' => 'Negro / Estándar', 'sku' => 'AUD-X1-NEG', 'unidad' => 'unidad'],
-                    ['id' => 2, 'producto' => 'Teclado mecánico K2', 'variante' => 'Switch azul / Español', 'sku' => 'TEC-K2-ESP', 'unidad' => 'unidad'],
-                    ['id' => 3, 'producto' => 'Mouse inalámbrico M5', 'variante' => 'Gris / 1600 DPI', 'sku' => 'MOU-M5-GRI', 'unidad' => 'unidad'],
-                    ['id' => 4, 'producto' => 'Cable USB-C reforzado', 'variante' => '2 metros / Negro', 'sku' => 'CAB-USBC-2M', 'unidad' => 'unidad'],
-                    ['id' => 5, 'producto' => 'Base para laptop', 'variante' => 'Aluminio / Ajustable', 'sku' => 'BAS-LAP-ALU', 'unidad' => 'unidad'],
-                ],
-            ]);
-        })->name('compras.create');
+        Route::get('/compras/nueva', [CompraController::class, 'create'])->name('compras.create');
+        Route::post('/compras', [CompraController::class, 'store'])->name('compras.store');
+        Route::post('/movimientos-bodega/transferencia-tienda', [MovimientoBodegaController::class, 'transferirATienda'])->name('movimientos-bodega.transferencia-tienda');
 
         // ── TU MÓDULO DE PROVEEDORES Y CATÁLOGOS ──
         
@@ -95,10 +84,12 @@ Route::middleware('auth')->group(function () {
         Route::get('/proveedor/{id}', [ProveedorController::class, 'show'])->name('proveedores.show');
 
         // ── Productos: CRUD solo Admin ──
-        Route::get('/productos/create', [ProductoController::class, 'create'])->name('productos.create');
-        Route::post('/productos', [ProductoController::class, 'store'])->name('productos.store');
-        Route::get('/productos/{producto}/edit', [ProductoController::class, 'edit'])->name('productos.edit');
-        Route::put('/productos/{producto}', [ProductoController::class, 'update'])->name('productos.update');
+        Route::get('/productos/create', [ProductoPropuestaController::class, 'create'])->name('productos.create');
+        Route::get('/productos/propuesta/nuevo', [ProductoPropuestaController::class, 'create'])->name('productos.propuesta.create');
+        Route::post('/productos/propuesta', [ProductoPropuestaController::class, 'store'])->name('productos.propuesta.store');
+        Route::post('/productos', [ProductoPropuestaController::class, 'store'])->name('productos.store');
+        Route::get('/productos/{producto}/edit', [ProductoPropuestaController::class, 'edit'])->name('productos.edit');
+        Route::post('/productos/{producto}', [ProductoPropuestaController::class, 'update'])->name('productos.update');
         Route::delete('/productos/{producto}', [ProductoController::class, 'destroy'])->name('productos.destroy');
 
         // ── Variantes AJAX: solo Admin ──
