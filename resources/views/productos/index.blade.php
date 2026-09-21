@@ -73,6 +73,21 @@
         </script>
         @endif
 
+        @if(session('error'))
+        <script>
+            document.addEventListener('DOMContentLoaded', () => {
+                Swal.fire({
+                    icon: 'error',
+                    title: '¡Acción no permitida!',
+                    text: @json(session('error')),
+                    confirmButtonText: 'Entendido',
+                    customClass: { popup: 'swal-axstore' },
+                });
+            });
+        </script>
+        @endif
+
+
         {{-- TABLA DE PRODUCTOS --}}
         <div class="bg-white rounded-2xl shadow-sm border border-slate-200/80 overflow-hidden">
             <div class="overflow-x-auto">
@@ -81,6 +96,7 @@
                         <tr class="border-b border-slate-100 bg-slate-50/80">
                             <th class="text-left px-6 py-4 text-xs font-bold text-slate-400 uppercase tracking-widest">#</th>
                             <th class="text-left px-6 py-4 text-xs font-bold text-slate-400 uppercase tracking-widest">Nombre</th>
+                            <th class="text-left px-6 py-4 text-xs font-bold text-slate-400 uppercase tracking-widest hidden sm:table-cell">Marca</th>
                             <th class="text-left px-6 py-4 text-xs font-bold text-slate-400 uppercase tracking-widest hidden sm:table-cell">Categoría</th>
                             <th class="text-left px-6 py-4 text-xs font-bold text-slate-400 uppercase tracking-widest hidden md:table-cell">Variantes</th>
                             <th class="text-left px-6 py-4 text-xs font-bold text-slate-400 uppercase tracking-widest">Estado</th>
@@ -94,6 +110,7 @@
                         <tr class="hover:bg-slate-50/60 transition-colors">
                             <td class="px-6 py-4 text-slate-400 font-mono text-xs">{{ $prod->id }}</td>
                             <td class="px-6 py-4 font-semibold text-slate-800">{{ $prod->nombre }}</td>
+                            <td class="px-6 py-4 hidden sm:table-cell text-slate-500 text-xs">{{ $prod->marca ?? '—' }}</td>
                             <td class="px-6 py-4 hidden sm:table-cell text-slate-500 text-xs">{{ $prod->categoria->nombre ?? '—' }}</td>
                             <td class="px-6 py-4 hidden md:table-cell">
                                 <span class="inline-flex items-center gap-1 text-xs font-semibold text-slate-500 bg-slate-100 rounded-full px-2.5 py-1">
@@ -118,12 +135,22 @@
                                    class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold text-blue-600 bg-blue-50 hover:bg-blue-100 border border-blue-200 rounded-lg transition-colors">
                                     <i class="fas fa-pencil text-xs"></i> Editar / Variantes
                                 </a>
+                                <form action="{{ route('productos.destroy', $prod->id) }}" method="POST"
+                                      class="inline" id="form-delete-{{ $prod->id }}">
+                                    @csrf
+                                    @method('DELETE')
+                                    <button type="button"
+                                            onclick="confirmarEliminar({{ $prod->id }}, '{{ addslashes($prod->nombre) }}')"
+                                            class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold text-red-600 bg-red-50 hover:bg-red-100 border border-red-200 rounded-lg transition-colors">
+                                        <i class="fas fa-trash text-xs"></i> Eliminar
+                                    </button>
+                                </form>
                             </td>
                             @endif
                         </tr>
                         @empty
                         <tr>
-                            <td colspan="{{ Auth::user()->rol === 'admin' ? 6 : 5 }}" class="text-center py-16 text-slate-400">
+                            <td colspan="{{ Auth::user()->rol === 'admin' ? 7 : 6 }}" class="text-center py-16 text-slate-400">
                                 <i class="fas fa-boxes-stacked text-4xl mb-3 block opacity-30"></i>
                                 <p class="font-semibold text-sm">No hay productos registrados.</p>
                                 @if(Auth::user()->rol === 'admin')
@@ -144,6 +171,68 @@
     <footer class="bg-white border-t border-slate-200/80 mt-12">
         @include('componentsHome.footer')
     </footer>
+
+<script>
+    function confirmarEliminar(id, nombre) {
+        Swal.fire({
+            title: '¿Eliminar producto?',
+            html: `Estás a punto de eliminar <strong>"${nombre}"</strong> y todas sus variantes. Esta acción no se puede deshacer.`,
+            icon: 'warning',
+            iconColor: '#f97316',
+            showCancelButton: true,
+            confirmButtonText: '<i class="fas fa-trash-alt mr-1"></i> Sí, eliminar',
+            cancelButtonText: 'Cancelar',
+            confirmButtonColor: '#ef4444',
+            cancelButtonColor: '#64748b',
+            reverseButtons: true,
+            customClass: {
+                popup:         'swal-axstore',
+                title:         'swal-title-custom',
+                htmlContainer: 'swal-html-custom',
+                confirmButton: 'swal-btn-danger',
+                cancelButton:  'swal-btn-cancel',
+            },
+        }).then((result) => {
+            if (result.isConfirmed) {
+                document.getElementById('form-delete-' + id).submit();
+            }
+        });
+    }
+</script>
+
+<style>
+    .swal-axstore {
+        border-radius: 1rem !important;
+        padding: 2rem !important;
+        font-family: inherit !important;
+        box-shadow: 0 25px 50px -12px rgba(0,0,0,0.18) !important;
+    }
+    .swal-title-custom {
+        font-size: 1.25rem !important;
+        font-weight: 700 !important;
+        color: #1e293b !important;
+        margin-top: 0.5rem !important;
+    }
+    .swal-html-custom {
+        font-size: 0.9rem !important;
+        color: #64748b !important;
+        line-height: 1.6 !important;
+    }
+    .swal-btn-danger {
+        border-radius: 0.6rem !important;
+        font-weight: 600 !important;
+        font-size: 0.875rem !important;
+        padding: 0.55rem 1.25rem !important;
+        box-shadow: none !important;
+    }
+    .swal-btn-cancel {
+        border-radius: 0.6rem !important;
+        font-weight: 600 !important;
+        font-size: 0.875rem !important;
+        padding: 0.55rem 1.25rem !important;
+        box-shadow: none !important;
+    }
+</style>
 
 </body>
 </html>

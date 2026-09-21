@@ -227,6 +227,25 @@ function closeModal() {
     setTimeout(() => modal.classList.add("hidden"), 250);
 }
 
+function normalizarNombreCategoria(nombre) {
+    return nombre
+        .trim()
+        .toLocaleLowerCase()
+        .normalize("NFD")
+        .replace(/[\u0300-\u036f]/g, "")
+        .replace(/\s+/g, " ");
+}
+
+function nombreCategoriaExiste(nombre, idActual) {
+    const nombreNormalizado = normalizarNombreCategoria(nombre);
+
+    return Array.from(document.querySelectorAll(".categoria-row, .categoria-card")).some((elemento) => {
+        if (idActual && elemento.dataset.id === idActual) return false;
+
+        return normalizarNombreCategoria(elemento.dataset.nombre || "") === nombreNormalizado;
+    });
+}
+
 document.addEventListener("keydown", (e) => {
     if (e.key === "Escape") closeModal();
 });
@@ -236,12 +255,16 @@ function validarFormulario() {
     let isValid = true;
 
     const nombre = document.getElementById("inputNombre").value.trim();
+    const idActual = document.getElementById("categoriaId").value;
     const descripcion = document
         .getElementById("inputDescripcion")
         .value.trim();
 
     if (!nombre) {
         showErrors({ nombre: ["El nombre de la categoría es obligatorio."] });
+        isValid = false;
+    } else if (nombreCategoriaExiste(nombre, idActual)) {
+        showErrors({ nombre: ["Ya existe una categoría con ese nombre."] });
         isValid = false;
     }
 

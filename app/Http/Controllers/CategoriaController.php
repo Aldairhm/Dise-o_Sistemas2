@@ -102,6 +102,13 @@ class CategoriaController extends Controller
 
     public function toggleStatus(Categoria $categoria)
     {
+        if ($categoria->estado && $categoria->productos()->exists()) {
+            return response()->json([
+                'success' => false,
+                'message' => 'No se puede deshabilitar la categoría porque tiene productos asociados.',
+            ], 409);
+        }
+
         $categoria->estado = !$categoria->estado;
         $categoria->save();
 

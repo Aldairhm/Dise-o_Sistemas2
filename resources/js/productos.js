@@ -67,14 +67,14 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    // ─── SKU automático ────────────────────────────────────────────
-    function generarSKU() {
-        const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
-        let sku = 'SKU-';
-        for (let i = 0; i < 8; i++) {
-            sku += chars.charAt(Math.floor(Math.random() * chars.length));
-        }
-        return sku;
+    // ─── SKU preview basado en nombre (igual que el servidor: VAR-NOM-###) ────
+    function previewSkuVariante(nombre) {
+        // Eliminar tildes y caracteres no-ASCII
+        const ascii = nombre.normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+        // Solo letras, primeras 3 en mayúsculas
+        const prefijo = ascii.replace(/[^a-zA-Z]/g, '').substring(0, 3).toUpperCase();
+        if (!prefijo) return 'VAR-???-...';
+        return `VAR-${prefijo}-###`;
     }
 
     // ─── Control del modal personalizado (sin Bootstrap) ──────────
@@ -84,10 +84,11 @@ document.addEventListener('DOMContentLoaded', () => {
         modalEl.offsetHeight;
         modalEl.classList.add('modal-open');
         document.body.style.overflow = 'hidden';
-        // Poner SKU automático al abrir en modo "nuevo"
+        // Preview SKU basado en nombre al abrir en modo "nuevo"
         const varianteId = document.getElementById('variante_id').value;
         if (!varianteId) {
-            document.getElementById('sku').value = generarSKU();
+            const nombre = document.getElementById('nombre_variante').value;
+            document.getElementById('sku').value = previewSkuVariante(nombre);
         }
     }
 
@@ -106,6 +107,15 @@ document.addEventListener('DOMContentLoaded', () => {
     // Cerrar con Escape
     document.addEventListener('keydown', (e) => {
         if (e.key === 'Escape' && !modalEl.classList.contains('hidden')) closeModal();
+    });
+
+    // ─── Preview SKU en tiempo real mientras se escribe el nombre ──
+    document.getElementById('nombre_variante')?.addEventListener('input', (e) => {
+        const varianteId = document.getElementById('variante_id').value;
+        // Solo actualizar preview en modo "nuevo" (no al editar)
+        if (!varianteId) {
+            document.getElementById('sku').value = previewSkuVariante(e.target.value);
+        }
     });
 
     // ─── Error inline del modal ────────────────────────────────────
@@ -324,11 +334,10 @@ document.addEventListener('DOMContentLoaded', () => {
 
     function fillModal(v, isDuplicar = false) {
         document.getElementById('nombre_variante').value = isDuplicar ? `${v.nombre_variante} (Copia)` : v.nombre_variante;
-        document.getElementById('sku').value             = isDuplicar ? generarSKU() : (v.sku ?? generarSKU());
+        document.getElementById('sku').value = isDuplicar ? previewSkuVariante(v.nombre_variante ?? '') : (v.sku ?? previewSkuVariante(v.nombre_variante ?? ''));
+
         document.getElementById('estado').value          = isDuplicar ? '1' : (v.estado ?? '1');
         document.getElementById('precio_venta').value   = v.precio_venta;
-        document.getElementById('stock').value          = v.stock;
-        document.getElementById('reserva').value        = v.reserva;
 
         if (!isDuplicar) {
             document.getElementById('variante_id').value = v.id;
@@ -364,9 +373,29 @@ document.addEventListener('DOMContentLoaded', () => {
         const isEdit     = varianteId !== '';
         const url        = isEdit ? `${ROUTES.updateVariante}/${varianteId}` : ROUTES.storeVariante;
 
-        // Asegurar SKU si quedó vacío
+        // Validaciones manuales para reemplazar las nativas de HTML
+        const nombreVal = document.getElementById('nombre_variante').value.trim();
+        const precioVal = document.getElementById('precio_venta').value.trim();
+
+        if (!nombreVal) {
+            showModalError('El nombre de la variante es obligatorio.');
+            return;
+        }
+
+        if (!precioVal || parseFloat(precioVal) <= 0) {
+            showModalError('El precio debe ser mayor a 0.');
+            return;
+        }
+
+        // Validación: debe haber al menos una imagen
+        if (previewZone && previewZone.children.length === 0) {
+            showModalError('Debes agregar al menos una imagen para la variante.');
+            return;
+        }
+
+        // El SKU lo genera el servidor; limpiar el campo preview antes de enviar
         const skuInput = document.getElementById('sku');
-        if (!skuInput.value) skuInput.value = generarSKU();
+        skuInput.value = ''; // El servidor asignará el SKU real
 
         const formData = new FormData(formVariante);
         archivosImagenes.forEach(f => formData.append('imagenes[]', f));
