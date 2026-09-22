@@ -16,6 +16,8 @@ class Variante extends Model
         'estado',
         'sku',
         'nombre_variante',
+        'costo_promedio',
+        'porcentaje_ganancia',
         'precio_venta',
         'stock',
         'reserva',

@@ -37,4 +37,9 @@ class Producto extends Model
     {
         return $this->hasMany(ProductoAtributo::class, 'id_producto');
     }
+
+    public function atributos()
+    {
+        return $this->belongsToMany(Atributo::class, 'productoatributo', 'id_producto', 'id_atributo');
+    }
 }

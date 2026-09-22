@@ -6,6 +6,7 @@ use App\Models\Producto;
 use App\Models\Categoria;
 use App\Http\Requests\StoreProductoRequest;
 use App\Http\Requests\UpdateProductoRequest;
+use App\Models\Atributo;
 use Illuminate\Support\Str;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\DB;
@@ -21,13 +22,15 @@ class ProductoController extends Controller
         }
 
         $productos = $query->get();
-        return view('productos.index', compact('productos'));
+        $categorias = Categoria::all();
+        return view('productos.index', compact('productos', 'categorias'));
     }
 
     public function create()
     {
         $categorias = Categoria::all();
-        return view('productos.create', compact('categorias'));
+        $atributos = collect([]); // No mostramos los globales
+        return view('productos.create', compact('categorias', 'atributos'));
     }
 
     public function store(StoreProductoRequest $request)
@@ -49,6 +52,19 @@ class ProductoController extends Controller
 
         $producto = Producto::create($validated);
 
+        $atributoIds = $request->input('atributos', []);
+        
+        if ($request->has('nuevos_atributos')) {
+            foreach ($request->input('nuevos_atributos') as $nombreAttr) {
+                $attr = Atributo::firstOrCreate(['nombre' => $nombreAttr]);
+                $atributoIds[] = $attr->id;
+            }
+        }
+
+        if (count($atributoIds) > 0) {
+            $producto->atributos()->sync($atributoIds);
+        }
+
         return redirect()->route('productos.edit', $producto->id)
                          ->with('success', 'Producto creado exitosamente. Ahora puedes agregar las variantes.');
     }
@@ -56,9 +72,10 @@ class ProductoController extends Controller
     public function edit(Producto $producto)
     {
         $categorias = Categoria::all();
-        $producto->load('variantes.imagenes', 'variantes.valores.atributo');
+        $producto->load('atributos', 'variantes.imagenes', 'variantes.valores.atributo');
+        $atributos = $producto->atributos; // Solo los que ya tiene este producto
 
-        return view('productos.edit', compact('producto', 'categorias'));
+        return view('productos.edit', compact('producto', 'categorias', 'atributos'));
     }
 
     public function update(UpdateProductoRequest $request, Producto $producto)
@@ -83,6 +100,21 @@ class ProductoController extends Controller
         }
 
         $producto->update($validated);
+
+        $atributoIds = $request->input('atributos', []);
+        
+        if ($request->has('nuevos_atributos')) {
+            foreach ($request->input('nuevos_atributos') as $nombreAttr) {
+                $attr = Atributo::firstOrCreate(['nombre' => $nombreAttr]);
+                $atributoIds[] = $attr->id;
+            }
+        }
+
+        if (count($atributoIds) > 0) {
+            $producto->atributos()->sync($atributoIds);
+        } else {
+            $producto->atributos()->detach();
+        }
 
         return redirect()->route('productos.index')
                          ->with('success', 'Producto actualizado exitosamente.');

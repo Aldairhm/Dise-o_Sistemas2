@@ -79,16 +79,62 @@
                             </div>
                         </div>
 
-                        {{-- Fila 2: Precio --}}
-                        <div>
+                        {{-- Fila Atributos --}}
+                        @if(isset($producto) && $producto->atributos && $producto->atributos->count() > 0)
+                        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 p-4 bg-slate-50 border border-slate-200 rounded-xl">
+                            <div class="col-span-full mb-1">
+                                <label class="block text-sm font-bold text-slate-700">
+                                    <i class="fas fa-tags text-blue-500 mr-1"></i> Valores de Atributos
+                                </label>
+                                <p class="text-xs text-slate-500 mt-1">Define los valores específicos para esta variante (ej. Rojo, M).</p>
+                            </div>
+                            @foreach($producto->atributos as $atributo)
                             <div>
-                                <label for="precio_venta" class="block text-sm font-bold text-slate-700 mb-1.5">
-                                    Precio <span class="text-red-500">*</span>
+                                <label for="atributo_{{ $atributo->id }}" class="block text-xs font-bold text-slate-600 mb-1.5">
+                                    {{ $atributo->nombre }}
+                                </label>
+                                <input type="text" id="atributo_{{ $atributo->id }}" name="valores[{{ $atributo->id }}]" 
+                                       class="atributo-input w-full px-3 py-2 bg-white border border-slate-200 focus:border-blue-500 rounded-lg text-sm text-slate-800 placeholder:text-slate-300 focus:ring-2 focus:ring-blue-500/20 focus:outline-none transition-all shadow-sm"
+                                       placeholder="Valor">
+                            </div>
+                            @endforeach
+                        </div>
+                        @endif
+
+                        {{-- Fila 2: Costo, Ganancia y Precio Calculado --}}
+                        <div class="grid grid-cols-1 sm:grid-cols-3 gap-5">
+                            <div>
+                                <label for="costo_promedio" class="block text-sm font-bold text-slate-700 mb-1.5">
+                                    Costo Promedio <span class="text-red-500">*</span>
                                 </label>
                                 <div class="relative">
                                     <span class="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-sm font-bold">$</span>
-                                    <input type="number" step="0.01" min="0" id="precio_venta" name="precio_venta" required
+                                    <input type="number" step="0.01" min="0" id="costo_promedio" name="costo_promedio" required
                                            class="w-full pl-7 pr-3 py-3 bg-white border border-slate-200 focus:border-blue-500 rounded-xl text-sm text-slate-800 placeholder:text-slate-400 focus:ring-2 focus:ring-blue-500/20 focus:outline-none transition-all shadow-sm"
+                                           placeholder="0.00">
+                                </div>
+                            </div>
+                            
+                            <div>
+                                <label for="porcentaje_ganancia" class="block text-sm font-bold text-slate-700 mb-1.5">
+                                    Ganancia (%) <span class="text-red-500">*</span>
+                                </label>
+                                <div class="relative">
+                                    <input type="number" step="1" min="0" id="porcentaje_ganancia" name="porcentaje_ganancia" required
+                                           class="w-full pl-4 pr-7 py-3 bg-white border border-slate-200 focus:border-blue-500 rounded-xl text-sm text-slate-800 placeholder:text-slate-400 focus:ring-2 focus:ring-blue-500/20 focus:outline-none transition-all shadow-sm"
+                                           placeholder="Ej: 30">
+                                    <span class="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 text-sm font-bold">%</span>
+                                </div>
+                            </div>
+
+                            <div>
+                                <label for="precio_venta" class="block text-sm font-bold text-slate-700 mb-1.5">
+                                    Precio Venta <span class="text-xs font-normal text-slate-400">(auto)</span>
+                                </label>
+                                <div class="relative">
+                                    <span class="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-sm font-bold">$</span>
+                                    <input type="number" step="0.01" min="0" id="precio_venta" name="precio_venta" readonly tabindex="-1"
+                                           class="w-full pl-7 pr-3 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm text-slate-500 font-bold cursor-not-allowed focus:outline-none shadow-sm"
                                            placeholder="0.00">
                                 </div>
                             </div>

@@ -15,7 +15,7 @@ class HomeController extends Controller
         $products = Producto::where('estado', 1)
             ->with(['variantes' => function ($q) {
                 $q->orderByDesc('stock');
-            }, 'categoria'])
+            }, 'categoria', 'atributos'])
             ->withSum('variantes', 'stock')
             ->orderByDesc('variantes_sum_stock')
             ->get();

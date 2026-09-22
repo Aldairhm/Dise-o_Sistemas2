@@ -10,19 +10,35 @@
         <div class="w-20 h-1 bg-blue-600 mx-auto mt-5 rounded-full"></div>
     </div>
 
-    {{-- Filtros de Categoría --}}
-    @if(isset($categorias) && $categorias->isNotEmpty())
-    <div class="flex flex-wrap justify-center gap-3 mb-10">
-        <button class="filter-btn active px-6 py-2 rounded-full text-sm font-bold bg-blue-600 text-white shadow-md shadow-blue-500/30 transition-all transform hover:-translate-y-1" data-category="all">
-            Todas
-        </button>
-        @foreach($categorias as $cat)
-        <button class="filter-btn px-6 py-2 rounded-full text-sm font-bold bg-white text-slate-500 border border-slate-200 hover:bg-blue-50 hover:border-blue-300 hover:text-blue-700 transition-all transform hover:-translate-y-1 shadow-sm" data-category="{{ $cat->id }}">
-            {{ $cat->nombre }}
-        </button>
-        @endforeach
+    {{-- Filtros y Buscador --}}
+    <div class="max-w-4xl mx-auto mb-10">
+        {{-- Filtros de Categoría --}}
+        @if(isset($categorias) && $categorias->isNotEmpty())
+        <div class="flex flex-wrap justify-center gap-3 mb-6">
+            <button class="filter-btn active px-6 py-2 rounded-full text-sm font-bold bg-blue-600 text-white shadow-md shadow-blue-500/30 transition-all transform hover:-translate-y-1" data-category="all">
+                Todas
+            </button>
+            @foreach($categorias as $cat)
+            <button class="filter-btn px-6 py-2 rounded-full text-sm font-bold bg-white text-slate-500 border border-slate-200 hover:bg-blue-50 hover:border-blue-300 hover:text-blue-700 transition-all transform hover:-translate-y-1 shadow-sm" data-category="{{ $cat->id }}">
+                {{ $cat->nombre }}
+            </button>
+            @endforeach
+        </div>
+        @endif
+
+        {{-- Buscador --}}
+        <div class="relative max-w-lg mx-auto transform transition-all focus-within:scale-[1.02]">
+            <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-slate-400">
+                <i class="fas fa-search"></i>
+            </div>
+            <input type="text" id="search-home-products" 
+                   class="w-full pl-11 pr-11 py-3.5 bg-white border border-slate-200 rounded-2xl text-sm font-medium text-slate-800 placeholder:text-slate-400 shadow-sm focus:outline-none focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 transition-all"
+                   placeholder="¿Qué estás buscando hoy?">
+            <button type="button" id="clear-search-home" class="absolute inset-y-0 right-0 pr-4 flex items-center text-slate-400 hover:text-blue-600 hidden transition-colors cursor-pointer">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
     </div>
-    @endif
 
     {{-- Grid de Tarjetas --}}
     @if($products->isNotEmpty())
@@ -74,7 +90,9 @@
             $catNombre = $prod->categoria?->nombre ?? 'Sin categoría';
         @endphp
 
-        <div class="product-card group bg-white rounded-3xl shadow-[0_2px_15px_-3px_rgba(0,0,0,0.07),0_10px_20px_-2px_rgba(0,0,0,0.04)] border border-transparent hover:border-blue-100 transition-all duration-300 flex flex-col overflow-hidden hover:-translate-y-1" data-category-id="{{ $prod->id_categoria }}">
+        <div class="product-card group bg-white rounded-3xl shadow-[0_2px_15px_-3px_rgba(0,0,0,0.07),0_10px_20px_-2px_rgba(0,0,0,0.04)] border border-transparent hover:border-blue-100 transition-all duration-300 flex flex-col overflow-hidden hover:-translate-y-1" 
+             data-category-id="{{ $prod->id_categoria }}"
+             data-name="{{ strtolower($prod->nombre) }}">
 
             {{-- Imagen --}}
             <div class="relative bg-slate-50/70 p-4 m-3 rounded-2xl flex items-center justify-center h-[260px] overflow-hidden group-hover:bg-blue-50/30 transition-colors">
@@ -114,6 +132,24 @@
                 <h3 class="text-lg font-bold text-gray-900 leading-tight mb-3 line-clamp-2">
                     {{ $prod->nombre }}
                 </h3>
+
+                {{-- Atributos --}}
+                @if($prod->atributos->count() > 0)
+                <div class="mb-2">
+                    <div class="flex flex-wrap gap-1">
+                        @foreach($prod->atributos->take(3) as $attr)
+                            <span class="inline-flex items-center px-1.5 py-0.5 rounded-md text-[9.5px] font-bold bg-indigo-50/80 text-indigo-600 border border-indigo-100/50 uppercase tracking-wide">
+                                <i class="fas fa-tag mr-1 text-[8px] opacity-60"></i>{{ Str::limit($attr->nombre, 15) }}
+                            </span>
+                        @endforeach
+                        @if($prod->atributos->count() > 3)
+                            <span class="inline-flex items-center px-1.5 py-0.5 rounded-md text-[9.5px] font-bold bg-slate-50 text-slate-500 border border-slate-200">
+                                +{{ $prod->atributos->count() - 3 }}
+                            </span>
+                        @endif
+                    </div>
+                </div>
+                @endif
 
                 {{-- Variantes disponibles (Pills mini) --}}
                 <div class="mb-4">
@@ -200,15 +236,35 @@ document.addEventListener('DOMContentLoaded', function() {
     const productCards = Array.from(document.querySelectorAll('.product-card'));
     const btnVerTodos = document.getElementById('btn-ver-todos');
     const btnContainer = document.getElementById('btn-ver-todos-container');
+    const searchInput = document.getElementById('search-home-products');
+    const clearSearchBtn = document.getElementById('clear-search-home');
     
     let currentCategory = 'all';
+    let searchQuery = '';
     let isExpanded = false;
     const ITEMS_PER_PAGE = 4; // Límite inicial de productos a mostrar (1 fila)
 
+    // Elemento para mostrar "No hay resultados"
+    const gridContainer = document.querySelector('.grid');
+    let noResultsMsg = document.createElement('div');
+    noResultsMsg.className = 'col-span-full text-center py-12 text-slate-400 hidden';
+    noResultsMsg.innerHTML = `
+        <i class="fas fa-search text-4xl mb-4 block opacity-30"></i>
+        <p class="text-lg font-semibold">No se encontraron productos.</p>
+        <p class="text-sm mt-1">Intenta con otra búsqueda o categoría.</p>
+    `;
+    if (gridContainer) {
+        gridContainer.appendChild(noResultsMsg);
+    }
+
     function renderProducts() {
-        // 1. Filtrar por categoría
+        if (!gridContainer) return;
+
+        // 1. Filtrar por categoría y búsqueda
         const filtered = productCards.filter(card => {
-            return currentCategory === 'all' || card.getAttribute('data-category-id') === currentCategory;
+            const matchCat = currentCategory === 'all' || card.getAttribute('data-category-id') === currentCategory;
+            const matchName = card.getAttribute('data-name').includes(searchQuery);
+            return matchCat && matchName;
         });
 
         // 2. Ocultar todos
@@ -220,22 +276,30 @@ document.addEventListener('DOMContentLoaded', function() {
             filtered[i].style.display = 'flex';
         }
 
-        // 4. Lógica del botón Ver Todos
+        // 4. Mostrar mensaje si no hay resultados
+        if (filtered.length === 0) {
+            noResultsMsg.classList.remove('hidden');
+        } else {
+            noResultsMsg.classList.add('hidden');
+        }
+
+        // 5. Lógica del botón Ver Todos
         if (btnVerTodos && btnContainer) {
             if (filtered.length <= ITEMS_PER_PAGE) {
-                // Si son muy pocos, ocultar el botón
+                // Si son muy pocos o cero, ocultar el botón
                 btnContainer.style.display = 'none';
             } else {
                 btnContainer.style.display = 'block';
                 if (isExpanded) {
                     btnVerTodos.innerHTML = 'Ver menos <i class="fas fa-arrow-up ml-1"></i>';
                 } else {
-                    btnVerTodos.innerHTML = 'Ver todos los productos <i class="fas fa-arrow-down ml-1"></i>';
+                    btnVerTodos.innerHTML = `Ver todos (${filtered.length}) <i class="fas fa-arrow-down ml-1"></i>`;
                 }
             }
         }
     }
 
+    // Eventos Filtros de Categoría
     filterBtns.forEach(btn => {
         btn.addEventListener('click', () => {
             filterBtns.forEach(b => {
@@ -251,6 +315,35 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     });
 
+    // Eventos Buscador
+    if (searchInput) {
+        searchInput.addEventListener('input', (e) => {
+            searchQuery = e.target.value.toLowerCase().trim();
+            
+            if (searchQuery.length > 0) {
+                clearSearchBtn.classList.remove('hidden');
+            } else {
+                clearSearchBtn.classList.add('hidden');
+            }
+            
+            isExpanded = true; // Si busca, mostrar todos los resultados filtrados sin colapsar (opcional, pero buena UX)
+            if (searchQuery === '') isExpanded = false; // Si borra, volver a 4
+
+            renderProducts();
+        });
+    }
+
+    if (clearSearchBtn) {
+        clearSearchBtn.addEventListener('click', () => {
+            searchInput.value = '';
+            searchQuery = '';
+            clearSearchBtn.classList.add('hidden');
+            isExpanded = false;
+            renderProducts();
+        });
+    }
+
+    // Evento Ver Todos
     if (btnVerTodos) {
         btnVerTodos.addEventListener('click', (e) => {
             e.preventDefault();

@@ -7,6 +7,7 @@ use App\Http\Controllers\HomeController;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\CategoriaController;
+use App\Http\Controllers\AtributoController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\ProductoController;
 use App\Http\Controllers\VarianteController;
@@ -61,6 +62,9 @@ Route::middleware('auth')->group(function () {
         Route::post('/categorias', [CategoriaController::class, 'store'])->name('categorias.store');
         Route::put('/categorias/{categoria}', [CategoriaController::class, 'update'])->name('categorias.update');
         Route::patch('/categorias/{categoria}/toggle-status', [CategoriaController::class, 'toggleStatus'])->name('categorias.toggleStatus');
+
+        // ── Módulo de Atributos ──
+        Route::resource('atributos', AtributoController::class)->except(['create', 'show', 'edit']);
 
         // ── TU MÓDULO DE PROVEEDORES Y CATÁLOGOS ──
         

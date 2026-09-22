@@ -40,6 +40,18 @@ class VarianteController extends Controller
             }
         }
 
+        if ($request->has('valores')) {
+            foreach ($request->input('valores') as $atributoId => $valor) {
+                if (!empty($valor)) {
+                    \App\Models\VarianteValor::create([
+                        'id_variante' => $variante->id,
+                        'id_atributo' => $atributoId,
+                        'valor'       => $valor,
+                    ]);
+                }
+            }
+        }
+
         return response()->json([
             'success'  => true,
             'message'  => 'Variante creada correctamente.',
@@ -111,6 +123,19 @@ class VarianteController extends Controller
                     'ruta_imagen'  => $path,
                     'es_principal' => $index === $principalIndex ? 1 : 0,
                 ]);
+            }
+        }
+
+        if ($request->has('valores')) {
+            \App\Models\VarianteValor::where('id_variante', $variante->id)->delete();
+            foreach ($request->input('valores') as $atributoId => $valor) {
+                if (!empty($valor)) {
+                    \App\Models\VarianteValor::create([
+                        'id_variante' => $variante->id,
+                        'id_atributo' => $atributoId,
+                        'valor'       => $valor,
+                    ]);
+                }
             }
         }
 
