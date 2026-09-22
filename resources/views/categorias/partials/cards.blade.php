@@ -17,6 +17,7 @@
         $icono  = $categoria->icono ?? 'fa-tag';
         $isBaja = !$categoria->estado;
         $delay  = $loop->index * 50;
+        $tieneProductos = ($categoria->productos_count ?? 0) > 0;
     @endphp
 
     <div class="categoria-card drag-handle group bg-white rounded-xl shadow-sm hover:shadow-md transition-all duration-300 relative flex flex-col border border-slate-200/60 {{ $isBaja ? 'opacity-75 grayscale-[20%]' : '' }}"
@@ -109,7 +110,9 @@
 
                 <button type="button"
                         onclick="toggleStatus({{ $categoria->id }}, '{{ addslashes($categoria->nombre) }}', 0)"
-                        class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md bg-red-50 hover:bg-red-100 text-red-600 font-semibold text-xs transition-colors cursor-pointer">
+                        class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md {{ $tieneProductos ? 'bg-slate-100 text-slate-300 cursor-not-allowed' : 'bg-red-50 hover:bg-red-100 text-red-600 cursor-pointer' }} font-semibold text-xs transition-colors"
+                        title="{{ $tieneProductos ? 'No se puede deshabilitar: tiene productos asociados' : 'Deshabilitar categoría' }}"
+                        {{ $tieneProductos ? 'disabled' : '' }}>
                     <i class="fas fa-ban"></i>
                     <span>Deshabilitar</span>
                 </button>

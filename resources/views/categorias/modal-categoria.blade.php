@@ -22,7 +22,7 @@
                 </div>
 
                 <!-- Formulario -->
-                <form id="categoriaForm">
+                <form id="categoriaForm" novalidate>
                     <!-- Configuración interna -->
                     <input type="hidden" id="modalMethod" value="POST">
                     <input type="hidden" id="categoriaId" value="">
@@ -82,7 +82,7 @@
                                     <!-- Nombre -->
                                     <div>
                                         <label for="inputNombre" class="block text-sm font-bold text-slate-700 mb-1.5">Nombre <span class="text-red-500">*</span></label>
-                                        <input type="text" id="inputNombre" required maxlength="100"
+                                        <input type="text" id="inputNombre" maxlength="100"
                                             class="w-full px-4 py-3 bg-white border border-slate-200 focus:border-blue-500 rounded-xl text-sm text-slate-800 placeholder:text-slate-400 focus:ring-2 focus:ring-blue-500/20 focus:outline-none transition-all shadow-sm"
                                             placeholder="Ej: Electrónica">
                                         <p class="mt-1.5 text-xs text-slate-400">Nombre público que verán los clientes (Campo obligatorio)</p>

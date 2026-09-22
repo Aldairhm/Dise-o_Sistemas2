@@ -25,7 +25,7 @@
                 </div>
 
                 {{-- Formulario --}}
-                <form id="formVariante" enctype="multipart/form-data">
+                <form id="formVariante" enctype="multipart/form-data" novalidate>
                     <input type="hidden" id="variante_id" name="variante_id" value="">
                     <input type="hidden" id="imagen_principal_index" name="imagen_principal_index" value="-1">
                     <input type="hidden" id="imagen_existente_principal_id" name="imagen_existente_principal_id" value="">
@@ -79,8 +79,8 @@
                             </div>
                         </div>
 
-                        {{-- Fila 2: Precio, Stock, Reserva --}}
-                        <div class="grid grid-cols-2 sm:grid-cols-3 gap-4">
+                        {{-- Fila 2: Precio --}}
+                        <div>
                             <div>
                                 <label for="precio_venta" class="block text-sm font-bold text-slate-700 mb-1.5">
                                     Precio <span class="text-red-500">*</span>
@@ -92,22 +92,6 @@
                                            placeholder="0.00">
                                 </div>
                             </div>
-
-                            <div>
-                                <label for="stock" class="block text-sm font-bold text-slate-700 mb-1.5">
-                                    Stock <span class="text-red-500">*</span>
-                                </label>
-                                <input type="number" min="0" id="stock" name="stock" required
-                                       class="w-full px-4 py-3 bg-white border border-slate-200 focus:border-blue-500 rounded-xl text-sm text-slate-800 placeholder:text-slate-400 focus:ring-2 focus:ring-blue-500/20 focus:outline-none transition-all shadow-sm"
-                                       placeholder="0">
-                            </div>
-
-                            <div>
-                                <label for="reserva" class="block text-sm font-bold text-slate-700 mb-1.5">Reserva</label>
-                                <input type="number" min="0" id="reserva" name="reserva" value="0"
-                                       class="w-full px-4 py-3 bg-white border border-slate-200 focus:border-blue-500 rounded-xl text-sm text-slate-800 placeholder:text-slate-400 focus:ring-2 focus:ring-blue-500/20 focus:outline-none transition-all shadow-sm">
-                            </div>
-
                         </div>
 
                         {{-- Fila 3: Imágenes Drag & Drop --}}

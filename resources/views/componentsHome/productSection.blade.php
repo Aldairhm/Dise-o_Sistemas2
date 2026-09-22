@@ -98,10 +98,17 @@
 
             {{-- Info --}}
             <div class="px-6 pb-6 pt-2 flex flex-col flex-1">
-                {{-- Categoría --}}
-                <p class="text-[11px] font-black text-blue-600 uppercase tracking-wider mb-1">
-                    {{ $catNombre }}
-                </p>
+                {{-- Categoría y Marca --}}
+                <div class="flex items-center justify-between mb-1">
+                    <p class="text-[11px] font-black text-blue-600 uppercase tracking-wider">
+                        {{ $catNombre }}
+                    </p>
+                    @if($prod->marca)
+                        <span class="text-[10px] font-bold text-orange-600 bg-orange-50 px-2 py-0.5 rounded-md uppercase tracking-wider border border-orange-200">
+                            {{ $prod->marca }}
+                        </span>
+                    @endif
+                </div>
 
                 {{-- Nombre --}}
                 <h3 class="text-lg font-bold text-gray-900 leading-tight mb-3 line-clamp-2">
@@ -143,6 +150,7 @@
                                 data-name="{{ $prod->nombre }}"
                                 data-price="{{ number_format($precio, 2) }}"
                                 data-category="{{ $catNombre }}"
+                                data-marca="{{ $prod->marca ?? '' }}"
                                 data-sku="{{ $sku }}"
                                 data-stock="{{ $stock }}"
                                 data-reserva="{{ $reserva }}"

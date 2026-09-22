@@ -91,6 +91,14 @@
                                class="w-full rounded-xl border border-slate-200 px-4 py-2.5 text-sm text-slate-500 bg-slate-50 cursor-not-allowed">
                     </div>
                     <div>
+                        <label for="marca" class="block text-xs font-bold text-slate-500 uppercase tracking-widest mb-1.5">
+                            Marca
+                        </label>
+                        <input type="text" name="marca" id="marca" maxlength="100"
+                               class="w-full rounded-xl border border-slate-200 px-4 py-2.5 text-sm text-slate-800 placeholder:text-slate-300 focus:outline-none focus:ring-2 focus:ring-blue-500/30 focus:border-blue-500 transition-all @error('marca') border-red-400 bg-red-50 @enderror"
+                               value="{{ old('marca', $producto->marca) }}">
+                    </div>
+                    <div>
                         <label for="id_categoria" class="block text-xs font-bold text-slate-500 uppercase tracking-widest mb-1.5">
                             Categoría <span class="text-red-500">*</span>
                         </label>

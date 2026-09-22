@@ -6,7 +6,7 @@
         <!-- Modal Panel -->
         <div class="flex items-center justify-center min-h-screen px-4 pt-4 pb-20 text-center sm:p-0">
             <!-- Contenedor Light Mode Minimalista -->
-            <div class="relative bg-white rounded-[2rem] text-left overflow-hidden shadow-2xl transform transition-all sm:my-8 sm:max-w-4xl w-full border border-gray-100 flex flex-col md:flex-row max-h-[90vh] md:max-h-[85vh]">
+            <div class="relative bg-white rounded-[2rem] text-left overflow-hidden shadow-2xl transform transition-all sm:my-8 sm:max-w-4xl w-full border border-gray-100 flex flex-col md:flex-row h-[90vh] md:h-[85vh] max-h-[90vh] md:max-h-[85vh]">
                 
                 <!-- Botón Cerrar Flotante -->
                 <button onclick="closeModal()" class="absolute top-4 right-4 sm:top-6 sm:right-6 w-10 h-10 bg-gray-100 hover:bg-gray-200 rounded-full flex items-center justify-center text-gray-500 hover:text-gray-800 transition-all z-[60] shadow-sm">
@@ -14,7 +14,7 @@
                 </button>
 
                 <!-- Panel Izquierdo (Imagen y Galería) -->
-                <div class="w-full md:w-1/2 bg-gray-50/50 p-6 sm:p-8 flex flex-col items-center relative overflow-hidden group border-b md:border-b-0 md:border-r border-gray-100">
+                <div class="w-full md:w-1/2 min-h-0 bg-gray-50/50 p-6 sm:p-8 flex flex-col items-center relative overflow-hidden group border-b md:border-b-0 md:border-r border-gray-100">
                     <div class="absolute inset-0 bg-blue-50 opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none"></div>
                     
                     <!-- Contenedor Imagen Principal -->
@@ -33,13 +33,14 @@
                 </div>
 
                 <!-- Panel Derecho (Info Light) -->
-                <div class="w-full md:w-1/2 p-6 sm:p-8 md:p-12 flex flex-col justify-center bg-white overflow-y-auto custom-scrollbar">
+                <div class="w-full md:w-1/2 min-h-0 p-6 sm:p-8 md:p-12 flex flex-col justify-start bg-white overflow-y-auto custom-scrollbar">
                     
                     <!-- Header: Categoría, Nombre y SKU -->
                     <!-- pr-12 o pr-16 evita que el botón X se superponga al contenido en pantallas móviles -->
                     <div class="flex flex-col mb-4 sm:mb-6 pr-12 sm:pr-14">
                         <div class="flex items-center gap-3 mb-2 flex-wrap">
                             <span id="v-modal-category" class="text-blue-600 text-[10px] sm:text-xs font-black uppercase tracking-widest">Categoría</span>
+                            <span id="v-modal-marca" class="hidden text-[10px] sm:text-xs font-bold text-orange-600 bg-orange-50 px-2.5 py-1 rounded-md uppercase tracking-wider border border-orange-200">Marca</span>
                             <span id="v-modal-sku" class="bg-gray-100 text-gray-500 text-[9px] sm:text-[10px] font-bold px-2.5 py-1 rounded-full border border-gray-200 whitespace-nowrap">SKU</span>
                         </div>
                         <h2 id="v-modal-name" class="text-2xl sm:text-3xl font-black text-gray-900 leading-tight">Nombre</h2>
@@ -49,7 +50,7 @@
                         <span class="text-blue-600 font-bold mr-1">$</span><span id="v-modal-price-val">0.00</span>
                     </div>
                     
-                    <p id="v-modal-description" class="text-gray-500 mb-6 sm:mb-8 leading-relaxed text-xs sm:text-sm">Descripción</p>
+                    <p id="v-modal-description" class="text-gray-500 mb-6 sm:mb-8 leading-relaxed text-xs sm:text-sm whitespace-pre-line break-words">Descripción</p>
 
                     <!-- Selector de Variantes (Estilo Shein/Temu) -->
                     <div id="v-modal-variants-container" class="mb-6 hidden">
@@ -132,6 +133,7 @@
             // Extraer los datos básicos del botón
             const name = btn.getAttribute('data-name') || '';
             const category = btn.getAttribute('data-category') || '';
+            const marca = btn.getAttribute('data-marca') || '';
             const desc = btn.getAttribute('data-description') || '';
 
             // Extraer JSON de variantes
@@ -145,11 +147,20 @@
             // Asignar los valores estáticos
             document.getElementById('v-modal-name').innerText = name;
             document.getElementById('v-modal-category').innerText = category;
+
+            const marcaSpan = document.getElementById('v-modal-marca');
+            if (marca) {
+                marcaSpan.innerText = marca;
+                marcaSpan.classList.remove('hidden');
+            } else {
+                marcaSpan.classList.add('hidden');
+            }
+
             document.getElementById('v-modal-description').innerText = desc;
 
             const variantsContainer = document.getElementById('v-modal-variants-container');
             const variantsList = document.getElementById('v-modal-variants-list');
-            
+
             variantsList.innerHTML = ''; // Limpiar lista
             
             if (variants && variants.length > 0) {
