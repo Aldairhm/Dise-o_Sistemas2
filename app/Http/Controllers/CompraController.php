@@ -12,13 +12,40 @@ use Illuminate\Support\Facades\DB;
 
 class CompraController extends Controller
 {
+    public function historial()
+    {
+        $compras = Compra::with('proveedor')
+            ->with(['detalles.variante.producto', 'detalles.variante.imagenes', 'movimientos.variante.producto'])
+            ->withCount('detalles')
+            ->latest('fecha_compra')
+            ->latest('id')
+            ->paginate(15);
+
+        return view('compras.historial', compact('compras'));
+    }
+
+    public function movimientos()
+    {
+        $variantes = Variante::with(['producto:id,nombre', 'imagenes'])
+            ->where('estado', 1)
+            ->orderBy('id')
+            ->get(['id', 'id_producto', 'sku', 'nombre_variante', 'stock', 'reserva']);
+
+        $movimientos = MovimientoBodega::with(['variante.producto', 'variante.imagenes', 'compra.proveedor'])
+            ->where('tipo', 'transferencia_tienda')
+            ->latest()
+            ->paginate(20);
+
+        return view('compras.movimientos', compact('movimientos', 'variantes'));
+    }
+
     public function create()
     {
         $proveedores = Proveedor::query()
             ->orderBy('nombre')
             ->get(['id', 'nombre', 'correo']);
 
-        $variantes = Variante::with('producto:id,nombre')
+        $variantes = Variante::with(['producto:id,nombre', 'imagenes'])
             ->where('estado', 1)
             ->orderBy('id')
             ->get(['id', 'id_producto', 'sku', 'nombre_variante', 'precio_venta'])
@@ -27,6 +54,9 @@ class CompraController extends Controller
                 'producto' => $variante->producto?->nombre ?? 'Producto sin nombre',
                 'variante' => $variante->nombre_variante,
                 'sku' => $variante->sku,
+                'imagen' => ($imagen = $variante->imagenes->firstWhere('es_principal', 1) ?? $variante->imagenes->first())
+                    ? asset('storage/' . $imagen->ruta_imagen)
+                    : null,
                 'unidad' => 'unidad',
                 'precio_venta' => $variante->precio_venta,
             ])

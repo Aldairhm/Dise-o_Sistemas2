@@ -66,6 +66,8 @@ Route::middleware('auth')->group(function () {
 
         Route::get('/compras/nueva', [CompraController::class, 'create'])->name('compras.create');
         Route::post('/compras', [CompraController::class, 'store'])->name('compras.store');
+        Route::get('/compras/historial', [CompraController::class, 'historial'])->name('compras.historial');
+        Route::get('/compras/movimientos', [CompraController::class, 'movimientos'])->name('compras.movimientos');
         Route::post('/movimientos-bodega/transferencia-tienda', [MovimientoBodegaController::class, 'transferirATienda'])->name('movimientos-bodega.transferencia-tienda');
 
         // ── TU MÓDULO DE PROVEEDORES Y CATÁLOGOS ──

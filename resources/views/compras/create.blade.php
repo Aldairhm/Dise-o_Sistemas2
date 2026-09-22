@@ -24,6 +24,12 @@
             </div>
         </div>
 
+        <nav class="flex flex-wrap gap-2 rounded-2xl border border-slate-200 bg-white p-2 shadow-sm" aria-label="Secciones de compras">
+            <a href="{{ route('compras.create') }}" class="rounded-xl bg-blue-600 px-4 py-2.5 text-sm font-bold text-white shadow-sm"><i class="fas fa-cart-plus mr-2"></i>Nueva compra</a>
+            <a href="{{ route('compras.historial') }}" class="rounded-xl px-4 py-2.5 text-sm font-bold text-slate-500 hover:bg-slate-50 hover:text-blue-600"><i class="fas fa-clock-rotate-left mr-2"></i>Historial</a>
+            <a href="{{ route('compras.movimientos') }}" class="rounded-xl px-4 py-2.5 text-sm font-bold text-slate-500 hover:bg-slate-50 hover:text-blue-600"><i class="fas fa-warehouse mr-2"></i>Bodega a tienda</a>
+        </nav>
+
         <div x-show="guardado" x-transition class="flex items-center gap-3 rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm font-bold text-emerald-700 shadow-sm" style="display:none;">
             <i class="fas fa-circle-check text-lg"></i>
             <span>Compra registrada correctamente. Las unidades ya están en bodega.</span>
@@ -87,9 +93,14 @@
                             <button type="button" @click="agregarVariante(variante)" class="text-left rounded-xl border border-slate-200 bg-white hover:border-blue-400 hover:shadow-md hover:shadow-blue-500/5 px-4 py-3 transition-all group">
                                 <div class="flex items-center justify-between gap-3">
                                     <div class="min-w-0">
+                                        <div class="mb-2 h-12 w-12 overflow-hidden rounded-lg border border-slate-200 bg-slate-50">
+                                            <template x-if="variante.imagen"><img :src="variante.imagen" :alt="variante.variante" class="h-full w-full object-cover"></template>
+                                            <template x-if="!variante.imagen"><div class="flex h-full items-center justify-center text-slate-300"><i class="fas fa-image"></i></div></template>
+                                        </div>
                                         <p class="text-sm font-bold text-slate-800 truncate group-hover:text-blue-700" x-text="variante.producto"></p>
                                         <p class="text-xs text-slate-500 truncate mt-0.5" x-text="variante.variante"></p>
                                         <p class="text-[10px] font-bold uppercase tracking-wider text-slate-400 mt-2" x-text="variante.sku"></p>
+                                        <p class="text-xs font-black text-blue-700 mt-1" x-text="'Venta: ' + moneda(variante.precio_venta)"></p>
                                     </div>
                                     <div class="w-8 h-8 rounded-full bg-slate-50 flex items-center justify-center text-slate-400 group-hover:bg-blue-600 group-hover:text-white transition-colors flex-shrink-0">
                                         <i class="fas fa-plus"></i>
@@ -122,7 +133,7 @@
                                 <tr>
                                     <th class="px-5 py-4 font-bold">Variante</th>
                                     <th class="px-3 py-4 font-bold w-28 text-center">Cantidad</th>
-                                    <th class="px-3 py-4 font-bold w-36 text-center">Costo Unit.</th>
+                                    <th class="px-3 py-4 font-bold w-36 text-center">Costo proveedor</th>
                                     <th class="px-5 py-4 font-bold text-right w-32">Subtotal</th>
                                     <th class="px-5 py-4 font-bold text-center"></th>
                                 </tr>
@@ -131,9 +142,17 @@
                                 <template x-for="linea in lineas" :key="linea.id">
                                     <tr class="hover:bg-slate-50/50 transition-colors group">
                                         <td class="px-5 py-4">
-                                            <p class="font-bold text-slate-800" x-text="linea.producto"></p>
+                                            <div class="flex items-center gap-3">
+                                                <div class="h-12 w-12 shrink-0 overflow-hidden rounded-lg border border-slate-200 bg-slate-50">
+                                                    <template x-if="linea.imagen"><img :src="linea.imagen" :alt="linea.variante" class="h-full w-full object-cover"></template>
+                                                    <template x-if="!linea.imagen"><div class="flex h-full items-center justify-center text-slate-300"><i class="fas fa-image"></i></div></template>
+                                                </div>
+                                                <div><p class="font-bold text-slate-800" x-text="linea.producto"></p>
                                             <p class="text-xs text-slate-500 mt-0.5" x-text="linea.variante"></p>
                                             <p class="text-[10px] font-bold uppercase tracking-wider text-slate-400 mt-1" x-text="linea.sku || 'Sin SKU'"></p>
+                                            <p class="text-xs font-black text-blue-700 mt-1" x-text="'Precio venta: ' + moneda(linea.precio_venta)"></p>
+                                                </div>
+                                            </div>
                                         </td>
                                         
                                         <!-- Inputs "Invisibles" pero accesibles -->

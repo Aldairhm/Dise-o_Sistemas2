@@ -37,4 +37,9 @@ class Compra extends Model
     {
         return $this->hasMany(CompraDetalle::class, 'id_compra');
     }
+
+    public function movimientos()
+    {
+        return $this->hasMany(MovimientoBodega::class, 'id_compra');
+    }
 }
