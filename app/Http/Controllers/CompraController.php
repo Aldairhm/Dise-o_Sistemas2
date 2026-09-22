@@ -80,7 +80,8 @@ class CompraController extends Controller
 
         $compra = DB::transaction(function () use ($validated, $request) {
             $detalles = collect($validated['lineas']);
-            $variantes = Variante::whereIn('id', $detalles->pluck('id_variante'))
+            $variantes = Variante::with('producto')
+                ->whereIn('id', $detalles->pluck('id_variante'))
                 ->lockForUpdate()
                 ->get()
                 ->keyBy('id');
@@ -108,6 +109,17 @@ class CompraController extends Controller
                 $reservaNueva = $reservaAnterior + $cantidad;
                 $stockActual = (int) $variante->stock;
 
+                // Cálculo del nuevo costo promedio ponderado
+                $unidadesActuales = $stockActual + $reservaAnterior;
+                $costoPromedioActual = (float) $variante->costo_promedio;
+                
+                $nuevoCostoPromedio = (($unidadesActuales * $costoPromedioActual) + ($cantidad * $costo)) / ($unidadesActuales + $cantidad);
+                
+                // Cálculo del nuevo precio de venta (costo promedio + ganancia + comisión del producto)
+                $porcentajeGanancia = (float) $variante->porcentaje_ganancia;
+                $comision = (float) ($variante->producto->comision ?? 0);
+                $nuevoPrecioVenta = ($nuevoCostoPromedio * (1 + ($porcentajeGanancia / 100))) + $comision;
+
                 CompraDetalle::create([
                     'id_compra' => $compra->id,
                     'id_variante' => $variante->id,
@@ -116,7 +128,11 @@ class CompraController extends Controller
                     'subtotal' => $cantidad * $costo,
                 ]);
 
-                $variante->update(['reserva' => $reservaNueva]);
+                $variante->update([
+                    'reserva' => $reservaNueva,
+                    'costo_promedio' => $nuevoCostoPromedio,
+                    'precio_venta' => $nuevoPrecioVenta
+                ]);
 
                 MovimientoBodega::create([
                     'id_variante' => $variante->id,

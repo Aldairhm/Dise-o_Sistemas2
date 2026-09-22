@@ -26,7 +26,7 @@ class StoreVarianteRequest extends FormRequest
             ],
             'costo_promedio'      => 'required|numeric|min:0',
             'porcentaje_ganancia' => 'required|numeric|min:0',
-            'precio_venta'        => 'required|numeric|min:0.01',
+            'precio_venta'        => 'required|numeric|min:0',
             'sku'                 => [
                 'nullable',
                 'string',
@@ -45,7 +45,7 @@ class StoreVarianteRequest extends FormRequest
             'nombre_variante.max'      => 'El nombre no puede superar 200 caracteres.',
             'nombre_variante.unique'   => 'Ya existe una variante con ese nombre para este producto.',
             'precio_venta.required'    => 'El precio de venta es obligatorio.',
-            'precio_venta.min'         => 'El precio debe ser mayor a 0.',
+            'precio_venta.min'         => 'El precio no puede ser negativo.',
             'sku.unique'               => 'Este SKU ya está en uso por otra variante.',
             'imagenes.required'        => 'Debes agregar al menos una imagen para la variante.',
             'imagenes.min'             => 'Debes agregar al menos una imagen para la variante.',

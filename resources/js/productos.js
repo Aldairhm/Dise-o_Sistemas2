@@ -119,19 +119,21 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     // ─── Cálculo de Precio Venta ───────────────────────────────────
-    const costoInput = document.getElementById('costo_promedio');
+    const costoInput    = document.getElementById('costo_promedio');
     const gananciaInput = document.getElementById('porcentaje_ganancia');
-    const precioInput = document.getElementById('precio_venta');
+    const precioInput   = document.getElementById('precio_venta');
+    const comisionEl    = document.getElementById('comision_producto');
 
     function calcularPrecio() {
         if (!costoInput || !gananciaInput || !precioInput) return;
-        const costo = parseFloat(costoInput.value) || 0;
+        const costo    = parseFloat(costoInput.value)    || 0;
         const ganancia = parseFloat(gananciaInput.value) || 0;
-        const precio = costo * (1 + (ganancia / 100));
-        precioInput.value = precio > 0 ? precio.toFixed(2) : '';
+        const comision = parseFloat(comisionEl?.value)   || 0;
+        const precio   = (costo * (1 + (ganancia / 100))) + comision;
+        precioInput.value = precio.toFixed(2);
     }
 
-    costoInput?.addEventListener('input', calcularPrecio);
+    // Solo ganancia es editable; al cambiarla recalcula el precio
     gananciaInput?.addEventListener('input', calcularPrecio);
 
     // ─── Error inline del modal ────────────────────────────────────
@@ -337,9 +339,9 @@ document.addEventListener('DOMContentLoaded', () => {
         document.getElementById('variante_id').value = '';
         document.getElementById('sku').value = '';
         document.getElementById('estado').value = '1';
-        if (costoInput) costoInput.value = '';
+        if (costoInput) costoInput.value = '0.00';
         if (gananciaInput) gananciaInput.value = '';
-        if (precioInput) precioInput.value = '';
+        if (precioInput) precioInput.value = '0.00';
         document.getElementById('imagen_principal_index').value = '-1';
         document.getElementById('imagen_existente_principal_id').value = '';
         document.getElementById('deletedImagesContainer').innerHTML = '';
@@ -416,8 +418,8 @@ document.addEventListener('DOMContentLoaded', () => {
             return;
         }
 
-        if (!costoVal || parseFloat(costoVal) < 0) {
-            showModalError('El costo promedio es requerido y debe ser mayor o igual a 0.');
+        if (!costoVal || isNaN(parseFloat(costoVal)) || parseFloat(costoVal) < 0) {
+            showModalError('El costo promedio es inválido.');
             return;
         }
 

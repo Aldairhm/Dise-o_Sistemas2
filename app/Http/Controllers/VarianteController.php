@@ -70,11 +70,12 @@ class VarianteController extends Controller
 
     public function update(UpdateVarianteRequest $request, $id)
     {
-        $variante  = Variante::findOrFail($id);
+        $variante  = Variante::with('producto')->findOrFail($id);
         $validated = $request->validated();
 
-        // ✅ CORRECCIÓN: nunca sobreescribir stock ni reserva desde el formulario
-        unset($validated['stock'], $validated['reserva']);
+        // Nunca sobreescribir stock, reserva ni costo_promedio desde el formulario
+        // El costo_promedio solo se actualiza automáticamente desde las compras
+        unset($validated['stock'], $validated['reserva'], $validated['costo_promedio']);
 
         // Actualizar hash si cambió el nombre
         $validated['hash_combinacion'] = md5($variante->id_producto . ':' . strtolower(trim($validated['nombre_variante'])));
@@ -83,6 +84,13 @@ class VarianteController extends Controller
         if (empty($validated['sku'])) {
             $validated['sku'] = $variante->sku ?: $this->generarSkuVariante($validated['nombre_variante'], $variante->id);
         }
+
+        // Recalcular precio_venta con el costo_promedio real de la BD + ganancia + comisión del producto
+        $porcentajeGanancia = isset($validated['porcentaje_ganancia'])
+            ? (float) $validated['porcentaje_ganancia']
+            : (float) $variante->porcentaje_ganancia;
+        $comision = (float) ($variante->producto->comision ?? 0);
+        $validated['precio_venta'] = ((float) $variante->costo_promedio * (1 + ($porcentajeGanancia / 100))) + $comision;
 
         $variante->update($validated);
 

@@ -95,14 +95,11 @@
 
     <script>
         function copyKit(event) {
-            const modalName = document.getElementById('v-modal-name').innerText;
+            const modalName  = document.getElementById('v-modal-name').innerText;
             const modalPrice = document.getElementById('v-modal-price-val').innerText;
-            const modalDesc = document.getElementById('v-modal-description').innerText;
-            const modalStock = document.getElementById('v-modal-stock').innerText;
-            const modalReserva = document.getElementById('v-modal-reserva').innerText;
+            const modalDesc  = document.getElementById('v-modal-description').innerText;
 
-            // Construir la descripción en Markdown (compatible con WhatsApp)
-            const markdownText = `*${modalName}*\n\n*Precio:* $${modalPrice}\n\n${modalDesc}\n\n*Stock:* ${modalStock} | *Reserva:* ${modalReserva}`;
+            const markdownText = `*${modalName}*\n\n*Precio:* $${modalPrice}\n\n${modalDesc}`;
 
             // Seleccionar y copiar al textarea
             const textarea = document.getElementById('modal-copy');
@@ -222,12 +219,34 @@
                     }
                 };
                 
-                // Renderizar botones de variantes
+                // Renderizar botones de variantes con etiquetas de estado
                 variants.forEach((v, idx) => {
                     const btn = document.createElement('button');
-                    // Estilos pill similares a Shein/Temu
-                    btn.className = 'px-4 py-2 text-xs sm:text-sm font-semibold border-2 rounded-full transition-all duration-200 border-gray-200 bg-white text-gray-600 hover:border-blue-300 focus:outline-none';
-                    btn.innerText = v.nombre;
+                    const vStock   = parseInt(v.stock)   || 0;
+                    const vReserva = parseInt(v.reserva) || 0;
+
+                    if (vStock === 0 && vReserva === 0) {
+                        // Agotado
+                        btn.className = 'relative px-4 py-2 text-xs sm:text-sm font-semibold border-2 rounded-full transition-all duration-200 border-red-200 bg-red-50 text-red-400 cursor-not-allowed focus:outline-none';
+                        btn.innerHTML = `
+                            <span class="line-through">${v.nombre}</span>
+                            <span class="ml-1.5 inline-flex items-center gap-0.5 text-[9px] font-black uppercase tracking-wider bg-red-500 text-white px-1.5 py-0.5 rounded-full">
+                                <i class="fas fa-ban text-[8px]"></i> Agotado
+                            </span>`;
+                    } else if (vStock === 0 && vReserva > 0) {
+                        // En bodega
+                        btn.className = 'relative px-4 py-2 text-xs sm:text-sm font-semibold border-2 rounded-full transition-all duration-200 border-amber-300 bg-amber-50 text-amber-700 hover:border-amber-400 focus:outline-none';
+                        btn.innerHTML = `
+                            ${v.nombre}
+                            <span class="ml-1.5 inline-flex items-center gap-0.5 text-[9px] font-black uppercase tracking-wider bg-amber-400 text-amber-900 px-1.5 py-0.5 rounded-full">
+                                <i class="fas fa-warehouse text-[8px]"></i> Bodega
+                            </span>`;
+                    } else {
+                        // Con stock normal
+                        btn.className = 'px-4 py-2 text-xs sm:text-sm font-semibold border-2 rounded-full transition-all duration-200 border-gray-200 bg-white text-gray-600 hover:border-blue-300 focus:outline-none';
+                        btn.innerText = v.nombre;
+                    }
+
                     btn.onclick = () => selectVariant(v, btn);
                     variantsList.appendChild(btn);
                 });
