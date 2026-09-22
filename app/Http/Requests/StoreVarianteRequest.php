@@ -14,7 +14,12 @@ class StoreVarianteRequest extends FormRequest
 
     public function rules(): array
     {
-        $productoId = $this->route('productoId');
+        // La ruta es /productos/{producto}/variantes — el param se llama 'producto'
+        $productoId = $this->route('producto');
+        // Soporta tanto un modelo Eloquent como un entero crudo
+        if (is_object($productoId)) {
+            $productoId = $productoId->id;
+        }
 
         return [
             'nombre_variante' => [

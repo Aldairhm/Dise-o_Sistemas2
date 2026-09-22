@@ -58,7 +58,7 @@
 
         {{-- FORMULARIO --}}
         <div class="bg-white rounded-2xl shadow-sm border border-slate-200/80 p-6 sm:p-8">
-            <form action="{{ route('productos.store') }}" method="POST" class="p-6 md:p-8" enctype="multipart/form-data">
+            <form action="{{ route('productos.store') }}" method="POST" class="p-6 md:p-8" enctype="multipart/form-data" novalidate>
                 @csrf
 
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
@@ -68,7 +68,7 @@
                         </label>
                         <input type="text" name="nombre" id="nombre"
                                class="w-full rounded-xl border border-slate-200 px-4 py-2.5 text-sm text-slate-800 placeholder:text-slate-300 focus:outline-none focus:ring-2 focus:ring-blue-500/30 focus:border-blue-500 transition-all @error('nombre') border-red-400 bg-red-50 @enderror"
-                               placeholder="Ej: Camiseta Premium" required value="{{ old('nombre') }}">
+                               placeholder="Ej: Camiseta Premium" value="{{ old('nombre') }}">
                     </div>
 
                     <div>
@@ -93,7 +93,7 @@
                         <label for="id_categoria" class="block text-xs font-bold text-slate-500 uppercase tracking-widest mb-1.5">
                             Categoría <span class="text-red-500">*</span>
                         </label>
-                        <select name="id_categoria" id="id_categoria" required
+                        <select name="id_categoria" id="id_categoria"
                                 class="w-full rounded-xl border border-slate-200 px-4 py-2.5 text-sm text-slate-800 bg-white focus:outline-none focus:ring-2 focus:ring-blue-500/30 focus:border-blue-500 transition-all @error('id_categoria') border-red-400 bg-red-50 @enderror">
                             <option value="">Selecciona una categoría...</option>
                             @foreach($categorias as $cat)
@@ -118,7 +118,7 @@
                     </label>
                     <div class="relative w-full sm:w-1/3">
                         <span class="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 font-bold">$</span>
-                        <input type="number" step="0.01" min="0" name="comision" id="comision" required
+                        <input type="number" step="0.01" min="0" name="comision" id="comision"
                                class="w-full rounded-xl border border-slate-200 pl-8 pr-4 py-2.5 text-sm text-slate-800 bg-white focus:outline-none focus:ring-2 focus:ring-blue-500/30 focus:border-blue-500 transition-all @error('comision') border-red-400 bg-red-50 @enderror"
                                value="{{ old('comision', 0) }}">
                     </div>

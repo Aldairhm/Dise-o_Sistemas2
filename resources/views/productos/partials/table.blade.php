@@ -44,20 +44,22 @@
                 </td>
                 @if(Auth::user()->rol === 'admin')
                 <td class="px-6 py-4 text-right">
-                    <a href="{{ route('productos.edit', $prod->id) }}"
-                        class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold text-blue-600 bg-blue-50 hover:bg-blue-100 border border-blue-200 rounded-lg transition-colors">
-                        <i class="fas fa-pencil text-xs"></i> Editar / Variantes
-                    </a>
-                    <form action="{{ route('productos.destroy', $prod->id) }}" method="POST"
-                            class="inline" id="form-delete-{{ $prod->id }}">
-                        @csrf
-                        @method('DELETE')
-                        <button type="button"
-                                onclick="confirmarEliminar({{ $prod->id }}, '{{ addslashes($prod->nombre) }}')"
-                                class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold text-red-600 bg-red-50 hover:bg-red-100 border border-red-200 rounded-lg transition-colors">
-                            <i class="fas fa-trash text-xs"></i> Eliminar
-                        </button>
-                    </form>
+                    <div class="inline-flex items-center gap-2">
+                        <a href="{{ route('productos.edit', $prod->id) }}"
+                            class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold text-blue-600 bg-blue-50 hover:bg-blue-100 border border-blue-200 rounded-lg transition-colors">
+                            <i class="fas fa-pencil text-xs"></i> Editar / Variantes
+                        </a>
+                        <form action="{{ route('productos.destroy', $prod->id) }}" method="POST"
+                                class="inline" id="form-delete-{{ $prod->id }}">
+                            @csrf
+                            @method('DELETE')
+                            <button type="button"
+                                    onclick="confirmarEliminar({{ $prod->id }}, '{{ addslashes($prod->nombre) }}')"
+                                    class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold text-red-600 bg-red-50 hover:bg-red-100 border border-red-200 rounded-lg transition-colors">
+                                <i class="fas fa-trash text-xs"></i> Eliminar
+                            </button>
+                        </form>
+                    </div>
                 </td>
                 @endif
             </tr>

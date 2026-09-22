@@ -65,14 +65,18 @@
                 }
                 
                 $variantesData[] = [
-                    'id' => $v->id,
-                    'nombre' => $v->nombre_variante,
-                    'precio' => $v->precio_venta,
-                    'stock' => $v->stock,
+                    'id'      => $v->id,
+                    'nombre'  => $v->nombre_variante,
+                    'precio'  => $v->precio_venta,
+                    'stock'   => $v->stock,
                     'reserva' => $v->reserva,
-                    'sku' => $v->sku,
-                    'imgUrl' => $vImgUrl,
-                    'imagenes' => $vImgsUrls
+                    'sku'     => $v->sku,
+                    'imgUrl'  => $vImgUrl,
+                    'imagenes'=> $vImgsUrls,
+                    'valores' => $v->valores->map(fn($val) => [
+                        'atributo' => $val->atributo?->nombre ?? '',
+                        'valor'    => $val->valor,
+                    ])->values()->toArray(),
                 ];
             }
 
@@ -223,6 +227,7 @@
                                 data-images="{{ json_encode($imagenesUrls) }}"
                                 data-variants="{{ json_encode($variantesData) }}"
                                 data-description="{{ $prod->descripcion ?? 'No hay descripción disponible.' }}"
+                                data-atributos="{{ json_encode($prod->atributos->map(fn($a) => $a->nombre)->values()) }}"
                                 class="w-10 h-10 rounded-full bg-slate-100 hover:bg-slate-200 text-gray-600 flex items-center justify-center transition-colors"
                                 title="Ver detalles">
                             <i class="fas fa-eye"></i>

@@ -47,7 +47,7 @@
                                 <label for="nombre_variante" class="block text-sm font-bold text-slate-700 mb-1.5">
                                     Nombre de Variante <span class="text-red-500">*</span>
                                 </label>
-                                <input type="text" id="nombre_variante" name="nombre_variante" required
+                                <input type="text" id="nombre_variante" name="nombre_variante"
                                        class="w-full px-4 py-3 bg-white border border-slate-200 focus:border-blue-500 rounded-xl text-sm text-slate-800 placeholder:text-slate-400 focus:ring-2 focus:ring-blue-500/20 focus:outline-none transition-all shadow-sm"
                                        placeholder="Ej: Rojo - Talla M">
                                 <p class="mt-1.5 text-xs text-slate-400">Combinación de atributos que identifica esta variante.</p>
@@ -121,7 +121,7 @@
                                     Ganancia (%) <span class="text-red-500">*</span>
                                 </label>
                                 <div class="relative">
-                                    <input type="number" step="1" min="0" id="porcentaje_ganancia" name="porcentaje_ganancia" required
+                                    <input type="number" step="1" min="0" id="porcentaje_ganancia" name="porcentaje_ganancia"
                                            class="w-full pl-4 pr-7 py-3 bg-white border border-slate-200 focus:border-blue-500 rounded-xl text-sm text-slate-800 placeholder:text-slate-400 focus:ring-2 focus:ring-blue-500/20 focus:outline-none transition-all shadow-sm"
                                            placeholder="Ej: 30">
                                     <span class="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 text-sm font-bold">%</span>

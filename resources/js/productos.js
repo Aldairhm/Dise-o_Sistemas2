@@ -358,10 +358,18 @@ document.addEventListener('DOMContentLoaded', () => {
         document.getElementById('nombre_variante').value = isDuplicar ? `${v.nombre_variante} (Copia)` : v.nombre_variante;
         document.getElementById('sku').value = isDuplicar ? previewSkuVariante(v.nombre_variante ?? '') : (v.sku ?? previewSkuVariante(v.nombre_variante ?? ''));
 
-        document.getElementById('estado').value          = isDuplicar ? '1' : (v.estado ?? '1');
-        if (costoInput) costoInput.value = v.costo_promedio ?? '';
-        if (gananciaInput) gananciaInput.value = v.porcentaje_ganancia ?? '';
-        if (precioInput) precioInput.value = v.precio_venta ?? '';
+        document.getElementById('estado').value = isDuplicar ? '1' : (v.estado ?? '1');
+
+        if (isDuplicar) {
+            // Al duplicar: costo y precio se reinician (el costo lo asignan las compras)
+            if (costoInput)    costoInput.value    = '0.00';
+            if (gananciaInput) gananciaInput.value = v.porcentaje_ganancia ?? '';
+            if (precioInput)   precioInput.value   = '0.00';
+        } else {
+            if (costoInput)    costoInput.value    = v.costo_promedio ?? '';
+            if (gananciaInput) gananciaInput.value = v.porcentaje_ganancia ?? '';
+            if (precioInput)   precioInput.value   = v.precio_venta ?? '';
+        }
 
         // Llenar valores de atributos si existen
         document.querySelectorAll('.atributo-input').forEach(input => input.value = ''); // Limpiar todos
