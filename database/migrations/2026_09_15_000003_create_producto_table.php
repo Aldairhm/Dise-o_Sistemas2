@@ -14,6 +14,7 @@ return new class extends Migration {
             $table->string('nombre', 150);
             $table->text('descripcion')->nullable();
             $table->decimal('comision', 10, 2)->default(0);
+            $table->string('marca', 100)->nullable();
             $table->string('imagen_principal')->nullable();
             $table->smallInteger('estado')->default(1);
             $table->timestamps();

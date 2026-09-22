@@ -11,7 +11,6 @@ use App\Http\Controllers\CompraController;
 use App\Http\Controllers\MovimientoBodegaController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\ProductoController;
-use App\Http\Controllers\ProductoPropuestaController;
 use App\Http\Controllers\VarianteController;
 
 // ── Autenticación ────────────────────────────────────────────
@@ -84,12 +83,10 @@ Route::middleware('auth')->group(function () {
         Route::get('/proveedor/{id}', [ProveedorController::class, 'show'])->name('proveedores.show');
 
         // ── Productos: CRUD solo Admin ──
-        Route::get('/productos/create', [ProductoPropuestaController::class, 'create'])->name('productos.create');
-        Route::get('/productos/propuesta/nuevo', [ProductoPropuestaController::class, 'create'])->name('productos.propuesta.create');
-        Route::post('/productos/propuesta', [ProductoPropuestaController::class, 'store'])->name('productos.propuesta.store');
-        Route::post('/productos', [ProductoPropuestaController::class, 'store'])->name('productos.store');
-        Route::get('/productos/{producto}/edit', [ProductoPropuestaController::class, 'edit'])->name('productos.edit');
-        Route::post('/productos/{producto}', [ProductoPropuestaController::class, 'update'])->name('productos.update');
+        Route::get('/productos/create', [ProductoController::class, 'create'])->name('productos.create');
+        Route::post('/productos', [ProductoController::class, 'store'])->name('productos.store');
+        Route::get('/productos/{producto}/edit', [ProductoController::class, 'edit'])->name('productos.edit');
+        Route::put('/productos/{producto}', [ProductoController::class, 'update'])->name('productos.update');
         Route::delete('/productos/{producto}', [ProductoController::class, 'destroy'])->name('productos.destroy');
 
         // ── Variantes AJAX: solo Admin ──
