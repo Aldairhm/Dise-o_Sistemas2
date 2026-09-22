@@ -138,6 +138,36 @@
                     </div>
                 </div>
 
+                <!-- Atributos Dinámicos -->
+                <div class="mb-8 p-5 rounded-2xl bg-slate-50 border border-slate-200/80">
+                    <label class="block text-xs font-bold text-slate-500 uppercase tracking-widest mb-3">
+                        <i class="fas fa-tags text-blue-500 mr-1"></i> Atributos del Producto (Opcional)
+                    </label>
+                    <p class="text-xs text-slate-500 mb-4">Selecciona los atributos que definirán las variantes de este producto (ej. si vas a tener variantes por Color y Talla, selecciona ambos).</p>
+                    
+                    <div id="atributos-checkbox-container" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3 mb-4">
+                        @if($atributos->count() > 0)
+                            @foreach($atributos as $atributo)
+                                <label class="flex items-center gap-2 p-3 bg-white border border-slate-200 rounded-xl cursor-pointer hover:border-blue-400 hover:bg-blue-50/50 transition-all">
+                                    <input type="checkbox" name="atributos[]" value="{{ $atributo->id }}" 
+                                           class="accent-blue-600 w-4 h-4 rounded border-slate-300 text-blue-600 focus:ring-blue-600">
+                                    <span class="text-sm font-semibold text-slate-700">{{ $atributo->nombre }}</span>
+                                </label>
+                            @endforeach
+                        @else
+                            <div id="no-atributos-msg" class="text-sm text-slate-500 italic col-span-full">No hay atributos creados. Usa el campo de abajo para crear uno.</div>
+                        @endif
+                    </div>
+
+                    <!-- Agregar Atributo Rápido -->
+                    <div class="flex items-center gap-2 mt-4 pt-4 border-t border-slate-200">
+                        <input type="text" id="nuevo_atributo_nombre" class="w-full max-w-xs rounded-xl border border-slate-200 px-4 py-2 text-sm text-slate-800 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500/30 focus:border-blue-500 transition-all shadow-sm" placeholder="Ej: Material, Talla...">
+                        <button type="button" id="btn_crear_atributo" class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-bold rounded-xl transition-all shadow-sm">
+                            <i class="fas fa-plus mr-1"></i> Añadir
+                        </button>
+                    </div>
+                </div>
+
                 <div class="mb-6">
                     <label for="imagen_principal" class="block text-xs font-bold text-slate-500 uppercase tracking-widest mb-1.5">Imagen Principal (Opcional)</label>
                     <input type="file" name="imagen_principal" id="imagen_principal" accept="image/*"
@@ -163,5 +193,77 @@
         @include('componentsHome.footer')
     </footer>
 
+    <script>
+        document.getElementById('btn_crear_atributo').addEventListener('click', () => {
+            const input = document.getElementById('nuevo_atributo_nombre');
+            const nombre = input.value.trim();
+            if (!nombre) return;
+
+            const container = document.getElementById('atributos-checkbox-container');
+            const noMsg = document.getElementById('no-atributos-msg');
+            if (noMsg) noMsg.remove();
+
+            const lbl = document.createElement('label');
+            lbl.className = 'flex items-center gap-2 p-3 bg-white border border-slate-200 rounded-xl cursor-pointer hover:border-blue-400 hover:bg-blue-50/50 transition-all group';
+            lbl.innerHTML = `
+                <input type="checkbox" name="nuevos_atributos[]" value="${nombre}" checked
+                       class="accent-blue-600 w-4 h-4 rounded border-slate-300 text-blue-600 focus:ring-blue-600">
+                <span class="text-sm font-semibold text-slate-700 flex-1">${nombre}</span>
+                <button type="button" class="text-slate-400 hover:text-blue-600 opacity-0 group-hover:opacity-100 transition-opacity" onclick="editarAtributo(this, event)">
+                    <i class="fas fa-pencil"></i>
+                </button>
+            `;
+            container.appendChild(lbl);
+            input.value = '';
+        });
+
+        window.editarAtributo = function(btn, event) {
+            event.preventDefault();
+            event.stopPropagation();
+
+            const label = btn.closest('label');
+            const span = label.querySelector('span');
+            const checkbox = label.querySelector('input[type="checkbox"]');
+            const oldText = span.innerText;
+
+            const input = document.createElement('input');
+            input.type = 'text';
+            input.value = oldText;
+            input.className = 'text-sm font-semibold text-slate-800 bg-white border border-blue-400 rounded px-1 flex-1 focus:outline-none focus:ring-2 focus:ring-blue-500';
+            
+            span.replaceWith(input);
+            btn.style.display = 'none';
+            input.focus();
+
+            input.addEventListener('click', (e) => e.stopPropagation());
+
+            const saveEdit = () => {
+                const newText = input.value.trim();
+                if (!newText || newText === oldText) {
+                    input.replaceWith(span);
+                    btn.style.display = '';
+                    return;
+                }
+
+                span.innerText = newText;
+                input.replaceWith(span);
+                btn.style.display = '';
+
+                if (checkbox.name === 'atributos[]') {
+                    checkbox.name = 'nuevos_atributos[]';
+                }
+                checkbox.value = newText;
+                checkbox.checked = true;
+            };
+
+            input.addEventListener('blur', saveEdit);
+            input.addEventListener('keydown', (e) => {
+                if (e.key === 'Enter') {
+                    e.preventDefault();
+                    saveEdit();
+                }
+            });
+        };
+    </script>
 </body>
 </html>

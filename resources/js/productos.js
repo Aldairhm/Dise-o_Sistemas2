@@ -118,6 +118,22 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
+    // ─── Cálculo de Precio Venta ───────────────────────────────────
+    const costoInput = document.getElementById('costo_promedio');
+    const gananciaInput = document.getElementById('porcentaje_ganancia');
+    const precioInput = document.getElementById('precio_venta');
+
+    function calcularPrecio() {
+        if (!costoInput || !gananciaInput || !precioInput) return;
+        const costo = parseFloat(costoInput.value) || 0;
+        const ganancia = parseFloat(gananciaInput.value) || 0;
+        const precio = costo * (1 + (ganancia / 100));
+        precioInput.value = precio > 0 ? precio.toFixed(2) : '';
+    }
+
+    costoInput?.addEventListener('input', calcularPrecio);
+    gananciaInput?.addEventListener('input', calcularPrecio);
+
     // ─── Error inline del modal ────────────────────────────────────
     function showModalError(msg) {
         errorMsg.textContent = msg;
@@ -321,9 +337,13 @@ document.addEventListener('DOMContentLoaded', () => {
         document.getElementById('variante_id').value = '';
         document.getElementById('sku').value = '';
         document.getElementById('estado').value = '1';
+        if (costoInput) costoInput.value = '';
+        if (gananciaInput) gananciaInput.value = '';
+        if (precioInput) precioInput.value = '';
         document.getElementById('imagen_principal_index').value = '-1';
         document.getElementById('imagen_existente_principal_id').value = '';
         document.getElementById('deletedImagesContainer').innerHTML = '';
+        document.querySelectorAll('.atributo-input').forEach(input => input.value = ''); // Limpiar atributos
         archivosImagenes = [];
         if (previewZone) previewZone.innerHTML = '';
         document.getElementById('modalVarianteLabel').innerText = 'Nueva Variante';
@@ -337,7 +357,20 @@ document.addEventListener('DOMContentLoaded', () => {
         document.getElementById('sku').value = isDuplicar ? previewSkuVariante(v.nombre_variante ?? '') : (v.sku ?? previewSkuVariante(v.nombre_variante ?? ''));
 
         document.getElementById('estado').value          = isDuplicar ? '1' : (v.estado ?? '1');
-        document.getElementById('precio_venta').value   = v.precio_venta;
+        if (costoInput) costoInput.value = v.costo_promedio ?? '';
+        if (gananciaInput) gananciaInput.value = v.porcentaje_ganancia ?? '';
+        if (precioInput) precioInput.value = v.precio_venta ?? '';
+
+        // Llenar valores de atributos si existen
+        document.querySelectorAll('.atributo-input').forEach(input => input.value = ''); // Limpiar todos
+        if (v.valores && v.valores.length > 0) {
+            v.valores.forEach(valorObj => {
+                const input = document.getElementById(`atributo_${valorObj.id_atributo}`);
+                if (input) {
+                    input.value = valorObj.valor;
+                }
+            });
+        }
 
         if (!isDuplicar) {
             document.getElementById('variante_id').value = v.id;
@@ -375,15 +408,21 @@ document.addEventListener('DOMContentLoaded', () => {
 
         // Validaciones manuales para reemplazar las nativas de HTML
         const nombreVal = document.getElementById('nombre_variante').value.trim();
-        const precioVal = document.getElementById('precio_venta').value.trim();
+        const costoVal = costoInput ? costoInput.value.trim() : '0';
+        const gananciaVal = gananciaInput ? gananciaInput.value.trim() : '0';
 
         if (!nombreVal) {
             showModalError('El nombre de la variante es obligatorio.');
             return;
         }
 
-        if (!precioVal || parseFloat(precioVal) <= 0) {
-            showModalError('El precio debe ser mayor a 0.');
+        if (!costoVal || parseFloat(costoVal) < 0) {
+            showModalError('El costo promedio es requerido y debe ser mayor o igual a 0.');
+            return;
+        }
+
+        if (!gananciaVal || parseFloat(gananciaVal) < 0) {
+            showModalError('El porcentaje de ganancia es requerido y debe ser mayor o igual a 0.');
             return;
         }
 

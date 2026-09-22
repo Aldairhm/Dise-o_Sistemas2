@@ -9,6 +9,8 @@ use App\Http\Controllers\UserController;
 use App\Http\Controllers\CategoriaController;
 use App\Http\Controllers\CompraController;
 use App\Http\Controllers\MovimientoBodegaController;
+use App\Http\Controllers\AtributoController;
+
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\ProductoController;
 use App\Http\Controllers\VarianteController;
@@ -64,11 +66,15 @@ Route::middleware('auth')->group(function () {
         Route::put('/categorias/{categoria}', [CategoriaController::class, 'update'])->name('categorias.update');
         Route::patch('/categorias/{categoria}/toggle-status', [CategoriaController::class, 'toggleStatus'])->name('categorias.toggleStatus');
 
+
         Route::get('/compras/nueva', [CompraController::class, 'create'])->name('compras.create');
         Route::post('/compras', [CompraController::class, 'store'])->name('compras.store');
         Route::get('/compras/historial', [CompraController::class, 'historial'])->name('compras.historial');
         Route::get('/compras/movimientos', [CompraController::class, 'movimientos'])->name('compras.movimientos');
         Route::post('/movimientos-bodega/transferencia-tienda', [MovimientoBodegaController::class, 'transferirATienda'])->name('movimientos-bodega.transferencia-tienda');
+
+        // ── Módulo de Atributos ──
+        Route::resource('atributos', AtributoController::class)->except(['create', 'show', 'edit']);
 
         // ── TU MÓDULO DE PROVEEDORES Y CATÁLOGOS ──
         

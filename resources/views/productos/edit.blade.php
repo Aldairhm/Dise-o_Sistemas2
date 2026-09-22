@@ -157,6 +157,47 @@
                             </label>
                         </div>
                     </div>
+                </div>
+
+                <!-- Atributos Dinámicos -->
+                <div class="mb-8 p-5 rounded-2xl bg-slate-50 border border-slate-200/80">
+                    <label class="block text-xs font-bold text-slate-500 uppercase tracking-widest mb-3">
+                        <i class="fas fa-tags text-blue-500 mr-1"></i> Atributos del Producto (Opcional)
+                    </label>
+                    <p class="text-xs text-slate-500 mb-4">Selecciona los atributos que definirán las variantes de este producto.</p>
+                    
+                    @php
+                        $productoAtributosIds = $producto->atributos->pluck('id')->toArray();
+                    @endphp
+                    
+                    <div id="atributos-checkbox-container" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3 mb-4">
+                        @if($atributos->count() > 0)
+                            @foreach($atributos as $atributo)
+                                <label class="flex items-center gap-2 p-3 bg-white border border-slate-200 rounded-xl cursor-pointer hover:border-blue-400 hover:bg-blue-50/50 transition-all group">
+                                    <input type="checkbox" name="atributos[]" value="{{ $atributo->id }}" 
+                                           {{ in_array($atributo->id, $productoAtributosIds) ? 'checked' : '' }}
+                                           class="accent-blue-600 w-4 h-4 rounded border-slate-300 text-blue-600 focus:ring-blue-600">
+                                    <span class="text-sm font-semibold text-slate-700 flex-1">{{ $atributo->nombre }}</span>
+                                    <button type="button" class="text-slate-400 hover:text-blue-600 opacity-0 group-hover:opacity-100 transition-opacity" onclick="editarAtributo(this, event)">
+                                        <i class="fas fa-pencil"></i>
+                                    </button>
+                                </label>
+                            @endforeach
+                        @else
+                            <div id="no-atributos-msg" class="text-sm text-slate-500 italic col-span-full">No hay atributos creados. Usa el campo de abajo para crear uno.</div>
+                        @endif
+                    </div>
+
+                    <!-- Agregar Atributo Rápido -->
+                    <div class="flex items-center gap-2 mt-4 pt-4 border-t border-slate-200">
+                        <input type="text" id="nuevo_atributo_nombre" class="w-full max-w-xs rounded-xl border border-slate-200 px-4 py-2 text-sm text-slate-800 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500/30 focus:border-blue-500 transition-all shadow-sm" placeholder="Ej: Material, Talla...">
+                        <button type="button" id="btn_crear_atributo" class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-bold rounded-xl transition-all shadow-sm">
+                            <i class="fas fa-plus mr-1"></i> Añadir
+                        </button>
+                    </div>
+                </div>
+
+                <div class="flex flex-col sm:flex-row justify-end items-start sm:items-center gap-4">
                     <button type="submit"
                             class="inline-flex items-center gap-2 px-6 py-2.5 text-sm font-extrabold text-white bg-blue-600 hover:bg-blue-700 rounded-xl shadow-lg shadow-blue-500/25 transition-all hover:scale-[1.02] active:scale-[0.98]">
                         <i class="fas fa-save"></i>
@@ -167,7 +208,7 @@
         </div>
 
         {{-- GESTIÓN DE VARIANTES --}}
-        <div class="bg-white rounded-2xl shadow-sm border border-slate-200/80 overflow-hidden">
+        <div class="bg-white rounded-2xl shadow-sm border border-slate-200/80 overflow-hidden mb-8">
             <div class="px-6 py-4 border-b border-slate-100 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                 <div>
                     <h2 class="text-base font-black text-slate-900 flex items-center gap-2">
@@ -176,97 +217,88 @@
                     </h2>
                     <p class="text-xs text-slate-400 mt-0.5">SKU, precio, stock e imágenes por cada combinación del producto.</p>
                 </div>
-                <button type="button" id="btnAgregarVariante"
-                        class="inline-flex items-center justify-center gap-2 px-4 py-2.5 text-sm font-extrabold text-white bg-emerald-600 hover:bg-emerald-700 rounded-xl shadow-lg shadow-emerald-500/25 transition-all hover:scale-[1.02] active:scale-[0.98] whitespace-nowrap">
-                    <i class="fas fa-plus text-xs"></i>
-                    Agregar Variante
-                </button>
+                
+                <div class="flex items-center gap-3 flex-wrap">
+                    <!-- Tabla / Tarjetas -->
+                    <div class="flex items-center bg-slate-100 rounded-xl p-1 gap-1">
+                        <button type="button" id="btnViewTableVar"
+                                onclick="setViewVar('table')"
+                                class="var-view-btn w-9 h-9 rounded-lg flex items-center justify-center text-slate-400 hover:text-slate-700 transition-colors cursor-pointer"
+                                title="Vista de tabla">
+                            <i class="fas fa-table-list text-sm"></i>
+                        </button>
+                        <button type="button" id="btnViewCardsVar"
+                                onclick="setViewVar('cards')"
+                                class="var-view-btn w-9 h-9 rounded-lg flex items-center justify-center text-slate-400 hover:text-slate-700 transition-colors cursor-pointer"
+                                title="Vista de tarjetas">
+                            <i class="fas fa-grip text-sm"></i>
+                        </button>
+                    </div>
+
+                    <button type="button" id="btnAgregarVariante"
+                            class="inline-flex items-center justify-center gap-2 px-4 py-2.5 text-sm font-extrabold text-white bg-emerald-600 hover:bg-emerald-700 rounded-xl shadow-lg shadow-emerald-500/25 transition-all hover:scale-[1.02] active:scale-[0.98] whitespace-nowrap">
+                        <i class="fas fa-plus text-xs"></i>
+                        Agregar Variante
+                    </button>
+                </div>
             </div>
 
-            <div class="overflow-x-auto">
-                <table class="w-full text-sm" id="tablaVariantes">
-                    <thead>
-                        <tr class="border-b border-slate-100 bg-slate-50/80">
-                            <th class="text-left px-6 py-3 text-xs font-bold text-slate-400 uppercase tracking-widest">Imagen</th>
-                            <th class="text-left px-6 py-3 text-xs font-bold text-slate-400 uppercase tracking-widest">SKU</th>
-                            <th class="text-left px-6 py-3 text-xs font-bold text-slate-400 uppercase tracking-widest">Variante</th>
-                            <th class="text-left px-6 py-3 text-xs font-bold text-slate-400 uppercase tracking-widest">Precio</th>
-                            <th class="text-left px-6 py-3 text-xs font-bold text-slate-400 uppercase tracking-widest">Stock</th>
-                            <th class="text-left px-6 py-3 text-xs font-bold text-slate-400 uppercase tracking-widest hidden md:table-cell">Reserva</th>
-                            <th class="text-left px-6 py-3 text-xs font-bold text-slate-400 uppercase tracking-widest">Estado</th>
-                            <th class="text-right px-6 py-3 text-xs font-bold text-slate-400 uppercase tracking-widest">Acciones</th>
-                        </tr>
-                    </thead>
-                    <tbody class="divide-y divide-slate-100">
-                        @forelse($producto->variantes as $variante)
-                        <tr class="hover:bg-slate-50/60 transition-colors" data-id="{{ $variante->id }}">
-                            <td class="px-6 py-3">
-                                @php
-                                    $imgP = $variante->imagenes->where('es_principal', 1)->first() ?? $variante->imagenes->first();
-                                @endphp
-                                @if($imgP)
-                                    <img src="{{ asset('storage/' . $imgP->ruta_imagen) }}" alt="img"
-                                         class="w-10 h-10 rounded-lg object-cover border border-slate-200">
-                                @else
-                                    <div class="w-10 h-10 rounded-lg bg-slate-100 flex items-center justify-center text-slate-300">
-                                        <i class="fas fa-image text-sm"></i>
-                                    </div>
-                                @endif
-                            </td>
-                            <td class="px-6 py-3 font-mono text-xs text-slate-500">{{ $variante->sku ?? '—' }}</td>
-                            <td class="px-6 py-3 font-semibold text-slate-800">{{ $variante->nombre_variante }}</td>
-                            <td class="px-6 py-3 font-bold text-slate-800">${{ number_format($variante->precio_venta, 2) }}</td>
-                            <td class="px-6 py-3">
-                                <span class="inline-flex items-center gap-1 text-xs font-bold px-2.5 py-1 rounded-full
-                                    {{ $variante->stock > 10 ? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
-                                     : ($variante->stock > 0  ? 'bg-amber-50 text-amber-700 border border-amber-200'
-                                                               : 'bg-red-50 text-red-600 border border-red-200') }}">
-                                    {{ $variante->stock }}
-                                </span>
-                            </td>
-                            <td class="px-6 py-3 hidden md:table-cell text-slate-500 text-xs">{{ $variante->reserva }}</td>
-                            <td class="px-6 py-3">
-                                @if($variante->estado == 1)
-                                    <span class="inline-flex items-center gap-1.5 text-xs font-bold text-emerald-700 bg-emerald-50 border border-emerald-200 rounded-full px-2.5 py-1">
-                                        <span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span> Activo
-                                    </span>
-                                @else
-                                    <span class="inline-flex items-center gap-1.5 text-xs font-bold text-red-600 bg-red-50 border border-red-200 rounded-full px-2.5 py-1">
-                                        <span class="w-1.5 h-1.5 rounded-full bg-red-500"></span> Inactivo
-                                    </span>
-                                @endif
-                            </td>
-                            <td class="px-6 py-3 text-right">
-                                <div class="flex items-center justify-end gap-1.5">
-                                    <button type="button"
-                                            class="btn-duplicar-variante p-2 text-xs font-bold text-violet-600 bg-violet-50 hover:bg-violet-100 border border-violet-200 rounded-lg transition-colors"
-                                            data-id="{{ $variante->id }}" title="Duplicar">
-                                        <i class="fas fa-copy"></i>
-                                    </button>
-                                    <button type="button"
-                                            class="btn-editar-variante p-2 text-xs font-bold text-blue-600 bg-blue-50 hover:bg-blue-100 border border-blue-200 rounded-lg transition-colors"
-                                            data-id="{{ $variante->id }}" title="Editar">
-                                        <i class="fas fa-pencil"></i>
-                                    </button>
-                                    <button type="button"
-                                            class="btn-eliminar-variante p-2 text-xs font-bold text-red-600 bg-red-50 hover:bg-red-100 border border-red-200 rounded-lg transition-colors"
-                                            data-id="{{ $variante->id }}" title="Eliminar">
-                                        <i class="fas fa-trash"></i>
-                                    </button>
-                                </div>
-                            </td>
-                        </tr>
-                        @empty
-                        <tr id="rowNoVariantes">
-                            <td colspan="8" class="text-center py-12 text-slate-400">
-                                <i class="fas fa-layer-group text-3xl mb-3 block opacity-30"></i>
-                                <p class="font-semibold text-sm">Este producto aún no tiene variantes.</p>
-                                <p class="text-xs mt-1">Usa el botón <strong>"Agregar Variante"</strong> para comenzar.</p>
-                            </td>
-                        </tr>
-                        @endforelse
-                    </tbody>
-                </table>
+            <!-- BUSQUEDA Y FILTROS VARIANTES -->
+            <div class="px-6 py-4 bg-slate-50/50 border-b border-slate-100 flex flex-col md:flex-row items-stretch md:items-center justify-between gap-4">
+                <!-- Campo de Busqueda -->
+                <div class="relative flex-1">
+                    <div class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
+                        <i class="fas fa-search text-sm"></i>
+                    </div>
+                    <input type="text" 
+                           id="searchVarInput" 
+                           placeholder="Buscar por SKU o nombre de variante..." 
+                           class="w-full pl-10 pr-10 py-2 bg-white hover:bg-slate-50 focus:bg-white border border-slate-200 focus:border-blue-600 rounded-xl text-sm text-slate-800 placeholder:text-slate-400 focus:ring-2 focus:ring-blue-600/20 focus:outline-none transition-all"
+                           oninput="applyFiltersVar()">
+                    <button type="button" 
+                            id="clearSearchVarBtn" 
+                            onclick="clearSearchVar()" 
+                            class="absolute inset-y-0 right-0 pr-3.5 flex items-center text-slate-400 hover:text-slate-700 hidden cursor-pointer">
+                        <i class="fas fa-times text-xs"></i>
+                    </button>
+                </div>
+
+                <!-- Filtro por Estado -->
+                <div class="flex flex-wrap items-center gap-3">
+                    <div class="flex items-center gap-2">
+                        <span class="text-xs font-bold text-slate-500 uppercase tracking-wider hidden sm:inline">Estado:</span>
+                        <select id="statusVarFilter" 
+                                onchange="applyFiltersVar()" 
+                                class="bg-white border border-slate-200 rounded-xl px-3 py-2 text-xs font-bold text-slate-700 focus:border-blue-600 focus:ring-2 focus:ring-blue-600/20 focus:outline-none cursor-pointer">
+                            <option value="todos">Todos</option>
+                            <option value="1">Activos</option>
+                            <option value="0">Inactivos</option>
+                        </select>
+                    </div>
+
+                    <!-- Boton Restablecer -->
+                    <button type="button" 
+                            onclick="resetAllFiltersVar()" 
+                            class="p-2 text-slate-400 hover:text-blue-600 rounded-xl hover:bg-slate-100 transition-colors cursor-pointer"
+                            title="Restablecer filtros">
+                        <i class="fas fa-rotate-right text-xs"></i>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Contenedor Principal (Tabla o Tarjetas) -->
+            <div id="variantsContainer" class="relative">
+                <!-- Vista Tabla -->
+                <div id="variantsTableWrapper">
+                    @include('productos.partials.table_variantes', ['producto' => $producto])
+                </div>
+
+                <!-- Vista Tarjetas -->
+                <div id="variantsCardsWrapper" class="hidden">
+                    <div class="p-5 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 bg-slate-50/30" id="variantsCardsGrid">
+                        @include('productos.partials.cards_variantes', ['producto' => $producto])
+                    </div>
+                </div>
             </div>
         </div>
 
@@ -284,7 +316,183 @@
             getVariante:    "{{ url('variantes') }}",
             updateVariante: "{{ url('variantes') }}",
         };
-    </script>
 
+        document.getElementById('btn_crear_atributo').addEventListener('click', () => {
+            const input = document.getElementById('nuevo_atributo_nombre');
+            const nombre = input.value.trim();
+            if (!nombre) return;
+
+            const container = document.getElementById('atributos-checkbox-container');
+            const noMsg = document.getElementById('no-atributos-msg');
+            if (noMsg) noMsg.remove();
+
+            const lbl = document.createElement('label');
+            lbl.className = 'flex items-center gap-2 p-3 bg-white border border-slate-200 rounded-xl cursor-pointer hover:border-blue-400 hover:bg-blue-50/50 transition-all group';
+            lbl.innerHTML = `
+                <input type="checkbox" name="nuevos_atributos[]" value="${nombre}" checked
+                       class="accent-blue-600 w-4 h-4 rounded border-slate-300 text-blue-600 focus:ring-blue-600">
+                <span class="text-sm font-semibold text-slate-700 flex-1">${nombre}</span>
+                <button type="button" class="text-slate-400 hover:text-blue-600 opacity-0 group-hover:opacity-100 transition-opacity" onclick="editarAtributo(this, event)">
+                    <i class="fas fa-pencil"></i>
+                </button>
+            `;
+            container.appendChild(lbl);
+            input.value = '';
+        });
+
+        window.editarAtributo = function(btn, event) {
+            event.preventDefault();
+            event.stopPropagation();
+
+            const label = btn.closest('label');
+            const span = label.querySelector('span');
+            const checkbox = label.querySelector('input[type="checkbox"]');
+            const oldText = span.innerText;
+
+            const input = document.createElement('input');
+            input.type = 'text';
+            input.value = oldText;
+            input.className = 'text-sm font-semibold text-slate-800 bg-white border border-blue-400 rounded px-1 flex-1 focus:outline-none focus:ring-2 focus:ring-blue-500';
+            
+            span.replaceWith(input);
+            btn.style.display = 'none';
+            input.focus();
+
+            input.addEventListener('click', (e) => e.stopPropagation());
+
+            const saveEdit = () => {
+                const newText = input.value.trim();
+                if (!newText || newText === oldText) {
+                    input.replaceWith(span);
+                    btn.style.display = '';
+                    return;
+                }
+
+                span.innerText = newText;
+                input.replaceWith(span);
+                btn.style.display = '';
+
+                if (checkbox.name === 'atributos[]') {
+                    checkbox.name = 'nuevos_atributos[]';
+                }
+                checkbox.value = newText;
+                checkbox.checked = true;
+            };
+
+            input.addEventListener('blur', saveEdit);
+            input.addEventListener('keydown', (e) => {
+                if (e.key === 'Enter') {
+                    e.preventDefault();
+                    saveEdit();
+                }
+            });
+        };
+
+        // ====== Lógica de Vistas y Filtros de Variantes ======
+        let currentViewVar = localStorage.getItem('ax_variantes_view') || 'table';
+
+        document.addEventListener('DOMContentLoaded', () => {
+            setViewVar(currentViewVar, false);
+        });
+
+        function setViewVar(view, save = true) {
+            currentViewVar = view;
+            if (save) localStorage.setItem('ax_variantes_view', view);
+
+            const btnTable = document.getElementById('btnViewTableVar');
+            const btnCards = document.getElementById('btnViewCardsVar');
+            const wrapperTable = document.getElementById('variantsTableWrapper');
+            const wrapperCards = document.getElementById('variantsCardsWrapper');
+
+            // Estilos botones
+            document.querySelectorAll('.var-view-btn').forEach(btn => {
+                btn.classList.remove('bg-white', 'text-blue-600', 'shadow-sm');
+                btn.classList.add('text-slate-400');
+            });
+
+            if (view === 'table') {
+                btnTable.classList.add('bg-white', 'text-blue-600', 'shadow-sm');
+                btnTable.classList.remove('text-slate-400');
+                wrapperTable.classList.remove('hidden');
+                wrapperCards.classList.add('hidden');
+            } else {
+                btnCards.classList.add('bg-white', 'text-blue-600', 'shadow-sm');
+                btnCards.classList.remove('text-slate-400');
+                wrapperTable.classList.add('hidden');
+                wrapperCards.classList.remove('hidden');
+            }
+        }
+
+        function applyFiltersVar() {
+            const searchInput = document.getElementById('searchVarInput');
+            const clearBtn = document.getElementById('clearSearchVarBtn');
+            const query = searchInput.value.toLowerCase().trim();
+            const status = document.getElementById('statusVarFilter').value;
+
+            // Mostrar/ocultar boton X
+            if (query.length > 0) {
+                clearBtn.classList.remove('hidden');
+            } else {
+                clearBtn.classList.add('hidden');
+            }
+
+            // Filtrar tabla
+            let visibleRows = 0;
+            document.querySelectorAll('.variante-row').forEach(row => {
+                const matchQuery = row.dataset.nombre.includes(query) || row.dataset.sku.includes(query);
+                const matchStatus = status === 'todos' || row.dataset.estado === status;
+
+                if (matchQuery && matchStatus) {
+                    row.style.display = '';
+                    visibleRows++;
+                } else {
+                    row.style.display = 'none';
+                }
+            });
+            
+            const noResultsTable = document.getElementById('table-no-results-variantes');
+            const emptyRowTable = document.getElementById('rowNoVariantes'); // El mensaje original si no hay ninguna variante
+            if (noResultsTable) {
+                noResultsTable.style.display = (visibleRows === 0 && !emptyRowTable) ? '' : 'none';
+            }
+
+            // Filtrar tarjetas
+            let visibleCards = 0;
+            document.querySelectorAll('.variante-card').forEach(card => {
+                const matchQuery = card.dataset.nombre.includes(query) || card.dataset.sku.includes(query);
+                const matchStatus = status === 'todos' || card.dataset.estado === status;
+
+                if (matchQuery && matchStatus) {
+                    card.style.display = '';
+                    visibleCards++;
+                } else {
+                    card.style.display = 'none';
+                }
+            });
+
+            const noResultsCards = document.getElementById('cards-no-results-variantes');
+            const emptyCardsMsg = document.getElementById('rowNoVariantesCards');
+            if (noResultsCards) {
+                if (visibleCards === 0 && !emptyCardsMsg) {
+                    noResultsCards.classList.remove('hidden');
+                    noResultsCards.classList.add('flex');
+                } else {
+                    noResultsCards.classList.add('hidden');
+                    noResultsCards.classList.remove('flex');
+                }
+            }
+        }
+
+        function clearSearchVar() {
+            document.getElementById('searchVarInput').value = '';
+            applyFiltersVar();
+        }
+
+        function resetAllFiltersVar() {
+            document.getElementById('searchVarInput').value = '';
+            document.getElementById('statusVarFilter').value = 'todos';
+            applyFiltersVar();
+        }
+    </script>
 </body>
 </html>

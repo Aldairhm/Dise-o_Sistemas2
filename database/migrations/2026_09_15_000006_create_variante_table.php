@@ -17,6 +17,8 @@ return new class extends Migration {
             $table->decimal('comision', 10, 2)->default(0);
             $table->integer('stock')->default(0);
             $table->integer('reserva')->default(0);
+            $table->decimal('costo_promedio', 10, 2)->default(0.00);
+            $table->decimal('porcentaje_ganancia', 5, 2)->default(0.00);
             $table->string('imagen', 255)->default('');
             $table->timestamps();
             $table->foreign('id_producto')->references('id')->on('producto')->onDelete('cascade');

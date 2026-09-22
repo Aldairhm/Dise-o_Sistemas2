@@ -28,8 +28,10 @@ class UpdateVarianteRequest extends FormRequest
                     ->where(fn($q) => $q->where('id_producto', $idProducto))
                     ->ignore($varianteId),
             ],
-            'precio_venta'    => 'required|numeric|min:0.01',
-            'sku'             => [
+            'costo_promedio'      => 'required|numeric|min:0',
+            'porcentaje_ganancia' => 'required|numeric|min:0',
+            'precio_venta'        => 'required|numeric|min:0.01',
+            'sku'                 => [
                 'nullable',
                 'string',
                 'max:100',
