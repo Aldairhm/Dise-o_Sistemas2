@@ -1,14 +1,9 @@
 <?php
-
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 
-return new class extends Migration
-{
-    /**
-     * Run the migrations.
-     */
+return new class extends Migration {
     public function up(): void
     {
         Schema::create('variantevalor', function (Blueprint $table) {
@@ -17,17 +12,10 @@ return new class extends Migration
             $table->unsignedBigInteger('id_atributo');
             $table->string('valor', 100);
             $table->timestamps();
-
             $table->foreign('id_variante')->references('id')->on('variante')->onDelete('cascade');
             $table->foreign('id_atributo')->references('id')->on('atributo')->onDelete('cascade');
         });
     }
 
-    /**
-     * Reverse the migrations.
-     */
-    public function down(): void
-    {
-        Schema::dropIfExists('variantevalor');
-    }
+    public function down(): void { Schema::dropIfExists('variantevalor'); }
 };

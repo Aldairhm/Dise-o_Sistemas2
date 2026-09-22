@@ -19,6 +19,7 @@ class Variante extends Model
         'costo_promedio',
         'porcentaje_ganancia',
         'precio_venta',
+        'comision',
         'stock',
         'reserva',
         'hash_combinacion'

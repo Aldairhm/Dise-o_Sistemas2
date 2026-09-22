@@ -10,6 +10,94 @@
         'Segoe UI Symbol', 'Noto Color Emoji';
 }
 
+/* Controles compactos del flujo de registro de compras */
+.field-label {
+    display: block;
+    margin-bottom: 0.5rem;
+    color: #64748b;
+    font-size: 0.7rem;
+    font-weight: 800;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+}
+
+.field-label b {
+    color: #2563eb;
+}
+
+.field-input,
+.table-input,
+.mini-select {
+    width: 100%;
+    border: 1px solid #e2e8f0;
+    border-radius: 0.75rem;
+    background: #f8fafc;
+    color: #1e293b;
+    font-size: 0.875rem;
+    outline: none;
+    transition: border-color 150ms ease, box-shadow 150ms ease, background 150ms ease;
+}
+
+.field-input {
+    padding: 0.7rem 0.85rem;
+}
+
+.table-input {
+    padding: 0.55rem 0.65rem;
+}
+
+.mini-select {
+    width: auto;
+    padding: 0.25rem 0.5rem;
+    font-size: 0.7rem;
+    font-weight: 800;
+}
+
+.field-input:focus,
+.table-input:focus,
+.mini-select:focus {
+    border-color: #2563eb;
+    background: #ffffff;
+    box-shadow: 0 0 0 3px rgb(37 99 235 / 0.12);
+}
+
+.currency,
+.suffix {
+    position: absolute;
+    top: 50%;
+    color: #94a3b8;
+    font-size: 0.75rem;
+    font-weight: 800;
+    transform: translateY(-50%);
+}
+
+.currency { left: 0.7rem; }
+.suffix { right: 0.8rem; }
+
+.icon-button {
+    display: inline-flex;
+    width: 2rem;
+    height: 2rem;
+    align-items: center;
+    justify-content: center;
+    border-radius: 0.5rem;
+    transition: color 150ms ease, background 150ms ease;
+}
+
+html.dark .field-input,
+html.dark .table-input,
+html.dark .mini-select {
+    border-color: #334155;
+    background: #1e293b;
+    color: #f1f5f9;
+}
+
+html.dark .field-input:focus,
+html.dark .table-input:focus,
+html.dark .mini-select:focus {
+    background: #1e293b;
+}
+
 /* ─── DARK MODE GLOBAL (PANEL) ─── */
 :root {
     --bg-page:    #f8fafc;
