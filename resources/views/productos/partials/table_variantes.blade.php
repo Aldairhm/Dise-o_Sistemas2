@@ -46,13 +46,25 @@
                 <td class="px-6 py-3 hidden md:table-cell text-slate-500 text-xs">{{ $variante->reserva }}</td>
                 <td class="px-6 py-3">
                     @if($variante->estado == 1)
-                        <span class="inline-flex items-center gap-1.5 text-xs font-bold text-emerald-700 bg-emerald-50 border border-emerald-200 rounded-full px-2.5 py-1">
-                            <span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span> Activo
-                        </span>
+                        <button type="button"
+                                class="btn-toggle-estado-variante inline-flex items-center gap-1.5 text-xs font-bold rounded-full px-2.5 py-1 transition-all hover:scale-105 active:scale-95 cursor-pointer border text-emerald-700 bg-emerald-50 hover:bg-emerald-100 border-emerald-200"
+                                data-id="{{ $variante->id }}"
+                                data-nombre="{{ $variante->nombre_variante }}"
+                                data-estado="1"
+                                title="Clic para desactivar variante">
+                            <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
+                            <span class="estado-label">Activo</span>
+                        </button>
                     @else
-                        <span class="inline-flex items-center gap-1.5 text-xs font-bold text-red-600 bg-red-50 border border-red-200 rounded-full px-2.5 py-1">
-                            <span class="w-1.5 h-1.5 rounded-full bg-red-500"></span> Inactivo
-                        </span>
+                        <button type="button"
+                                class="btn-toggle-estado-variante inline-flex items-center gap-1.5 text-xs font-bold rounded-full px-2.5 py-1 transition-all hover:scale-105 active:scale-95 cursor-pointer border text-red-600 bg-red-50 hover:bg-red-100 border-red-200"
+                                data-id="{{ $variante->id }}"
+                                data-nombre="{{ $variante->nombre_variante }}"
+                                data-estado="0"
+                                title="Clic para activar variante">
+                            <span class="w-1.5 h-1.5 rounded-full bg-red-500"></span>
+                            <span class="estado-label">Inactivo</span>
+                        </button>
                     @endif
                 </td>
                 <td class="px-6 py-3 text-right">

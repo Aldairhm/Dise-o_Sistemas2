@@ -36,6 +36,7 @@ class ProductoController extends Controller
     public function store(StoreProductoRequest $request)
     {
         $validated = $request->validated();
+        $validated['estado'] = isset($validated['estado']) ? (int) $validated['estado'] : 1;
 
         // Auto-generar SKU basado en categoría + nombre del producto
         if (empty($validated['sku'])) {
@@ -81,6 +82,9 @@ class ProductoController extends Controller
     public function update(UpdateProductoRequest $request, Producto $producto)
     {
         $validated = $request->validated();
+        if (isset($validated['estado'])) {
+            $validated['estado'] = (int) $validated['estado'];
+        }
 
         // Conservar SKU actual si no se proporcionó uno nuevo
         if (empty($validated['sku'])) {
@@ -187,5 +191,19 @@ class ProductoController extends Controller
 
         return redirect()->route('productos.index')
                          ->with('success', 'Producto eliminado exitosamente.');
+    }
+
+    public function toggleStatus(Producto $producto)
+    {
+        $producto->estado = $producto->estado == 1 ? 0 : 1;
+        $producto->save();
+
+        $accion = $producto->estado == 1 ? 'activado' : 'desactivado';
+
+        return response()->json([
+            'success'      => true,
+            'message'      => "Producto «{$producto->nombre}» {$accion} correctamente.",
+            'nuevo_estado' => $producto->estado,
+        ]);
     }
 }

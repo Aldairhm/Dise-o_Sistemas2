@@ -30,14 +30,38 @@
                     title="{{ $prod->nombre }}">
                     {{ $prod->nombre }}
                 </h3>
-                @if($isActivo)
-                    <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-50 text-emerald-600 border border-emerald-100">
-                        <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span> Activo
-                    </span>
+                @if(Auth::user()->rol === 'admin')
+                    @if($isActivo)
+                        <button type="button"
+                                class="btn-toggle-estado-producto inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-50 text-emerald-600 hover:bg-emerald-100 border border-emerald-100 cursor-pointer transition-transform hover:scale-105 active:scale-95"
+                                data-id="{{ $prod->id }}"
+                                data-nombre="{{ $prod->nombre }}"
+                                data-estado="1"
+                                title="Clic para desactivar producto">
+                            <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
+                            <span class="estado-label">Activo</span>
+                        </button>
+                    @else
+                        <button type="button"
+                                class="btn-toggle-estado-producto inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-bold bg-red-50 text-red-600 hover:bg-red-100 border border-red-100 cursor-pointer transition-transform hover:scale-105 active:scale-95"
+                                data-id="{{ $prod->id }}"
+                                data-nombre="{{ $prod->nombre }}"
+                                data-estado="0"
+                                title="Clic para activar producto">
+                            <span class="w-1.5 h-1.5 rounded-full bg-red-500"></span>
+                            <span class="estado-label">Inactivo</span>
+                        </button>
+                    @endif
                 @else
-                    <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-bold bg-red-50 text-red-600 border border-red-100">
-                        <span class="w-1.5 h-1.5 rounded-full bg-red-500"></span> Inactivo
-                    </span>
+                    @if($isActivo)
+                        <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-50 text-emerald-600 border border-emerald-100">
+                            <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span> Activo
+                        </span>
+                    @else
+                        <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-bold bg-red-50 text-red-600 border border-red-100">
+                            <span class="w-1.5 h-1.5 rounded-full bg-red-500"></span> Inactivo
+                        </span>
+                    @endif
                 @endif
             </div>
         </div>

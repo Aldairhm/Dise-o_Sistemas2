@@ -29,6 +29,7 @@ class StoreVarianteRequest extends FormRequest
                 Rule::unique('variante', 'nombre_variante')
                     ->where(fn($q) => $q->where('id_producto', $productoId)),
             ],
+            'estado'              => 'nullable|in:0,1',
             'costo_promedio'      => 'required|numeric|min:0',
             'porcentaje_ganancia' => 'required|numeric|min:0',
             'precio_venta'        => 'required|numeric|min:0',

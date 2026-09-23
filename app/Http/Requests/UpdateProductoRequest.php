@@ -17,6 +17,7 @@ class UpdateProductoRequest extends FormRequest
 
         return [
             'nombre' => 'required|string|max:150|unique:producto,nombre,' . $productoId,
+            'estado' => 'nullable|in:0,1',
             'marca' => 'nullable|string|max:100',
             'id_categoria' => 'required|exists:categoria,id',
             'descripcion' => 'nullable|string|max:5000',

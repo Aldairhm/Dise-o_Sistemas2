@@ -97,12 +97,14 @@ Route::middleware('auth')->group(function () {
         Route::get('/productos/{producto}/edit', [ProductoController::class, 'edit'])->name('productos.edit');
         Route::put('/productos/{producto}', [ProductoController::class, 'update'])->name('productos.update');
         Route::delete('/productos/{producto}', [ProductoController::class, 'destroy'])->name('productos.destroy');
+        Route::patch('/productos/{producto}/toggle-status', [ProductoController::class, 'toggleStatus'])->name('productos.toggleStatus');
 
         // ── Variantes AJAX: solo Admin ──
         Route::post('/productos/{producto}/variantes', [VarianteController::class, 'store'])->name('variantes.store');
         Route::get('/variantes/{id}', [VarianteController::class, 'show'])->name('variantes.show');
         Route::put('/variantes/{id}', [VarianteController::class, 'update'])->name('variantes.update');
         Route::delete('/variantes/{id}', [VarianteController::class, 'destroy'])->name('variantes.destroy');
+        Route::patch('/variantes/{id}/toggle-status', [VarianteController::class, 'toggleStatus'])->name('variantes.toggleStatus');
     });
 
     // ── Productos: índice visible para todos los usuarios autenticados ──

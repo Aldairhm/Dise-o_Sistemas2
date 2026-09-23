@@ -32,14 +32,38 @@
                     </span>
                 </td>
                 <td class="px-6 py-4">
-                    @if($prod->estado == 1)
-                        <span class="inline-flex items-center gap-1.5 text-xs font-bold text-emerald-700 bg-emerald-50 border border-emerald-200 rounded-full px-2.5 py-1">
-                            <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span> Activo
-                        </span>
+                    @if(Auth::user()->rol === 'admin')
+                        @if($prod->estado == 1)
+                            <button type="button"
+                                    class="btn-toggle-estado-producto inline-flex items-center gap-1.5 text-xs font-bold rounded-full px-2.5 py-1 transition-all hover:scale-105 active:scale-95 cursor-pointer border text-emerald-700 bg-emerald-50 hover:bg-emerald-100 border-emerald-200"
+                                    data-id="{{ $prod->id }}"
+                                    data-nombre="{{ $prod->nombre }}"
+                                    data-estado="1"
+                                    title="Clic para desactivar producto">
+                                <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
+                                <span class="estado-label">Activo</span>
+                            </button>
+                        @else
+                            <button type="button"
+                                    class="btn-toggle-estado-producto inline-flex items-center gap-1.5 text-xs font-bold rounded-full px-2.5 py-1 transition-all hover:scale-105 active:scale-95 cursor-pointer border text-red-600 bg-red-50 hover:bg-red-100 border-red-200"
+                                    data-id="{{ $prod->id }}"
+                                    data-nombre="{{ $prod->nombre }}"
+                                    data-estado="0"
+                                    title="Clic para activar producto">
+                                <span class="w-1.5 h-1.5 rounded-full bg-red-500"></span>
+                                <span class="estado-label">Inactivo</span>
+                            </button>
+                        @endif
                     @else
-                        <span class="inline-flex items-center gap-1.5 text-xs font-bold text-red-600 bg-red-50 border border-red-200 rounded-full px-2.5 py-1">
-                            <span class="w-1.5 h-1.5 rounded-full bg-red-500"></span> Inactivo
-                        </span>
+                        @if($prod->estado == 1)
+                            <span class="inline-flex items-center gap-1.5 text-xs font-bold text-emerald-700 bg-emerald-50 border border-emerald-200 rounded-full px-2.5 py-1">
+                                <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span> Activo
+                            </span>
+                        @else
+                            <span class="inline-flex items-center gap-1.5 text-xs font-bold text-red-600 bg-red-50 border border-red-200 rounded-full px-2.5 py-1">
+                                <span class="w-1.5 h-1.5 rounded-full bg-red-500"></span> Inactivo
+                            </span>
+                        @endif
                     @endif
                 </td>
                 @if(Auth::user()->rol === 'admin')

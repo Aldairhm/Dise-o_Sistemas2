@@ -19,6 +19,7 @@ class VarianteController extends Controller
         $validated = $request->validated();
 
         $validated['id_producto']      = $productoId;
+        $validated['estado']           = isset($validated['estado']) ? (int) $validated['estado'] : 1;
         $validated['stock']            = 0;
         $validated['reserva']          = 0;
         // Hash basado en nombre de variante + producto para detectar duplicados lógicos
@@ -79,6 +80,10 @@ class VarianteController extends Controller
         // Nunca sobreescribir stock, reserva ni costo_promedio desde el formulario
         // El costo_promedio solo se actualiza automáticamente desde las compras
         unset($validated['stock'], $validated['reserva'], $validated['costo_promedio']);
+
+        if (isset($validated['estado'])) {
+            $validated['estado'] = (int) $validated['estado'];
+        }
 
         // Actualizar hash si cambió el nombre
         $validated['hash_combinacion'] = md5($variante->id_producto . ':' . strtolower(trim($validated['nombre_variante'])));
@@ -188,6 +193,21 @@ class VarianteController extends Controller
                 'message' => "No se puede eliminar \"{$variante->nombre_variante}\" porque tiene registros de compras asociados. Desactívala en lugar de eliminarla.",
             ], 422);
         }
+    }
+
+    public function toggleStatus($id)
+    {
+        $variante = Variante::findOrFail($id);
+        $variante->estado = $variante->estado == 1 ? 0 : 1;
+        $variante->save();
+
+        $accion = $variante->estado == 1 ? 'activada' : 'desactivada';
+
+        return response()->json([
+            'success'      => true,
+            'message'      => "Variante «{$variante->nombre_variante}» {$accion} correctamente.",
+            'nuevo_estado' => $variante->estado,
+        ]);
     }
     /**
      * Genera un SKU de variante con formato: VAR-NOM-###

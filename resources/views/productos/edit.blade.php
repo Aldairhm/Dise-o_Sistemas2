@@ -315,6 +315,7 @@
             storeVariante:  "{{ route('variantes.store', $producto->id) }}",
             getVariante:    "{{ url('variantes') }}",
             updateVariante: "{{ url('variantes') }}",
+            toggleVariante: "{{ url('variantes') }}",
         };
 
         document.getElementById('btn_crear_atributo').addEventListener('click', () => {
@@ -493,6 +494,8 @@
             document.getElementById('statusVarFilter').value = 'todos';
             applyFiltersVar();
         }
+
+        window.applyFiltersVar = applyFiltersVar;
     </script>
 </body>
 </html>

@@ -325,6 +325,140 @@
             }
         });
     }
+
+    // ─── Activar / Desactivar Producto ───────────────────────────
+    const productsContainer = document.getElementById('productsContainer');
+    const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
+
+    const Toast = Swal.mixin({
+        toast: true,
+        position: 'top-end',
+        showConfirmButton: false,
+        timer: 2000,
+        timerProgressBar: true,
+        customClass: { popup: 'swal-axstore' },
+    });
+
+    async function toggleProductoStatus(id, nombre, estadoActual) {
+        const nuevoEstado = (estadoActual === 1) ? 0 : 1;
+        const actionText = nuevoEstado === 1 ? 'activar' : 'desactivar';
+        const actionIcon = nuevoEstado === 1 ? 'fa-check' : 'fa-ban';
+        const btnColor   = nuevoEstado === 1 ? '#10b981' : '#f43f5e';
+        const htmlText   = nuevoEstado === 1
+            ? `El producto <strong class="text-slate-800">${nombre}</strong> volverá a estar disponible y visible en el catálogo.`
+            : `El producto <strong class="text-slate-800">${nombre}</strong> quedará inactivo y se ocultará del catálogo.`;
+
+        const result = await Swal.fire({
+            customClass: { popup: 'swal-axstore' },
+            title: `¿${actionText.charAt(0).toUpperCase() + actionText.slice(1)} producto?`,
+            html: `<p class="text-slate-600 text-sm">${htmlText}</p>`,
+            icon: 'warning',
+            iconColor: btnColor,
+            showCancelButton: true,
+            confirmButtonColor: btnColor,
+            cancelButtonColor: '#94a3b8',
+            confirmButtonText: `<i class="fas ${actionIcon} mr-1"></i> ${actionText.charAt(0).toUpperCase() + actionText.slice(1)}`,
+            cancelButtonText: 'Cancelar',
+            reverseButtons: true,
+        });
+
+        if (!result.isConfirmed) return;
+
+        try {
+            const res = await fetch(`/productos/${id}/toggle-status`, {
+                method: 'PATCH',
+                headers: {
+                    'X-CSRF-TOKEN': csrfToken,
+                    'X-Requested-With': 'XMLHttpRequest',
+                    'Accept': 'application/json',
+                },
+            });
+            const data = await res.json();
+
+            if (res.ok && data.success) {
+                Toast.fire({ icon: 'success', title: data.message });
+
+                const nuevoEst = parseInt(data.nuevo_estado);
+
+                // Actualizar fila en tabla
+                const tr = document.querySelector(`tr.producto-row[data-id="${id}"]`);
+                if (tr) {
+                    tr.dataset.estado = nuevoEst;
+                    const btn = tr.querySelector('.btn-toggle-estado-producto');
+                    if (btn) {
+                        btn.dataset.estado = nuevoEst;
+                        btn.title = `Clic para ${nuevoEst === 1 ? 'desactivar' : 'activar'} producto`;
+                        if (nuevoEst === 1) {
+                            btn.className = 'btn-toggle-estado-producto inline-flex items-center gap-1.5 text-xs font-bold rounded-full px-2.5 py-1 transition-all hover:scale-105 active:scale-95 cursor-pointer border text-emerald-700 bg-emerald-50 hover:bg-emerald-100 border-emerald-200';
+                            btn.innerHTML = `<span class="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span> <span class="estado-label">Activo</span>`;
+                        } else {
+                            btn.className = 'btn-toggle-estado-producto inline-flex items-center gap-1.5 text-xs font-bold rounded-full px-2.5 py-1 transition-all hover:scale-105 active:scale-95 cursor-pointer border text-red-600 bg-red-50 hover:bg-red-100 border-red-200';
+                            btn.innerHTML = `<span class="w-1.5 h-1.5 rounded-full bg-red-500"></span> <span class="estado-label">Inactivo</span>`;
+                        }
+                    }
+                }
+
+                // Actualizar tarjeta en grid
+                const card = document.querySelector(`.producto-card[data-id="${id}"]`);
+                if (card) {
+                    card.dataset.estado = nuevoEst;
+                    card.style.borderTopColor = nuevoEst === 1 ? '#10b981' : '#ef4444';
+                    const imgContainer = card.querySelector('.w-16.h-16');
+                    const titleEl = card.querySelector('h3');
+                    const btn = card.querySelector('.btn-toggle-estado-producto');
+
+                    if (nuevoEst === 1) {
+                        card.classList.remove('opacity-70');
+                        imgContainer?.classList.remove('grayscale');
+                        titleEl?.classList.remove('text-slate-400');
+                        if (btn) {
+                            btn.dataset.estado = 1;
+                            btn.title = 'Clic para desactivar producto';
+                            btn.className = 'btn-toggle-estado-producto inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-50 text-emerald-600 hover:bg-emerald-100 border border-emerald-100 cursor-pointer transition-transform hover:scale-105 active:scale-95';
+                            btn.innerHTML = `<span class="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span> <span class="estado-label">Activo</span>`;
+                        }
+                    } else {
+                        card.classList.add('opacity-70');
+                        imgContainer?.classList.add('grayscale');
+                        titleEl?.classList.add('text-slate-400');
+                        if (btn) {
+                            btn.dataset.estado = 0;
+                            btn.title = 'Clic para activar producto';
+                            btn.className = 'btn-toggle-estado-producto inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-bold bg-red-50 text-red-600 hover:bg-red-100 border border-red-100 cursor-pointer transition-transform hover:scale-105 active:scale-95';
+                            btn.innerHTML = `<span class="w-1.5 h-1.5 rounded-full bg-red-500"></span> <span class="estado-label">Inactivo</span>`;
+                        }
+                    }
+                }
+
+                // Re-filtrar si hay un filtro de estado aplicado
+                applyFilters();
+            } else {
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Error',
+                    text: data.message || 'No se pudo cambiar el estado del producto.',
+                    customClass: { popup: 'swal-axstore' }
+                });
+            }
+        } catch {
+            Swal.fire({
+                icon: 'error',
+                title: 'Error',
+                text: 'Error de red al intentar cambiar el estado.',
+                customClass: { popup: 'swal-axstore' }
+            });
+        }
+    }
+
+    productsContainer?.addEventListener('click', async (e) => {
+        const btnToggle = e.target.closest('.btn-toggle-estado-producto');
+        if (btnToggle) {
+            const id = btnToggle.dataset.id;
+            const nombre = btnToggle.dataset.nombre || 'este producto';
+            const estadoActual = parseInt(btnToggle.dataset.estado ?? '1');
+            await toggleProductoStatus(id, nombre, estadoActual);
+        }
+    });
 </script>
 
 <style>

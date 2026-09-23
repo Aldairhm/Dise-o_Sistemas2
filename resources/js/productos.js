@@ -480,17 +480,136 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
-    // ─── Acciones delegadas en tabla (editar / duplicar / eliminar)──
-    tablaBody?.addEventListener('click', async (e) => {
+    // ─── Activar / Desactivar Variante ───────────────────────────
+    async function toggleVarianteStatus(id, nombre, estadoActual) {
+        const nuevoEstado = (estadoActual === 1) ? 0 : 1;
+        const actionText = nuevoEstado === 1 ? 'activar' : 'desactivar';
+        const actionIcon = nuevoEstado === 1 ? 'fa-check' : 'fa-ban';
+        const btnColor   = nuevoEstado === 1 ? '#10b981' : '#f43f5e';
+        const htmlText   = nuevoEstado === 1
+            ? `La variante <strong class="text-slate-800">${nombre}</strong> volverá a estar disponible y activa.`
+            : `La variante <strong class="text-slate-800">${nombre}</strong> quedará inactiva y no se mostrará para ventas.`;
+
+        const result = await Swal.fire({
+            customClass: { popup: 'swal-axstore' },
+            title: `¿${actionText.charAt(0).toUpperCase() + actionText.slice(1)} variante?`,
+            html: `<p class="text-slate-600 text-sm">${htmlText}</p>`,
+            icon: 'warning',
+            iconColor: btnColor,
+            showCancelButton: true,
+            confirmButtonColor: btnColor,
+            cancelButtonColor: '#94a3b8',
+            confirmButtonText: `<i class="fas ${actionIcon} mr-1"></i> ${actionText.charAt(0).toUpperCase() + actionText.slice(1)}`,
+            cancelButtonText: 'Cancelar',
+            reverseButtons: true,
+        });
+
+        if (!result.isConfirmed) return;
+
+        try {
+            const url = `${ROUTES.toggleVariante || '/variantes'}/${id}/toggle-status`;
+            const res = await fetch(url, {
+                method: 'PATCH',
+                headers: {
+                    'X-CSRF-TOKEN': csrfToken,
+                    'X-Requested-With': 'XMLHttpRequest',
+                    'Accept': 'application/json',
+                },
+            });
+            const data = await res.json();
+
+            if (res.ok && data.success) {
+                Toast.fire({ icon: 'success', title: data.message });
+
+                const nuevoEst = parseInt(data.nuevo_estado);
+
+                // Actualizar fila en tabla
+                const tr = document.querySelector(`tr.variante-row[data-id="${id}"]`);
+                if (tr) {
+                    tr.dataset.estado = nuevoEst;
+                    const btn = tr.querySelector('.btn-toggle-estado-variante');
+                    if (btn) {
+                        btn.dataset.estado = nuevoEst;
+                        btn.title = `Clic para ${nuevoEst === 1 ? 'desactivar' : 'activar'} variante`;
+                        if (nuevoEst === 1) {
+                            btn.className = 'btn-toggle-estado-variante inline-flex items-center gap-1.5 text-xs font-bold rounded-full px-2.5 py-1 transition-all hover:scale-105 active:scale-95 cursor-pointer border text-emerald-700 bg-emerald-50 hover:bg-emerald-100 border-emerald-200';
+                            btn.innerHTML = `<span class="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span><span class="estado-label">Activo</span>`;
+                        } else {
+                            btn.className = 'btn-toggle-estado-variante inline-flex items-center gap-1.5 text-xs font-bold rounded-full px-2.5 py-1 transition-all hover:scale-105 active:scale-95 cursor-pointer border text-red-600 bg-red-50 hover:bg-red-100 border-red-200';
+                            btn.innerHTML = `<span class="w-1.5 h-1.5 rounded-full bg-red-500"></span><span class="estado-label">Inactivo</span>`;
+                        }
+                    }
+                }
+
+                // Actualizar tarjeta en grid
+                const card = document.querySelector(`.variante-card[data-id="${id}"]`);
+                if (card) {
+                    card.dataset.estado = nuevoEst;
+                    card.style.borderLeftColor = nuevoEst === 1 ? '#10b981' : '#ef4444';
+                    const imgContainer = card.querySelector('.w-16.h-16');
+                    const titleEl = card.querySelector('h3');
+                    const btn = card.querySelector('.btn-toggle-estado-variante');
+
+                    if (nuevoEst === 1) {
+                        card.classList.remove('opacity-70');
+                        imgContainer?.classList.remove('grayscale');
+                        titleEl?.classList.remove('text-slate-400');
+                        if (btn) {
+                            btn.dataset.estado = 1;
+                            btn.title = 'Clic para desactivar variante';
+                            btn.className = 'btn-toggle-estado-variante inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-50 text-emerald-600 hover:bg-emerald-100 border border-emerald-100 cursor-pointer transition-transform hover:scale-105 active:scale-95';
+                            btn.innerHTML = `<span class="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span><span class="estado-label">Activo</span>`;
+                        }
+                    } else {
+                        card.classList.add('opacity-70');
+                        imgContainer?.classList.add('grayscale');
+                        titleEl?.classList.add('text-slate-400');
+                        if (btn) {
+                            btn.dataset.estado = 0;
+                            btn.title = 'Clic para activar variante';
+                            btn.className = 'btn-toggle-estado-variante inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-bold bg-red-50 text-red-600 hover:bg-red-100 border border-red-100 cursor-pointer transition-transform hover:scale-105 active:scale-95';
+                            btn.innerHTML = `<span class="w-1.5 h-1.5 rounded-full bg-red-500"></span><span class="estado-label">Inactivo</span>`;
+                        }
+                    }
+                }
+
+                // Re-filtrar si hay un filtro de estado aplicado
+                if (typeof window.applyFiltersVar === 'function') {
+                    window.applyFiltersVar();
+                }
+            } else {
+                alertErr(data.message || 'No se pudo cambiar el estado de la variante.');
+            }
+        } catch {
+            alertErr('Error de red al intentar cambiar el estado.');
+        }
+    }
+
+    // ─── Acciones delegadas en contenedor de variantes (tabla y tarjetas) ──
+    const containerVariantes = document.getElementById('variantsContainer') || tablaBody;
+    containerVariantes?.addEventListener('click', async (e) => {
+        const btnToggle   = e.target.closest('.btn-toggle-estado-variante');
         const btnEliminar = e.target.closest('.btn-eliminar-variante');
         const btnEditar   = e.target.closest('.btn-editar-variante');
         const btnDuplicar = e.target.closest('.btn-duplicar-variante');
 
+        // TOGGLE ESTADO (ACTIVAR / DESACTIVAR)
+        if (btnToggle) {
+            const id           = btnToggle.dataset.id;
+            const nombre       = btnToggle.dataset.nombre || 'esta variante';
+            const estadoActual = parseInt(btnToggle.dataset.estado ?? '1');
+            await toggleVarianteStatus(id, nombre, estadoActual);
+            return;
+        }
+
         // ELIMINAR
         if (btnEliminar) {
             const id     = btnEliminar.dataset.id;
-            const tr     = btnEliminar.closest('tr');
-            const nombre = tr.querySelector('td:nth-child(3)')?.innerText?.trim() ?? 'esta variante';
+            const tr     = document.querySelector(`tr.variante-row[data-id="${id}"]`);
+            const card   = document.querySelector(`.variante-card[data-id="${id}"]`);
+            const nombre = tr?.querySelector('td:nth-child(3)')?.innerText?.trim()
+                        ?? card?.querySelector('h3')?.innerText?.trim()
+                        ?? 'esta variante';
 
             const result = await confirmDanger(
                 '¿Eliminar variante?',
@@ -506,15 +625,17 @@ document.addEventListener('DOMContentLoaded', () => {
                 const data = await res.json();
 
                 if (res.ok && data.success) {
-                    tr.remove();
+                    tr?.remove();
+                    card?.remove();
                     Toast.fire({ icon: 'success', title: data.message });
-                    if (!tablaBody.querySelector('tr[data-id]')) location.reload();
+                    if (!document.querySelector('tr.variante-row[data-id]')) location.reload();
                 } else {
                     alertErr(data.message || 'No se pudo eliminar.');
                 }
             } catch {
                 alertErr('Error de red. Intenta de nuevo.');
             }
+            return;
         }
 
         // EDITAR o DUPLICAR
