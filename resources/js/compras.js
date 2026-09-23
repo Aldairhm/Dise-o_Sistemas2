@@ -53,13 +53,7 @@ document.addEventListener("alpine:init", () => {
             return this.lineas.reduce((total, linea) => total + Number(linea.cantidad || 0), 0);
         },
 
-        get totalVenta() {
-            return this.lineas.reduce((total, linea) => total + this.precioVentaLinea(linea), 0);
-        },
 
-        get totalUtilidad() {
-            return this.lineas.reduce((total, linea) => total + this.utilidadLinea(linea), 0);
-        },
 
         agregarVariante(variante) {
             this.lineas.push({
@@ -78,17 +72,7 @@ document.addEventListener("alpine:init", () => {
             return Math.max(0, Number(linea.cantidad || 0)) * Math.max(0, Number(linea.costo || 0));
         },
 
-        precioVentaUnidad(linea) {
-            return Math.max(0, Number(linea.precio_venta || 0));
-        },
 
-        precioVentaLinea(linea) {
-            return this.precioVentaUnidad(linea) * Math.max(0, Number(linea.cantidad || 0));
-        },
-
-        utilidadLinea(linea) {
-            return this.precioVentaLinea(linea) - this.costoLinea(linea);
-        },
 
         moneda(valor) {
             return new Intl.NumberFormat("es-SV", { style: "currency", currency: "USD" }).format(Number(valor || 0));

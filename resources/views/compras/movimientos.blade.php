@@ -140,7 +140,7 @@
                             @php $imagenMovimiento = $movimiento->variante?->imagenes?->firstWhere('es_principal', 1) ?? $movimiento->variante?->imagenes?->first(); @endphp
                             <tr class="hover:bg-slate-50/60">
                                 <td class="px-5 py-4 whitespace-nowrap text-slate-500">{{ $movimiento->created_at?->format('d/m/Y H:i') }}</td>
-                                <td class="px-5 py-4">
+                                <td class="px-5 py-4 max-w-[250px] sm:max-w-xs">
                                     <div class="flex items-center gap-3">
                                         <div class="h-12 w-12 shrink-0 overflow-hidden rounded-lg border border-slate-200 bg-slate-50">
                                             @if ($imagenMovimiento)
@@ -149,9 +149,9 @@
                                                 <div class="flex h-full items-center justify-center text-slate-300"><i class="fas fa-image"></i></div>
                                             @endif
                                         </div>
-                                        <div class="min-w-0">
-                                            <p class="font-bold text-slate-800">{{ $movimiento->variante?->producto?->nombre ?? 'Producto' }}</p>
-                                            <p class="text-xs text-slate-500">{{ $movimiento->variante?->nombre_variante }}</p>
+                                        <div class="min-w-0 flex-1">
+                                            <p class="font-bold text-slate-800 truncate" title="{{ $movimiento->variante?->producto?->nombre ?? 'Producto' }}">{{ $movimiento->variante?->producto?->nombre ?? 'Producto' }}</p>
+                                            <p class="text-xs text-slate-500 truncate" title="{{ $movimiento->variante?->nombre_variante }}">{{ $movimiento->variante?->nombre_variante }}</p>
                                             <p class="text-[10px] font-bold uppercase tracking-wider text-slate-400">SKU: {{ $movimiento->variante?->sku ?: 'Sin SKU' }}</p>
                                         </div>
                                     </div>
