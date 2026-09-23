@@ -68,6 +68,7 @@ Route::middleware('auth')->group(function () {
 
 
         Route::get('/compras/nueva', [CompraController::class, 'create'])->name('compras.create');
+        Route::get('/compras/buscar-variantes', [CompraController::class, 'buscarVariantes'])->name('compras.buscar-variantes');
         Route::post('/compras', [CompraController::class, 'store'])->name('compras.store');
         Route::get('/compras/historial', [CompraController::class, 'historial'])->name('compras.historial');
         Route::get('/compras/movimientos', [CompraController::class, 'movimientos'])->name('compras.movimientos');

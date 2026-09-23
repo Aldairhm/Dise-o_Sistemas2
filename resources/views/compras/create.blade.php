@@ -84,7 +84,8 @@
                     </div>
                     
                     <div class="relative">
-                        <i class="fas fa-search absolute left-4 top-1/2 -translate-y-1/2 text-slate-400"></i>
+                        <i class="fas fa-search absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" x-show="!buscando"></i>
+                        <i class="fas fa-spinner fa-spin absolute left-4 top-1/2 -translate-y-1/2 text-blue-500" x-show="buscando" style="display:none;"></i>
                         <input x-model="busqueda" type="search" placeholder="Escribe producto, variante o SKU..." class="w-full rounded-xl border border-slate-300 bg-slate-50 py-3.5 pl-11 pr-4 text-sm text-slate-800 placeholder:text-slate-400 focus:border-blue-500 focus:bg-white focus:outline-none focus:ring-4 focus:ring-blue-500/10 transition-all shadow-inner">
                     </div>
                     
@@ -108,7 +109,7 @@
                                 </div>
                             </button>
                         </template>
-                        <p x-show="variantesDisponibles.length === 0" class="sm:col-span-2 text-sm font-medium text-slate-400 py-6 text-center" style="display:none;">No se encontraron resultados.</p>
+                        <p x-show="variantesDisponibles.length === 0 && !buscando" class="sm:col-span-2 text-sm font-medium text-slate-400 py-6 text-center" style="display:none;">No se encontraron resultados.</p>
                     </div>
                 </div>
 

@@ -9,16 +9,35 @@ document.addEventListener("alpine:init", () => {
         busqueda: "",
         lineas: [],
         guardado: false,
+        buscando: false,
+        timeoutBusqueda: null,
+
+        init() {
+            this.$watch('busqueda', (value) => {
+                clearTimeout(this.timeoutBusqueda);
+                this.timeoutBusqueda = setTimeout(() => {
+                    this.buscarEnServidor(value);
+                }, 300);
+            });
+        },
+
+        async buscarEnServidor(termino) {
+            this.buscando = true;
+            try {
+                const response = await fetch(`/compras/buscar-variantes?q=${encodeURIComponent(termino)}`);
+                const result = await response.json();
+                // Si es un paginador de Laravel, los datos están en result.data
+                this.variantes = result.data || []; 
+            } catch (error) {
+                console.error("Error buscando variantes", error);
+            } finally {
+                this.buscando = false;
+            }
+        },
 
         get variantesDisponibles() {
-            const termino = this.busqueda.trim().toLowerCase();
             return this.variantes.filter((variante) => {
-                const yaAgregada = this.lineas.some((linea) => linea.id === variante.id);
-                const coincide = !termino || [variante.producto, variante.variante, variante.sku]
-                    .join(" ")
-                    .toLowerCase()
-                    .includes(termino);
-                return !yaAgregada && coincide;
+                return !this.lineas.some((linea) => linea.id === variante.id);
             });
         },
 
