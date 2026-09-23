@@ -14,8 +14,12 @@ class UpdateProveedorRequest extends FormRequest
 
     public function rules(): array
     {
+        // El parámetro de la ruta puede ser el modelo o el ID.
+        $proveedor = $this->route('proveedor');
+        $proveedorId = $proveedor instanceof \App\Models\Proveedor ? $proveedor->id : $proveedor;
+
         return [
-            'nombre'    => ['required', 'string', 'max:255'],
+            'nombre'    => ['required', 'string', 'max:255', \Illuminate\Validation\Rule::unique('proveedors', 'nombre')->ignore($proveedorId)],
             'correo'    => ['nullable', 'email', 'max:255'],
             'telefono'  => ['nullable', 'string', 'max:9'],
             'direccion' => ['nullable', 'string', 'max:500'],
@@ -28,6 +32,7 @@ class UpdateProveedorRequest extends FormRequest
     {
         return [
             'nombre.required' => 'El nombre de la empresa es obligatorio.',
+            'nombre.unique'   => 'Ya existe otro proveedor registrado con ese nombre.',
             'archivo.mimes'   => 'El archivo debe ser un PDF, Excel o Imagen.',
             'archivo.max'     => 'El archivo no debe pesar más de 5MB.',
         ];

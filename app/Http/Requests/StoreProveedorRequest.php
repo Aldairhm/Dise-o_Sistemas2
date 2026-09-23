@@ -15,7 +15,7 @@ class StoreProveedorRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'nombre'    => ['required', 'string', 'max:255'],
+            'nombre'    => ['required', 'string', 'max:255', 'unique:proveedors,nombre'],
             'correo'    => ['nullable', 'email', 'max:255'],
             'telefono'  => ['nullable', 'string', 'max:9'],
             'direccion' => ['nullable', 'string', 'max:500'],
@@ -26,6 +26,7 @@ class StoreProveedorRequest extends FormRequest
     {
         return [
             'nombre.required' => 'El nombre de la empresa es obligatorio.',
+            'nombre.unique'   => 'Ya existe un proveedor registrado con ese nombre.',
         ];
     }
 }

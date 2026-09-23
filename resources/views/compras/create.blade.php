@@ -169,9 +169,6 @@
                                         
                                         <td class="px-5 py-4 text-right">
                                             <p class="font-black text-slate-800 text-base" x-text="moneda(costoLinea(linea))"></p>
-                                            <p class="text-[10px] text-emerald-600 font-bold mt-1" x-show="utilidadLinea(linea) > 0" title="Utilidad por unidad estimada">
-                                                +<span x-text="moneda(utilidadLinea(linea))"></span> utl.
-                                            </p>
                                         </td>
                                         <td class="px-4 py-4 text-center">
                                             <button type="button" @click="quitarLinea(linea.id)" class="w-8 h-8 rounded-lg text-slate-300 hover:text-red-600 hover:bg-red-50 flex items-center justify-center transition-colors mx-auto" title="Quitar variante">
@@ -190,7 +187,7 @@
             <aside class="space-y-6 xl:sticky xl:top-24">
                 <section class="bg-white border border-slate-200 rounded-2xl p-6 shadow-sm">
                     <div class="flex items-center gap-2 mb-3"><i class="fas fa-circle-info text-blue-600"></i><h2 class="font-black text-slate-900">Ayuda rápida</h2></div>
-                    <p class="text-sm text-slate-500 leading-relaxed">El <strong class="text-slate-700">costo</strong> es lo que le pagas al proveedor. Tu precio de venta ya está configurado en el catálogo y se usa para estimar la utilidad.</p>
+                    <p class="text-sm text-slate-500 leading-relaxed">El <strong class="text-slate-700">costo</strong> es lo que le pagas al proveedor por cada unidad recibida.</p>
                 </section>
                 
                 <section class="bg-gradient-to-b from-slate-800 to-slate-900 text-white rounded-3xl p-6 shadow-xl shadow-slate-900/20 border border-slate-700/50">
@@ -207,10 +204,6 @@
                         <div class="flex justify-between items-center text-slate-300">
                             <span>Unidades</span>
                             <strong class="text-white" x-text="unidades"></strong>
-                        </div>
-                        <div class="flex justify-between items-center text-slate-300">
-                            <span>Utilidad est.</span>
-                            <strong class="text-emerald-400" x-text="moneda(totalUtilidad)"></strong>
                         </div>
                     </div>
                     
