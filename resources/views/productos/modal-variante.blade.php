@@ -29,6 +29,7 @@
                     <input type="hidden" id="variante_id" name="variante_id" value="">
                     <input type="hidden" id="imagen_principal_index" name="imagen_principal_index" value="-1">
                     <input type="hidden" id="imagen_existente_principal_id" name="imagen_existente_principal_id" value="">
+                    <input type="hidden" id="comision_producto" value="{{ $producto->comision ?? 0 }}">
                     <div id="deletedImagesContainer"></div>
 
                     {{-- Body --}}
@@ -46,7 +47,7 @@
                                 <label for="nombre_variante" class="block text-sm font-bold text-slate-700 mb-1.5">
                                     Nombre de Variante <span class="text-red-500">*</span>
                                 </label>
-                                <input type="text" id="nombre_variante" name="nombre_variante" required
+                                <input type="text" id="nombre_variante" name="nombre_variante"
                                        class="w-full px-4 py-3 bg-white border border-slate-200 focus:border-blue-500 rounded-xl text-sm text-slate-800 placeholder:text-slate-400 focus:ring-2 focus:ring-blue-500/20 focus:outline-none transition-all shadow-sm"
                                        placeholder="Ej: Rojo - Talla M">
                                 <p class="mt-1.5 text-xs text-slate-400">Combinación de atributos que identifica esta variante.</p>
@@ -105,12 +106,12 @@
                         <div class="grid grid-cols-1 sm:grid-cols-3 gap-5">
                             <div>
                                 <label for="costo_promedio" class="block text-sm font-bold text-slate-700 mb-1.5">
-                                    Costo Promedio <span class="text-red-500">*</span>
+                                    Costo Promedio <span class="text-xs font-normal text-slate-400">(compras)</span>
                                 </label>
                                 <div class="relative">
                                     <span class="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-sm font-bold">$</span>
-                                    <input type="number" step="0.01" min="0" id="costo_promedio" name="costo_promedio" required
-                                           class="w-full pl-7 pr-3 py-3 bg-white border border-slate-200 focus:border-blue-500 rounded-xl text-sm text-slate-800 placeholder:text-slate-400 focus:ring-2 focus:ring-blue-500/20 focus:outline-none transition-all shadow-sm"
+                                    <input type="number" step="0.01" min="0" id="costo_promedio" name="costo_promedio" readonly tabindex="-1"
+                                           class="w-full pl-7 pr-3 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm text-slate-500 font-bold cursor-not-allowed focus:outline-none shadow-sm"
                                            placeholder="0.00">
                                 </div>
                             </div>
@@ -120,7 +121,7 @@
                                     Ganancia (%) <span class="text-red-500">*</span>
                                 </label>
                                 <div class="relative">
-                                    <input type="number" step="1" min="0" id="porcentaje_ganancia" name="porcentaje_ganancia" required
+                                    <input type="number" step="1" min="0" id="porcentaje_ganancia" name="porcentaje_ganancia"
                                            class="w-full pl-4 pr-7 py-3 bg-white border border-slate-200 focus:border-blue-500 rounded-xl text-sm text-slate-800 placeholder:text-slate-400 focus:ring-2 focus:ring-blue-500/20 focus:outline-none transition-all shadow-sm"
                                            placeholder="Ej: 30">
                                     <span class="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 text-sm font-bold">%</span>

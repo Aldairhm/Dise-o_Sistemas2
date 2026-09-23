@@ -16,7 +16,7 @@ class UpdateProductoRequest extends FormRequest
         $productoId = $this->route('producto')?->id ?? $this->route('producto');
 
         return [
-            'nombre' => 'required|string|max:150',
+            'nombre' => 'required|string|max:150|unique:producto,nombre,' . $productoId,
             'marca' => 'nullable|string|max:100',
             'id_categoria' => 'required|exists:categoria,id',
             'descripcion' => 'nullable|string|max:5000',
@@ -30,7 +30,8 @@ class UpdateProductoRequest extends FormRequest
     {
         return [
             'nombre.required' => 'El nombre del producto es obligatorio.',
-            'nombre.max' => 'El nombre no puede superar 150 caracteres.',
+            'nombre.max'      => 'El nombre no puede superar 150 caracteres.',
+            'nombre.unique'   => 'Ya existe otro producto con ese nombre.',
             'id_categoria.required' => 'Debes seleccionar una categoría.',
             'id_categoria.exists' => 'La categoría seleccionada no existe.',
             'comision.required' => 'La comisión es obligatoria.',

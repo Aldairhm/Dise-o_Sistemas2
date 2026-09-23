@@ -65,14 +65,18 @@
                 }
                 
                 $variantesData[] = [
-                    'id' => $v->id,
-                    'nombre' => $v->nombre_variante,
-                    'precio' => $v->precio_venta,
-                    'stock' => $v->stock,
+                    'id'      => $v->id,
+                    'nombre'  => $v->nombre_variante,
+                    'precio'  => $v->precio_venta,
+                    'stock'   => $v->stock,
                     'reserva' => $v->reserva,
-                    'sku' => $v->sku,
-                    'imgUrl' => $vImgUrl,
-                    'imagenes' => $vImgsUrls
+                    'sku'     => $v->sku,
+                    'imgUrl'  => $vImgUrl,
+                    'imagenes'=> $vImgsUrls,
+                    'valores' => $v->valores->map(fn($val) => [
+                        'atributo' => $val->atributo?->nombre ?? '',
+                        'valor'    => $val->valor,
+                    ])->values()->toArray(),
                 ];
             }
 
@@ -88,6 +92,9 @@
             $reserva  = $variante?->reserva ?? 0;
             $sku      = $variante?->sku ?? '';
             $catNombre = $prod->categoria?->nombre ?? 'Sin categoría';
+
+            // El producto se marca Agotado solo si NINGUNA variante tiene stock ni reserva
+            $todoAgotado = $variantesActivas->every(fn($v) => $v->stock == 0 && $v->reserva == 0);
         @endphp
 
         <div class="product-card group bg-white rounded-3xl shadow-[0_2px_15px_-3px_rgba(0,0,0,0.07),0_10px_20px_-2px_rgba(0,0,0,0.04)] border border-transparent hover:border-blue-100 transition-all duration-300 flex flex-col overflow-hidden hover:-translate-y-1" 
@@ -100,6 +107,13 @@
                 @if($prod->sku)
                 <div class="absolute top-3 left-3 bg-white text-gray-800 text-[11px] font-bold px-3 py-1.5 rounded-full shadow-sm z-10">
                     SKU: <span class="font-medium text-gray-500">{{ $prod->sku }}</span>
+                </div>
+                @endif
+
+                {{-- Badge Agotado solo si ninguna variante tiene nada --}}
+                @if($todoAgotado && $variantesActivas->isNotEmpty())
+                <div class="absolute top-3 right-3 z-10 flex items-center gap-1 px-2.5 py-1 rounded-full bg-red-500 text-white text-[10px] font-black uppercase tracking-wider shadow-md shadow-red-500/30">
+                    <i class="fas fa-ban text-[9px]"></i> Agotado
                 </div>
                 @endif
 
@@ -151,14 +165,33 @@
                 </div>
                 @endif
 
-                {{-- Variantes disponibles (Pills mini) --}}
+                {{-- Variantes con etiqueta de estado --}}
                 <div class="mb-4">
                     <p class="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1.5">Variantes</p>
                     <div class="flex flex-wrap gap-1.5">
                         @forelse(array_slice($variantesData, 0, 3) as $vData)
-                            <span class="inline-flex items-center px-2 py-0.5 rounded-md bg-gray-50 border border-gray-200 text-[10px] font-medium text-gray-600">
-                                {{ Str::limit($vData['nombre'], 15) }}
-                            </span>
+                            @php
+                                $vStock   = $vData['stock']   ?? 0;
+                                $vReserva = $vData['reserva'] ?? 0;
+                            @endphp
+                            @if($vStock == 0 && $vReserva == 0)
+                                {{-- Agotado --}}
+                                <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-red-50 border border-red-200 text-[10px] font-bold text-red-500">
+                                    <i class="fas fa-ban text-[8px]"></i>
+                                    {{ Str::limit($vData['nombre'], 13) }}
+                                </span>
+                            @elseif($vStock == 0 && $vReserva > 0)
+                                {{-- En Bodega --}}
+                                <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-amber-50 border border-amber-300 text-[10px] font-bold text-amber-700">
+                                    <i class="fas fa-warehouse text-[8px]"></i>
+                                    {{ Str::limit($vData['nombre'], 13) }}
+                                </span>
+                            @else
+                                {{-- Con stock --}}
+                                <span class="inline-flex items-center px-2 py-0.5 rounded-md bg-gray-50 border border-gray-200 text-[10px] font-medium text-gray-600">
+                                    {{ Str::limit($vData['nombre'], 15) }}
+                                </span>
+                            @endif
                         @empty
                             <span class="text-[10px] text-gray-400">Sin variantes</span>
                         @endforelse
@@ -194,6 +227,7 @@
                                 data-images="{{ json_encode($imagenesUrls) }}"
                                 data-variants="{{ json_encode($variantesData) }}"
                                 data-description="{{ $prod->descripcion ?? 'No hay descripción disponible.' }}"
+                                data-atributos="{{ json_encode($prod->atributos->map(fn($a) => $a->nombre)->values()) }}"
                                 class="w-10 h-10 rounded-full bg-slate-100 hover:bg-slate-200 text-gray-600 flex items-center justify-center transition-colors"
                                 title="Ver detalles">
                             <i class="fas fa-eye"></i>

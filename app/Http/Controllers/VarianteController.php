@@ -11,8 +11,11 @@ use Illuminate\Support\Str;
 
 class VarianteController extends Controller
 {
-    public function store(StoreVarianteRequest $request, $productoId)
+    public function store(StoreVarianteRequest $request, $producto)
     {
+        // La ruta inyecta {producto} — puede ser modelo Eloquent o entero según binding
+        $productoId = is_object($producto) ? $producto->id : $producto;
+
         $validated = $request->validated();
 
         $validated['id_producto']      = $productoId;
@@ -70,11 +73,12 @@ class VarianteController extends Controller
 
     public function update(UpdateVarianteRequest $request, $id)
     {
-        $variante  = Variante::findOrFail($id);
+        $variante  = Variante::with('producto')->findOrFail($id);
         $validated = $request->validated();
 
-        // ✅ CORRECCIÓN: nunca sobreescribir stock ni reserva desde el formulario
-        unset($validated['stock'], $validated['reserva']);
+        // Nunca sobreescribir stock, reserva ni costo_promedio desde el formulario
+        // El costo_promedio solo se actualiza automáticamente desde las compras
+        unset($validated['stock'], $validated['reserva'], $validated['costo_promedio']);
 
         // Actualizar hash si cambió el nombre
         $validated['hash_combinacion'] = md5($variante->id_producto . ':' . strtolower(trim($validated['nombre_variante'])));
@@ -83,6 +87,13 @@ class VarianteController extends Controller
         if (empty($validated['sku'])) {
             $validated['sku'] = $variante->sku ?: $this->generarSkuVariante($validated['nombre_variante'], $variante->id);
         }
+
+        // Recalcular precio_venta con el costo_promedio real de la BD + ganancia + comisión del producto
+        $porcentajeGanancia = isset($validated['porcentaje_ganancia'])
+            ? (float) $validated['porcentaje_ganancia']
+            : (float) $variante->porcentaje_ganancia;
+        $comision = (float) ($variante->producto->comision ?? 0);
+        $validated['precio_venta'] = ((float) $variante->costo_promedio * (1 + ($porcentajeGanancia / 100))) + $comision;
 
         $variante->update($validated);
 
@@ -150,16 +161,33 @@ class VarianteController extends Controller
     {
         $variante = Variante::with('imagenes')->findOrFail($id);
 
-        foreach ($variante->imagenes as $img) {
-            Storage::disk('public')->delete($img->ruta_imagen);
+        // Verificar si tiene stock o reserva antes de eliminar
+        if ($variante->stock > 0 || $variante->reserva > 0) {
+            return response()->json([
+                'success' => false,
+                'message' => "No puedes eliminar \"{$variante->nombre_variante}\" porque aún tiene {$variante->stock} unidad(es) en stock y {$variante->reserva} en reserva. Vacía el inventario primero.",
+            ], 422);
         }
 
-        $variante->delete();
+        try {
+            foreach ($variante->imagenes as $img) {
+                Storage::disk('public')->delete($img->ruta_imagen);
+            }
 
-        return response()->json([
-            'success' => true,
-            'message' => 'Variante eliminada correctamente.',
-        ]);
+            $variante->delete();
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Variante eliminada correctamente.',
+            ]);
+
+        } catch (\Illuminate\Database\QueryException $e) {
+            // Llave foránea: la variante está referenciada en compras u otras tablas
+            return response()->json([
+                'success' => false,
+                'message' => "No se puede eliminar \"{$variante->nombre_variante}\" porque tiene registros de compras asociados. Desactívala en lugar de eliminarla.",
+            ], 422);
+        }
     }
     /**
      * Genera un SKU de variante con formato: VAR-NOM-###

@@ -14,7 +14,7 @@ class HomeController extends Controller
         // ordenados de mayor a menor stock total de variantes
         $products = Producto::where('estado', 1)
             ->with(['variantes' => function ($q) {
-                $q->orderByDesc('stock');
+                $q->orderByDesc('stock')->with('valores.atributo');
             }, 'categoria', 'atributos'])
             ->withSum('variantes', 'stock')
             ->orderByDesc('variantes_sum_stock')

@@ -49,8 +49,29 @@
                     <div id="v-modal-price" class="text-3xl sm:text-4xl font-light text-gray-900 mb-4 sm:mb-6 flex items-center">
                         <span class="text-blue-600 font-bold mr-1">$</span><span id="v-modal-price-val">0.00</span>
                     </div>
-                    
-                    <p id="v-modal-description" class="text-gray-500 mb-6 sm:mb-8 leading-relaxed text-xs sm:text-sm whitespace-pre-line break-words">Descripción</p>
+                    {{-- Chips de atributos con valor (se actualizan al cambiar variante) --}}
+                    <div id="v-modal-attrs-section" class="hidden mb-5">
+                        <div id="v-modal-attrs-list" class="flex flex-wrap gap-1.5">
+                            {{-- JS inserta chips aquí --}}
+                        </div>
+                    </div>
+
+                    {{-- Descripción con leer más --}}
+                    <div class="mb-6 sm:mb-8">
+                        <div id="v-modal-desc-wrapper" class="relative">
+                            <p id="v-modal-description"
+                               class="text-gray-500 leading-relaxed text-xs sm:text-sm whitespace-pre-line break-words overflow-hidden transition-all duration-500"
+                               style="display: -webkit-box; -webkit-line-clamp: 4; -webkit-box-orient: vertical; overflow: hidden;">
+                                Descripción
+                            </p>
+                        </div>
+                        <button id="v-modal-read-more"
+                                onclick="toggleDescription()"
+                                class="mt-2 inline-flex items-center gap-1.5 text-blue-600 hover:text-blue-800 text-xs font-bold uppercase tracking-wider transition-colors hidden">
+                            <span id="v-modal-read-more-text">Leer más</span>
+                            <i id="v-modal-read-more-icon" class="fas fa-chevron-down text-[10px] transition-transform duration-300"></i>
+                        </button>
+                    </div>
 
                     <!-- Selector de Variantes (Estilo Shein/Temu) -->
                     <div id="v-modal-variants-container" class="mb-6 hidden">
@@ -63,14 +84,14 @@
                     <!-- Información de Inventario y Reserva (Dinámico según variante) -->
                     <div class="flex gap-3 sm:gap-4 mb-8 sm:mb-10">
                         <div class="flex-1 bg-white rounded-xl sm:rounded-2xl p-3 sm:p-4 border border-gray-100 shadow-sm shadow-gray-100/50 flex flex-col items-center justify-center text-center">
-                            <i class="fas fa-box text-green-500 mb-1 sm:mb-2 text-lg sm:text-xl"></i>
+                            <i class="fas fa-store text-green-500 mb-1 sm:mb-2 text-lg sm:text-xl"></i>
                             <p id="v-modal-stock" class="text-lg sm:text-xl font-black text-gray-800">0</p>
-                            <p class="text-[9px] sm:text-[10px] text-gray-400 uppercase tracking-wider font-bold">Stock</p>
+                            <p class="text-[9px] sm:text-[10px] text-gray-400 uppercase tracking-wider font-bold">Tienda</p>
                         </div>
                         <div class="flex-1 bg-white rounded-xl sm:rounded-2xl p-3 sm:p-4 border border-gray-100 shadow-sm shadow-gray-100/50 flex flex-col items-center justify-center text-center">
-                            <i class="fas fa-clock text-orange-500 mb-1 sm:mb-2 text-lg sm:text-xl"></i>
+                            <i class="fas fa-warehouse text-orange-500 mb-1 sm:mb-2 text-lg sm:text-xl"></i>
                             <p id="v-modal-reserva" class="text-lg sm:text-xl font-black text-gray-800">0</p>
-                            <p class="text-[9px] sm:text-[10px] text-gray-400 uppercase tracking-wider font-bold">Reserva</p>
+                            <p class="text-[9px] sm:text-[10px] text-gray-400 uppercase tracking-wider font-bold">Bodega</p>
                         </div>
                     </div>
 
@@ -95,14 +116,11 @@
 
     <script>
         function copyKit(event) {
-            const modalName = document.getElementById('v-modal-name').innerText;
+            const modalName  = document.getElementById('v-modal-name').innerText;
             const modalPrice = document.getElementById('v-modal-price-val').innerText;
-            const modalDesc = document.getElementById('v-modal-description').innerText;
-            const modalStock = document.getElementById('v-modal-stock').innerText;
-            const modalReserva = document.getElementById('v-modal-reserva').innerText;
+            const modalDesc  = document.getElementById('v-modal-description').innerText.trim();
 
-            // Construir la descripción en Markdown (compatible con WhatsApp)
-            const markdownText = `*${modalName}*\n\n*Precio:* $${modalPrice}\n\n${modalDesc}\n\n*Stock:* ${modalStock} | *Reserva:* ${modalReserva}`;
+            const markdownText = `*${modalName}*\n\n*Precio:* $${modalPrice}\n\n${modalDesc}`;
 
             // Seleccionar y copiar al textarea
             const textarea = document.getElementById('modal-copy');
@@ -144,6 +162,10 @@
                 console.error("Error al parsear variantes", e);
             }
 
+            // Limpiar chips de atributos (se rellenan en selectVariant al elegir variante)
+            document.getElementById('v-modal-attrs-section').classList.add('hidden');
+            document.getElementById('v-modal-attrs-list').innerHTML = '';
+
             // Asignar los valores estáticos
             document.getElementById('v-modal-name').innerText = name;
             document.getElementById('v-modal-category').innerText = category;
@@ -156,7 +178,29 @@
                 marcaSpan.classList.add('hidden');
             }
 
-            document.getElementById('v-modal-description').innerText = desc;
+            // Descripción con leer más
+            const descEl = document.getElementById('v-modal-description');
+            const readMoreBtn = document.getElementById('v-modal-read-more');
+            const readMoreText = document.getElementById('v-modal-read-more-text');
+            const readMoreIcon = document.getElementById('v-modal-read-more-icon');
+
+            descEl.innerText = desc;
+            // Resetear estado colapsado
+            descEl.style.cssText = 'display: -webkit-box; -webkit-line-clamp: 4; -webkit-box-orient: vertical; overflow: hidden;';
+            descEl.dataset.expanded = 'false';
+
+            // Verificar si realmente necesita el botón (más de 4 líneas aprox.)
+            requestAnimationFrame(() => {
+                descEl.style.cssText = 'display: -webkit-box; -webkit-line-clamp: 4; -webkit-box-orient: vertical; overflow: hidden;';
+                const isTruncated = descEl.scrollHeight > descEl.clientHeight + 2;
+                if (isTruncated) {
+                    readMoreBtn.classList.remove('hidden');
+                    readMoreText.textContent = 'Leer más';
+                    readMoreIcon.style.transform = 'rotate(0deg)';
+                } else {
+                    readMoreBtn.classList.add('hidden');
+                }
+            });
 
             const variantsContainer = document.getElementById('v-modal-variants-container');
             const variantsList = document.getElementById('v-modal-variants-list');
@@ -177,6 +221,23 @@
                     btnElement.classList.add('border-blue-600', 'bg-blue-50', 'text-blue-700');
                     btnElement.classList.remove('border-gray-200', 'bg-white', 'text-gray-600');
                     
+                    // Actualizar chips de atributos+valor de la variante
+                    const attrsSection = document.getElementById('v-modal-attrs-section');
+                    const attrsList    = document.getElementById('v-modal-attrs-list');
+                    attrsList.innerHTML = '';
+                    if (variant.valores && variant.valores.length > 0) {
+                        variant.valores.forEach(v => {
+                            if (!v.atributo || !v.valor) return;
+                            const chip = document.createElement('span');
+                            chip.className = 'inline-flex items-center gap-1 px-2.5 py-1 rounded-md text-[10px] font-semibold bg-slate-100 text-slate-600 border border-slate-200 uppercase tracking-wide';
+                            chip.innerHTML = `<i class="fas fa-tag text-[8px] text-slate-400"></i><span class="text-slate-400 font-bold">${v.atributo}:</span>&nbsp;<span class="text-slate-700">${v.valor}</span>`;
+                            attrsList.appendChild(chip);
+                        });
+                        attrsSection.classList.remove('hidden');
+                    } else {
+                        attrsSection.classList.add('hidden');
+                    }
+
                     // Actualizar datos en modal
                     document.getElementById('v-modal-price-val').innerText = parseFloat(variant.precio).toFixed(2);
                     document.getElementById('v-modal-sku').innerText = variant.sku || 'N/A';
@@ -222,12 +283,34 @@
                     }
                 };
                 
-                // Renderizar botones de variantes
+                // Renderizar botones de variantes con etiquetas de estado
                 variants.forEach((v, idx) => {
                     const btn = document.createElement('button');
-                    // Estilos pill similares a Shein/Temu
-                    btn.className = 'px-4 py-2 text-xs sm:text-sm font-semibold border-2 rounded-full transition-all duration-200 border-gray-200 bg-white text-gray-600 hover:border-blue-300 focus:outline-none';
-                    btn.innerText = v.nombre;
+                    const vStock   = parseInt(v.stock)   || 0;
+                    const vReserva = parseInt(v.reserva) || 0;
+
+                    if (vStock === 0 && vReserva === 0) {
+                        // Agotado
+                        btn.className = 'relative px-4 py-2 text-xs sm:text-sm font-semibold border-2 rounded-full transition-all duration-200 border-red-200 bg-red-50 text-red-400 cursor-not-allowed focus:outline-none';
+                        btn.innerHTML = `
+                            <span class="line-through">${v.nombre}</span>
+                            <span class="ml-1.5 inline-flex items-center gap-0.5 text-[9px] font-black uppercase tracking-wider bg-red-500 text-white px-1.5 py-0.5 rounded-full">
+                                <i class="fas fa-ban text-[8px]"></i> Agotado
+                            </span>`;
+                    } else if (vStock === 0 && vReserva > 0) {
+                        // En bodega
+                        btn.className = 'relative px-4 py-2 text-xs sm:text-sm font-semibold border-2 rounded-full transition-all duration-200 border-amber-300 bg-amber-50 text-amber-700 hover:border-amber-400 focus:outline-none';
+                        btn.innerHTML = `
+                            ${v.nombre}
+                            <span class="ml-1.5 inline-flex items-center gap-0.5 text-[9px] font-black uppercase tracking-wider bg-amber-400 text-amber-900 px-1.5 py-0.5 rounded-full">
+                                <i class="fas fa-warehouse text-[8px]"></i> Bodega
+                            </span>`;
+                    } else {
+                        // Con stock normal
+                        btn.className = 'px-4 py-2 text-xs sm:text-sm font-semibold border-2 rounded-full transition-all duration-200 border-gray-200 bg-white text-gray-600 hover:border-blue-300 focus:outline-none';
+                        btn.innerText = v.nombre;
+                    }
+
                     btn.onclick = () => selectVariant(v, btn);
                     variantsList.appendChild(btn);
                 });
@@ -238,6 +321,8 @@
             } else {
                 // Fallback por si acaso el producto no tiene variantes (no debería pasar)
                 variantsContainer.classList.add('hidden');
+                document.getElementById('v-modal-attrs-section').classList.add('hidden');
+                document.getElementById('v-modal-attrs-list').innerHTML = '';
                 document.getElementById('v-modal-price-val').innerText = (btn.getAttribute('data-price') || '').replace('$', '');
                 document.getElementById('v-modal-sku').innerText = btn.getAttribute('data-sku') || '';
                 document.getElementById('v-modal-stock').innerText = (btn.getAttribute('data-stock') || '').replace(' un.', '');
@@ -260,6 +345,27 @@
             modal.classList.remove('hidden');
             // Agregar scroll-lock al body
             document.body.style.overflow = 'hidden';
+        }
+
+        function toggleDescription() {
+            const descEl = document.getElementById('v-modal-description');
+            const readMoreText = document.getElementById('v-modal-read-more-text');
+            const readMoreIcon = document.getElementById('v-modal-read-more-icon');
+            const isExpanded = descEl.dataset.expanded === 'true';
+
+            if (isExpanded) {
+                // Colapsar
+                descEl.style.cssText = 'display: -webkit-box; -webkit-line-clamp: 4; -webkit-box-orient: vertical; overflow: hidden;';
+                descEl.dataset.expanded = 'false';
+                readMoreText.textContent = 'Leer más';
+                readMoreIcon.style.transform = 'rotate(0deg)';
+            } else {
+                // Expandir
+                descEl.style.cssText = 'display: block; overflow: visible;';
+                descEl.dataset.expanded = 'true';
+                readMoreText.textContent = 'Ver menos';
+                readMoreIcon.style.transform = 'rotate(180deg)';
+            }
         }
 
         function closeModal() {
