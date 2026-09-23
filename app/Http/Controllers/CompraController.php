@@ -29,6 +29,7 @@ class CompraController extends Controller
         $variantes = Variante::with(['producto:id,nombre', 'imagenes'])
             ->where('estado', 1)
             ->orderBy('id')
+            ->limit(10)
             ->get(['id', 'id_producto', 'sku', 'nombre_variante', 'stock', 'reserva']);
 
         $movimientos = MovimientoBodega::with(['variante.producto', 'variante.imagenes', 'compra.proveedor'])
@@ -48,6 +49,7 @@ class CompraController extends Controller
         $variantes = Variante::with(['producto:id,nombre', 'imagenes'])
             ->where('estado', 1)
             ->orderBy('id')
+            ->limit(10)
             ->get(['id', 'id_producto', 'sku', 'nombre_variante', 'precio_venta'])
             ->map(fn (Variante $variante) => [
                 'id' => $variante->id,
@@ -63,6 +65,43 @@ class CompraController extends Controller
             ->values();
 
         return view('compras.create', compact('proveedores', 'variantes'));
+    }
+
+    public function buscarVariantes(Request $request)
+    {
+        $busqueda = $request->query('q', '');
+
+        $query = Variante::with(['producto:id,nombre', 'imagenes'])
+            ->where('estado', 1);
+
+        if (!empty($busqueda)) {
+            $query->where(function ($q) use ($busqueda) {
+                $q->where('sku', 'like', "%{$busqueda}%")
+                  ->orWhere('nombre_variante', 'like', "%{$busqueda}%")
+                  ->orWhereHas('producto', function ($qProd) use ($busqueda) {
+                      $qProd->where('nombre', 'like', "%{$busqueda}%");
+                  });
+            });
+        }
+
+        $paginator = $query->orderBy('id')
+            ->paginate(10, ['id', 'id_producto', 'sku', 'nombre_variante', 'precio_venta', 'stock', 'reserva']);
+
+        $paginator->getCollection()->transform(fn (Variante $variante) => [
+            'id' => $variante->id,
+            'producto' => $variante->producto?->nombre ?? 'Producto sin nombre',
+            'variante' => $variante->nombre_variante,
+            'sku' => $variante->sku,
+            'imagen' => ($imagen = $variante->imagenes->firstWhere('es_principal', 1) ?? $variante->imagenes->first())
+                ? asset('storage/' . $imagen->ruta_imagen)
+                : null,
+            'unidad' => 'unidad',
+            'precio_venta' => $variante->precio_venta,
+            'stock' => $variante->stock,
+            'reserva' => $variante->reserva,
+        ]);
+
+        return response()->json($paginator);
     }
 
     public function store(Request $request)
