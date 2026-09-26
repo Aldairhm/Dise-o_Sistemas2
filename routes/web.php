@@ -10,6 +10,7 @@ use App\Http\Controllers\CategoriaController;
 use App\Http\Controllers\CompraController;
 use App\Http\Controllers\MovimientoBodegaController;
 use App\Http\Controllers\AtributoController;
+use App\Http\Controllers\VentaController;
 
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\ProductoController;
@@ -73,6 +74,13 @@ Route::middleware('auth')->group(function () {
         Route::get('/compras/historial', [CompraController::class, 'historial'])->name('compras.historial');
         Route::get('/compras/movimientos', [CompraController::class, 'movimientos'])->name('compras.movimientos');
         Route::post('/movimientos-bodega/transferencia-tienda', [MovimientoBodegaController::class, 'transferirATienda'])->name('movimientos-bodega.transferencia-tienda');
+
+        // ── Módulo de Ventas ──
+        Route::get('/ventas/nueva', [VentaController::class, 'create'])->name('ventas.create');
+        Route::get('/ventas', [VentaController::class, 'index'])->name('ventas.index');
+        Route::post('/ventas', [VentaController::class, 'store'])->name('ventas.store');
+        Route::get('/ventas/{id}', [VentaController::class, 'show'])->name('ventas.show');
+        Route::get('/ventas/{id}/imprimir', [VentaController::class, 'imprimir'])->name('ventas.imprimir');
 
         // ── Módulo de Atributos ──
         Route::resource('atributos', AtributoController::class)->except(['create', 'show', 'edit']);

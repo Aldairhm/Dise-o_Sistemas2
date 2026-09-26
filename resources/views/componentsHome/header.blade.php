@@ -17,6 +17,7 @@
                     <a href="{{ route('productos.index') }}" class="text-sm font-medium text-gray-600 hover:text-blue-600 transition-colors flex items-center gap-2"><i class="fas fa-shopping-bag"></i> Productos</a>
                     <a href="/proveedores" class="text-sm font-medium text-gray-600 hover:text-blue-600 transition-colors flex items-center gap-2"><i class="fas fa-truck"></i> Proveedores</a>
                     <a href="{{ route('compras.create') }}" class="text-sm font-medium text-gray-600 hover:text-blue-600 transition-colors flex items-center gap-2"><i class="fas fa-cart-plus"></i> Compras</a>
+                    <a href="{{ Auth::check() && Auth::user()->rol === 'vendedor' ? route('ventas.create') : route('ventas.index') }}" class="text-sm font-medium text-gray-600 hover:text-blue-600 transition-colors flex items-center gap-2 {{ request()->routeIs('ventas.*') ? 'text-blue-600 font-bold' : '' }}"><i class="fas fa-cash-register"></i> Ventas</a>
                     <a href="{{ route('categorias.index') }}" class="text-sm font-medium text-gray-600 hover:text-blue-600 transition-colors flex items-center gap-2"><i class="fas fa-folder-open"></i> Categorías</a>              
                     <a href="{{ route('usuarios.index') }}" class="text-sm font-medium text-gray-600 hover:text-blue-600 transition-colors flex items-center gap-2"><i class="fas fa-users-gear"></i> Usuarios</a>
                 </nav>
@@ -86,10 +87,8 @@
                         </div>
                     </div>
 
-                    <button class="relative p-2 text-gray-600 hover:text-blue-600 transition-colors">
-                        <i class="fas fa-shopping-cart text-xl"></i>
-                        <span class="absolute top-0 right-0 bg-red-500 text-white text-[10px] font-bold h-4 w-4 rounded-full flex items-center justify-center">0</span>
-                    </button>
+                    <!-- Bolsa de compras estilo Apple -->
+                    @include('componentsHome.cartDropdown')
                     <!-- Usuario Dropdown con Cerrar Sesión -->
                     @auth
                     <div class="user-dropdown">

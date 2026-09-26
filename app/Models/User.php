@@ -33,4 +33,18 @@ class User extends Authenticatable
         ];
     }
 
+    public function ventas()
+    {
+        return $this->hasMany(Venta::class, 'id_usuario');
+    }
+
+    public function salidas()
+    {
+        return $this->hasMany(Salida::class, 'id_usuario');
+    }
+
+    public function comisiones()
+    {
+        return $this->hasMany(ComisionVendedor::class, 'id_vendedor');
+    }
 }

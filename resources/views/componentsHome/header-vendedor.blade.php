@@ -14,7 +14,8 @@
                  <!-- Desktop Menu -->
                   <nav class="hidden lg:flex items-center gap-8">
                     <a href="/home" class="text-sm font-semibold text-blue-600 flex items-center gap-2"><i class="fas fa-home"></i> Inicio</a>
-                    </nav>
+                    <a href="{{ route('ventas.create') }}" class="text-sm font-medium text-gray-600 hover:text-blue-600 transition-colors flex items-center gap-2 {{ request()->routeIs('ventas.*') ? 'text-blue-600 font-bold' : '' }}"><i class="fas fa-cash-register"></i> Ventas / Carrito</a>
+                  </nav>
 
                  <!-- Icons -->
                 <div class="flex items-center gap-4">
@@ -81,10 +82,8 @@
                         </div>
                     </div>
 
-                    <button class="relative p-2 text-gray-600 hover:text-blue-600 transition-colors">
-                        <i class="fas fa-shopping-cart text-xl"></i>
-                        <span class="absolute top-0 right-0 bg-red-500 text-white text-[10px] font-bold h-4 w-4 rounded-full flex items-center justify-center">0</span>
-                    </button>
+                    <!-- Bolsa de compras estilo Apple -->
+                    @include('componentsHome.cartDropdown')
                     <!-- Usuario Dropdown con Cerrar Sesión -->
                     @auth
                     <div class="user-dropdown">

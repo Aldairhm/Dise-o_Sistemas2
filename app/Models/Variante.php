@@ -39,4 +39,14 @@ class Variante extends Model
     {
         return $this->hasMany(VarianteValor::class, 'id_variante');
     }
+
+    public function detalleVentas()
+    {
+        return $this->hasMany(DetalleVenta::class, 'id_variante');
+    }
+
+    public function salidas()
+    {
+        return $this->hasMany(Salida::class, 'id_variante');
+    }
 }
