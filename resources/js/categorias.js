@@ -28,6 +28,8 @@ let currentView = localStorage.getItem("cat_view") || "table";
 let currentEstado = localStorage.getItem("cat_estado") || "todas";
 let sortableTable = null;
 let sortableCards = null;
+let currentEditProductosCount = 0;
+let currentEditOriginalNombre = "";
 
 function setView(view) {
     currentView = view;
@@ -140,7 +142,42 @@ document.addEventListener("DOMContentLoaded", () => {
     initSortable();
 });
 
+function setNombreInputLocked(isLocked, count = 0) {
+    const inputNombre = document.getElementById("inputNombre");
+    const badge = document.getElementById("badgeNombreBloqueado");
+    const iconLock = document.getElementById("iconNombreLock");
+    const helper = document.getElementById("helperNombre");
+    const warning = document.getElementById("warningNombreBloqueado");
+
+    if (!inputNombre) return;
+
+    if (isLocked) {
+        inputNombre.readOnly = true;
+        inputNombre.classList.add("bg-slate-100", "text-slate-500", "cursor-not-allowed");
+        inputNombre.classList.remove("bg-white", "text-slate-800");
+        if (badge) badge.classList.remove("hidden");
+        if (iconLock) iconLock.classList.remove("hidden");
+        if (helper) helper.classList.add("hidden");
+        if (warning) {
+            warning.innerHTML = `<i class="fas fa-lock mr-1"></i>No se puede editar el nombre porque esta categoría ya tiene <strong>${count}</strong> producto(s) vinculado(s).`;
+            warning.classList.remove("hidden");
+        }
+    } else {
+        inputNombre.readOnly = false;
+        inputNombre.classList.remove("bg-slate-100", "text-slate-500", "cursor-not-allowed");
+        inputNombre.classList.add("bg-white", "text-slate-800");
+        if (badge) badge.classList.add("hidden");
+        if (iconLock) iconLock.classList.add("hidden");
+        if (helper) helper.classList.remove("hidden");
+        if (warning) warning.classList.add("hidden");
+    }
+}
+
 function openCreateModal() {
+    currentEditProductosCount = 0;
+    currentEditOriginalNombre = "";
+    setNombreInputLocked(false);
+
     const icon = document.getElementById("modalHeaderIcon");
     if (icon) icon.className = "fas fa-plus-circle";
     const title = document.getElementById("modalTitle");
@@ -167,7 +204,10 @@ function openCreateModal() {
     showModal();
 }
 
-function openEditModal(id, nombre, descripcion, color, icono) {
+function openEditModal(id, nombre, descripcion, color, icono, productosCount = 0) {
+    currentEditProductosCount = parseInt(productosCount, 10) || 0;
+    currentEditOriginalNombre = nombre || "";
+
     const icon = document.getElementById("modalHeaderIcon");
     if (icon) icon.className = "fas fa-edit";
     const title = document.getElementById("modalTitle");
@@ -181,6 +221,8 @@ function openEditModal(id, nombre, descripcion, color, icono) {
     document.getElementById("categoriaId").value = id;
     document.getElementById("inputNombre").value = nombre;
     document.getElementById("inputDescripcion").value = descripcion;
+
+    setNombreInputLocked(currentEditProductosCount > 0, currentEditProductosCount);
 
     const pName = document.getElementById("previewName");
     if (pName) pName.textContent = nombre || "Nueva Categoría";
@@ -213,7 +255,13 @@ function showModal() {
         panel.classList.remove("scale-95", "opacity-0");
         panel.classList.add("scale-100", "opacity-100");
     });
-    setTimeout(() => document.getElementById("inputNombre").focus(), 250);
+    setTimeout(() => {
+        if (!document.getElementById("inputNombre").readOnly) {
+            document.getElementById("inputNombre").focus();
+        } else {
+            document.getElementById("inputDescripcion").focus();
+        }
+    }, 250);
 }
 
 function closeModal() {
@@ -224,7 +272,12 @@ function closeModal() {
     bd.classList.add("opacity-0");
     panel.classList.remove("scale-100", "opacity-100");
     panel.classList.add("scale-95", "opacity-0");
-    setTimeout(() => modal.classList.add("hidden"), 250);
+    setTimeout(() => {
+        modal.classList.add("hidden");
+        setNombreInputLocked(false);
+        currentEditProductosCount = 0;
+        currentEditOriginalNombre = "";
+    }, 250);
 }
 
 function normalizarNombreCategoria(nombre) {
@@ -259,6 +312,13 @@ function validarFormulario() {
     const descripcion = document
         .getElementById("inputDescripcion")
         .value.trim();
+
+    if (currentEditProductosCount > 0 && nombre !== currentEditOriginalNombre) {
+        showErrors({
+            nombre: ["No se puede modificar el nombre de la categoría porque ya tiene productos vinculados."]
+        });
+        isValid = false;
+    }
 
     if (!nombre) {
         showErrors({ nombre: ["El nombre de la categoría es obligatorio."] });

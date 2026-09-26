@@ -79,6 +79,16 @@ class CategoriaController extends Controller
 
     public function update(Request $request, Categoria $categoria)
     {
+        // Validar si la categoría ya tiene productos asociados y se intenta cambiar el nombre
+        if ($categoria->productos()->exists() && trim((string)$request->nombre) !== trim((string)$categoria->nombre)) {
+            return response()->json([
+                'message' => 'No se puede modificar el nombre de la categoría porque ya tiene productos vinculados.',
+                'errors'  => [
+                    'nombre' => ['No se puede modificar el nombre de la categoría porque ya tiene productos vinculados.'],
+                ],
+            ], 422);
+        }
+
         $request->validate([
             'nombre'      => 'required|string|max:100|unique:categoria,nombre,' . $categoria->id,
             'descripcion' => 'nullable|string',
@@ -91,7 +101,7 @@ class CategoriaController extends Controller
         ]);
 
         $categoria->update([
-            'nombre'      => $request->nombre,
+            'nombre'      => $categoria->productos()->exists() ? $categoria->nombre : $request->nombre,
             'descripcion' => $request->descripcion,
             'color'       => $request->color ?? $categoria->color,
             'icono'       => $request->icono ?? $categoria->icono,

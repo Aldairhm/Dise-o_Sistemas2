@@ -81,11 +81,24 @@
                                 <div class="space-y-5 flex-1">
                                     <!-- Nombre -->
                                     <div>
-                                        <label for="inputNombre" class="block text-sm font-bold text-slate-700 mb-1.5">Nombre <span class="text-red-500">*</span></label>
-                                        <input type="text" id="inputNombre" maxlength="100"
-                                            class="w-full px-4 py-3 bg-white border border-slate-200 focus:border-blue-500 rounded-xl text-sm text-slate-800 placeholder:text-slate-400 focus:ring-2 focus:ring-blue-500/20 focus:outline-none transition-all shadow-sm"
-                                            placeholder="Ej: Electrónica">
-                                        <p class="mt-1.5 text-xs text-slate-400">Nombre público que verán los clientes (Campo obligatorio)</p>
+                                        <div class="flex items-center justify-between mb-1.5">
+                                            <label for="inputNombre" class="block text-sm font-bold text-slate-700">Nombre <span class="text-red-500">*</span></label>
+                                            <span id="badgeNombreBloqueado" class="hidden inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-bold bg-amber-50 text-amber-700 border border-amber-200">
+                                                <i class="fas fa-lock text-[10px]"></i> Bloqueado
+                                            </span>
+                                        </div>
+                                        <div class="relative">
+                                            <input type="text" id="inputNombre" maxlength="100"
+                                                class="w-full px-4 py-3 bg-white border border-slate-200 focus:border-blue-500 rounded-xl text-sm text-slate-800 placeholder:text-slate-400 focus:ring-2 focus:ring-blue-500/20 focus:outline-none transition-all shadow-sm"
+                                                placeholder="Ej: Electrónica">
+                                            <div id="iconNombreLock" class="hidden absolute inset-y-0 right-0 pr-3.5 flex items-center pointer-events-none text-amber-500">
+                                                <i class="fas fa-lock text-sm"></i>
+                                            </div>
+                                        </div>
+                                        <p id="helperNombre" class="mt-1.5 text-xs text-slate-400">Nombre público que verán los clientes (Campo obligatorio)</p>
+                                        <p id="warningNombreBloqueado" class="mt-1.5 text-xs text-amber-600 font-medium hidden">
+                                            <i class="fas fa-info-circle mr-1"></i>No se puede editar el nombre porque esta categoría tiene productos vinculados.
+                                        </p>
                                         <p id="errorNombre" class="mt-1 text-xs text-red-500 font-medium hidden"></p>
                                     </div>
 

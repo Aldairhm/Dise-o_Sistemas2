@@ -102,7 +102,7 @@
         <div class="p-4 flex items-center justify-end gap-2 bg-slate-50/30 rounded-b-xl">
             @if(!$isBaja)
                 <button type="button" 
-                        onclick="openEditModal({{ $categoria->id }}, '{{ addslashes($categoria->nombre) }}', '{{ addslashes($categoria->descripcion ?? '') }}', '{{ $color }}', '{{ $icono }}')"
+                        onclick="openEditModal({{ $categoria->id }}, '{{ addslashes($categoria->nombre) }}', '{{ addslashes($categoria->descripcion ?? '') }}', '{{ $color }}', '{{ $icono }}', {{ (int)($categoria->productos_count ?? 0) }})"
                         class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md bg-blue-50 hover:bg-blue-100 text-blue-600 font-semibold text-xs transition-colors cursor-pointer">
                     <i class="fas fa-edit"></i>
                     <span>Editar</span>

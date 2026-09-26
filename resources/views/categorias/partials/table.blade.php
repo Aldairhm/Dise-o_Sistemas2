@@ -92,7 +92,7 @@
                         <div class="flex items-center justify-end gap-2">
                             <!-- Editar -->
                             <button type="button"
-                                    onclick="openEditModal({{ $categoria->id }}, '{{ addslashes($categoria->nombre) }}', '{{ addslashes($categoria->descripcion ?? '') }}', '{{ $color }}', '{{ $icono }}')"
+                                    onclick="openEditModal({{ $categoria->id }}, '{{ addslashes($categoria->nombre) }}', '{{ addslashes($categoria->descripcion ?? '') }}', '{{ $color }}', '{{ $icono }}', {{ (int)($categoria->productos_count ?? 0) }})"
                                     class="w-8 h-8 rounded-lg bg-slate-100 hover:bg-blue-100 text-slate-500 hover:text-blue-600 flex items-center justify-center transition-colors cursor-pointer"
                                     title="Editar categoría">
                                 <i class="fas fa-pencil text-xs"></i>
