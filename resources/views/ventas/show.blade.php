@@ -200,8 +200,13 @@
         </div>
         @endif
 
+        @php
+            $folioDescarga = 'VNT-' . str_pad($venta->id, 5, '0', STR_PAD_LEFT);
+            $fechaDescarga = \Carbon\Carbon::parse($venta->fecha)->format('Y-m-d');
+        @endphp
+
+        <!-- 1. COMPROBANTE DE TRANSFERENCIA BANCARIA -->
         @if($venta->comprobante_url)
-        <!-- TARJETA COMPROBANTE DE TRANSFERENCIA BANCARIA -->
         <div class="bg-white border border-blue-200 rounded-2xl shadow-sm overflow-hidden" x-data="{ zoomComprobante: false }">
             <div class="p-5 border-b border-blue-100 bg-gradient-to-r from-blue-50/70 to-indigo-50/40 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                 <div class="flex items-center gap-3">
@@ -227,14 +232,15 @@
                         <i class="fas fa-arrow-up-right-from-square text-[11px]"></i>
                         <span>Abrir pestaña</span>
                     </a>
-                    <a 
-                        href="{{ $venta->comprobante_url }}" 
-                        download 
-                        class="rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold px-3.5 py-2 text-xs transition-all shadow-sm shadow-blue-500/20 flex items-center gap-1.5"
+                    <button 
+                        type="button" 
+                        onclick="descargarArchivoVenta('{{ $venta->comprobante_url }}', '{{ $folioDescarga }}_{{ $fechaDescarga }}_comprobante_pago')"
+                        class="rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold px-3.5 py-2 text-xs transition-all shadow-sm shadow-blue-500/20 flex items-center gap-1.5 cursor-pointer"
+                        title="Descargar con folio y fecha"
                     >
                         <i class="fas fa-download text-[11px]"></i>
                         <span>Descargar</span>
-                    </a>
+                    </button>
                 </div>
             </div>
 
@@ -319,9 +325,14 @@
                                 <span class="text-sm font-black uppercase tracking-wider text-white">Comprobante de Transferencia Bancaria</span>
                             </div>
                             <div class="flex items-center gap-3">
-                                <a href="{{ $venta->comprobante_url }}" target="_blank" download class="text-xs text-blue-100 hover:text-white flex items-center gap-1 font-bold transition-colors">
+                                <button 
+                                    type="button" 
+                                    onclick="descargarArchivoVenta('{{ $venta->comprobante_url }}', '{{ $folioDescarga }}_{{ $fechaDescarga }}_comprobante_pago')"
+                                    class="text-xs text-blue-100 hover:text-white flex items-center gap-1 font-bold transition-colors cursor-pointer"
+                                    title="Descargar con folio y fecha"
+                                >
                                     <i class="fas fa-download"></i> Descargar
-                                </a>
+                                </button>
                                 <button type="button" @click="zoomComprobante = false" class="w-8 h-8 rounded-lg bg-white/10 hover:bg-white/20 flex items-center justify-center text-white transition-colors cursor-pointer">
                                     <i class="fas fa-times text-sm"></i>
                                 </button>
@@ -331,8 +342,149 @@
                             <img src="{{ $venta->comprobante_url }}" alt="Comprobante en alta resolución" class="max-w-full max-h-[70vh] object-contain rounded-lg shadow-sm border border-slate-200">
                         </div>
                         <div class="px-6 py-3.5 bg-gray-50 border-t border-gray-100 flex items-center justify-between">
-                            <span class="text-xs text-slate-500 font-medium">Venta #VNT-{{ str_pad($venta->id, 5, '0', STR_PAD_LEFT) }}</span>
-                            <button type="button" @click="zoomComprobante = false" class="px-5 py-2 bg-slate-800 hover:bg-slate-700 text-white rounded-xl text-xs font-bold transition-colors cursor-pointer">
+                            <span class="text-xs text-slate-500 font-medium">Venta #{{ $folioDescarga }}</span>
+                            <div class="flex items-center gap-2">
+                                <button 
+                                    type="button" 
+                                    onclick="descargarArchivoVenta('{{ $venta->comprobante_url }}', '{{ $folioDescarga }}_{{ $fechaDescarga }}_comprobante_pago')" 
+                                    class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-bold transition-colors cursor-pointer flex items-center gap-1.5"
+                                >
+                                    <i class="fas fa-download text-[11px]"></i>
+                                    <span>Descargar</span>
+                                </button>
+                                <button type="button" @click="zoomComprobante = false" class="px-5 py-2 bg-slate-800 hover:bg-slate-700 text-white rounded-xl text-xs font-bold transition-colors cursor-pointer">
+                                    Cerrar
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        @endif
+
+        <!-- 2. COMPROBANTE DE PAQUETE (EN RUTA) -->
+        @if($venta->comprobante_paquete_url)
+        <div class="bg-white border border-indigo-200 rounded-2xl shadow-sm overflow-hidden" x-data="{ zoomPaquete: false }">
+            <div class="p-5 border-b border-indigo-100 bg-gradient-to-r from-indigo-50/70 to-blue-50/40 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                <div class="flex items-center gap-3">
+                    <div class="w-10 h-10 rounded-xl bg-indigo-600 text-white flex items-center justify-center font-bold text-base shadow-sm shadow-indigo-500/20">
+                        <i class="fas fa-box-open"></i>
+                    </div>
+                    <div>
+                        <div class="flex items-center gap-2">
+                            <h2 class="text-sm font-black text-slate-900 uppercase tracking-tight">Comprobante de Paquetería (En Ruta)</h2>
+                            <span class="text-[10px] font-bold text-indigo-700 bg-indigo-100 border border-indigo-200 px-2.5 py-0.5 rounded-full">
+                                En Ruta
+                            </span>
+                        </div>
+                        <p class="text-xs text-slate-500">Evidencia de entrega y rotulado a mensajería / delivery</p>
+                    </div>
+                </div>
+                <div class="flex items-center gap-2">
+                    <a 
+                        href="{{ $venta->comprobante_paquete_url }}" 
+                        target="_blank" 
+                        class="rounded-xl border border-indigo-200 bg-white hover:bg-indigo-600 hover:text-white text-indigo-700 font-bold px-3.5 py-2 text-xs transition-all shadow-2xs flex items-center gap-1.5"
+                    >
+                        <i class="fas fa-arrow-up-right-from-square text-[11px]"></i>
+                        <span>Abrir pestaña</span>
+                    </a>
+                    <button 
+                        type="button" 
+                        onclick="descargarArchivoVenta('{{ $venta->comprobante_paquete_url }}', '{{ $folioDescarga }}_{{ $fechaDescarga }}_paquete')"
+                        class="rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-bold px-3.5 py-2 text-xs transition-all shadow-sm shadow-indigo-500/20 flex items-center gap-1.5 cursor-pointer"
+                        title="Descargar con folio y fecha"
+                    >
+                        <i class="fas fa-download text-[11px]"></i>
+                        <span>Descargar</span>
+                    </button>
+                </div>
+            </div>
+
+            <div class="p-6 flex flex-col sm:flex-row items-center sm:items-start gap-6">
+                <!-- MINIATURA INTERACTIVA -->
+                <button 
+                    type="button" 
+                    @click="zoomPaquete = true"
+                    class="block group relative overflow-hidden rounded-2xl border border-slate-200 shadow-md shrink-0 cursor-pointer focus:outline-none focus:ring-4 focus:ring-indigo-500/20"
+                    title="Clic para ampliar imagen"
+                >
+                    <img 
+                        src="{{ $venta->comprobante_paquete_url }}" 
+                        alt="Comprobante de paquete" 
+                        class="w-36 h-36 sm:w-44 sm:h-44 object-cover group-hover:scale-105 transition-transform duration-300"
+                    >
+                    <div class="absolute inset-0 bg-slate-950/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center text-white text-xs font-bold gap-1.5">
+                        <i class="fas fa-magnifying-glass-plus text-sm"></i>
+                        <span>Ampliar</span>
+                    </div>
+                </button>
+
+                <div class="space-y-2.5 text-xs text-slate-600 flex-1">
+                    <p class="font-bold text-slate-800">Fotografía tomada al entregar el paquete a la mensajería</p>
+                    <p class="text-slate-600 leading-relaxed">
+                        Permite auditar el estado del paquete al momento de despacho para envíos a domicilio.
+                    </p>
+                    <div>
+                        <button 
+                            type="button" 
+                            @click="zoomPaquete = true"
+                            class="inline-flex items-center gap-1.5 text-xs font-bold text-indigo-600 hover:text-indigo-800 transition-colors cursor-pointer"
+                        >
+                            <i class="fas fa-expand text-[10px]"></i> Ver paquete en pantalla completa
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- MODAL LIGHTBOX PAQUETE -->
+            <div 
+                x-show="zoomPaquete" 
+                x-cloak
+                class="fixed inset-0 z-50 overflow-y-auto"
+                style="display: none;"
+                role="dialog"
+                aria-modal="true"
+            >
+                <div 
+                    x-show="zoomPaquete"
+                    x-transition.opacity
+                    class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm transition-opacity"
+                    @click="zoomPaquete = false"
+                ></div>
+
+                <div class="flex min-h-screen items-center justify-center p-4 text-center">
+                    <div 
+                        x-show="zoomPaquete"
+                        x-transition
+                        class="relative z-10 max-w-4xl w-full bg-white rounded-2xl shadow-2xl overflow-hidden border border-slate-200"
+                        @click.away="zoomPaquete = false"
+                    >
+                        <div class="bg-indigo-600 px-6 py-4 flex items-center justify-between text-white shadow-md">
+                            <div class="flex items-center gap-2.5">
+                                <i class="fas fa-box-open text-white text-base"></i>
+                                <span class="text-sm font-black uppercase tracking-wider text-white">Comprobante de Paquetería</span>
+                            </div>
+                            <div class="flex items-center gap-3">
+                                <button 
+                                    type="button" 
+                                    onclick="descargarArchivoVenta('{{ $venta->comprobante_paquete_url }}', '{{ $folioDescarga }}_{{ $fechaDescarga }}_paquete')"
+                                    class="text-xs text-indigo-100 hover:text-white flex items-center gap-1 font-bold transition-colors cursor-pointer"
+                                >
+                                    <i class="fas fa-download"></i> Descargar
+                                </button>
+                                <button type="button" @click="zoomPaquete = false" class="w-8 h-8 rounded-lg bg-white/10 hover:bg-white/20 flex items-center justify-center text-white transition-colors cursor-pointer">
+                                    <i class="fas fa-times text-sm"></i>
+                                </button>
+                            </div>
+                        </div>
+                        <div class="p-4 bg-slate-900/5 flex items-center justify-center max-h-[75vh] overflow-auto">
+                            <img src="{{ $venta->comprobante_paquete_url }}" alt="Comprobante paquete" class="max-w-full max-h-[70vh] object-contain rounded-lg shadow-sm border border-slate-200">
+                        </div>
+                        <div class="px-6 py-3.5 bg-gray-50 border-t border-gray-100 flex items-center justify-between">
+                            <span class="text-xs text-slate-500 font-medium">Venta #{{ $folioDescarga }}</span>
+                            <button type="button" @click="zoomPaquete = false" class="px-5 py-2 bg-slate-800 hover:bg-slate-700 text-white rounded-xl text-xs font-bold transition-colors cursor-pointer">
                                 Cerrar
                             </button>
                         </div>
@@ -341,6 +493,169 @@
             </div>
         </div>
         @endif
+
+        <!-- 3. COMPROBANTE DE DEVOLUCIÓN -->
+        @if($venta->comprobante_devolucion_url)
+        <div class="bg-white border border-rose-200 rounded-2xl shadow-sm overflow-hidden" x-data="{ zoomDevolucion: false }">
+            <div class="p-5 border-b border-rose-100 bg-gradient-to-r from-rose-50/70 to-purple-50/40 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                <div class="flex items-center gap-3">
+                    <div class="w-10 h-10 rounded-xl bg-rose-600 text-white flex items-center justify-center font-bold text-base shadow-sm shadow-rose-500/20">
+                        <i class="fas fa-arrow-rotate-left"></i>
+                    </div>
+                    <div>
+                        <div class="flex items-center gap-2">
+                            <h2 class="text-sm font-black text-slate-900 uppercase tracking-tight">Comprobante de Devolución por Garantía</h2>
+                            <span class="text-[10px] font-bold text-rose-700 bg-rose-100 border border-rose-200 px-2.5 py-0.5 rounded-full">
+                                Devolución
+                            </span>
+                        </div>
+                        <p class="text-xs text-slate-500">Fotografía del artículo recibido en retorno al almacén</p>
+                    </div>
+                </div>
+                <div class="flex items-center gap-2">
+                    <a 
+                        href="{{ $venta->comprobante_devolucion_url }}" 
+                        target="_blank" 
+                        class="rounded-xl border border-rose-200 bg-white hover:bg-rose-600 hover:text-white text-rose-700 font-bold px-3.5 py-2 text-xs transition-all shadow-2xs flex items-center gap-1.5"
+                    >
+                        <i class="fas fa-arrow-up-right-from-square text-[11px]"></i>
+                        <span>Abrir pestaña</span>
+                    </a>
+                    <button 
+                        type="button" 
+                        onclick="descargarArchivoVenta('{{ $venta->comprobante_devolucion_url }}', '{{ $folioDescarga }}_{{ $fechaDescarga }}_devolucion')"
+                        class="rounded-xl bg-rose-600 hover:bg-rose-700 text-white font-bold px-3.5 py-2 text-xs transition-all shadow-sm shadow-rose-500/20 flex items-center gap-1.5 cursor-pointer"
+                        title="Descargar con folio y fecha"
+                    >
+                        <i class="fas fa-download text-[11px]"></i>
+                        <span>Descargar</span>
+                    </button>
+                </div>
+            </div>
+
+            <div class="p-6 flex flex-col sm:flex-row items-center sm:items-start gap-6">
+                <!-- MINIATURA INTERACTIVA -->
+                <button 
+                    type="button" 
+                    @click="zoomDevolucion = true"
+                    class="block group relative overflow-hidden rounded-2xl border border-slate-200 shadow-md shrink-0 cursor-pointer focus:outline-none focus:ring-4 focus:ring-rose-500/20"
+                    title="Clic para ampliar imagen"
+                >
+                    <img 
+                        src="{{ $venta->comprobante_devolucion_url }}" 
+                        alt="Comprobante de devolucion" 
+                        class="w-36 h-36 sm:w-44 sm:h-44 object-cover group-hover:scale-105 transition-transform duration-300"
+                    >
+                    <div class="absolute inset-0 bg-slate-950/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center text-white text-xs font-bold gap-1.5">
+                        <i class="fas fa-magnifying-glass-plus text-sm"></i>
+                        <span>Ampliar</span>
+                    </div>
+                </button>
+
+                <div class="space-y-2.5 text-xs text-slate-600 flex-1">
+                    <p class="font-bold text-slate-800">Inspección física del artículo devuelto</p>
+                    <p class="text-slate-600 leading-relaxed">
+                        Fotografía adjunta para soporte del retorno físico de mercancía al stock de inventario.
+                    </p>
+                    <div>
+                        <button 
+                            type="button" 
+                            @click="zoomDevolucion = true"
+                            class="inline-flex items-center gap-1.5 text-xs font-bold text-rose-600 hover:text-rose-800 transition-colors cursor-pointer"
+                        >
+                            <i class="fas fa-expand text-[10px]"></i> Ver evidencia en pantalla completa
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- MODAL LIGHTBOX DEVOLUCIÓN -->
+            <div 
+                x-show="zoomDevolucion" 
+                x-cloak
+                class="fixed inset-0 z-50 overflow-y-auto"
+                style="display: none;"
+                role="dialog"
+                aria-modal="true"
+            >
+                <div 
+                    x-show="zoomDevolucion"
+                    x-transition.opacity
+                    class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm transition-opacity"
+                    @click="zoomDevolucion = false"
+                ></div>
+
+                <div class="flex min-h-screen items-center justify-center p-4 text-center">
+                    <div 
+                        x-show="zoomDevolucion"
+                        x-transition
+                        class="relative z-10 max-w-4xl w-full bg-white rounded-2xl shadow-2xl overflow-hidden border border-slate-200"
+                        @click.away="zoomDevolucion = false"
+                    >
+                        <div class="bg-rose-600 px-6 py-4 flex items-center justify-between text-white shadow-md">
+                            <div class="flex items-center gap-2.5">
+                                <i class="fas fa-arrow-rotate-left text-white text-base"></i>
+                                <span class="text-sm font-black uppercase tracking-wider text-white">Comprobante de Devolución</span>
+                            </div>
+                            <div class="flex items-center gap-3">
+                                <button 
+                                    type="button" 
+                                    onclick="descargarArchivoVenta('{{ $venta->comprobante_devolucion_url }}', '{{ $folioDescarga }}_{{ $fechaDescarga }}_devolucion')"
+                                    class="text-xs text-rose-100 hover:text-white flex items-center gap-1 font-bold transition-colors cursor-pointer"
+                                >
+                                    <i class="fas fa-download"></i> Descargar
+                                </button>
+                                <button type="button" @click="zoomDevolucion = false" class="w-8 h-8 rounded-lg bg-white/10 hover:bg-white/20 flex items-center justify-center text-white transition-colors cursor-pointer">
+                                    <i class="fas fa-times text-sm"></i>
+                                </button>
+                            </div>
+                        </div>
+                        <div class="p-4 bg-slate-900/5 flex items-center justify-center max-h-[75vh] overflow-auto">
+                            <img src="{{ $venta->comprobante_devolucion_url }}" alt="Comprobante devolucion" class="max-w-full max-h-[70vh] object-contain rounded-lg shadow-sm border border-slate-200">
+                        </div>
+                        <div class="px-6 py-3.5 bg-gray-50 border-t border-gray-100 flex items-center justify-between">
+                            <span class="text-xs text-slate-500 font-medium">Venta #{{ $folioDescarga }}</span>
+                            <button type="button" @click="zoomDevolucion = false" class="px-5 py-2 bg-slate-800 hover:bg-slate-700 text-white rounded-xl text-xs font-bold transition-colors cursor-pointer">
+                                Cerrar
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        @endif
+
+        <script>
+            function descargarArchivoVenta(url, nombreBase) {
+                if (!url) return;
+                const extMatch = url.match(/\.([a-zA-Z0-9]+)(?:\?|#|$)/);
+                const ext = extMatch ? extMatch[1] : 'jpg';
+                const filename = (nombreBase || 'VNT_comprobante') + '.' + ext;
+
+                fetch(url)
+                    .then(res => res.blob())
+                    .then(blob => {
+                        const blobUrl = window.URL.createObjectURL(blob);
+                        const a = document.createElement('a');
+                        a.style.display = 'none';
+                        a.href = blobUrl;
+                        a.download = filename;
+                        document.body.appendChild(a);
+                        a.click();
+                        window.URL.revokeObjectURL(blobUrl);
+                        document.body.removeChild(a);
+                    })
+                    .catch(() => {
+                        const a = document.createElement('a');
+                        a.href = url;
+                        a.download = filename;
+                        a.target = '_blank';
+                        document.body.appendChild(a);
+                        a.click();
+                        document.body.removeChild(a);
+                    });
+            }
+        </script>
 
     </div>
 </x-app>

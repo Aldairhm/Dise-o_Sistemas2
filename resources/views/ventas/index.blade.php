@@ -41,12 +41,34 @@
                 <i class="fas fa-cash-register text-slate-400"></i>
                 <span>Terminal de Ventas (Carrito)</span>
             </a>
+            <a href="{{ route('ventas.pedidos') }}" class="rounded-xl px-4 py-2 text-sm font-bold text-slate-600 hover:bg-slate-50 hover:text-blue-600 transition-all flex items-center gap-2">
+                <i class="fas fa-boxes-packing text-slate-400"></i>
+                <span>Control de Envíos y Estados</span>
+            </a>
         </nav>
 
         <!-- 1. SECCIÓN SUPERIOR: FILTROS GLOBALES -->
-        <section class="bg-white border border-slate-200 rounded-2xl p-5 shadow-sm">
-            <form method="GET" action="{{ route('ventas.index') }}" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-12 gap-4 items-end">
+        <section class="bg-white border border-slate-200 rounded-2xl p-4 sm:p-5 shadow-sm">
+            <form method="GET" action="{{ route('ventas.index') }}" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-12 gap-3.5 items-end">
                 
+                <!-- BÚSQUEDA RÁPIDA -->
+                <div class="sm:col-span-2 md:col-span-3 lg:col-span-3">
+                    <label for="q" class="block text-[11px] font-bold uppercase tracking-wider text-slate-600 mb-1.5">
+                        <i class="fas fa-magnifying-glass text-slate-400 mr-1"></i> Buscar por Folio / Cliente / Teléfono
+                    </label>
+                    <div class="relative">
+                        <input 
+                            type="text" 
+                            name="q" 
+                            id="q" 
+                            value="{{ $busqueda ?? '' }}" 
+                            placeholder="Ej: 00004 o 7123-4567..." 
+                            class="w-full rounded-xl border border-slate-300 bg-slate-50 pl-9 pr-3 py-2 text-xs font-semibold text-slate-700 focus:border-blue-500 focus:bg-white focus:outline-none focus:ring-4 focus:ring-blue-500/10 transition-all"
+                        >
+                        <i class="fas fa-search absolute left-3 top-2.5 text-slate-400 text-xs"></i>
+                    </div>
+                </div>
+
                 <!-- FECHA DESDE -->
                 <div class="lg:col-span-2">
                     <label for="desde" class="block text-[11px] font-bold uppercase tracking-wider text-slate-600 mb-1.5">
@@ -57,7 +79,7 @@
                         name="desde" 
                         id="desde" 
                         value="{{ $desde }}" 
-                        class="w-full rounded-xl border border-slate-300 bg-slate-50 px-3.5 py-2 text-xs font-semibold text-slate-700 focus:border-blue-500 focus:bg-white focus:outline-none focus:ring-4 focus:ring-blue-500/10 transition-all"
+                        class="w-full rounded-xl border border-slate-300 bg-slate-50 px-3 py-2 text-xs font-semibold text-slate-700 focus:border-blue-500 focus:bg-white focus:outline-none focus:ring-4 focus:ring-blue-500/10 transition-all"
                     >
                 </div>
 
@@ -71,40 +93,40 @@
                         name="hasta" 
                         id="hasta" 
                         value="{{ $hasta }}" 
-                        class="w-full rounded-xl border border-slate-300 bg-slate-50 px-3.5 py-2 text-xs font-semibold text-slate-700 focus:border-blue-500 focus:bg-white focus:outline-none focus:ring-4 focus:ring-blue-500/10 transition-all"
+                        class="w-full rounded-xl border border-slate-300 bg-slate-50 px-3 py-2 text-xs font-semibold text-slate-700 focus:border-blue-500 focus:bg-white focus:outline-none focus:ring-4 focus:ring-blue-500/10 transition-all"
                     >
                 </div>
 
                 <!-- SELECT VENDEDOR -->
-                <div class="lg:col-span-3">
+                <div class="lg:col-span-2">
                     <label for="vendedor_id" class="block text-[11px] font-bold uppercase tracking-wider text-slate-600 mb-1.5">
                         <i class="fas fa-user-tie text-slate-400 mr-1"></i> Vendedor
                     </label>
                     <select 
                         name="vendedor_id" 
                         id="vendedor_id" 
-                        class="w-full rounded-xl border border-slate-300 bg-slate-50 px-3.5 py-2 text-xs font-semibold text-slate-700 focus:border-blue-500 focus:bg-white focus:outline-none focus:ring-4 focus:ring-blue-500/10 transition-all"
+                        class="w-full rounded-xl border border-slate-300 bg-slate-50 px-3 py-2 text-xs font-semibold text-slate-700 focus:border-blue-500 focus:bg-white focus:outline-none focus:ring-4 focus:ring-blue-500/10 transition-all"
                     >
-                        <option value="">Todos los vendedores</option>
+                        <option value="">Todos</option>
                         @foreach($vendedores as $v)
                             <option value="{{ $v->id }}" {{ (string)$vendedorId === (string)$v->id ? 'selected' : '' }}>
-                                {{ $v->nombre_real ?: $v->username }} ({{ ucfirst($v->rol) }})
+                                {{ $v->nombre_real ?: $v->username }}
                             </option>
                         @endforeach
                     </select>
                 </div>
 
                 <!-- SELECT PRODUCTO ESPECÍFICO (MÉTRICAS DETALLADAS) -->
-                <div class="lg:col-span-3">
+                <div class="lg:col-span-2">
                     <label for="producto_id" class="block text-[11px] font-bold uppercase tracking-wider text-slate-600 mb-1.5">
-                        <i class="fas fa-box text-slate-400 mr-1"></i> Producto Específico
+                        <i class="fas fa-box text-slate-400 mr-1"></i> Producto
                     </label>
                     <select 
                         name="producto_id" 
                         id="producto_id" 
-                        class="w-full rounded-xl border border-slate-300 bg-slate-50 px-3.5 py-2 text-xs font-semibold text-slate-700 focus:border-blue-500 focus:bg-white focus:outline-none focus:ring-4 focus:ring-blue-500/10 transition-all"
+                        class="w-full rounded-xl border border-slate-300 bg-slate-50 px-3 py-2 text-xs font-semibold text-slate-700 focus:border-blue-500 focus:bg-white focus:outline-none focus:ring-4 focus:ring-blue-500/10 transition-all"
                     >
-                        <option value="">Todos los productos</option>
+                        <option value="">Todos</option>
                         @foreach($productos as $p)
                             <option value="{{ $p->id }}" {{ (string)$productoId === (string)$p->id ? 'selected' : '' }}>
                                 {{ $p->nombre }}
@@ -114,21 +136,22 @@
                 </div>
 
                 <!-- BOTONES DE FILTRADO -->
-                <div class="lg:col-span-2 flex items-center gap-2">
+                <div class="lg:col-span-1 flex items-center gap-1.5">
                     <button 
                         type="submit" 
-                        class="flex-1 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-bold py-2 px-3 text-xs transition-all shadow-md shadow-blue-600/15 flex items-center justify-center gap-1.5 cursor-pointer"
+                        class="w-full rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-bold py-2 px-2.5 text-xs transition-all shadow-md shadow-blue-600/15 flex items-center justify-center gap-1 cursor-pointer"
+                        title="Aplicar filtros"
                     >
-                        <i class="fas fa-filter"></i>
-                        <span>Filtrar</span>
+                        <i class="fas fa-filter text-[11px]"></i>
+                        <span class="hidden sm:inline lg:hidden xl:inline">Filtrar</span>
                     </button>
-                    @if(request()->hasAny(['desde', 'hasta', 'vendedor_id', 'producto_id']))
+                    @if(request()->hasAny(['desde', 'hasta', 'vendedor_id', 'producto_id', 'q']))
                         <a 
                             href="{{ route('ventas.index') }}" 
-                            class="rounded-xl border border-slate-200 bg-slate-50 hover:bg-slate-100 text-slate-600 font-bold py-2 px-3 text-xs transition-colors flex items-center justify-center"
+                            class="rounded-xl border border-slate-200 bg-slate-50 hover:bg-slate-100 text-slate-600 font-bold py-2 px-2.5 text-xs transition-colors flex items-center justify-center shrink-0"
                             title="Limpiar filtros"
                         >
-                            <i class="fas fa-rotate-left"></i>
+                            <i class="fas fa-rotate-left text-[11px]"></i>
                         </a>
                     @endif
                 </div>
@@ -293,38 +316,84 @@
                         <i class="fas fa-list-check"></i>
                     </div>
                     <div>
-                        <h2 class="text-base font-black text-slate-900">Historial de Transacciones</h2>
-                        <p class="text-xs text-slate-500">Listado cronológico de ventas registradas en el periodo seleccionado</p>
+                        <h2 class="text-base font-black text-slate-900">Historial de Transacciones (Entregadas)</h2>
+                        <p class="text-xs text-slate-500">Listado cronológico de ventas entregadas y liquidadas en el periodo seleccionado</p>
                     </div>
                 </div>
-                <span class="text-xs font-bold text-slate-600 bg-slate-100 border border-slate-200 px-3 py-1 rounded-lg">
-                    {{ $ventas->total() }} registros totales
-                </span>
+                <div class="flex items-center gap-2">
+                    <a href="{{ route('ventas.pedidos') }}" class="text-xs font-bold text-blue-600 hover:text-blue-700 bg-blue-50 border border-blue-200 px-3 py-1 rounded-lg transition-colors flex items-center gap-1.5">
+                        <i class="fas fa-boxes-packing text-[11px]"></i>
+                        <span>Gestionar Pedidos en Proceso</span>
+                    </a>
+                    <span class="text-xs font-bold text-slate-600 bg-slate-100 border border-slate-200 px-3 py-1 rounded-lg">
+                        {{ $ventas->total() }} entregadas
+                    </span>
+                </div>
             </div>
 
             <!-- TABLA -->
             <div class="overflow-x-auto">
-                <table class="w-full text-left text-xs">
+                <table class="w-full text-left text-xs min-w-[1050px]">
                     <thead class="bg-slate-50/80 text-[10px] uppercase font-bold tracking-wider text-slate-400 border-b border-slate-200">
                         <tr>
-                            <th class="px-5 py-3.5 w-24">Folio</th>
-                            <th class="px-4 py-3.5">Fecha y Hora</th>
-                            <th class="px-4 py-3.5">Vendedor</th>
-                            <th class="px-4 py-3.5">Método de Pago</th>
-                            <th class="px-4 py-3.5 text-center">Estado</th>
-                            <th class="px-4 py-3.5 text-center">Ítems</th>
-                            <th class="px-5 py-3.5 text-right w-28">Total</th>
-                            <th class="px-5 py-3.5 text-right w-44">Acciones</th>
+                            <th class="px-5 py-3.5 w-24 whitespace-nowrap">Folio</th>
+                            <th class="px-4 py-3.5 whitespace-nowrap">Fecha y Hora</th>
+                            <th class="px-4 py-3.5 whitespace-nowrap">Vendedor</th>
+                            <th class="px-4 py-3.5 whitespace-nowrap">Tipo y Destino</th>
+                            <th class="px-4 py-3.5 whitespace-nowrap">Método de Pago</th>
+                            <th class="px-4 py-3.5 text-center whitespace-nowrap">Estado Actual</th>
+                            <th class="px-4 py-3.5 text-right whitespace-nowrap w-24">Total</th>
+                            <th class="px-5 py-3.5 text-right whitespace-nowrap">Acciones</th>
                         </tr>
                     </thead>
                     <tbody class="divide-y divide-slate-100">
                         @forelse($ventas as $venta)
+                            @php
+                                $estado = $venta->estado ?? 'Pendiente';
+                                $tipo = $venta->tipo_venta ?? 'Tienda';
+                                $bloqueado = $venta->estado_bloqueado;
+                                $permitidos = $venta->estados_permitidos;
+                                $puedeDevolver = $venta->puede_devolver;
+                                $diasRestantes = $venta->dias_restantes_devolucion;
+                                $diasGarantia = $venta->dias_garantia;
+                                $textoGarantia = $venta->texto_garantia_devolucion;
+                                $fechaLimite = $venta->fecha_limite_devolucion;
+                                $limiteFechaFormatted = $fechaLimite ? $fechaLimite->format('d/m/Y') : '';
+
+                                $badgeClasses = match($estado) {
+                                    'Pendiente' => 'bg-amber-50 text-amber-700 border-amber-200 hover:bg-amber-100/80',
+                                    'Confirmada' => 'bg-blue-50 text-blue-700 border-blue-200 hover:bg-blue-100/80',
+                                    'En ruta' => 'bg-indigo-50 text-indigo-700 border-indigo-200 hover:bg-indigo-100/80',
+                                    'Entregada' => 'bg-emerald-50 text-emerald-700 border-emerald-200 hover:bg-emerald-100/80',
+                                    'Cancelada' => 'bg-rose-50 text-rose-700 border-rose-200',
+                                    'Devolución' => 'bg-purple-50 text-purple-700 border-purple-200',
+                                    default => 'bg-slate-50 text-slate-700 border-slate-200'
+                                };
+
+                                $badgeIcon = match($estado) {
+                                    'Pendiente' => 'fa-clock',
+                                    'Confirmada' => 'fa-circle-check',
+                                    'En ruta' => 'fa-truck-fast',
+                                    'Entregada' => 'fa-box-open',
+                                    'Cancelada' => 'fa-ban',
+                                    'Devolución' => 'fa-rotate-left',
+                                    default => 'fa-info-circle'
+                                };
+
+                                $garantiaBadgeText = $diasRestantes > 1 
+                                    ? "Garantía: {$diasRestantes} días" 
+                                    : ($diasRestantes === 1 ? "Garantía: 1 día" : "Garantía: Hoy último día");
+                            @endphp
+
                             <tr class="hover:bg-slate-50/70 transition-colors">
+                                <!-- FOLIO -->
                                 <td class="px-5 py-3.5 font-bold text-slate-900">
                                     <span class="bg-slate-100 text-slate-700 px-2 py-0.5 rounded text-[11px] font-mono">
                                         #VNT-{{ str_pad($venta->id, 5, '0', STR_PAD_LEFT) }}
                                     </span>
                                 </td>
+
+                                <!-- FECHA Y HORA -->
                                 <td class="px-4 py-3.5 text-slate-600">
                                     <p class="font-bold text-slate-800">
                                         {{ \Carbon\Carbon::parse($venta->fecha)->format('d/m/Y') }}
@@ -333,6 +402,8 @@
                                         {{ \Carbon\Carbon::parse($venta->fecha)->format('h:i A') }}
                                     </span>
                                 </td>
+
+                                <!-- VENDEDOR -->
                                 <td class="px-4 py-3.5">
                                     <div class="flex items-center gap-2">
                                         <div class="w-6 h-6 rounded-full bg-blue-100 text-blue-600 font-bold text-[10px] flex items-center justify-center shrink-0">
@@ -343,6 +414,33 @@
                                         </span>
                                     </div>
                                 </td>
+
+                                <!-- TIPO Y DESTINO -->
+                                <td class="px-4 py-3.5">
+                                    <div class="space-y-0.5">
+                                        @if($tipo === 'Envio')
+                                            <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-bold bg-indigo-50 text-indigo-700 border border-indigo-200">
+                                                <i class="fas fa-truck text-[9px]"></i> Entrega a Domicilio
+                                            </span>
+                                            @if($venta->direccion_entrega)
+                                                <p class="text-[11px] text-slate-700 font-medium truncate max-w-[200px]" title="{{ $venta->direccion_entrega }}">
+                                                    {{ $venta->direccion_entrega }}
+                                                </p>
+                                            @endif
+                                            @if($venta->telefono_entrega)
+                                                <p class="text-[10px] text-slate-400 flex items-center gap-1 font-mono">
+                                                    <i class="fas fa-phone text-[8px]"></i> {{ $venta->telefono_entrega }}
+                                                </p>
+                                            @endif
+                                        @else
+                                            <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
+                                                <i class="fas fa-store text-[9px]"></i> Venta en Tienda
+                                            </span>
+                                        @endif
+                                    </div>
+                                </td>
+
+                                <!-- MÉTODO DE PAGO -->
                                 <td class="px-4 py-3.5">
                                     <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[11px] font-bold border {{ $venta->metodo_pago === 'Efectivo' ? 'bg-emerald-50 text-emerald-700 border-emerald-200' : ($venta->metodo_pago === 'Transferencia Bancaria' ? 'bg-purple-50 text-purple-700 border-purple-200' : 'bg-blue-50 text-blue-700 border-blue-200') }}">
                                         <i class="fas {{ $venta->metodo_pago === 'Efectivo' ? 'fa-money-bill-wave' : ($venta->metodo_pago === 'Transferencia Bancaria' ? 'fa-building-columns' : 'fa-credit-card') }} text-[10px]"></i>
@@ -350,45 +448,8 @@
                                     </span>
                                 </td>
 
-                                <!-- COLUMNA DE ESTADO INTERACTIVA -->
+                                <!-- ESTADO ACTUAL INTERACTIVO -->
                                 <td class="px-4 py-3.5 text-center">
-                                    @php
-                                        $estado = $venta->estado ?? 'Pendiente';
-                                        $tipo = $venta->tipo_venta ?? 'Tienda';
-                                        $bloqueado = $venta->estado_bloqueado;
-                                        $permitidos = $venta->estados_permitidos;
-                                        $puedeDevolver = $venta->puede_devolver;
-                                        $diasRestantes = $venta->dias_restantes_devolucion;
-                                        $diasGarantia = $venta->dias_garantia;
-                                        $textoGarantia = $venta->texto_garantia_devolucion;
-                                        $fechaLimite = $venta->fecha_limite_devolucion;
-                                        $limiteFechaFormatted = $fechaLimite ? $fechaLimite->format('d/m/Y') : '';
-
-                                        $badgeClasses = match($estado) {
-                                            'Pendiente' => 'bg-amber-50 text-amber-700 border-amber-200 hover:bg-amber-100/80',
-                                            'Confirmada' => 'bg-blue-50 text-blue-700 border-blue-200 hover:bg-blue-100/80',
-                                            'En ruta' => 'bg-indigo-50 text-indigo-700 border-indigo-200 hover:bg-indigo-100/80',
-                                            'Entregada' => 'bg-emerald-50 text-emerald-700 border-emerald-200 hover:bg-emerald-100/80',
-                                            'Cancelada' => 'bg-rose-50 text-rose-700 border-rose-200',
-                                            'Devolución' => 'bg-purple-50 text-purple-700 border-purple-200',
-                                            default => 'bg-slate-50 text-slate-700 border-slate-200'
-                                        };
-
-                                        $badgeIcon = match($estado) {
-                                            'Pendiente' => 'fa-clock',
-                                            'Confirmada' => 'fa-circle-check',
-                                            'En ruta' => 'fa-truck-fast',
-                                            'Entregada' => 'fa-box-open',
-                                            'Cancelada' => 'fa-ban',
-                                            'Devolución' => 'fa-rotate-left',
-                                            default => 'fa-info-circle'
-                                        };
-
-                                        $garantiaBadgeText = $diasRestantes > 1 
-                                            ? "Garantía: {$diasRestantes} días" 
-                                            : ($diasRestantes === 1 ? "Garantía: 1 día" : "Garantía: Hoy último día");
-                                    @endphp
-
                                     <div class="inline-flex flex-col items-center">
                                         @if(!$bloqueado && count($permitidos) > 0)
                                             <button 
@@ -429,24 +490,61 @@
                                     </div>
                                 </td>
 
-                                <td class="px-4 py-3.5 text-center">
-                                    <span class="inline-block bg-slate-100 text-slate-700 font-bold px-2 py-0.5 rounded text-[11px]" title="{{ $venta->detalles->count() }} variantes distintas">
-                                        {{ $venta->detalles->sum('cantidad') }} uds
-                                    </span>
-                                </td>
-                                <td class="px-5 py-3.5 text-right font-black text-slate-900 text-sm">
+                                <!-- TOTAL -->
+                                <td class="px-4 py-3.5 text-right font-black text-slate-900 text-sm whitespace-nowrap">
                                     ${{ number_format($venta->total, 2) }}
                                 </td>
-                                <td class="px-5 py-3.5 text-right">
-                                    <div class="flex items-center justify-end gap-1.5">
+
+                                <!-- ACCIONES -->
+                                <td class="px-5 py-3.5 text-right whitespace-nowrap">
+                                    <div class="flex items-center justify-end gap-1.5 flex-nowrap">
+                                        <!-- COMPROBANTE DE PAGO (TRANSFERENCIA) -->
+                                        @if($venta->comprobante_pago)
+                                            <button 
+                                                type="button" 
+                                                @click="verImagenAmpliada('{{ asset('storage/' . $venta->comprobante_pago) }}', 'VNT-{{ str_pad($venta->id, 5, '0', STR_PAD_LEFT) }}_{{ \Carbon\Carbon::parse($venta->fecha)->format('Y-m-d') }}_comprobante_pago', 'Comprobante de Pago por Transferencia')"
+                                                class="rounded-lg border border-purple-200 bg-purple-50 hover:bg-purple-600 hover:text-white text-purple-700 px-2 py-1 text-[11px] font-bold transition-all shadow-2xs flex items-center gap-1 cursor-pointer shrink-0"
+                                                title="Ver Comprobante de Pago por Transferencia"
+                                            >
+                                                <i class="fas fa-file-invoice-dollar text-[10px]"></i>
+                                                <span>Comprobante</span>
+                                            </button>
+                                        @endif
+
+                                        <!-- COMPROBANTE DE PAQUETE (EN RUTA) -->
+                                        @if($venta->comprobante_paquete)
+                                            <button 
+                                                type="button" 
+                                                @click="verImagenAmpliada('{{ asset('storage/' . $venta->comprobante_paquete) }}', 'VNT-{{ str_pad($venta->id, 5, '0', STR_PAD_LEFT) }}_{{ \Carbon\Carbon::parse($venta->fecha)->format('Y-m-d') }}_paquete', 'Comprobante de Paquetería')"
+                                                class="rounded-lg border border-indigo-200 bg-indigo-50 hover:bg-indigo-600 hover:text-white text-indigo-700 px-2 py-1 text-[11px] font-bold transition-all shadow-2xs flex items-center gap-1 cursor-pointer shrink-0"
+                                                title="Ver Comprobante de Paquetería"
+                                            >
+                                                <i class="fas fa-truck-ramp-box text-[10px]"></i>
+                                                <span>Paquete</span>
+                                            </button>
+                                        @endif
+
+                                        <!-- COMPROBANTE DE DEVOLUCIÓN -->
+                                        @if($venta->comprobante_devolucion)
+                                            <button 
+                                                type="button" 
+                                                @click="verImagenAmpliada('{{ asset('storage/' . $venta->comprobante_devolucion) }}', 'VNT-{{ str_pad($venta->id, 5, '0', STR_PAD_LEFT) }}_{{ \Carbon\Carbon::parse($venta->fecha)->format('Y-m-d') }}_devolucion', 'Comprobante de Devolución')"
+                                                class="rounded-lg border border-rose-200 bg-rose-50 hover:bg-rose-600 hover:text-white text-rose-700 px-2 py-1 text-[11px] font-bold transition-all shadow-2xs flex items-center gap-1 cursor-pointer shrink-0"
+                                                title="Ver Comprobante de Devolución"
+                                            >
+                                                <i class="fas fa-box-archive text-[10px]"></i>
+                                                <span>Devolución</span>
+                                            </button>
+                                        @endif
+
                                         <!-- BOTÓN VER DETALLE -->
                                         <button 
                                             type="button" 
                                             @click="abrirDetalle({{ $venta->id }})"
-                                            class="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-bold text-slate-700 bg-slate-100 hover:bg-slate-200 transition-colors cursor-pointer"
+                                            class="rounded-lg border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 px-2 py-1 text-[11px] font-bold transition-all shadow-2xs flex items-center gap-1 cursor-pointer shrink-0"
                                             title="Ver detalle completo de la venta"
                                         >
-                                            <i class="fas fa-eye text-slate-500"></i>
+                                            <i class="fas fa-eye text-slate-400 text-[10px]"></i>
                                             <span>Detalle</span>
                                         </button>
 
@@ -454,10 +552,10 @@
                                         <button 
                                             type="button" 
                                             @click="abrirModalImpresion({{ $venta->id }}, '{{ $venta->metodo_pago }}', {{ (float) $venta->total }})"
-                                            class="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-bold text-emerald-700 bg-emerald-50 hover:bg-emerald-600 hover:text-white border border-emerald-200 hover:border-emerald-600 transition-all shadow-sm cursor-pointer"
+                                            class="rounded-lg border border-emerald-200 bg-emerald-50 hover:bg-emerald-600 hover:text-white text-emerald-700 px-2 py-1 text-[11px] font-bold transition-all shadow-2xs flex items-center gap-1 cursor-pointer shrink-0"
                                             title="Imprimir ticket o factura comercial/tributaria"
                                         >
-                                            <i class="fas fa-print"></i>
+                                            <i class="fas fa-print text-[10px]"></i>
                                             <span>Imprimir</span>
                                         </button>
                                     </div>
@@ -509,14 +607,14 @@
                 x-show="modalDetalleAbierto"
                 x-transition.opacity
                 class="fixed inset-0 bg-slate-900/40 backdrop-blur-sm transition-opacity"
-                @click="cerrarDetalle()"
+                @click="if (!modalImprimirAbierto && !comprobanteZoomUrl) cerrarDetalle()"
             ></div>
 
             <div class="flex min-h-screen items-center justify-center p-3 sm:p-5 text-center">
                 <div 
                     x-show="modalDetalleAbierto"
                     x-transition
-                    @click.away="cerrarDetalle()"
+                    @click.away="if (!modalImprimirAbierto && !comprobanteZoomUrl) cerrarDetalle()"
                     class="relative z-10 w-full max-w-4xl transform overflow-hidden rounded-2xl bg-white text-left shadow-2xl transition-all border border-gray-100 flex flex-col my-8 max-h-[90vh]"
                 >
                     <!-- CABECERA AZUL UNIFICADA -->
@@ -679,7 +777,7 @@
                                         <div class="flex items-start gap-4 p-3 bg-white rounded-xl border border-blue-100">
                                             <button 
                                                 type="button" 
-                                                @click="verImagenAmpliada(ventaSeleccionada.comprobante_url)"
+                                                @click="verImagenAmpliada(ventaSeleccionada.comprobante_url, nombreComprobanteVenta('comprobante_pago'), 'Comprobante de Pago')"
                                                 class="group relative overflow-hidden rounded-lg border border-slate-200 shadow-2xs shrink-0 cursor-pointer block"
                                                 title="Haz clic para ampliar la imagen"
                                             >
@@ -700,7 +798,7 @@
                                                 </p>
                                                 <button 
                                                     type="button" 
-                                                    @click="verImagenAmpliada(ventaSeleccionada.comprobante_url)"
+                                                    @click="verImagenAmpliada(ventaSeleccionada.comprobante_url, nombreComprobanteVenta('comprobante_pago'), 'Comprobante de Pago')"
                                                     class="inline-flex items-center gap-1 text-[11px] font-bold text-blue-600 hover:text-blue-800 transition-colors cursor-pointer"
                                                 >
                                                     <i class="fas fa-expand text-[10px]"></i> Ver imagen ampliada
@@ -772,7 +870,7 @@
                                         <div class="flex items-start gap-4 p-3 bg-white rounded-xl border border-indigo-100">
                                             <button 
                                                 type="button" 
-                                                @click="verImagenAmpliada(ventaSeleccionada.comprobante_paquete_url)"
+                                                @click="verImagenAmpliada(ventaSeleccionada.comprobante_paquete_url, nombreComprobanteVenta('paquete'), 'Comprobante de Paquetería')"
                                                 class="group relative overflow-hidden rounded-lg border border-slate-200 shadow-2xs shrink-0 cursor-pointer block"
                                                 title="Haz clic para ampliar la imagen"
                                             >
@@ -793,7 +891,7 @@
                                                 </p>
                                                 <button 
                                                     type="button" 
-                                                    @click="verImagenAmpliada(ventaSeleccionada.comprobante_paquete_url)"
+                                                    @click="verImagenAmpliada(ventaSeleccionada.comprobante_paquete_url, nombreComprobanteVenta('paquete'), 'Comprobante de Paquetería')"
                                                     class="inline-flex items-center gap-1 text-[11px] font-bold text-indigo-600 hover:text-indigo-800 transition-colors cursor-pointer"
                                                 >
                                                     <i class="fas fa-expand text-[10px]"></i> Ver imagen ampliada
@@ -837,7 +935,7 @@
                                         <div class="flex items-start gap-4 p-3 bg-white rounded-xl border border-purple-100">
                                             <button 
                                                 type="button" 
-                                                @click="verImagenAmpliada(ventaSeleccionada.comprobante_devolucion_url)"
+                                                @click="verImagenAmpliada(ventaSeleccionada.comprobante_devolucion_url, nombreComprobanteVenta('devolucion'), 'Comprobante de Devolución')"
                                                 class="group relative overflow-hidden rounded-lg border border-slate-200 shadow-2xs shrink-0 cursor-pointer block"
                                                 title="Haz clic para ampliar la imagen"
                                             >
@@ -858,7 +956,7 @@
                                                 </p>
                                                 <button 
                                                     type="button" 
-                                                    @click="verImagenAmpliada(ventaSeleccionada.comprobante_devolucion_url)"
+                                                    @click="verImagenAmpliada(ventaSeleccionada.comprobante_devolucion_url, nombreComprobanteVenta('devolucion'), 'Comprobante de Devolución')"
                                                     class="inline-flex items-center gap-1 text-[11px] font-bold text-purple-600 hover:text-purple-800 transition-colors cursor-pointer"
                                                 >
                                                     <i class="fas fa-expand text-[10px]"></i> Ver imagen ampliada
@@ -968,7 +1066,7 @@
         <div 
             x-show="modalImprimirAbierto" 
             x-cloak
-            class="fixed inset-0 z-50 overflow-y-auto"
+            class="fixed inset-0 z-[70] overflow-y-auto"
             style="display: none;"
             role="dialog"
             aria-modal="true"
@@ -977,14 +1075,15 @@
             <div 
                 x-show="modalImprimirAbierto"
                 x-transition.opacity
-                class="fixed inset-0 bg-slate-900/40 backdrop-blur-sm transition-opacity"
-                @click="cerrarModalImpresion()"
+                class="fixed inset-0 bg-slate-900/50 backdrop-blur-xs transition-opacity"
+                @click.stop="cerrarModalImpresion()"
             ></div>
 
             <div class="flex min-h-screen items-center justify-center p-3 sm:p-5 text-center">
                 <div 
                     x-show="modalImprimirAbierto"
                     x-transition
+                    @click.stop
                     @click.away="cerrarModalImpresion()"
                     class="relative z-10 w-full max-w-2xl transform overflow-hidden rounded-2xl bg-white text-left shadow-2xl transition-all border border-gray-100 flex flex-col my-8 max-h-[90vh]"
                 >
@@ -1007,7 +1106,7 @@
 
                         <button 
                             type="button" 
-                            @click="cerrarModalImpresion()"
+                            @click.stop="cerrarModalImpresion()"
                             class="w-8 h-8 rounded-lg bg-white/10 hover:bg-white/25 flex items-center justify-center text-white transition-colors cursor-pointer"
                             title="Cerrar ventana"
                         >
@@ -1355,7 +1454,7 @@
                     <div class="px-6 py-4 bg-gray-50/80 border-t border-gray-100 flex items-center justify-between gap-3 rounded-b-2xl">
                         <button 
                             type="button" 
-                            @click="cerrarModalImpresion()"
+                            @click.stop="cerrarModalImpresion()"
                             class="px-6 py-2.5 rounded-xl font-bold text-xs uppercase tracking-wider text-slate-600 bg-white border border-slate-200 hover:bg-slate-100 hover:text-slate-800 transition-colors shadow-sm cursor-pointer"
                         >
                             Cancelar
@@ -1401,14 +1500,20 @@
                 >
                     <div class="bg-blue-600 px-5 py-3.5 flex items-center justify-between text-white shadow-md">
                         <div class="flex items-center gap-2.5">
-                            <i class="fas fa-file-invoice-dollar text-white text-base"></i>
-                            <span class="text-xs font-black uppercase tracking-wider text-white">Comprobante de Transferencia Bancaria</span>
+                            <i class="fas fa-file-invoice text-white text-base"></i>
+                            <span class="text-xs font-black uppercase tracking-wider text-white" x-text="comprobanteZoomTitulo || 'Evidencia de Venta'"></span>
                         </div>
-                        <div class="flex items-center gap-3">
-                            <a :href="comprobanteZoomUrl" target="_blank" download class="text-xs text-blue-100 hover:text-white flex items-center gap-1 font-bold transition-colors">
-                                <i class="fas fa-download"></i> Descargar
-                            </a>
-                            <button type="button" @click="cerrarImagenAmpliada()" class="w-7 h-7 rounded-lg bg-white/10 hover:bg-white/20 flex items-center justify-center text-white transition-colors cursor-pointer">
+                        <div class="flex items-center gap-2">
+                            <button 
+                                type="button" 
+                                @click="descargarImagenActual()" 
+                                class="text-xs text-white hover:bg-white/20 bg-white/10 flex items-center gap-1.5 font-bold transition-all px-3 py-1.5 rounded-xl cursor-pointer"
+                                title="Descargar imagen con folio y fecha de venta"
+                            >
+                                <i class="fas fa-download"></i>
+                                <span>Descargar</span>
+                            </button>
+                            <button type="button" @click="cerrarImagenAmpliada()" class="w-8 h-8 rounded-xl bg-white/10 hover:bg-white/20 flex items-center justify-center text-white transition-colors cursor-pointer">
                                 <i class="fas fa-times text-sm"></i>
                             </button>
                         </div>
@@ -1479,8 +1584,24 @@
                     </div>
 
                     <!-- CUERPO DEL MODAL -->
-                    <div class="p-6 overflow-y-auto space-y-5 flex-1 custom-scrollbar text-xs">
+                    <div id="modal-cambiar-estado-body" class="p-6 overflow-y-auto space-y-5 flex-1 custom-scrollbar text-xs">
                         
+                        <!-- BANNER GENERAL DE ERROR INLINE -->
+                        <template x-if="errorEstadoModal">
+                            <div class="p-3.5 bg-rose-50 border border-rose-300 rounded-xl text-xs text-rose-800 flex items-start justify-between gap-2 shadow-xs transition-all">
+                                <div class="flex items-start gap-2.5">
+                                    <i class="fas fa-circle-exclamation text-rose-600 mt-0.5 text-base shrink-0"></i>
+                                    <div>
+                                        <p class="font-bold text-rose-950 leading-snug">Atención</p>
+                                        <p class="text-[11px] text-rose-800 mt-0.5" x-text="errorEstadoModal"></p>
+                                    </div>
+                                </div>
+                                <button type="button" @click="errorEstadoModal = ''" class="text-rose-400 hover:text-rose-700 p-1 cursor-pointer">
+                                    <i class="fas fa-times text-xs"></i>
+                                </button>
+                            </div>
+                        </template>
+
                         <!-- ESTADO ACTUAL Y DETALLES -->
                         <div class="bg-slate-50 border border-slate-200 rounded-xl p-3.5 flex items-center justify-between">
                             <div>
@@ -1501,12 +1622,18 @@
                         </div>
 
                         <!-- SELECCIÓN DEL NUEVO ESTADO -->
-                        <div>
-                            <label class="block text-[11px] font-bold uppercase tracking-wider text-slate-700 mb-2">
-                                Selecciona el nuevo estado <span class="text-rose-500">*</span>
-                            </label>
+                        <div id="seccion-seleccion-nuevo-estado">
+                            <div class="flex items-center justify-between mb-2">
+                                <label class="block text-[11px] font-bold uppercase tracking-wider text-slate-700">
+                                    Selecciona el nuevo estado <span class="text-rose-500">*</span>
+                                </label>
+                                <span x-show="errorNuevoEstado" class="text-[10px] font-bold text-rose-600 bg-rose-50 px-2 py-0.5 rounded border border-rose-200">
+                                    Selección requerida
+                                </span>
+                            </div>
                             
-                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5 p-1 rounded-xl transition-all"
+                                 :class="errorNuevoEstado ? 'border border-rose-400 bg-rose-50/30' : ''">
                                 <template x-for="st in estadoModalData.estadosPermitidos" :key="st">
                                     <button 
                                         type="button" 
@@ -1537,29 +1664,64 @@
                                     </button>
                                 </template>
                             </div>
+                            <span x-show="errorNuevoEstado" class="text-[11px] font-bold text-rose-600 flex items-center gap-1 mt-1 pl-1">
+                                <i class="fas fa-triangle-exclamation text-[10px]"></i> Debes elegir el nuevo estado al que transicionará la venta.
+                            </span>
                         </div>
 
                         <!-- SECCIÓN DINÁMICA: EVIDENCIA PAQUETERÍA (EN RUTA) -->
-                        <div x-show="nuevoEstadoSeleccionado === 'En ruta'" class="space-y-3 p-4 bg-indigo-50/60 border border-indigo-200 rounded-xl" x-transition>
-                            <div class="flex items-center gap-2">
-                                <i class="fas fa-camera text-indigo-600 text-sm"></i>
-                                <h4 class="font-bold text-indigo-950 text-xs uppercase tracking-wide">
-                                    Fotografía del Paquete entregado a Paquetería <span class="text-rose-500">*</span>
-                                </h4>
+                        <div 
+                            id="seccion-foto-paquete"
+                            x-show="nuevoEstadoSeleccionado === 'En ruta'" 
+                            class="space-y-3 p-4 rounded-xl border transition-all"
+                            :class="errorFotoPaquete ? 'bg-rose-50/80 border-rose-400 ring-2 ring-rose-500/20' : 'bg-indigo-50/60 border-indigo-200'"
+                            x-transition
+                        >
+                            <div class="flex items-center justify-between">
+                                <div class="flex items-center gap-2">
+                                    <i class="fas fa-camera text-sm" :class="errorFotoPaquete ? 'text-rose-600' : 'text-indigo-600'"></i>
+                                    <h4 class="font-bold text-xs uppercase tracking-wide" :class="errorFotoPaquete ? 'text-rose-950 font-black' : 'text-indigo-950'">
+                                        Fotografía del Paquete entregado a Paquetería <span class="text-rose-500">*</span>
+                                    </h4>
+                                </div>
+                                <span x-show="errorFotoPaquete" class="text-[10px] font-bold px-2 py-0.5 rounded-full text-rose-700 bg-rose-100 border border-rose-300 animate-pulse">
+                                    ¡Fotografía requerida!
+                                </span>
                             </div>
-                            <p class="text-[11px] text-slate-600">
+
+                            <!-- ALERTA INLINE VISIBLE CUANDO FALTA LA FOTO -->
+                            <template x-if="errorFotoPaquete">
+                                <div class="p-3 bg-rose-100/90 border border-rose-300 rounded-xl text-rose-900 text-xs font-semibold flex items-start gap-2.5 shadow-2xs">
+                                    <i class="fas fa-circle-exclamation text-rose-600 mt-0.5 text-base shrink-0"></i>
+                                    <div class="flex-1">
+                                        <p class="font-bold leading-snug">¡Falta la fotografía del paquete!</p>
+                                        <p class="text-[11px] text-rose-700 mt-0.5 leading-relaxed" x-text="errorFotoPaqueteMensaje || 'Para cambiar al estado &quot;En ruta&quot; es obligatorio adjuntar la fotografía del paquete entregado a la paquetería.'"></p>
+                                    </div>
+                                </div>
+                            </template>
+
+                            <p class="text-[11px]" :class="errorFotoPaquete ? 'text-rose-700 font-medium' : 'text-slate-600'">
                                 Toma o adjunta la fotografía del paquete con la viñeta/guía tras entregarlo a la empresa de mensajería.
                             </p>
 
                             <template x-if="!previewPaquete">
-                                <label class="border-2 border-dashed border-indigo-300 hover:border-indigo-500 bg-white rounded-xl p-5 flex flex-col items-center justify-center cursor-pointer transition-colors group">
-                                    <div class="w-10 h-10 rounded-full bg-indigo-50 text-indigo-600 flex items-center justify-center text-lg mb-2 group-hover:scale-110 transition-transform">
-                                        <i class="fas fa-cloud-arrow-up"></i>
-                                    </div>
-                                    <span class="font-bold text-indigo-700">Seleccionar fotografía del paquete</span>
-                                    <span class="text-[10px] text-slate-400 mt-1">Formatos soportados: JPG, PNG, WEBP (Máx 5MB)</span>
-                                    <input type="file" accept="image/jpeg,image/png,image/jpg,image/webp" class="hidden" @change="onArchivoPaqueteSeleccionado($event)">
-                                </label>
+                                <div>
+                                    <label class="border-2 border-dashed bg-white rounded-xl p-5 flex flex-col items-center justify-center cursor-pointer transition-colors group shadow-2xs"
+                                           :class="errorFotoPaquete ? 'border-rose-400 hover:border-rose-600 hover:bg-rose-50/40 ring-1 ring-rose-300' : 'border-indigo-300 hover:border-indigo-500'">
+                                        <div class="w-10 h-10 rounded-full flex items-center justify-center text-lg mb-2 group-hover:scale-110 transition-transform"
+                                             :class="errorFotoPaquete ? 'bg-rose-100 text-rose-600' : 'bg-indigo-50 text-indigo-600'">
+                                            <i class="fas" :class="errorFotoPaquete ? 'fa-triangle-exclamation' : 'fa-cloud-arrow-up'"></i>
+                                        </div>
+                                        <span class="font-bold text-xs" :class="errorFotoPaquete ? 'text-rose-800' : 'text-indigo-700'">Seleccionar fotografía del paquete</span>
+                                        <span class="text-[10px] mt-1" :class="errorFotoPaquete ? 'text-rose-500' : 'text-slate-400'">Formatos soportados: JPG, PNG, WEBP (Máx 5MB)</span>
+                                        <input type="file" accept="image/jpeg,image/png,image/jpg,image/webp" class="hidden" @change="onArchivoPaqueteSeleccionado($event)">
+                                    </label>
+                                    <template x-if="errorFotoPaquete">
+                                        <span class="text-[11px] font-bold text-rose-600 flex items-center gap-1 mt-1.5 pl-1">
+                                            <i class="fas fa-arrow-up text-[10px]"></i> Haz clic arriba para seleccionar la imagen del paquete.
+                                        </span>
+                                    </template>
+                                </div>
                             </template>
 
                             <template x-if="previewPaquete">
@@ -1568,101 +1730,132 @@
                                     <div class="min-w-0 flex-1">
                                         <p class="font-bold text-slate-800 truncate" x-text="nombreArchivoPaquete"></p>
                                         <span class="text-[10px] text-emerald-600 font-bold flex items-center gap-1 mt-0.5">
-                                            <i class="fas fa-check-circle"></i> Imagen lista para subir
+                                            <i class="fas fa-check-circle"></i> Imagen lista para adjuntar
                                         </span>
                                     </div>
-                                    <button type="button" @click="removerArchivoPaquete()" class="text-slate-400 hover:text-rose-600 p-2 cursor-pointer transition-colors" title="Cambiar imagen">
-                                        <i class="fas fa-trash-can"></i>
+                                    <button 
+                                        type="button" 
+                                        @click="removerArchivoPaquete()"
+                                        class="p-2 text-rose-500 hover:bg-rose-50 rounded-lg transition-colors cursor-pointer"
+                                        title="Eliminar imagen"
+                                    >
+                                        <i class="fas fa-trash-can text-sm"></i>
                                     </button>
                                 </div>
                             </template>
                         </div>
 
-                        <!-- SECCIÓN DINÁMICA: MOTIVO DE CANCELACIÓN (CANCELADA) -->
-                        <div x-show="nuevoEstadoSeleccionado === 'Cancelada'" class="space-y-3 p-4 bg-rose-50/60 border border-rose-200 rounded-xl" x-transition>
-                            <div class="flex items-center gap-2">
-                                <i class="fas fa-circle-exclamation text-rose-600 text-sm"></i>
-                                <h4 class="font-bold text-rose-950 text-xs uppercase tracking-wide">
-                                    Motivo de Cancelación (Observaciones) <span class="text-rose-500">*</span>
-                                </h4>
+                        <!-- SECCIÓN DINÁMICA: DEVOLUCIÓN (EVIDENCIA Y MOTIVO) -->
+                        <div 
+                            id="seccion-foto-devolucion"
+                            x-show="nuevoEstadoSeleccionado === 'Devolución'" 
+                            class="space-y-3 p-4 rounded-xl border transition-all"
+                            :class="errorFotoDevolucion ? 'bg-rose-50/80 border-rose-400 ring-2 ring-rose-500/20' : 'bg-purple-50/60 border-purple-200'"
+                            x-transition
+                        >
+                            <div class="flex items-center justify-between">
+                                <div class="flex items-center gap-2">
+                                    <i class="fas fa-rotate-left text-sm" :class="errorFotoDevolucion ? 'text-rose-600' : 'text-purple-600'"></i>
+                                    <h4 class="font-bold text-xs uppercase tracking-wide" :class="errorFotoDevolucion ? 'text-rose-950 font-black' : 'text-purple-950'">
+                                        Evidencia y Justificación de Devolución <span class="text-rose-500">*</span>
+                                    </h4>
+                                </div>
+                                <span x-show="errorFotoDevolucion" class="text-[10px] font-bold px-2 py-0.5 rounded-full text-rose-700 bg-rose-100 border border-rose-300 animate-pulse">
+                                    ¡Fotografía requerida!
+                                </span>
                             </div>
-                            <p class="text-[11px] text-slate-600">
-                                Ingresa la razón de la cancelación. Al confirmar, <b>las unidades vendidas regresarán inmediatamente al stock</b> y se anularán las comisiones asociadas.
+
+                            <!-- ALERTA INLINE VISIBLE CUANDO FALTA LA FOTO DE DEVOLUCIÓN -->
+                            <template x-if="errorFotoDevolucion">
+                                <div class="p-3 bg-rose-100/90 border border-rose-300 rounded-xl text-rose-900 text-xs font-semibold flex items-start gap-2.5 shadow-2xs">
+                                    <i class="fas fa-circle-exclamation text-rose-600 mt-0.5 text-base shrink-0"></i>
+                                    <div class="flex-1">
+                                        <p class="font-bold leading-snug">¡Falta la fotografía de devolución!</p>
+                                        <p class="text-[11px] text-rose-700 mt-0.5 leading-relaxed" x-text="errorFotoDevolucionMensaje || 'Para procesar una devolución debes adjuntar la fotografía del paquete devuelto.'"></p>
+                                    </div>
+                                </div>
+                            </template>
+
+                            <p class="text-[11px]" :class="errorFotoDevolucion ? 'text-rose-700 font-medium' : 'text-slate-600'">
+                                Adjunta la fotografía del estado del producto devuelto por el cliente.
                             </p>
-                            <textarea 
-                                x-model="observacionesEstado" 
-                                rows="3" 
-                                placeholder="Escribe aquí el motivo detallado de la cancelación..."
-                                class="w-full rounded-xl border border-rose-300 bg-white p-3 text-xs text-slate-800 placeholder-slate-400 focus:border-rose-500 focus:outline-none focus:ring-4 focus:ring-rose-500/10 transition-all"
-                            ></textarea>
-                        </div>
 
-                        <!-- SECCIÓN DINÁMICA: DEVOLUCIÓN (MOTIVO + FOTO DEL PAQUETE DEVUELTO) -->
-                        <div x-show="nuevoEstadoSeleccionado === 'Devolución'" class="space-y-3 p-4 bg-purple-50/60 border border-purple-200 rounded-xl" x-transition>
-                            <div class="flex items-center gap-2">
-                                <i class="fas fa-rotate-left text-purple-600 text-sm"></i>
-                                <h4 class="font-bold text-purple-950 text-xs uppercase tracking-wide">
-                                    Justificación y Evidencia de Devolución <span class="text-rose-500">*</span>
-                                </h4>
-                            </div>
-                            <p class="text-[11px] text-slate-600">
-                                Especifica el motivo de la devolución y adjunta la foto del producto o paquete devuelto. El stock físico será reincorporado al inventario.
-                            </p>
-
-                            <!-- TEXTAREA OBSERVACIONES -->
-                            <div>
-                                <label class="block text-[10px] font-bold uppercase text-purple-900 mb-1">
-                                    ¿Por qué se devolvió el producto? (Observaciones) *
-                                </label>
-                                <textarea 
-                                    x-model="observacionesEstado" 
-                                    rows="2" 
-                                    placeholder="Detalla el motivo de la devolución (defecto de fábrica, talla errónea, insatisfacción del cliente, etc.)..."
-                                    class="w-full rounded-xl border border-purple-300 bg-white p-3 text-xs text-slate-800 placeholder-slate-400 focus:border-purple-500 focus:outline-none focus:ring-4 focus:ring-purple-500/10 transition-all"
-                                ></textarea>
-                            </div>
-
-                            <!-- FOTO PAQUETE DEVUELTO -->
-                            <div>
-                                <label class="block text-[10px] font-bold uppercase text-purple-900 mb-1">
-                                    Fotografía del paquete devuelto *
-                                </label>
-
-                                <template x-if="!previewDevolucion">
-                                    <label class="border-2 border-dashed border-purple-300 hover:border-purple-500 bg-white rounded-xl p-4 flex flex-col items-center justify-center cursor-pointer transition-colors group">
-                                        <div class="w-9 h-9 rounded-full bg-purple-50 text-purple-600 flex items-center justify-center text-base mb-1.5 group-hover:scale-110 transition-transform">
-                                            <i class="fas fa-camera"></i>
+                            <template x-if="!previewDevolucion">
+                                <div>
+                                    <label class="border-2 border-dashed bg-white rounded-xl p-5 flex flex-col items-center justify-center cursor-pointer transition-colors group shadow-2xs"
+                                           :class="errorFotoDevolucion ? 'border-rose-400 hover:border-rose-600 hover:bg-rose-50/40 ring-1 ring-rose-300' : 'border-purple-300 hover:border-purple-500'">
+                                        <div class="w-10 h-10 rounded-full flex items-center justify-center text-lg mb-2 group-hover:scale-110 transition-transform"
+                                             :class="errorFotoDevolucion ? 'bg-rose-100 text-rose-600' : 'bg-purple-50 text-purple-600'">
+                                            <i class="fas" :class="errorFotoDevolucion ? 'fa-triangle-exclamation' : 'fa-camera'"></i>
                                         </div>
-                                        <span class="font-bold text-purple-700">Subir foto del paquete devuelto</span>
-                                        <span class="text-[10px] text-slate-400 mt-0.5">JPG, PNG, WEBP (Máx 5MB)</span>
+                                        <span class="font-bold text-xs" :class="errorFotoDevolucion ? 'text-rose-800' : 'text-purple-700'">Subir fotografía del paquete devuelto</span>
+                                        <span class="text-[10px] mt-1" :class="errorFotoDevolucion ? 'text-rose-500' : 'text-slate-400'">Formatos soportados: JPG, PNG, WEBP (Máx 5MB)</span>
                                         <input type="file" accept="image/jpeg,image/png,image/jpg,image/webp" class="hidden" @change="onArchivoDevolucionSeleccionado($event)">
                                     </label>
-                                </template>
+                                    <template x-if="errorFotoDevolucion">
+                                        <span class="text-[11px] font-bold text-rose-600 flex items-center gap-1 mt-1.5 pl-1">
+                                            <i class="fas fa-arrow-up text-[10px]"></i> Haz clic arriba para seleccionar la imagen de la devolución.
+                                        </span>
+                                    </template>
+                                </div>
+                            </template>
 
-                                <template x-if="previewDevolucion">
-                                    <div class="flex items-center gap-3 p-2 bg-white rounded-xl border border-purple-200">
-                                        <img :src="previewDevolucion" alt="Preview Devolución" class="w-16 h-16 rounded-lg object-cover border border-slate-200 shrink-0">
-                                        <div class="min-w-0 flex-1">
-                                            <p class="font-bold text-slate-800 truncate" x-text="nombreArchivoDevolucion"></p>
-                                            <span class="text-[10px] text-emerald-600 font-bold flex items-center gap-1 mt-0.5">
-                                                <i class="fas fa-check-circle"></i> Foto de devolución cargada
-                                            </span>
-                                        </div>
-                                        <button type="button" @click="removerArchivoDevolucion()" class="text-slate-400 hover:text-rose-600 p-2 cursor-pointer transition-colors" title="Cambiar imagen">
-                                            <i class="fas fa-trash-can"></i>
-                                        </button>
+                            <template x-if="previewDevolucion">
+                                <div class="flex items-center gap-3 p-2 bg-white rounded-xl border border-purple-200">
+                                    <img :src="previewDevolucion" alt="Preview Devolución" class="w-16 h-16 rounded-lg object-cover border border-slate-200 shrink-0">
+                                    <div class="min-w-0 flex-1">
+                                        <p class="font-bold text-slate-800 truncate" x-text="nombreArchivoDevolucion"></p>
+                                        <span class="text-[10px] text-emerald-600 font-bold flex items-center gap-1 mt-0.5">
+                                            <i class="fas fa-check-circle"></i> Fotografía lista
+                                        </span>
                                     </div>
-                                </template>
-                            </div>
+                                    <button 
+                                        type="button" 
+                                        @click="removerArchivoDevolucion()"
+                                        class="p-2 text-rose-500 hover:bg-rose-50 rounded-lg transition-colors cursor-pointer"
+                                        title="Eliminar imagen"
+                                    >
+                                        <i class="fas fa-trash-can text-sm"></i>
+                                    </button>
+                                </div>
+                            </template>
                         </div>
 
-                        <!-- CONFIRMACIÓN PARA CONFIRMADA O ENTREGADA -->
-                        <div x-show="nuevoEstadoSeleccionado === 'Confirmada' || nuevoEstadoSeleccionado === 'Entregada'" class="p-4 bg-emerald-50/60 border border-emerald-200 rounded-xl" x-transition>
-                            <div class="flex items-center gap-2 text-emerald-800">
-                                <i class="fas fa-info-circle text-emerald-600"></i>
-                                <span class="font-bold" x-text="nuevoEstadoSeleccionado === 'Confirmada' ? 'Confirmar orden para empaque' : 'Confirmar entrega al cliente'"></span>
+                        <!-- CAMPO DE OBSERVACIONES / MOTIVO -->
+                        <div id="seccion-observaciones-estado">
+                            <div class="flex items-center justify-between mb-1.5">
+                                <label class="block text-[11px] font-bold uppercase tracking-wider text-slate-700">
+                                    Observaciones / Motivo del cambio
+                                    <span x-show="nuevoEstadoSeleccionado === 'Cancelada' || nuevoEstadoSeleccionado === 'Devolución'" class="text-rose-500">* (Obligatorio)</span>
+                                </label>
+                                <span x-show="errorObservacionesEstado" class="text-[10px] font-bold text-rose-600 bg-rose-50 px-2 py-0.5 rounded border border-rose-200">
+                                    Requerido
+                                </span>
                             </div>
-                            <p class="text-[11px] text-slate-600 mt-1" x-text="nuevoEstadoSeleccionado === 'Confirmada' ? 'Al confirmar la venta, pasa a estar lista para embalaje y posterior entrega a mensajería.' : 'Al marcar como entregada, se registrará la fecha y hora de entrega e iniciará la ventana de garantía de devolución (4 días en tienda / 6 días en envío).'"></p>
+                            <textarea 
+                                id="input-observaciones-estado"
+                                x-model="observacionesEstado" 
+                                @input="errorObservacionesEstado = false"
+                                rows="3" 
+                                placeholder="Ingresa notas operativas, motivo de cancelación o justificación de devolución..."
+                                :class="errorObservacionesEstado ? 'border-rose-500 bg-rose-50/40 text-rose-900 focus:border-rose-500 focus:ring-rose-500/20 ring-1 ring-rose-400' : 'border-slate-300 text-slate-700 focus:border-blue-500 focus:ring-blue-500/10'"
+                                class="w-full rounded-xl border p-3 text-xs font-semibold focus:outline-none focus:ring-4 transition-all resize-none"
+                            ></textarea>
+                            <span x-show="errorObservacionesEstado" class="text-[11px] font-bold text-rose-600 flex items-center gap-1 mt-1 pl-1">
+                                <i class="fas fa-triangle-exclamation text-[10px]"></i>
+                                <span x-text="errorObservacionesEstadoMensaje || 'Por favor ingresa el motivo u observaciones para continuar.'"></span>
+                            </span>
+                        </div>
+
+                        <!-- ADVERTENCIA DE SEGURIDAD / IMPACTO -->
+                        <div class="p-3 bg-amber-50 border border-amber-200 rounded-xl flex items-start gap-2.5 text-amber-900">
+                            <i class="fas fa-circle-exclamation text-amber-600 text-sm mt-0.5 shrink-0"></i>
+                            <div class="text-[11px]">
+                                <span class="font-bold block">Acción con impacto en inventario y comisiones:</span>
+                                <span class="text-amber-800">
+                                    Si cancelas la venta o procesas devolución, el stock de las variantes se devolverá automáticamente a la bodega y se anularán las comisiones asociadas.
+                                </span>
+                            </div>
                         </div>
 
                     </div>
@@ -1680,11 +1873,11 @@
                         <button 
                             type="button" 
                             @click="guardarCambioEstado()"
-                            :disabled="procesandoEstado || !nuevoEstadoSeleccionado"
+                            :disabled="procesandoEstado"
                             class="inline-flex items-center gap-2 px-6 py-2.5 rounded-xl font-black text-xs uppercase tracking-wider text-white shadow-lg transition-all duration-300 hover:scale-[1.02] cursor-pointer bg-blue-600 hover:bg-blue-700 disabled:opacity-50 disabled:pointer-events-none shadow-blue-600/20"
                         >
                             <i class="fas" :class="procesandoEstado ? 'fa-spinner fa-spin' : 'fa-check'"></i>
-                            <span x-text="procesandoEstado ? 'Guardando...' : 'Guardar Estado'"></span>
+                            <span x-text="procesandoEstado ? 'Actualizando...' : 'Confirmar Cambio'"></span>
                         </button>
                     </div>
                 </div>
@@ -1701,6 +1894,8 @@
                 cargandoDetalle: false,
                 ventaSeleccionada: null,
                 comprobanteZoomUrl: null,
+                comprobanteZoomNombre: '',
+                comprobanteZoomTitulo: '',
 
                 // --- MODAL DE CAMBIO DE ESTADO (MÁQUINA DE ESTADOS) ---
                 modalCambiarEstadoAbierto: false,
@@ -1724,6 +1919,14 @@
                 previewDevolucion: null,
                 nombreArchivoDevolucion: '',
                 procesandoEstado: false,
+                errorEstadoModal: '',
+                errorNuevoEstado: false,
+                errorFotoPaquete: false,
+                errorFotoPaqueteMensaje: '',
+                errorFotoDevolucion: false,
+                errorFotoDevolucionMensaje: '',
+                errorObservacionesEstado: false,
+                errorObservacionesEstadoMensaje: '',
 
                 abrirModalCambiarEstado(id, estadoActual, tipoVenta, puedeDevolver, estadosPermitidos, diasRestantes, textoGarantia, fechaLimite) {
                     this.estadoModalData = {
@@ -1742,6 +1945,14 @@
                         ? this.estadoModalData.estadosPermitidos[0] 
                         : null;
                     this.observacionesEstado = '';
+                    this.errorEstadoModal = '';
+                    this.errorNuevoEstado = false;
+                    this.errorFotoPaquete = false;
+                    this.errorFotoPaqueteMensaje = '';
+                    this.errorFotoDevolucion = false;
+                    this.errorFotoDevolucionMensaje = '';
+                    this.errorObservacionesEstado = false;
+                    this.errorObservacionesEstadoMensaje = '';
                     this.removerArchivoPaquete();
                     this.removerArchivoDevolucion();
                     this.procesandoEstado = false;
@@ -1754,10 +1965,26 @@
                     this.removerArchivoDevolucion();
                     this.observacionesEstado = '';
                     this.nuevoEstadoSeleccionado = null;
+                    this.errorEstadoModal = '';
+                    this.errorNuevoEstado = false;
+                    this.errorFotoPaquete = false;
+                    this.errorFotoPaqueteMensaje = '';
+                    this.errorFotoDevolucion = false;
+                    this.errorFotoDevolucionMensaje = '';
+                    this.errorObservacionesEstado = false;
+                    this.errorObservacionesEstadoMensaje = '';
                 },
 
                 seleccionarNuevoEstado(st) {
                     this.nuevoEstadoSeleccionado = st;
+                    this.errorNuevoEstado = false;
+                    this.errorEstadoModal = '';
+                    this.errorFotoPaquete = false;
+                    this.errorFotoPaqueteMensaje = '';
+                    this.errorFotoDevolucion = false;
+                    this.errorFotoDevolucionMensaje = '';
+                    this.errorObservacionesEstado = false;
+                    this.errorObservacionesEstadoMensaje = '';
                 },
 
                 obtenerDescripcionEstado(st) {
@@ -1783,27 +2010,23 @@
 
                     const validTypes = ['image/jpeg', 'image/png', 'image/jpg', 'image/webp'];
                     if (!validTypes.includes(file.type)) {
-                        Swal.fire({
-                            icon: 'error',
-                            title: 'Formato no soportado',
-                            text: 'El archivo debe ser una imagen válida (JPG, PNG o WEBP).'
-                        });
+                        this.errorFotoPaquete = true;
+                        this.errorFotoPaqueteMensaje = 'El archivo debe ser una imagen válida (JPG, PNG o WEBP).';
                         e.target.value = '';
                         return;
                     }
 
                     if (file.size > 5 * 1024 * 1024) {
-                        Swal.fire({
-                            icon: 'warning',
-                            title: 'Imagen muy grande',
-                            text: 'La fotografía no debe superar 5MB.'
-                        });
+                        this.errorFotoPaquete = true;
+                        this.errorFotoPaqueteMensaje = 'La fotografía del paquete no puede exceder los 5MB.';
                         e.target.value = '';
                         return;
                     }
 
                     this.archivoPaquete = file;
                     this.nombreArchivoPaquete = file.name;
+                    this.errorFotoPaquete = false;
+                    this.errorFotoPaqueteMensaje = '';
                     const reader = new FileReader();
                     reader.onload = (evt) => {
                         this.previewPaquete = evt.target.result;
@@ -1815,6 +2038,8 @@
                     this.archivoPaquete = null;
                     this.previewPaquete = null;
                     this.nombreArchivoPaquete = '';
+                    this.errorFotoPaquete = false;
+                    this.errorFotoPaqueteMensaje = '';
                 },
 
                 onArchivoDevolucionSeleccionado(e) {
@@ -1823,27 +2048,23 @@
 
                     const validTypes = ['image/jpeg', 'image/png', 'image/jpg', 'image/webp'];
                     if (!validTypes.includes(file.type)) {
-                        Swal.fire({
-                            icon: 'error',
-                            title: 'Formato no soportado',
-                            text: 'El archivo debe ser una imagen válida (JPG, PNG o WEBP).'
-                        });
+                        this.errorFotoDevolucion = true;
+                        this.errorFotoDevolucionMensaje = 'El archivo debe ser una imagen válida (JPG, PNG o WEBP).';
                         e.target.value = '';
                         return;
                     }
 
                     if (file.size > 5 * 1024 * 1024) {
-                        Swal.fire({
-                            icon: 'warning',
-                            title: 'Imagen muy grande',
-                            text: 'La fotografía no debe superar 5MB.'
-                        });
+                        this.errorFotoDevolucion = true;
+                        this.errorFotoDevolucionMensaje = 'La fotografía de devolución no puede exceder los 5MB.';
                         e.target.value = '';
                         return;
                     }
 
                     this.archivoDevolucion = file;
                     this.nombreArchivoDevolucion = file.name;
+                    this.errorFotoDevolucion = false;
+                    this.errorFotoDevolucionMensaje = '';
                     const reader = new FileReader();
                     reader.onload = (evt) => {
                         this.previewDevolucion = evt.target.result;
@@ -1855,54 +2076,65 @@
                     this.archivoDevolucion = null;
                     this.previewDevolucion = null;
                     this.nombreArchivoDevolucion = '';
+                    this.errorFotoDevolucion = false;
+                    this.errorFotoDevolucionMensaje = '';
                 },
 
                 async guardarCambioEstado() {
                     if (this.procesandoEstado) return;
 
+                    this.errorEstadoModal = '';
+                    this.errorNuevoEstado = false;
+                    this.errorFotoPaquete = false;
+                    this.errorFotoDevolucion = false;
+                    this.errorObservacionesEstado = false;
+
                     if (!this.nuevoEstadoSeleccionado) {
-                        Swal.fire({
-                            icon: 'warning',
-                            title: 'Selecciona un estado',
-                            text: 'Debes elegir el nuevo estado al que transicionará la venta.'
+                        this.errorNuevoEstado = true;
+                        this.$nextTick(() => {
+                            document.getElementById('seccion-seleccion-nuevo-estado')?.scrollIntoView({ behavior: 'smooth', block: 'center' });
                         });
                         return;
                     }
 
                     // Validar requisitos por estado
                     if (this.nuevoEstadoSeleccionado === 'En ruta' && !this.archivoPaquete) {
-                        Swal.fire({
-                            icon: 'warning',
-                            title: 'Fotografía requerida',
-                            text: 'Para cambiar al estado "En ruta" es obligatorio adjuntar la fotografía del paquete entregado a la paquetería.'
+                        this.errorFotoPaquete = true;
+                        this.errorFotoPaqueteMensaje = 'Para cambiar al estado "En ruta" es obligatorio adjuntar la fotografía del paquete entregado a la paquetería.';
+                        this.$nextTick(() => {
+                            document.getElementById('seccion-foto-paquete')?.scrollIntoView({ behavior: 'smooth', block: 'center' });
                         });
                         return;
                     }
 
                     if (this.nuevoEstadoSeleccionado === 'Cancelada' && !this.observacionesEstado.trim()) {
-                        Swal.fire({
-                            icon: 'warning',
-                            title: 'Motivo requerido',
-                            text: 'Para cancelar la venta debes ingresar el motivo en el campo observaciones.'
+                        this.errorObservacionesEstado = true;
+                        this.errorObservacionesEstadoMensaje = 'Por favor ingresa en el campo de observaciones el motivo de la cancelación de la venta.';
+                        this.$nextTick(() => {
+                            const el = document.getElementById('input-observaciones-estado');
+                            el?.focus();
+                            el?.scrollIntoView({ behavior: 'smooth', block: 'center' });
                         });
                         return;
                     }
 
                     if (this.nuevoEstadoSeleccionado === 'Devolución') {
                         if (!this.observacionesEstado.trim()) {
-                            Swal.fire({
-                                icon: 'warning',
-                                title: 'Motivo de devolución requerido',
-                                text: 'Por favor ingresa la justificación o motivo por el cual se procesa la devolución.'
+                            this.errorObservacionesEstado = true;
+                            this.errorObservacionesEstadoMensaje = 'Por favor ingresa la justificación o motivo por el cual se procesa la devolución.';
+                            this.$nextTick(() => {
+                                const el = document.getElementById('input-observaciones-estado');
+                                el?.focus();
+                                el?.scrollIntoView({ behavior: 'smooth', block: 'center' });
                             });
                             return;
                         }
 
                         if (!this.archivoDevolucion) {
-                            Swal.fire({
-                                icon: 'warning',
-                                title: 'Fotografía de devolución requerida',
-                                text: 'Para procesar una devolución debes adjuntar la fotografía del paquete devuelto.'
+                            this.errorFotoDevolucion = true;
+                            this.errorFotoDevolucionMensaje = 'Para procesar una devolución debes adjuntar la fotografía del paquete devuelto.';
+                            this.$nextTick(() => {
+                                document.getElementById('seccion-foto-devolucion')?.scrollIntoView({ behavior: 'smooth', block: 'center' });
                             });
                             return;
                         }
@@ -1938,39 +2170,88 @@
                         const data = await response.json();
 
                         if (!response.ok) {
-                            throw new Error(data.message || 'No se pudo actualizar el estado de la venta.');
+                            this.errorEstadoModal = data.message || 'No se pudo actualizar el estado de la venta.';
+                            this.$nextTick(() => {
+                                document.getElementById('modal-cambiar-estado-body')?.scrollTo({ top: 0, behavior: 'smooth' });
+                            });
+                            return;
                         }
 
                         this.cerrarModalCambiarEstado();
 
-                        Swal.fire({
-                            icon: 'success',
-                            title: '¡Estado Actualizado!',
-                            text: data.message,
-                            timer: 1600,
-                            showConfirmButton: false
-                        }).then(() => {
+                        if (typeof Swal !== 'undefined') {
+                            Swal.fire({
+                                icon: 'success',
+                                title: '¡Estado Actualizado!',
+                                text: data.message,
+                                timer: 1600,
+                                showConfirmButton: false
+                            }).then(() => {
+                                window.location.reload();
+                            });
+                        } else {
                             window.location.reload();
-                        });
+                        }
 
                     } catch (err) {
                         console.error('Error al actualizar estado:', err);
-                        Swal.fire({
-                            icon: 'error',
-                            title: 'Error al actualizar',
-                            text: err.message || 'Ocurrió un error inesperado al actualizar el estado.'
+                        this.errorEstadoModal = err.message || 'Ocurrió un error inesperado al actualizar el estado.';
+                        this.$nextTick(() => {
+                            document.getElementById('modal-cambiar-estado-body')?.scrollTo({ top: 0, behavior: 'smooth' });
                         });
                     } finally {
                         this.procesandoEstado = false;
                     }
                 },
 
-                verImagenAmpliada(url) {
+                verImagenAmpliada(url, nombre = '', titulo = '') {
                     this.comprobanteZoomUrl = url;
+                    this.comprobanteZoomNombre = nombre || 'VNT_comprobante';
+                    this.comprobanteZoomTitulo = titulo || 'Evidencia de Venta';
                 },
 
                 cerrarImagenAmpliada() {
                     this.comprobanteZoomUrl = null;
+                    this.comprobanteZoomNombre = '';
+                    this.comprobanteZoomTitulo = '';
+                },
+
+                descargarImagenActual() {
+                    if (!this.comprobanteZoomUrl) return;
+                    const url = this.comprobanteZoomUrl;
+                    const extMatch = url.match(/\.([a-zA-Z0-9]+)(?:\?|#|$)/);
+                    const ext = extMatch ? extMatch[1] : 'jpg';
+                    const filename = (this.comprobanteZoomNombre || 'VNT_comprobante') + '.' + ext;
+
+                    fetch(url)
+                        .then(res => res.blob())
+                        .then(blob => {
+                            const blobUrl = window.URL.createObjectURL(blob);
+                            const a = document.createElement('a');
+                            a.style.display = 'none';
+                            a.href = blobUrl;
+                            a.download = filename;
+                            document.body.appendChild(a);
+                            a.click();
+                            window.URL.revokeObjectURL(blobUrl);
+                            document.body.removeChild(a);
+                        })
+                        .catch(() => {
+                            const a = document.createElement('a');
+                            a.href = url;
+                            a.download = filename;
+                            a.target = '_blank';
+                            document.body.appendChild(a);
+                            a.click();
+                            document.body.removeChild(a);
+                        });
+                },
+
+                nombreComprobanteVenta(tipo) {
+                    if (!this.ventaSeleccionada) return 'VNT_' + tipo;
+                    const folio = 'VNT-' + String(this.ventaSeleccionada.id).padStart(5, '0');
+                    const fecha = this.ventaSeleccionada.fecha ? this.ventaSeleccionada.fecha.slice(0, 10) : 'fecha';
+                    return `${folio}_${fecha}_${tipo}`;
                 },
 
                 modalImprimirAbierto: false,
@@ -2021,9 +2302,12 @@
                     }
                 },
 
+                impresionDesdeDetalle: false,
+
                 cerrarDetalle() {
                     this.modalDetalleAbierto = false;
                     this.ventaSeleccionada = null;
+                    this.impresionDesdeDetalle = false;
                 },
 
                 abrirModalImpresion(id, metodoPago, total) {
@@ -2031,6 +2315,7 @@
                     this.metodoPagoImprimir = metodoPago;
                     this.totalImprimir = total;
                     this.tipoComprobante = 'ticket';
+                    this.impresionDesdeDetalle = false;
                     this.modalImprimirAbierto = true;
                 },
 
@@ -2041,10 +2326,17 @@
                         this.ventaSeleccionada.metodo_pago,
                         this.ventaSeleccionada.total
                     );
+                    this.impresionDesdeDetalle = true;
                 },
 
                 cerrarModalImpresion() {
                     this.modalImprimirAbierto = false;
+                    if (this.impresionDesdeDetalle) {
+                        this.modalDetalleAbierto = true;
+                        setTimeout(() => {
+                            this.modalDetalleAbierto = true;
+                        }, 30);
+                    }
                 },
 
                 // --- VALIDACIÓN Y FORMATO LEGAL DE DOCUMENTOS (EL SALVADOR) ---

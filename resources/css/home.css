@@ -62,3 +62,9 @@ body { font-family: 'Inter', sans-serif; }
         .user-dropdown.active .user-dropdown-menu {
             opacity: 1; visibility: visible; transform: translateY(0);
         }
+
+        /* SweetAlert2 siempre debe posicionarse por encima de cualquier modal o menú */
+        .swal2-container,
+        .swal2-topmost {
+            z-index: 100000 !important;
+        }

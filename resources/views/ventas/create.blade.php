@@ -66,6 +66,10 @@
                 <i class="fas fa-cash-register"></i>
                 <span>Terminal de Ventas (Carrito)</span>
             </a>
+            <a href="{{ route('ventas.pedidos') }}" class="rounded-xl px-4 py-2 text-sm font-bold text-slate-600 hover:bg-slate-50 hover:text-blue-600 transition-all flex items-center gap-2">
+                <i class="fas fa-boxes-packing text-slate-400"></i>
+                <span>Control de Envíos y Estados</span>
+            </a>
             <a href="{{ route('ventas.index') }}" class="rounded-xl px-4 py-2 text-sm font-bold text-slate-600 hover:bg-slate-50 hover:text-blue-600 transition-all flex items-center gap-2">
                 <i class="fas fa-chart-line text-slate-400"></i>
                 <span>Dashboard Histórico</span>

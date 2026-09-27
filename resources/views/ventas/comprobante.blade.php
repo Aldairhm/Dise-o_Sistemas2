@@ -87,6 +87,15 @@
 
         <div class="flex items-center gap-2">
             <button 
+                id="btnDescargarDocumento"
+                onclick="descargarComoImagen()" 
+                class="inline-flex items-center gap-2 bg-emerald-600 hover:bg-emerald-500 text-white font-bold px-4 py-2.5 rounded-xl text-xs transition-all shadow-md shadow-emerald-600/20 cursor-pointer"
+                title="Descargar documento como imagen"
+            >
+                <i class="fas fa-download"></i>
+                <span id="textoBtnDescargar">Descargar Imagen</span>
+            </button>
+            <button 
                 onclick="window.print()" 
                 class="inline-flex items-center gap-2 bg-blue-600 hover:bg-blue-500 text-white font-bold px-4 py-2.5 rounded-xl text-xs transition-all shadow-md shadow-blue-600/20 cursor-pointer"
             >
@@ -524,7 +533,46 @@
     </div>
     @endif
 
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <script>
+        function descargarComoImagen() {
+            const container = document.querySelector('.print-container');
+            if (!container) return;
+
+            const btn = document.getElementById('btnDescargarDocumento');
+            const txt = document.getElementById('textoBtnDescargar');
+            if (btn && txt) {
+                btn.disabled = true;
+                txt.textContent = 'Generando...';
+            }
+
+            const folio = 'VNT-{{ str_pad($venta->id, 5, '0', STR_PAD_LEFT) }}';
+            const fecha = '{{ \Carbon\Carbon::parse($venta->fecha)->format('Y-m-d') }}';
+            const nombreArchivo = `${folio}_${fecha}.png`;
+
+            html2canvas(container, {
+                scale: 2,
+                useCORS: true,
+                backgroundColor: '#ffffff',
+                logging: false
+            }).then(canvas => {
+                const link = document.createElement('a');
+                link.download = nombreArchivo;
+                link.href = canvas.toDataURL('image/png');
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+            }).catch(err => {
+                console.error('Error al generar imagen:', err);
+                alert('No se pudo generar la imagen del documento.');
+            }).finally(() => {
+                if (btn && txt) {
+                    btn.disabled = false;
+                    txt.textContent = 'Descargar Imagen';
+                }
+            });
+        }
+
         // Dispara automáticamente la impresión al cargar
         window.addEventListener('load', () => {
             setTimeout(() => {

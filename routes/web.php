@@ -77,6 +77,7 @@ Route::middleware('auth')->group(function () {
 
         // ── Módulo de Ventas ──
         Route::get('/ventas/nueva', [VentaController::class, 'create'])->name('ventas.create');
+        Route::get('/ventas/pedidos', [VentaController::class, 'pedidos'])->name('ventas.pedidos');
         Route::get('/ventas', [VentaController::class, 'index'])->name('ventas.index');
         Route::post('/ventas', [VentaController::class, 'store'])->name('ventas.store');
         Route::patch('/ventas/{id}/estado', [VentaController::class, 'actualizarEstado'])->name('ventas.actualizar-estado');

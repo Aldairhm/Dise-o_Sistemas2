@@ -4,7 +4,7 @@
         <div 
             x-show="abierto" 
             x-cloak
-            class="fixed inset-0 z-[9999] overflow-y-auto"
+            class="fixed inset-0 z-[70] overflow-y-auto"
             style="display: none;"
             role="dialog"
             aria-modal="true"
@@ -56,8 +56,24 @@
             </div>
 
             {{-- CUERPO: DOS COLUMNAS (INFORMACIÓN DEL PRODUCTO Y DATOS DE LA ENTREGA) --}}
-            <div class="grid grid-cols-1 md:grid-cols-12 gap-6 p-5 sm:p-7 max-h-[calc(90vh-140px)] overflow-y-auto custom-scrollbar">
+            <div id="modal-entrega-body" class="grid grid-cols-1 md:grid-cols-12 gap-6 p-5 sm:p-7 max-h-[calc(90vh-140px)] overflow-y-auto custom-scrollbar">
                 
+                {{-- BANNER DE ERROR GENERAL INLINE (Sin popups ni alertas saltarinas) --}}
+                <template x-if="errorGeneral">
+                    <div class="col-span-12 p-3.5 bg-rose-50 border border-rose-300 rounded-xl text-xs text-rose-800 flex items-start justify-between gap-2 shadow-xs transition-all">
+                        <div class="flex items-start gap-2.5">
+                            <i class="fas fa-circle-exclamation text-rose-600 mt-0.5 text-base shrink-0"></i>
+                            <div>
+                                <p class="font-bold text-rose-950 leading-snug">Atención</p>
+                                <p class="text-[11px] text-rose-800 mt-0.5" x-text="errorGeneral"></p>
+                            </div>
+                        </div>
+                        <button type="button" @click="errorGeneral = ''" class="text-rose-400 hover:text-rose-700 p-1 cursor-pointer">
+                            <i class="fas fa-times text-xs"></i>
+                        </button>
+                    </div>
+                </template>
+
                 {{-- COLUMNA IZQUIERDA: INFORMACIÓN DEL PRODUCTO --}}
                 <div class="md:col-span-5 flex flex-col border-b md:border-b-0 md:border-r border-slate-100 pb-5 md:pb-0 md:pr-6">
                     <h4 class="text-xs font-bold text-slate-500 uppercase tracking-widest mb-3">
@@ -204,17 +220,24 @@
                     </div>
 
                     {{-- Fila 3: Dirección de Entrega (Sin icono de ubicación) --}}
-                    <div>
-                        <label class="block text-xs font-bold text-slate-700 mb-1">
-                            Dirección de Entrega <span class="text-red-500">*</span>
+                    <div id="seccion-direccion-entrega">
+                        <label class="block text-xs font-bold text-slate-700 mb-1 flex items-center justify-between">
+                            <span>Dirección de Entrega <span class="text-red-500">*</span></span>
+                            <span x-show="errorDireccion" class="text-[10px] font-bold text-rose-600 bg-rose-50 px-1.5 py-0.2 rounded border border-rose-200">Requerido</span>
                         </label>
                         <input 
+                            id="input-direccion-entrega"
                             type="text" 
                             x-model="direccionEntrega" 
+                            @input="errorDireccion = false"
                             placeholder="Ej. Calle Principal #123, Colonia San Benito" 
-                            class="w-full rounded-lg border border-slate-300 px-3.5 py-2 text-xs font-semibold text-slate-800 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20 transition-all"
+                            :class="errorDireccion ? 'border-rose-500 bg-rose-50/40 text-rose-800 focus:border-rose-500 focus:ring-rose-500/20' : 'border-slate-300 text-slate-800 focus:border-blue-500 focus:ring-blue-500/20'"
+                            class="w-full rounded-lg border px-3.5 py-2 text-xs font-semibold focus:outline-none focus:ring-2 transition-all"
                         >
-                        <span class="text-[11px] text-slate-400 block mt-0.5">Dirección exacta para la entrega del producto</span>
+                        <span x-show="!errorDireccion" class="text-[11px] text-slate-400 block mt-0.5">Dirección exacta para la entrega del producto</span>
+                        <span x-show="errorDireccion" class="text-[11px] font-bold text-rose-600 flex items-center gap-1 mt-0.5">
+                            <i class="fas fa-triangle-exclamation text-[10px]"></i> Por favor ingresa la dirección de entrega.
+                        </span>
                     </div>
 
                     {{-- Fila 4: Punto de Referencia y Número de Teléfono con validaciones del sistema --}}
@@ -232,9 +255,10 @@
                             <span class="text-[11px] text-slate-400 block mt-0.5">Casa, color o referencia</span>
                         </div>
 
-                        <div>
-                            <label class="block text-xs font-bold text-slate-700 mb-1">
-                                Número de Teléfono <span class="text-red-500">*</span>
+                        <div id="seccion-telefono-entrega">
+                            <label class="block text-xs font-bold text-slate-700 mb-1 flex items-center justify-between">
+                                <span>Número de Teléfono <span class="text-red-500">*</span></span>
+                                <span x-show="errorTelefonoTocado && (!telefono || !esTelefonoValido)" class="text-[10px] font-bold text-rose-600 bg-rose-50 px-1.5 py-0.2 rounded border border-rose-200">Requerido</span>
                             </label>
                             <div class="relative">
                                 <div class="absolute left-3 top-1/2 -translate-y-1/2 flex items-center gap-1.5 text-slate-400 text-xs font-bold select-none pointer-events-none">
@@ -242,16 +266,17 @@
                                     <span class="text-slate-500 font-mono">+503</span>
                                 </div>
                                 <input 
+                                    id="input-telefono-entrega"
                                     type="text" 
                                     inputmode="numeric"
                                     maxlength="9"
                                     x-model="telefono" 
-                                    @input="onTelefonoInput($event)"
+                                    @input="errorTelefonoTocado = false; onTelefonoInput($event)"
                                     placeholder="XXXX-XXXX" 
                                     :class="{
                                         'border-emerald-500 bg-emerald-50/40 text-emerald-800 focus:ring-emerald-500/20 focus:border-emerald-500': telefono && esTelefonoValido,
-                                        'border-rose-500 bg-rose-50/40 text-rose-800 focus:ring-rose-500/20 focus:border-rose-500': telefono && !esTelefonoValido,
-                                        'border-slate-300 text-slate-800 focus:border-blue-500 focus:ring-blue-500/20': !telefono
+                                        'border-rose-500 bg-rose-50/40 text-rose-800 focus:ring-rose-500/20 focus:border-rose-500': (errorTelefonoTocado || (telefono && !esTelefonoValido)),
+                                        'border-slate-300 text-slate-800 focus:border-blue-500 focus:ring-blue-500/20': !telefono && !errorTelefonoTocado
                                     }"
                                     class="w-full rounded-lg border py-2 pr-9 text-xs font-semibold focus:outline-none focus:ring-2 transition-all"
                                     style="padding-left: 4.8rem;"
@@ -260,20 +285,20 @@
                                     <template x-if="telefono && esTelefonoValido">
                                         <i class="fas fa-check text-emerald-500 text-xs"></i>
                                     </template>
-                                    <template x-if="telefono && !esTelefonoValido">
+                                    <template x-if="errorTelefonoTocado || (telefono && !esTelefonoValido)">
                                         <i class="fas fa-triangle-exclamation text-rose-500 text-xs"></i>
                                     </template>
                                 </div>
                             </div>
                             <div class="mt-0.5">
-                                <template x-if="!telefono">
+                                <template x-if="!telefono && !errorTelefonoTocado">
                                     <span class="text-[11px] text-slate-400 block">Formato: XXXX-XXXX (ej: 7890-1234)</span>
                                 </template>
                                 <template x-if="telefono && esTelefonoValido">
                                     <span class="text-[11px] text-emerald-600 font-semibold block">Número válido de El Salvador ✓</span>
                                 </template>
-                                <template x-if="telefono && !esTelefonoValido">
-                                    <span class="text-[11px] text-rose-500 font-semibold block" x-text="errorTelefono"></span>
+                                <template x-if="errorTelefonoTocado || (telefono && !esTelefonoValido)">
+                                    <span class="text-[11px] font-bold text-rose-600 flex items-center gap-1" x-text="errorTelefono || 'Ingresa un número de teléfono válido de El Salvador.'"></span>
                                 </template>
                             </div>
                         </div>
@@ -338,36 +363,64 @@
 
                     {{-- Comprobante de Transferencia Bancaria (Condicional) --}}
                     <div 
+                        id="seccion-comprobante-entrega"
                         x-show="metodoPago === 'Transferencia Bancaria'" 
                         x-transition
-                        class="p-3.5 rounded-xl border border-blue-200 bg-blue-50/50 space-y-2.5"
+                        class="p-3.5 rounded-xl border transition-all space-y-2.5"
+                        :class="errorComprobante ? 'border-rose-400 bg-rose-50/80 ring-2 ring-rose-500/20' : 'border-blue-200 bg-blue-50/50'"
                     >
                         <div class="flex items-center justify-between">
-                            <label class="block text-xs font-bold text-blue-950 flex items-center gap-1.5">
-                                <i class="fas fa-file-invoice-dollar text-blue-600"></i>
-                                Comprobante de Transferencia <span class="text-rose-500 font-bold">*</span>
+                            <label class="block text-xs font-bold flex items-center gap-1.5" :class="errorComprobante ? 'text-rose-950 font-black' : 'text-blue-950'">
+                                <i class="fas fa-file-invoice-dollar" :class="errorComprobante ? 'text-rose-600' : 'text-blue-600'"></i>
+                                <span>Comprobante de Transferencia</span>
+                                <span class="text-rose-500 font-bold">*</span>
                             </label>
-                            <span class="text-[10px] font-semibold text-blue-700 bg-blue-100 border border-blue-200 px-2 py-0.5 rounded-full">
-                                Imagen requerida
+                            <span class="text-[10px] font-bold px-2 py-0.5 rounded-full transition-all"
+                                  :class="errorComprobante ? 'text-rose-700 bg-rose-100 border border-rose-300 animate-pulse' : 'text-blue-700 bg-blue-100 border border-blue-200'">
+                                <span x-text="errorComprobante ? '¡Falta comprobante!' : 'Imagen requerida'"></span>
                             </span>
                         </div>
 
+                        {{-- ALERTA INLINE VISIBLE CUANDO NO SE HA ADJUNTADO EL COMPROBANTE --}}
+                        <template x-if="errorComprobante">
+                            <div class="p-3 bg-rose-100/90 border border-rose-300 rounded-xl text-rose-800 text-xs font-semibold flex items-start gap-2.5 shadow-2xs">
+                                <i class="fas fa-circle-exclamation text-rose-600 mt-0.5 text-base shrink-0"></i>
+                                <div class="flex-1">
+                                    <p class="font-bold text-rose-900 leading-snug">¡No has adjuntado el comprobante de pago!</p>
+                                    <p class="text-[11px] text-rose-700 mt-0.5 leading-relaxed" x-text="errorComprobanteMensaje || 'Debes subir la foto o captura de pantalla de la transferencia para poder registrar y autorizar la entrega.'"></p>
+                                </div>
+                            </div>
+                        </template>
+
                         {{-- Área de carga o preview --}}
                         <template x-if="!comprobantePreview">
-                            <div 
-                                @click="$refs.modalComprobanteInput.click()" 
-                                class="border-2 border-dashed border-blue-300 hover:border-blue-500 rounded-xl p-3 text-center bg-white cursor-pointer transition-all hover:bg-blue-50/40 shadow-2xs group"
-                            >
-                                <div class="w-8 h-8 mx-auto rounded-full bg-blue-50 text-blue-600 flex items-center justify-center text-sm mb-1 group-hover:scale-110 transition-transform">
-                                    <i class="fas fa-cloud-arrow-up"></i>
+                            <div>
+                                <div 
+                                    @click="$refs.modalComprobanteInput.click()" 
+                                    class="border-2 border-dashed rounded-xl p-3 text-center bg-white cursor-pointer transition-all shadow-2xs group"
+                                    :class="errorComprobante ? 'border-rose-400 hover:border-rose-600 hover:bg-rose-50/50 ring-1 ring-rose-300' : 'border-blue-300 hover:border-blue-500 hover:bg-blue-50/40'"
+                                >
+                                    <div class="w-8 h-8 mx-auto rounded-full flex items-center justify-center text-sm mb-1 group-hover:scale-110 transition-transform"
+                                         :class="errorComprobante ? 'bg-rose-100 text-rose-600' : 'bg-blue-50 text-blue-600'">
+                                        <i class="fas" :class="errorComprobante ? 'fa-triangle-exclamation text-rose-600 text-sm' : 'fa-cloud-arrow-up'"></i>
+                                    </div>
+                                    <p class="text-xs font-bold" :class="errorComprobante ? 'text-rose-800' : 'text-slate-800'">
+                                        Haz clic para subir comprobante
+                                    </p>
+                                    <p class="text-[10px]" :class="errorComprobante ? 'text-rose-500 font-medium' : 'text-slate-400'">
+                                        JPG, PNG o WEBP (Máx. 5MB)
+                                    </p>
                                 </div>
-                                <p class="text-xs font-bold text-slate-800">Haz clic para subir comprobante</p>
-                                <p class="text-[10px] text-slate-400">JPG, PNG o WEBP (Máx. 5MB)</p>
+                                <template x-if="errorComprobante">
+                                    <span class="text-[11px] font-bold text-rose-600 flex items-center gap-1 mt-1.5 pl-1">
+                                        <i class="fas fa-arrow-up text-[10px]"></i> Haz clic arriba para seleccionar el archivo de la transferencia.
+                                    </span>
+                                </template>
                             </div>
                         </template>
 
                         <template x-if="comprobantePreview">
-                            <div class="relative flex items-center gap-3 p-2.5 bg-white border border-blue-200 rounded-xl shadow-xs">
+                            <div class="relative flex items-center gap-3 p-2.5 bg-white border border-emerald-300 rounded-xl shadow-xs">
                                 <img :src="comprobantePreview" alt="Preview Comprobante" class="w-12 h-12 object-cover rounded-lg border border-slate-200 shrink-0">
                                 <div class="min-w-0 flex-1">
                                     <p class="text-xs font-bold text-slate-900 truncate" x-text="comprobanteNombre"></p>
@@ -478,10 +531,16 @@
             descuento: 0,
             metodoPago: 'Efectivo',
 
+            errorGeneral: '',
+            errorDireccion: false,
+            errorTelefonoTocado: false,
+
             archivoComprobante: null,
             comprobantePreview: null,
             comprobanteNombre: '',
             comprobanteTamano: '',
+            errorComprobante: false,
+            errorComprobanteMensaje: '',
 
             init() {
                 // Escuchar evento para abrir modal desde la bolsa de compras
@@ -500,6 +559,8 @@
                 });
 
                 this.$watch('metodoPago', (val) => {
+                    this.errorComprobante = false;
+                    this.errorComprobanteMensaje = '';
                     if (val !== 'Transferencia Bancaria') {
                         this.removerComprobante();
                     }
@@ -531,11 +592,19 @@
                 const min = String(hoy.getMinutes()).padStart(2, '0');
                 this.horaSalida = `${hh}:${min}`;
 
+                this.errorGeneral = '';
+                this.errorDireccion = false;
+                this.errorTelefonoTocado = false;
+                this.errorComprobante = false;
+                this.errorComprobanteMensaje = '';
                 this.abierto = true;
             },
 
             cerrar() {
                 this.abierto = false;
+                this.errorGeneral = '';
+                this.errorDireccion = false;
+                this.errorTelefonoTocado = false;
                 this.removerComprobante();
             },
 
@@ -619,13 +688,15 @@
 
                 const tipos = ['image/jpeg', 'image/png', 'image/jpg', 'image/webp'];
                 if (!tipos.includes(file.type)) {
-                    alert('El comprobante debe ser un archivo de imagen válido (JPG, PNG o WEBP).');
+                    this.errorComprobante = true;
+                    this.errorComprobanteMensaje = 'El comprobante debe ser un archivo de imagen válido (JPG, PNG o WEBP).';
                     event.target.value = '';
                     return;
                 }
 
                 if (file.size > 5 * 1024 * 1024) {
-                    alert('La imagen no debe superar los 5MB.');
+                    this.errorComprobante = true;
+                    this.errorComprobanteMensaje = 'La imagen del comprobante no debe superar los 5MB.';
                     event.target.value = '';
                     return;
                 }
@@ -633,6 +704,8 @@
                 this.archivoComprobante = file;
                 this.comprobanteNombre = file.name;
                 this.comprobanteTamano = (file.size / 1024).toFixed(1) + ' KB';
+                this.errorComprobante = false;
+                this.errorComprobanteMensaje = '';
 
                 const reader = new FileReader();
                 reader.onload = (e) => {
@@ -646,6 +719,8 @@
                 this.comprobantePreview = null;
                 this.comprobanteNombre = '';
                 this.comprobanteTamano = '';
+                this.errorComprobante = false;
+                this.errorComprobanteMensaje = '';
                 const input = document.querySelector('input[x-ref="modalComprobanteInput"]');
                 if (input) input.value = '';
             },
@@ -691,44 +766,47 @@
 
             async procesarEntrega() {
                 if (this.procesando) return;
+                this.errorGeneral = '';
 
                 if (!this.items || this.items.length === 0) {
-                    if (typeof Swal !== 'undefined') {
-                        Swal.fire({ icon: 'warning', title: 'Bolsa vacía', text: 'No hay productos en la bolsa para procesar la entrega.' });
-                    } else {
-                        alert('No hay productos en la bolsa.');
-                    }
+                    this.errorGeneral = 'No hay productos en la bolsa para procesar la entrega.';
+                    this.$nextTick(() => {
+                        document.getElementById('modal-entrega-body')?.scrollTo({ top: 0, behavior: 'smooth' });
+                    });
                     return;
                 }
 
                 if (!this.direccionEntrega.trim()) {
-                    if (typeof Swal !== 'undefined') {
-                        Swal.fire({ icon: 'warning', title: 'Dirección requerida', text: 'Por favor ingresa la dirección de entrega del producto.' });
-                    } else {
-                        alert('Por favor ingresa la dirección de entrega.');
-                    }
+                    this.errorDireccion = true;
+                    this.$nextTick(() => {
+                        const el = document.getElementById('input-direccion-entrega');
+                        el?.focus();
+                        el?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    });
                     return;
                 }
 
                 if (!this.telefono || !this.esTelefonoValido) {
-                    if (typeof Swal !== 'undefined') {
-                        Swal.fire({
-                            icon: 'warning',
-                            title: 'Teléfono requerido',
-                            text: this.errorTelefono || 'Por favor ingresa un número de teléfono válido de El Salvador (8 dígitos, inicia con 2, 6 o 7, ej: 7890-1234).'
-                        });
-                    } else {
-                        alert(this.errorTelefono || 'Por favor ingresa un número de teléfono válido de El Salvador.');
-                    }
+                    this.errorTelefonoTocado = true;
+                    this.$nextTick(() => {
+                        const el = document.getElementById('input-telefono-entrega');
+                        el?.focus();
+                        el?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    });
                     return;
                 }
 
+                // Validación de Comprobante de Transferencia Bancaria
                 if (this.metodoPago === 'Transferencia Bancaria' && !this.archivoComprobante) {
-                    if (typeof Swal !== 'undefined') {
-                        Swal.fire({ icon: 'warning', title: 'Comprobante requerido', text: 'Debes adjuntar la imagen del comprobante de transferencia bancaria.' });
-                    } else {
-                        alert('Debes adjuntar el comprobante de transferencia bancaria.');
-                    }
+                    this.errorComprobante = true;
+                    this.errorComprobanteMensaje = 'Debes adjuntar la imagen del comprobante de transferencia bancaria.';
+
+                    this.$nextTick(() => {
+                        const elem = document.getElementById('seccion-comprobante-entrega');
+                        if (elem) {
+                            elem.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                        }
+                    });
                     return;
                 }
 
@@ -777,7 +855,22 @@
                     const data = await response.json();
 
                     if (!response.ok) {
-                        throw new Error(data.message || 'Error al procesar la venta y entrega.');
+                        if (data.message && data.message.toLowerCase().includes('comprobante')) {
+                            this.errorComprobante = true;
+                            this.errorComprobanteMensaje = data.message;
+                            this.$nextTick(() => {
+                                const elem = document.getElementById('seccion-comprobante-entrega');
+                                if (elem) {
+                                    elem.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                                }
+                            });
+                            return;
+                        }
+                        this.errorGeneral = data.message || 'Error al procesar la venta y entrega.';
+                        this.$nextTick(() => {
+                            document.getElementById('modal-entrega-body')?.scrollTo({ top: 0, behavior: 'smooth' });
+                        });
+                        return;
                     }
 
                     this.cerrar();
@@ -799,25 +892,33 @@
                             </div>`,
                             timer: 2000,
                             timerProgressBar: true,
-                            showConfirmButton: false
+                            showConfirmButton: false,
+                            customClass: {
+                                container: '!z-[100000]'
+                            }
                         }).then(() => {
                             window.location.href = '{{ route("ventas.index") }}';
                         });
                     } else {
-                        alert(`¡Venta #${data.id_venta} registrada con éxito!`);
                         window.location.href = '{{ route("ventas.index") }}';
                     }
                 } catch (err) {
                     console.error('Error al procesar venta:', err);
-                    if (typeof Swal !== 'undefined') {
-                        Swal.fire({
-                            icon: 'error',
-                            title: 'Error al registrar',
-                            text: err.message || 'No se pudo completar el registro de la entrega.'
+                    if (err.message && err.message.toLowerCase().includes('comprobante')) {
+                        this.errorComprobante = true;
+                        this.errorComprobanteMensaje = err.message;
+                        this.$nextTick(() => {
+                            const elem = document.getElementById('seccion-comprobante-entrega');
+                            if (elem) {
+                                elem.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                            }
                         });
-                    } else {
-                        alert(err.message || 'Error al procesar.');
+                        return;
                     }
+                    this.errorGeneral = err.message || 'No se pudo completar el registro de la entrega.';
+                    this.$nextTick(() => {
+                        document.getElementById('modal-entrega-body')?.scrollTo({ top: 0, behavior: 'smooth' });
+                    });
                 } finally {
                     this.procesando = false;
                 }

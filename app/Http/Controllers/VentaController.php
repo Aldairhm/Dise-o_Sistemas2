@@ -33,9 +33,11 @@ class VentaController extends Controller
 
         $vendedorId = $request->input('vendedor_id');
         $productoId = $request->input('producto_id');
+        $busqueda = trim($request->input('q', ''));
 
-        // 2. Consulta base de ventas con filtros aplicados
+        // 2. Consulta base de ventas con filtros aplicados (ÚNICAMENTE VENTAS ENTREGADAS)
         $query = Venta::with(['usuario', 'detalles.variante.producto'])
+            ->whereIn('estado', ['Entregada', 'Entregado'])
             ->whereDate('fecha', '>=', $desde)
             ->whereDate('fecha', '<=', $hasta);
 
@@ -49,15 +51,47 @@ class VentaController extends Controller
             });
         }
 
+        if (!empty($busqueda)) {
+            $query->where(function ($q) use ($busqueda) {
+                $cleanId = preg_replace('/[^0-9]/', '', $busqueda);
+                if (!empty($cleanId)) {
+                    $q->orWhere('id', (int) $cleanId);
+                }
+                $q->orWhere('telefono', 'like', "%{$busqueda}%")
+                  ->orWhere('observaciones', 'like', "%{$busqueda}%")
+                  ->orWhereHas('usuario', function ($u) use ($busqueda) {
+                      $u->where('nombre_real', 'like', "%{$busqueda}%")
+                        ->orWhere('username', 'like', "%{$busqueda}%");
+                  });
+
+                $salidasVentasIds = Salida::where(function ($sq) use ($busqueda) {
+                    $sq->where('direccion', 'like', "%{$busqueda}%")
+                       ->orWhere('telefono', 'like', "%{$busqueda}%");
+                })->where('observaciones', 'like', 'Venta #%')
+                  ->pluck('observaciones')
+                  ->map(function ($obs) {
+                      if (preg_match('/Venta #(\d+)/', $obs, $m)) {
+                          return (int) $m[1];
+                      }
+                      return null;
+                  })->filter()->toArray();
+
+                if (!empty($salidasVentasIds)) {
+                    $q->orWhereIn('id', $salidasVentasIds);
+                }
+            });
+        }
+
         // 3. Métricas Generales en el periodo
         $totalVentasCount = (clone $query)->count();
         $totalVentasMonto = (float) ((clone $query)->sum('total') ?? 0);
 
-        // Ranking de productos (más y menos vendido)
+        // Ranking de productos (más y menos vendido) considerando solo entregadas
         $rankingProductos = DetalleVenta::query()
             ->join('venta', 'detalleventa.id_venta', '=', 'venta.id')
             ->join('variante', 'detalleventa.id_variante', '=', 'variante.id')
             ->join('producto', 'variante.id_producto', '=', 'producto.id')
+            ->whereIn('venta.estado', ['Entregada', 'Entregado'])
             ->whereDate('venta.fecha', '>=', $desde)
             ->whereDate('venta.fecha', '<=', $hasta)
             ->when($vendedorId, fn($q) => $q->where('venta.id_usuario', $vendedorId))
@@ -95,6 +129,7 @@ class VentaController extends Controller
                 ->join('venta', 'detalleventa.id_venta', '=', 'venta.id')
                 ->join('variante', 'detalleventa.id_variante', '=', 'variante.id')
                 ->where('variante.id_producto', $productoId)
+                ->whereIn('venta.estado', ['Entregada', 'Entregado'])
                 ->whereDate('venta.fecha', '>=', $desde)
                 ->whereDate('venta.fecha', '<=', $hasta)
                 ->when($vendedorId, fn($q) => $q->where('venta.id_usuario', $vendedorId))
@@ -119,6 +154,7 @@ class VentaController extends Controller
                 ->join('venta', 'detalleventa.id_venta', '=', 'venta.id')
                 ->join('variante', 'detalleventa.id_variante', '=', 'variante.id')
                 ->where('variante.id_producto', $productoId)
+                ->whereIn('venta.estado', ['Entregada', 'Entregado'])
                 ->whereDate('venta.fecha', '>=', $desdeAnterior)
                 ->whereDate('venta.fecha', '<=', $hastaAnterior)
                 ->when($vendedorId, fn($q) => $q->where('venta.id_usuario', $vendedorId))
@@ -150,6 +186,29 @@ class VentaController extends Controller
             ->paginate(15)
             ->withQueryString();
 
+        // Asociar datos de entrega desde salida para ventas en historial
+        $ventasIds = $ventas->pluck('id')->toArray();
+        if (!empty($ventasIds)) {
+            $salidas = Salida::where(function ($q) use ($ventasIds) {
+                foreach ($ventasIds as $vId) {
+                    $q->orWhere('observaciones', 'like', "Venta #{$vId}%");
+                }
+            })->get()->groupBy(function ($s) {
+                if (preg_match('/Venta #(\d+)/', $s->observaciones, $m)) {
+                    return (int) $m[1];
+                }
+                return 0;
+            });
+
+            foreach ($ventas as $v) {
+                $salidasDeVenta = $salidas[$v->id] ?? collect();
+                $primeraSalida = $salidasDeVenta->first();
+                $v->direccion_entrega = $primeraSalida?->direccion;
+                $v->telefono_entrega = $v->telefono ?? $primeraSalida?->telefono ?? $v->usuario?->telefono;
+                $v->precio_envio = (float) ($v->precio_envio ?? $primeraSalida?->precio_envio ?? 0);
+            }
+        }
+
         // 6. Catálogos para filtros
         $vendedores = User::where('estado', 1)->orderBy('nombre_real')->get(['id', 'nombre_real', 'username', 'rol']);
         $productos = Producto::where('estado', 1)->orderBy('nombre')->get(['id', 'nombre']);
@@ -160,6 +219,7 @@ class VentaController extends Controller
             'hasta',
             'vendedorId',
             'productoId',
+            'busqueda',
             'totalVentasCount',
             'totalVentasMonto',
             'productoMasVendido',
@@ -171,6 +231,80 @@ class VentaController extends Controller
             'vendedores',
             'productos'
         ));
+    }
+
+    /**
+     * Muestra la gestión de pedidos y control de estados de ventas/envíos organizada por apartados.
+     */
+    public function pedidos(Request $request)
+    {
+        $desde = $request->input('desde');
+        $hasta = $request->input('hasta');
+        $vendedorId = $request->input('vendedor_id');
+        $busqueda = trim($request->input('q', ''));
+        $estadoTab = $request->input('tab', 'todos');
+
+        $query = Venta::with(['usuario', 'detalles.variante.producto'])
+            ->whereNotIn('estado', ['Entregada', 'Entregado'])
+            ->when($desde, fn($q) => $q->whereDate('fecha', '>=', $desde))
+            ->when($hasta, fn($q) => $q->whereDate('fecha', '<=', $hasta))
+            ->when($vendedorId, fn($q) => $q->where('id_usuario', $vendedorId));
+
+        if (!empty($busqueda)) {
+            $query->where(function ($q) use ($busqueda) {
+                $cleanId = preg_replace('/[^0-9]/', '', $busqueda);
+                if (!empty($cleanId)) {
+                    $q->orWhere('id', (int) $cleanId);
+                }
+                $q->orWhere('telefono', 'like', "%{$busqueda}%")
+                  ->orWhere('observaciones', 'like', "%{$busqueda}%")
+                  ->orWhereHas('usuario', function ($u) use ($busqueda) {
+                      $u->where('nombre_real', 'like', "%{$busqueda}%")
+                        ->orWhere('username', 'like', "%{$busqueda}%");
+                  });
+            });
+        }
+
+        $todasVentas = $query->orderByDesc('fecha')->orderByDesc('id')->get();
+
+        // Asociar datos de entrega desde salida
+        $ventasIds = $todasVentas->pluck('id')->toArray();
+        $salidasMap = [];
+        if (!empty($ventasIds)) {
+            $salidas = Salida::where(function ($q) use ($ventasIds) {
+                foreach ($ventasIds as $vId) {
+                    $q->orWhere('observaciones', 'like', "Venta #{$vId}%");
+                }
+            })->get()->groupBy(function ($s) {
+                if (preg_match('/Venta #(\d+)/', $s->observaciones, $m)) {
+                    return (int) $m[1];
+                }
+                return 0;
+            });
+            $salidasMap = $salidas;
+        }
+
+        foreach ($todasVentas as $v) {
+            $salidasDeVenta = $salidasMap[$v->id] ?? collect();
+            $primeraSalida = $salidasDeVenta->first();
+            $v->direccion_entrega = $primeraSalida?->direccion;
+            $v->telefono_entrega = $v->telefono ?? $primeraSalida?->telefono ?? $v->usuario?->telefono;
+            $v->precio_envio = (float) ($v->precio_envio ?? $primeraSalida?->precio_envio ?? 0);
+        }
+
+        // Conteos por estado para los apartados (excluyendo entregadas que se ven en historial)
+        $conteoEstados = [
+            'todos' => $todasVentas->count(),
+            'Pendiente' => $todasVentas->where('estado', 'Pendiente')->count(),
+            'Confirmada' => $todasVentas->where('estado', 'Confirmada')->count(),
+            'En ruta' => $todasVentas->where('estado', 'En ruta')->count(),
+            'Cancelada' => $todasVentas->where('estado', 'Cancelada')->count(),
+            'Devolución' => $todasVentas->where('estado', 'Devolución')->count(),
+        ];
+
+        $vendedores = User::where('estado', 1)->orderBy('nombre_real')->get(['id', 'nombre_real', 'username', 'rol']);
+
+        return view('ventas.pedidos', compact('todasVentas', 'conteoEstados', 'vendedores', 'desde', 'hasta', 'vendedorId', 'busqueda', 'estadoTab'));
     }
 
     /**
@@ -314,13 +448,13 @@ class VentaController extends Controller
                     'fecha_entrega' => $fechaEntregaInicial,
                 ]);
 
-                // B. Guardar el archivo del comprobante con el nombre del día y folio de la venta
+                // B. Guardar el archivo del comprobante con el nombre de folio y fecha de la venta
                 if ($request->hasFile('comprobante_pago')) {
                     $archivo = $request->file('comprobante_pago');
                     $diaVenta = $fechaVenta->format('Y-m-d');
                     $folioVenta = 'VNT-' . str_pad($venta->id, 5, '0', STR_PAD_LEFT);
                     $extension = strtolower($archivo->getClientOriginalExtension() ?: $archivo->extension() ?: 'jpg');
-                    $nombreArchivo = "{$diaVenta}_{$folioVenta}.{$extension}";
+                    $nombreArchivo = "{$folioVenta}_{$diaVenta}_comprobante_pago.{$extension}";
 
                     $rutaComprobante = $archivo->storeAs('comprobantes_pago', $nombreArchivo, 'public');
                     $venta->comprobante_pago = $rutaComprobante;
@@ -520,14 +654,14 @@ class VentaController extends Controller
 
         DB::beginTransaction();
         try {
-            $diaVenta = now()->format('Y-m-d');
+            $diaVenta = $venta->fecha ? \Carbon\Carbon::parse($venta->fecha)->format('Y-m-d') : now()->format('Y-m-d');
             $folioVenta = 'VNT-' . str_pad($venta->id, 5, '0', STR_PAD_LEFT);
 
             // A. Guardar imagen comprobante paquete si va a En ruta
             if ($nuevoEstado === 'En ruta' && $request->hasFile('comprobante_paquete')) {
                 $archivo = $request->file('comprobante_paquete');
                 $extension = strtolower($archivo->getClientOriginalExtension() ?: $archivo->extension() ?: 'jpg');
-                $nombreArchivo = "{$diaVenta}_{$folioVenta}_paquete.{$extension}";
+                $nombreArchivo = "{$folioVenta}_{$diaVenta}_paquete.{$extension}";
                 $rutaPaquete = $archivo->storeAs('comprobantes_paquete', $nombreArchivo, 'public');
                 $venta->comprobante_paquete = $rutaPaquete;
             }
@@ -536,7 +670,7 @@ class VentaController extends Controller
             if ($nuevoEstado === 'Devolución' && $request->hasFile('comprobante_devolucion')) {
                 $archivo = $request->file('comprobante_devolucion');
                 $extension = strtolower($archivo->getClientOriginalExtension() ?: $archivo->extension() ?: 'jpg');
-                $nombreArchivo = "{$diaVenta}_{$folioVenta}_devolucion.{$extension}";
+                $nombreArchivo = "{$folioVenta}_{$diaVenta}_devolucion.{$extension}";
                 $rutaDevolucion = $archivo->storeAs('comprobantes_devolucion', $nombreArchivo, 'public');
                 $venta->comprobante_devolucion = $rutaDevolucion;
             }
