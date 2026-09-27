@@ -5,6 +5,12 @@ document.addEventListener("alpine:init", () => {
         busqueda: "",
         descuentoGlobal: 0,
         metodoPago: "Efectivo",
+        modalTipoVentaAbierto: false,
+        varianteSeleccionada: null,
+        archivoComprobante: null,
+        comprobantePreview: null,
+        comprobanteNombre: "",
+        comprobanteTamano: "",
         toast: {
             visible: false,
             mensaje: "",
@@ -30,6 +36,12 @@ document.addEventListener("alpine:init", () => {
                     localStorage.setItem("ax_carrito", JSON.stringify(nuevoCarrito));
                     window.dispatchEvent(new CustomEvent("ax-cart-updated", { detail: nuevoCarrito }));
                 } catch (e) {}
+            });
+
+            this.$watch("metodoPago", (nuevoMetodo) => {
+                if (nuevoMetodo !== "Transferencia Bancaria") {
+                    this.removerComprobante();
+                }
             });
         },
 
@@ -70,6 +82,78 @@ document.addEventListener("alpine:init", () => {
                 const sku = (v.sku || "").toLowerCase();
                 return prod.includes(q) || variante.includes(q) || sku.includes(q);
             });
+        },
+
+        /**
+         * Intercepta el clic en 'Agregar' para preguntar si es venta en tienda o envío
+         */
+        solicitarTipoVenta(variante) {
+            const stockDisponible = Number(variante.stock || 0);
+
+            if (stockDisponible <= 0) {
+                this.mostrarToast(
+                    `El producto "${variante.producto}" está agotado en tienda.`,
+                    "error"
+                );
+                return;
+            }
+
+            this.varianteSeleccionada = variante;
+            this.modalTipoVentaAbierto = true;
+        },
+
+        cerrarModalTipoVenta() {
+            this.modalTipoVentaAbierto = false;
+            this.varianteSeleccionada = null;
+        },
+
+        seleccionarVentaTienda() {
+            if (!this.varianteSeleccionada) return;
+            const v = this.varianteSeleccionada;
+            this.modalTipoVentaAbierto = false;
+            this.varianteSeleccionada = null;
+            this.agregarProducto(v);
+        },
+
+        seleccionarVentaEnvio() {
+            if (!this.varianteSeleccionada) return;
+            const variante = this.varianteSeleccionada;
+            this.modalTipoVentaAbierto = false;
+            this.varianteSeleccionada = null;
+
+            // Clonamos el carrito actual de la terminal para incluir lo que ya esté o agregar el nuevo
+            let itemsParaEntrega = JSON.parse(JSON.stringify(this.carrito || []));
+            const index = itemsParaEntrega.findIndex((item) => item.id === variante.id);
+            if (index >= 0) {
+                itemsParaEntrega[index].cantidad = Math.max(1, Number(itemsParaEntrega[index].cantidad || 1));
+            } else {
+                itemsParaEntrega.push({
+                    id: variante.id,
+                    producto: variante.producto,
+                    variante: variante.variante,
+                    sku: variante.sku,
+                    precio_venta: Number(variante.precio_venta || 0),
+                    precio: Number(variante.precio_venta || 0),
+                    stock: Number(variante.stock || 0),
+                    imagen: variante.imagen || null,
+                    cantidad: 1,
+                    costo_extra: 0,
+                });
+            }
+
+            // Sincronizar el carrito de la terminal
+            this.carrito = itemsParaEntrega;
+
+            // Abrir el modal de entrega con el/los productos
+            window.dispatchEvent(new CustomEvent('abrir-modal-entrega', { detail: itemsParaEntrega }));
+        },
+
+        abrirEntregaDesdeCarrito() {
+            if (!this.carrito || this.carrito.length === 0) {
+                this.mostrarToast("El carrito está vacío. Agrega productos primero.", "warning");
+                return;
+            }
+            window.dispatchEvent(new CustomEvent('abrir-modal-entrega', { detail: this.carrito }));
         },
 
         /**
@@ -191,7 +275,7 @@ document.addEventListener("alpine:init", () => {
             this.carrito = this.carrito.filter((i) => i.id !== id);
             if (item) {
                 this.mostrarToast(
-                    `"${item.variante || item.producto}" fue retirado del carrito.`,
+                    `"${item.producto || item.variante || 'Producto'}" fue retirado del carrito.`,
                     "info"
                 );
             }
@@ -280,44 +364,122 @@ document.addEventListener("alpine:init", () => {
             }).format(Number(valor || 0));
         },
 
+        /**
+         * Maneja la selección del archivo de comprobante de transferencia bancaria
+         */
+        onComprobanteSeleccionado(event) {
+            const file = event.target.files ? event.target.files[0] : null;
+            if (!file) return;
+
+            // Validar que sea un formato de imagen soportado
+            const tiposValidos = ["image/jpeg", "image/png", "image/jpg", "image/webp"];
+            if (!tiposValidos.includes(file.type)) {
+                this.mostrarToast(
+                    "El comprobante debe ser un archivo de imagen válido (JPG, PNG o WEBP).",
+                    "error"
+                );
+                event.target.value = "";
+                return;
+            }
+
+            // Validar tamaño máximo (5MB)
+            const maxBytes = 5 * 1024 * 1024;
+            if (file.size > maxBytes) {
+                this.mostrarToast(
+                    "La imagen del comprobante no debe superar los 5MB.",
+                    "warning"
+                );
+                event.target.value = "";
+                return;
+            }
+
+            this.archivoComprobante = file;
+            this.comprobanteNombre = file.name;
+            this.comprobanteTamano = (file.size / 1024).toFixed(1) + " KB";
+
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                this.comprobantePreview = e.target.result;
+            };
+            reader.readAsDataURL(file);
+
+            this.mostrarToast("Comprobante adjuntado correctamente.", "success");
+        },
+
+        /**
+         * Elimina el comprobante cargado
+         */
+        removerComprobante() {
+            this.archivoComprobante = null;
+            this.comprobantePreview = null;
+            this.comprobanteNombre = "";
+            this.comprobanteTamano = "";
+
+            const input = document.querySelector('input[x-ref="comprobanteInput"]');
+            if (input) {
+                input.value = "";
+            }
+        },
+
         procesando: false,
 
         /**
          * Valida si la venta está lista para procesarse
          */
         puedeProcesar() {
-            return this.carrito.length > 0 && this.totalPagar > 0;
+            if (this.carrito.length === 0 || this.totalPagar <= 0) {
+                return false;
+            }
+            if (this.metodoPago === "Transferencia Bancaria" && !this.archivoComprobante) {
+                return false;
+            }
+            return true;
         },
 
         /**
-         * Envía la venta al backend para ser procesada atómicamente
+         * Envía la venta al backend para ser procesada atómicamente con soporte multipart/FormData
          */
         async procesarVenta() {
-            if (!this.puedeProcesar() || this.procesando) return;
+            if (this.procesando) return;
+
+            if (this.metodoPago === "Transferencia Bancaria" && !this.archivoComprobante) {
+                this.mostrarToast(
+                    "Es obligatorio adjuntar el comprobante de la transferencia bancaria.",
+                    "warning"
+                );
+                return;
+            }
+
+            if (!this.puedeProcesar()) return;
 
             this.procesando = true;
             const token = document.querySelector('meta[name="csrf-token"]')?.content;
 
-            const payload = {
-                metodo_pago: this.metodoPago,
-                descuento: Number(this.descuentoGlobal || 0),
-                lineas: this.carrito.map((item) => ({
-                    id_variante: item.id,
-                    cantidad: Number(item.cantidad),
-                    precio_unitario: Number(item.precio_venta),
-                    costo_extra: Math.max(0, Number(item.costo_extra) || 0),
-                })),
-            };
+            const formData = new FormData();
+            formData.append("metodo_pago", this.metodoPago);
+            formData.append("tipo_venta", "Tienda");
+            formData.append("direccion_entrega", "Venta en mostrador / POS");
+            formData.append("descuento", Number(this.descuentoGlobal || 0));
+
+            this.carrito.forEach((item, index) => {
+                formData.append(`lineas[${index}][id_variante]`, item.id);
+                formData.append(`lineas[${index}][cantidad]`, Number(item.cantidad));
+                formData.append(`lineas[${index}][precio_unitario]`, Number(item.precio_venta));
+                formData.append(`lineas[${index}][costo_extra]`, Math.max(0, Number(item.costo_extra) || 0));
+            });
+
+            if (this.metodoPago === "Transferencia Bancaria" && this.archivoComprobante) {
+                formData.append("comprobante_pago", this.archivoComprobante);
+            }
 
             try {
                 const response = await fetch("/ventas", {
                     method: "POST",
                     headers: {
-                        "Content-Type": "application/json",
                         "Accept": "application/json",
                         "X-CSRF-TOKEN": token,
                     },
-                    body: JSON.stringify(payload),
+                    body: formData,
                 });
 
                 const data = await response.json();
@@ -339,9 +501,10 @@ document.addEventListener("alpine:init", () => {
                     "success"
                 );
 
-                // Limpiar carrito y campos
+                // Limpiar carrito, campos y comprobante
                 this.carrito = [];
                 this.descuentoGlobal = 0;
+                this.removerComprobante();
             } catch (error) {
                 this.mostrarToast(error.message, "error");
             } finally {

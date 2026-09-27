@@ -79,6 +79,7 @@ Route::middleware('auth')->group(function () {
         Route::get('/ventas/nueva', [VentaController::class, 'create'])->name('ventas.create');
         Route::get('/ventas', [VentaController::class, 'index'])->name('ventas.index');
         Route::post('/ventas', [VentaController::class, 'store'])->name('ventas.store');
+        Route::patch('/ventas/{id}/estado', [VentaController::class, 'actualizarEstado'])->name('ventas.actualizar-estado');
         Route::get('/ventas/{id}', [VentaController::class, 'show'])->name('ventas.show');
         Route::get('/ventas/{id}/imprimir', [VentaController::class, 'imprimir'])->name('ventas.imprimir');
 

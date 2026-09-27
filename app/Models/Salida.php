@@ -21,6 +21,7 @@ class Salida extends Model
         'hora_salida',
         'fecha_entrega',
         'direccion',
+        'telefono',
         'precio_envio',
         'costo_extra',
         'precio_unitario',
@@ -31,6 +32,8 @@ class Salida extends Model
         'comision_aplicada',
         'observaciones',
         'estado',
+        'comprobante_paquete',
+        'comprobante_devolucion',
         'fecha_cancelacion',
         'created_at',
     ];

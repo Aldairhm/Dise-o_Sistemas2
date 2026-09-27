@@ -124,7 +124,7 @@
                         <div class="flex items-center gap-2">
                             <span class="text-xs font-bold text-slate-500">Método de Pago:</span>
                             <span class="text-xs font-bold text-slate-800 bg-white border border-slate-200 px-2.5 py-1 rounded-lg">
-                                <i class="fas {{ $venta->metodo_pago === 'Efectivo' ? 'fa-money-bill-wave text-emerald-600' : 'fa-credit-card text-blue-600' }} mr-1"></i>
+                                <i class="fas {{ $venta->metodo_pago === 'Efectivo' ? 'fa-money-bill-wave text-emerald-600' : 'fa-building-columns text-purple-600' }} mr-1"></i>
                                 {{ $venta->metodo_pago }}
                             </span>
                         </div>
@@ -144,6 +144,12 @@
                             <span>+${{ number_format($venta->total_costo_extra, 2) }}</span>
                         </div>
                         @endif
+                        @if($venta->precio_envio > 0)
+                        <div class="flex justify-between text-blue-700 font-bold bg-blue-50 px-2 py-1 rounded">
+                            <span>Costo de envío:</span>
+                            <span>+${{ number_format($venta->precio_envio, 2) }}</span>
+                        </div>
+                        @endif
                         @if($venta->descuento_aplicado > 0)
                         <div class="flex justify-between text-emerald-600 font-bold">
                             <span>Descuentos:</span>
@@ -158,6 +164,183 @@
                 </div>
             </div>
         </div>
+
+        @if(!empty($venta->direccion_entrega) && $venta->direccion_entrega !== 'Venta en mostrador / POS')
+        <!-- TARJETA DE ENTREGA A DOMICILIO -->
+        <div class="bg-white border border-blue-200 rounded-2xl p-5 shadow-sm flex items-start gap-4">
+            <div class="w-10 h-10 rounded-xl bg-blue-600 text-white flex items-center justify-center font-bold text-base shadow-sm shrink-0">
+                <i class="fas fa-truck-fast"></i>
+            </div>
+            <div class="space-y-1 text-xs flex-1">
+                <div class="flex items-center gap-2">
+                    <h2 class="text-sm font-black text-slate-900 uppercase tracking-tight">Datos de Entrega a Domicilio</h2>
+                    <span class="text-[10px] font-bold text-blue-700 bg-blue-50 border border-blue-200 px-2.5 py-0.5 rounded-full">
+                        Despachado
+                    </span>
+                </div>
+                <p class="text-slate-800 font-bold text-sm">
+                    {{ $venta->direccion_entrega }}
+                </p>
+                @if($venta->fecha_salida)
+                <p class="text-slate-500 text-[11px]">
+                    Salida registrada: <strong class="text-slate-700">{{ \Carbon\Carbon::parse($venta->fecha_salida)->format('d/m/Y') }}</strong>
+                    @if($venta->hora_salida)
+                    a las <strong class="text-slate-700">{{ $venta->hora_salida }}</strong>
+                    @endif
+                </p>
+                @endif
+                @if($venta->telefono)
+                <p class="text-slate-600 text-xs flex items-center gap-1.5 pt-1">
+                    <i class="fas fa-phone text-blue-600 text-[11px]"></i>
+                    <span>Teléfono de contacto:</span>
+                    <strong class="text-slate-900 font-mono">{{ $venta->telefono }}</strong>
+                </p>
+                @endif
+            </div>
+        </div>
+        @endif
+
+        @if($venta->comprobante_url)
+        <!-- TARJETA COMPROBANTE DE TRANSFERENCIA BANCARIA -->
+        <div class="bg-white border border-blue-200 rounded-2xl shadow-sm overflow-hidden" x-data="{ zoomComprobante: false }">
+            <div class="p-5 border-b border-blue-100 bg-gradient-to-r from-blue-50/70 to-indigo-50/40 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                <div class="flex items-center gap-3">
+                    <div class="w-10 h-10 rounded-xl bg-blue-600 text-white flex items-center justify-center font-bold text-base shadow-sm shadow-blue-500/20">
+                        <i class="fas fa-file-invoice-dollar"></i>
+                    </div>
+                    <div>
+                        <div class="flex items-center gap-2">
+                            <h2 class="text-sm font-black text-slate-900 uppercase tracking-tight">Comprobante de Transferencia Bancaria</h2>
+                            <span class="text-[10px] font-bold text-emerald-700 bg-emerald-100 border border-emerald-200 px-2.5 py-0.5 rounded-full">
+                                Verificado
+                            </span>
+                        </div>
+                        <p class="text-xs text-slate-500">Documento de respaldo adjuntado por el vendedor</p>
+                    </div>
+                </div>
+                <div class="flex items-center gap-2">
+                    <a 
+                        href="{{ $venta->comprobante_url }}" 
+                        target="_blank" 
+                        class="rounded-xl border border-blue-200 bg-white hover:bg-blue-600 hover:text-white text-blue-700 font-bold px-3.5 py-2 text-xs transition-all shadow-2xs flex items-center gap-1.5"
+                    >
+                        <i class="fas fa-arrow-up-right-from-square text-[11px]"></i>
+                        <span>Abrir pestaña</span>
+                    </a>
+                    <a 
+                        href="{{ $venta->comprobante_url }}" 
+                        download 
+                        class="rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold px-3.5 py-2 text-xs transition-all shadow-sm shadow-blue-500/20 flex items-center gap-1.5"
+                    >
+                        <i class="fas fa-download text-[11px]"></i>
+                        <span>Descargar</span>
+                    </a>
+                </div>
+            </div>
+
+            <div class="p-6 flex flex-col sm:flex-row items-center sm:items-start gap-6">
+                <!-- MINIATURA INTERACTIVA -->
+                <button 
+                    type="button" 
+                    @click="zoomComprobante = true"
+                    class="block group relative overflow-hidden rounded-2xl border border-slate-200 shadow-md shrink-0 cursor-pointer focus:outline-none focus:ring-4 focus:ring-blue-500/20"
+                    title="Clic para ampliar imagen"
+                >
+                    <img 
+                        src="{{ $venta->comprobante_url }}" 
+                        alt="Comprobante de transferencia" 
+                        class="w-36 h-36 sm:w-44 sm:h-44 object-cover group-hover:scale-105 transition-transform duration-300"
+                    >
+                    <div class="absolute inset-0 bg-slate-950/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center text-white text-xs font-bold gap-1.5">
+                        <i class="fas fa-magnifying-glass-plus text-sm"></i>
+                        <span>Ampliar</span>
+                    </div>
+                </button>
+
+                <!-- DETALLES DEL COMPROBANTE -->
+                <div class="space-y-2.5 text-xs text-slate-600 flex-1">
+                    <div class="flex items-center gap-2">
+                        <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-[11px] font-bold bg-blue-50 text-blue-700 border border-blue-200">
+                            <i class="fas fa-shield-check"></i> Archivo Registrado en Sistema
+                        </span>
+                        <span class="text-slate-400">•</span>
+                        <span class="text-slate-500 font-medium">Método: {{ $venta->metodo_pago }}</span>
+                    </div>
+                    <p class="text-slate-700 font-medium leading-relaxed">
+                        Este comprobante fue cargado durante el proceso de facturación en caja para certificar la transferencia bancaria correspondiente al total de <strong class="text-emerald-700 font-bold">${{ number_format($venta->total, 2) }}</strong>.
+                    </p>
+                    <div class="p-3 bg-slate-50 border border-slate-100 rounded-xl space-y-1">
+                        <p class="text-[11px] text-slate-500">
+                            <strong>Identificador de archivo:</strong>
+                            <span class="font-mono text-slate-600">{{ $venta->comprobante_pago }}</span>
+                        </p>
+                        <p class="text-[11px] text-slate-500">
+                            <strong>Fecha de registro:</strong> {{ \Carbon\Carbon::parse($venta->fecha)->format('d/m/Y h:i A') }}
+                        </p>
+                    </div>
+                    <div>
+                        <button 
+                            type="button" 
+                            @click="zoomComprobante = true"
+                            class="inline-flex items-center gap-1.5 text-xs font-bold text-blue-600 hover:text-blue-800 transition-colors cursor-pointer"
+                        >
+                            <i class="fas fa-expand text-[10px]"></i> Ver comprobante en pantalla completa
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- MODAL LIGHTBOX EN SHOW -->
+            <div 
+                x-show="zoomComprobante" 
+                x-cloak
+                class="fixed inset-0 z-50 overflow-y-auto"
+                style="display: none;"
+                role="dialog"
+                aria-modal="true"
+            >
+                <div 
+                    x-show="zoomComprobante"
+                    x-transition.opacity
+                    class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm transition-opacity"
+                    @click="zoomComprobante = false"
+                ></div>
+
+                <div class="flex min-h-screen items-center justify-center p-4 text-center">
+                    <div 
+                        x-show="zoomComprobante"
+                        x-transition
+                        class="relative z-10 max-w-4xl w-full bg-white rounded-2xl shadow-2xl overflow-hidden border border-slate-200"
+                        @click.away="zoomComprobante = false"
+                    >
+                        <div class="bg-blue-600 px-6 py-4 flex items-center justify-between text-white shadow-md">
+                            <div class="flex items-center gap-2.5">
+                                <i class="fas fa-file-invoice-dollar text-white text-base"></i>
+                                <span class="text-sm font-black uppercase tracking-wider text-white">Comprobante de Transferencia Bancaria</span>
+                            </div>
+                            <div class="flex items-center gap-3">
+                                <a href="{{ $venta->comprobante_url }}" target="_blank" download class="text-xs text-blue-100 hover:text-white flex items-center gap-1 font-bold transition-colors">
+                                    <i class="fas fa-download"></i> Descargar
+                                </a>
+                                <button type="button" @click="zoomComprobante = false" class="w-8 h-8 rounded-lg bg-white/10 hover:bg-white/20 flex items-center justify-center text-white transition-colors cursor-pointer">
+                                    <i class="fas fa-times text-sm"></i>
+                                </button>
+                            </div>
+                        </div>
+                        <div class="p-4 bg-slate-900/5 flex items-center justify-center max-h-[75vh] overflow-auto">
+                            <img src="{{ $venta->comprobante_url }}" alt="Comprobante en alta resolución" class="max-w-full max-h-[70vh] object-contain rounded-lg shadow-sm border border-slate-200">
+                        </div>
+                        <div class="px-6 py-3.5 bg-gray-50 border-t border-gray-100 flex items-center justify-between">
+                            <span class="text-xs text-slate-500 font-medium">Venta #VNT-{{ str_pad($venta->id, 5, '0', STR_PAD_LEFT) }}</span>
+                            <button type="button" @click="zoomComprobante = false" class="px-5 py-2 bg-slate-800 hover:bg-slate-700 text-white rounded-xl text-xs font-bold transition-colors cursor-pointer">
+                                Cerrar
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        @endif
 
     </div>
 </x-app>

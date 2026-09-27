@@ -57,11 +57,12 @@
 
                 <div class="space-y-2 pt-1">
                     {{-- Botón Principal: Pagar / Revisar bolsa --}}
-                    <a href="{{ route('ventas.create') }}" 
-                       class="w-full inline-flex items-center justify-center gap-2 px-5 py-3 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-extrabold text-sm shadow-lg shadow-blue-500/25 transition-all duration-200 hover:scale-[1.01] active:scale-[0.99] text-center">
+                    <button type="button" 
+                       onclick="window.AXCart.openEntregaModal()" 
+                       class="w-full inline-flex items-center justify-center gap-2 px-5 py-3 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-extrabold text-sm shadow-lg shadow-blue-500/25 transition-all duration-200 hover:scale-[1.01] active:scale-[0.99] text-center cursor-pointer">
                         <span>Revisar Bolsa y Pagar</span>
                         <i class="fas fa-arrow-right text-xs"></i>
-                    </a>
+                    </button>
 
                     {{-- Botón Secundario: Seguir comprando --}}
                     <button type="button" 
@@ -92,4 +93,7 @@
         </div>
 
     </div>
+
+    {{-- Modal "Registrar Entrega de Producto" --}}
+    @include('componentsHome.modalEntregaVenta')
 </div>

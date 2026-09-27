@@ -134,9 +134,9 @@
                                 </div>
                                 <button 
                                     type="button" 
-                                    @click="agregarProducto(variante)"
+                                    @click="solicitarTipoVenta(variante)"
                                     :disabled="variante.stock <= 0"
-                                    class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all disabled:opacity-40 disabled:cursor-not-allowed"
+                                    class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer"
                                     :class="variante.stock > 0 ? 'bg-blue-50 text-blue-700 hover:bg-blue-600 hover:text-white' : 'bg-slate-100 text-slate-400'"
                                 >
                                     <i class="fas fa-plus"></i>
@@ -319,13 +319,77 @@
                             id="metodo_pago" 
                             name="metodo_pago" 
                             x-model="metodoPago"
-                            class="w-full rounded-xl border border-slate-300 bg-white px-3.5 py-2.5 text-xs font-semibold text-slate-700 focus:border-emerald-500 focus:outline-none focus:ring-4 focus:ring-emerald-500/10 transition-all"
+                            class="w-full rounded-xl border border-slate-300 bg-white px-3.5 py-2.5 text-xs font-semibold text-slate-700 focus:border-emerald-500 focus:outline-none focus:ring-4 focus:ring-emerald-500/10 transition-all cursor-pointer"
                         >
                             <option value="Efectivo">Efectivo</option>
-                            <option value="Tarjeta de Débito">Tarjeta de Débito</option>
-                            <option value="Tarjeta de Crédito">Tarjeta de Crédito</option>
                             <option value="Transferencia Bancaria">Transferencia Bancaria</option>
                         </select>
+                    </div>
+
+                    <!-- SECCIÓN DE COMPROBANTE DE TRANSFERENCIA (CONDICIONAL) -->
+                    <div 
+                        x-show="metodoPago === 'Transferencia Bancaria'" 
+                        x-transition:enter="transition ease-out duration-300"
+                        x-transition:enter-start="opacity-0 -translate-y-2 scale-98"
+                        x-transition:enter-end="opacity-100 translate-y-0 scale-100"
+                        x-transition:leave="transition ease-in duration-200"
+                        x-transition:leave-start="opacity-100 translate-y-0 scale-100"
+                        x-transition:leave-end="opacity-0 -translate-y-2 scale-98"
+                        class="p-4 rounded-xl border border-blue-200 bg-blue-50/50 space-y-3"
+                    >
+                        <div class="flex items-center justify-between">
+                            <label class="block text-xs font-bold text-blue-950 flex items-center gap-1.5">
+                                <i class="fas fa-file-invoice-dollar text-blue-600"></i>
+                                Comprobante de Transferencia <span class="text-rose-500 font-bold">*</span>
+                            </label>
+                            <span class="text-[10px] font-semibold text-blue-700 bg-blue-100 border border-blue-200 px-2 py-0.5 rounded-full">
+                                Imagen requerida
+                            </span>
+                        </div>
+
+                        <!-- ZONA DE CARGA DE ARCHIVO (DROPZONE O INPUT) -->
+                        <template x-if="!comprobantePreview">
+                            <div 
+                                @click="$refs.comprobanteInput.click()"
+                                class="border-2 border-dashed border-blue-300 hover:border-blue-500 rounded-xl p-4 text-center bg-white cursor-pointer transition-all hover:bg-blue-50/40 group shadow-2xs"
+                            >
+                                <div class="w-10 h-10 mx-auto rounded-full bg-blue-50 text-blue-600 flex items-center justify-center text-lg mb-2 group-hover:scale-110 transition-transform shadow-inner">
+                                    <i class="fas fa-cloud-arrow-up"></i>
+                                </div>
+                                <p class="text-xs font-bold text-slate-800">Haz clic para subir el comprobante</p>
+                                <p class="text-[10px] text-slate-400 mt-0.5">Formatos: JPG, PNG o WEBP (Máx. 5MB)</p>
+                            </div>
+                        </template>
+
+                        <!-- PREVIEW DE LA IMAGEN CARGADA -->
+                        <template x-if="comprobantePreview">
+                            <div class="relative flex items-center gap-3 p-3 bg-white border border-blue-200 rounded-xl shadow-xs">
+                                <img :src="comprobantePreview" alt="Preview Comprobante" class="w-14 h-14 object-cover rounded-lg border border-slate-200 shrink-0">
+                                <div class="min-w-0 flex-1">
+                                    <p class="text-xs font-bold text-slate-900 truncate" x-text="comprobanteNombre"></p>
+                                    <p class="text-[10px] text-slate-400 font-mono" x-text="comprobanteTamano"></p>
+                                    <span class="inline-flex items-center gap-1 text-[10px] font-bold text-emerald-600 mt-1">
+                                        <i class="fas fa-circle-check text-[9px]"></i> Comprobante adjunto
+                                    </span>
+                                </div>
+                                <button 
+                                    type="button" 
+                                    @click="removerComprobante()" 
+                                    class="p-2 text-slate-400 hover:text-rose-500 rounded-lg hover:bg-rose-50 transition-colors cursor-pointer"
+                                    title="Eliminar o cambiar imagen"
+                                >
+                                    <i class="fas fa-trash-can text-xs"></i>
+                                </button>
+                            </div>
+                        </template>
+
+                        <input 
+                            type="file" 
+                            x-ref="comprobanteInput" 
+                            @change="onComprobanteSeleccionado($event)" 
+                            accept="image/png,image/jpeg,image/jpg,image/webp" 
+                            class="hidden"
+                        >
                     </div>
 
                     <!-- DESCUENTO GLOBAL -->
@@ -374,7 +438,7 @@
                         </div>
                     </div>
 
-                    <!-- BOTÓN PROCESAR VENTA -->
+                    <!-- BOTÓN PROCESAR VENTA EN TIENDA -->
                     <button 
                         type="button" 
                         id="btn-procesar-venta"
@@ -383,7 +447,19 @@
                         class="w-full rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-extrabold py-3.5 text-sm transition-all shadow-lg shadow-blue-500/25 flex items-center justify-center gap-2 cursor-pointer active:scale-[0.99] disabled:opacity-40 disabled:cursor-not-allowed disabled:shadow-none"
                     >
                         <i class="fas" :class="procesando ? 'fa-spinner fa-spin' : 'fa-check-circle text-base'"></i>
-                        <span x-text="procesando ? 'Procesando Venta...' : 'Procesar Venta'"></span>
+                        <span x-text="procesando ? 'Procesando Venta...' : 'Facturar Venta en Tienda'"></span>
+                    </button>
+
+                    <!-- BOTÓN SECUNDARIO DESPACHAR COMO ENVÍO -->
+                    <button 
+                        type="button" 
+                        x-show="carrito.length > 0"
+                        @click="abrirEntregaDesdeCarrito()"
+                        :disabled="procesando"
+                        class="w-full rounded-xl bg-blue-50 hover:bg-blue-100 text-blue-700 font-bold py-2.5 text-xs transition-all flex items-center justify-center gap-2 cursor-pointer border border-blue-200 shadow-2xs"
+                    >
+                        <i class="fas fa-truck-fast"></i>
+                        <span>Despachar pedido como Envío / Delivery</span>
                     </button>
 
                 </div>
@@ -391,6 +467,164 @@
             </section>
 
         </div>
+
+        <!-- MODAL ELECCIÓN TIPO DE VENTA: TIENDA VS ENVÍO -->
+        <template x-teleport="body">
+            <div 
+                x-show="modalTipoVentaAbierto" 
+                x-cloak
+                class="fixed inset-0 z-[9990] overflow-y-auto"
+                style="display: none;"
+                role="dialog"
+                aria-modal="true"
+                @keydown.escape.window="cerrarModalTipoVenta()"
+            >
+                <!-- Backdrop oscuro translúcido con desenfoque suave -->
+                <div 
+                    x-show="modalTipoVentaAbierto"
+                    x-transition:enter="transition ease-out duration-300"
+                    x-transition:enter-start="opacity-0"
+                    x-transition:enter-end="opacity-100"
+                    x-transition:leave="transition ease-in duration-200"
+                    x-transition:leave-start="opacity-100"
+                    x-transition:leave-end="opacity-0"
+                    class="fixed inset-0 bg-slate-900/60 backdrop-blur-xs transition-opacity"
+                    @click="cerrarModalTipoVenta()"
+                ></div>
+
+                <div class="flex min-h-screen items-center justify-center p-3 sm:p-4 text-center">
+                    <div 
+                        x-show="modalTipoVentaAbierto"
+                        x-transition:enter="transition ease-out duration-300"
+                        x-transition:enter-start="opacity-0 scale-95 translate-y-3"
+                        x-transition:enter-end="opacity-100 scale-100 translate-y-0"
+                        x-transition:leave="transition ease-in duration-200"
+                        x-transition:leave-start="opacity-100 scale-100 translate-y-0"
+                        x-transition:leave-end="opacity-0 scale-95 translate-y-3"
+                        @click.away="cerrarModalTipoVenta()"
+                        class="relative z-10 w-full max-w-lg transform overflow-hidden rounded-3xl bg-white text-left shadow-2xl transition-all border border-slate-200 flex flex-col my-6"
+                    >
+                        <!-- CABECERA ELEGANTE AZUL AXSTORE -->
+                        <div class="bg-gradient-to-r from-blue-600 to-indigo-700 px-5 sm:px-6 py-4 flex items-center justify-between text-white shadow-md">
+                            <div class="flex items-center gap-3">
+                                <div class="w-9 h-9 rounded-xl bg-white/20 backdrop-blur-sm flex items-center justify-center text-white text-base shadow-inner shrink-0">
+                                    <i class="fas fa-hand-holding-dollar"></i>
+                                </div>
+                                <div>
+                                    <h3 class="text-base font-black tracking-tight leading-tight">Tipo de Venta</h3>
+                                    <p class="text-xs text-blue-100 font-medium">¿Cómo deseas despachar este producto?</p>
+                                </div>
+                            </div>
+                            <button 
+                                type="button" 
+                                @click="cerrarModalTipoVenta()" 
+                                class="w-8 h-8 rounded-xl bg-white/10 hover:bg-white/20 text-white flex items-center justify-center transition-colors cursor-pointer"
+                                title="Cerrar ventana"
+                            >
+                                <i class="fas fa-times text-sm"></i>
+                            </button>
+                        </div>
+
+                        <!-- RESUMEN DEL PRODUCTO SELECCIONADO -->
+                        <template x-if="varianteSeleccionada">
+                            <div class="p-4 bg-slate-50 border-b border-slate-200/80 flex items-center gap-3.5">
+                                <div class="w-13 h-13 rounded-xl bg-white border border-slate-200 flex items-center justify-center shrink-0 overflow-hidden shadow-2xs">
+                                    <template x-if="varianteSeleccionada.imagen">
+                                        <img :src="varianteSeleccionada.imagen" :alt="varianteSeleccionada.producto" class="w-full h-full object-cover">
+                                    </template>
+                                    <template x-if="!varianteSeleccionada.imagen">
+                                        <i class="fas fa-box text-slate-400 text-lg"></i>
+                                    </template>
+                                </div>
+                                <div class="min-w-0 flex-1">
+                                    <div class="flex items-center gap-2 mb-0.5">
+                                        <span class="text-[9px] font-black uppercase tracking-wider text-blue-700 bg-blue-50 border border-blue-200 px-1.5 py-0.2 rounded" x-text="varianteSeleccionada.sku || 'Sin SKU'"></span>
+                                        <span class="text-[10px] font-bold text-emerald-700 bg-emerald-50 border border-emerald-200 px-1.5 py-0.2 rounded" x-text="'Stock: ' + varianteSeleccionada.stock + ' uds'"></span>
+                                    </div>
+                                    <h4 class="text-xs font-black text-slate-900 truncate" x-text="varianteSeleccionada.producto"></h4>
+                                    <p class="text-[11px] text-slate-500 font-semibold truncate" x-text="varianteSeleccionada.variante"></p>
+                                </div>
+                                <div class="text-right shrink-0">
+                                    <span class="text-[10px] text-slate-400 font-bold block uppercase">Precio</span>
+                                    <span class="text-base font-black text-slate-900" x-text="moneda(varianteSeleccionada.precio_venta)"></span>
+                                </div>
+                            </div>
+                        </template>
+
+                        <!-- TARJETAS DE OPCIONES INTERACTIVAS -->
+                        <div class="p-5 sm:p-6 space-y-3.5">
+                            
+                            <!-- Opción 1: Venta en Tienda (Mostrador) -->
+                            <button 
+                                type="button" 
+                                @click="seleccionarVentaTienda()" 
+                                class="w-full p-4 rounded-2xl border-2 border-slate-200 hover:border-emerald-500 hover:bg-emerald-50/40 text-left transition-all duration-200 group flex items-start gap-4 cursor-pointer shadow-2xs hover:shadow-md hover:shadow-emerald-500/10"
+                            >
+                                <div class="w-12 h-12 rounded-2xl bg-emerald-100 text-emerald-600 flex items-center justify-center shrink-0 text-xl group-hover:scale-105 group-hover:bg-emerald-600 group-hover:text-white transition-all shadow-sm">
+                                    <i class="fas fa-store"></i>
+                                </div>
+                                <div class="flex-1 min-w-0">
+                                    <div class="flex items-center justify-between mb-1">
+                                        <h4 class="text-sm font-black text-slate-900 group-hover:text-emerald-700 transition-colors">
+                                            Venta en Tienda (Mostrador)
+                                        </h4>
+                                        <span class="text-[10px] font-black uppercase tracking-wider text-emerald-700 bg-emerald-100 border border-emerald-200 px-2 py-0.5 rounded-full">
+                                            Presencial
+                                        </span>
+                                    </div>
+                                    <p class="text-xs text-slate-500 leading-snug">
+                                        Entrega física inmediata al cliente en caja. Incorpora el producto al carrito de la terminal para facturación en mostrador.
+                                    </p>
+                                </div>
+                                <div class="self-center text-slate-300 group-hover:text-emerald-600 group-hover:translate-x-1 transition-all">
+                                    <i class="fas fa-chevron-right text-sm"></i>
+                                </div>
+                            </button>
+
+                            <!-- Opción 2: Envío / Entrega a Domicilio -->
+                            <button 
+                                type="button" 
+                                @click="seleccionarVentaEnvio()" 
+                                class="w-full p-4 rounded-2xl border-2 border-slate-200 hover:border-blue-500 hover:bg-blue-50/40 text-left transition-all duration-200 group flex items-start gap-4 cursor-pointer shadow-2xs hover:shadow-md hover:shadow-blue-500/10"
+                            >
+                                <div class="w-12 h-12 rounded-2xl bg-blue-100 text-blue-600 flex items-center justify-center shrink-0 text-xl group-hover:scale-105 group-hover:bg-blue-600 group-hover:text-white transition-all shadow-sm">
+                                    <i class="fas fa-truck-fast"></i>
+                                </div>
+                                <div class="flex-1 min-w-0">
+                                    <div class="flex items-center justify-between mb-1">
+                                        <h4 class="text-sm font-black text-slate-900 group-hover:text-blue-700 transition-colors">
+                                            Envío / Entrega a Domicilio
+                                        </h4>
+                                        <span class="text-[10px] font-black uppercase tracking-wider text-blue-700 bg-blue-100 border border-blue-200 px-2 py-0.5 rounded-full">
+                                            Delivery
+                                        </span>
+                                    </div>
+                                    <p class="text-xs text-slate-500 leading-snug">
+                                        Despacho con mensajería. Abre el formulario de entrega para especificar dirección, teléfono de contacto y tarifa de envío.
+                                    </p>
+                                </div>
+                                <div class="self-center text-slate-300 group-hover:text-blue-600 group-hover:translate-x-1 transition-all">
+                                    <i class="fas fa-chevron-right text-sm"></i>
+                                </div>
+                            </button>
+
+                        </div>
+
+                        <!-- PIE DEL MODAL -->
+                        <div class="px-5 py-3.5 bg-slate-50 border-t border-slate-100 flex items-center justify-end">
+                            <button 
+                                type="button" 
+                                @click="cerrarModalTipoVenta()" 
+                                class="px-4 py-2 text-xs font-bold text-slate-600 hover:text-slate-900 hover:bg-slate-200/60 rounded-xl transition-colors cursor-pointer"
+                            >
+                                Cancelar
+                            </button>
+                        </div>
+
+                    </div>
+                </div>
+            </div>
+        </template>
 
     </div>
 </x-app>

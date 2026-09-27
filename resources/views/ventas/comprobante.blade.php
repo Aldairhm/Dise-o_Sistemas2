@@ -56,6 +56,11 @@
                 width: 76mm !important;
                 max-width: 76mm !important;
             }
+
+            * {
+                -webkit-print-color-adjust: exact !important;
+                print-color-adjust: exact !important;
+            }
         }
     </style>
 </head>
@@ -106,6 +111,7 @@
         
         <!-- ENCABEZADO TICKET -->
         <div class="text-center pb-3 border-b border-dashed border-slate-300">
+            <img src="{{ asset('assets/images/logo.png') }}" alt="AXStore Logo" class="h-12 w-auto mx-auto mb-2 object-contain">
             <h1 class="text-base font-black tracking-wider text-slate-900">AXSTORE</h1>
             <p class="text-[11px] font-bold text-slate-600">AXSTORE S.A. DE C.V.</p>
             <p class="text-[10px] text-slate-500">NIT: 0614-150995-102-1 • NRC: 284910-3</p>
@@ -170,6 +176,12 @@
                 <span>Subtotal:</span>
                 <span>${{ number_format($calculos['subtotal_general'], 2) }}</span>
             </div>
+            @if(!empty($calculos['precio_envio']) && $calculos['precio_envio'] > 0)
+            <div class="flex justify-between text-slate-700 font-bold">
+                <span>Costo de Envío:</span>
+                <span>+${{ number_format($calculos['precio_envio'], 2) }}</span>
+            </div>
+            @endif
             @if($calculos['descuento'] > 0)
             <div class="flex justify-between text-slate-700 font-bold">
                 <span>Descuento:</span>
@@ -200,10 +212,8 @@
         
         <!-- ENCABEZADO Y DATOS DE LA EMPRESA -->
         <div class="grid grid-cols-12 gap-4 pb-6 border-b border-slate-200">
-            <div class="col-span-8 flex items-start gap-4">
-                <div class="w-14 h-14 rounded-2xl bg-blue-600 text-white flex items-center justify-center font-black text-2xl shrink-0 shadow-md">
-                    AX
-                </div>
+            <div class="col-span-8 flex items-center gap-4">
+                <img src="{{ asset('assets/images/logo.png') }}" alt="AXStore Logo" class="h-16 w-auto max-w-[90px] object-contain shrink-0">
                 <div>
                     <h1 class="text-xl font-black text-slate-900">AXSTORE S.A. DE C.V.</h1>
                     <p class="text-xs font-semibold text-slate-600">Comercio al por menor de accesorios, iluminación y repuestos</p>
@@ -311,6 +321,12 @@
                     <span>Sumas Gravadas:</span>
                     <span class="font-bold text-slate-800">${{ number_format($calculos['subtotal_general'], 2) }}</span>
                 </div>
+                @if(!empty($calculos['precio_envio']) && $calculos['precio_envio'] > 0)
+                <div class="flex justify-between text-blue-700 font-bold">
+                    <span>(+) Costo de Envío:</span>
+                    <span>+${{ number_format($calculos['precio_envio'], 2) }}</span>
+                </div>
+                @endif
                 @if($calculos['descuento'] > 0)
                 <div class="flex justify-between text-emerald-700 font-bold">
                     <span>(-) Descuentos:</span>
@@ -343,10 +359,8 @@
         <!-- ENCABEZADO FORMAL CCF -->
         <div class="grid grid-cols-12 gap-4 pb-6 border-b-2 border-slate-300">
             <div class="col-span-7">
-                <div class="flex items-center gap-3 mb-1">
-                    <div class="w-12 h-12 rounded-xl bg-purple-700 text-white flex items-center justify-center font-black text-xl shrink-0 shadow-md">
-                        AX
-                    </div>
+                <div class="flex items-center gap-3.5 mb-1.5">
+                    <img src="{{ asset('assets/images/logo.png') }}" alt="AXStore Logo" class="h-16 w-auto max-w-[90px] object-contain shrink-0">
                     <div>
                         <h1 class="text-xl font-black text-slate-900 tracking-tight">AXSTORE S.A. DE C.V.</h1>
                         <p class="text-[11px] font-bold text-purple-800">DOCUMENTO TRIBUTARIO ELECTRÓNICO (DTE - 03)</p>

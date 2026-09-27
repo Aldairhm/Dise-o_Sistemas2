@@ -219,8 +219,16 @@ class VentaController extends Controller
 
         // 2. Validación exhaustiva de los datos del carrito
         $validated = $request->validate([
-            'metodo_pago' => ['required', 'string', 'max:50'],
+            'metodo_pago' => ['required', 'string', 'in:Efectivo,Transferencia Bancaria'],
+            'tipo_venta' => ['nullable', 'string', 'in:Tienda,Envio,Envío'],
+            'comprobante_pago' => ['nullable', 'image', 'mimes:jpeg,png,jpg,webp', 'max:5120'],
             'descuento' => ['nullable', 'numeric', 'min:0'],
+            'precio_envio' => ['nullable', 'numeric', 'min:0'],
+            'direccion_entrega' => ['nullable', 'string', 'max:255'],
+            'punto_referencia' => ['nullable', 'string', 'max:255'],
+            'telefono' => ['nullable', 'string', 'regex:/^[267]\d{3}-\d{4}$/'],
+            'fecha_salida' => ['nullable', 'string'],
+            'hora_salida' => ['nullable', 'string'],
             'lineas' => ['required', 'array', 'min:1'],
             'lineas.*.id_variante' => ['required', 'integer', 'exists:variante,id'],
             'lineas.*.cantidad' => ['required', 'integer', 'min:1'],
@@ -228,9 +236,16 @@ class VentaController extends Controller
             'lineas.*.costo_extra' => ['nullable', 'numeric', 'min:0'],
         ]);
 
+        if ($validated['metodo_pago'] === 'Transferencia Bancaria' && !$request->hasFile('comprobante_pago')) {
+            return response()->json([
+                'success' => false,
+                'message' => 'El comprobante de pago es obligatorio cuando el método de pago es Transferencia Bancaria.',
+            ], 422);
+        }
+
         try {
             // 3. Transacción de base de datos atómica
-            $venta = DB::transaction(function () use ($validated, $userId) {
+            $venta = DB::transaction(function () use ($validated, $userId, $request) {
                 $lineas = collect($validated['lineas']);
 
                 // Bloqueo pesimista de variantes para garantizar coherencia de stock ante concurrencia
@@ -255,22 +270,75 @@ class VentaController extends Controller
                     }
                 }
 
-                // Cálculo financiero de la venta incorporando posibles costos extras por producto
+                // Cálculo financiero de la venta incorporando posibles costos extras por producto y costo de envío
                 $subtotalGeneral = $lineas->sum(
                     fn ($l) => ((float) $l['cantidad'] * (float) $l['precio_unitario']) + max(0, (float) ($l['costo_extra'] ?? 0))
                 );
-                $descuentoGeneral = min($subtotalGeneral, max(0, (float) ($validated['descuento'] ?? 0)));
-                $totalPagar = max(0, $subtotalGeneral - $descuentoGeneral);
+                $costoEnvio = max(0, (float) ($validated['precio_envio'] ?? 0));
+                $descuentoGeneral = min($subtotalGeneral + $costoEnvio, max(0, (float) ($validated['descuento'] ?? 0)));
+                $totalPagar = max(0, $subtotalGeneral + $costoEnvio - $descuentoGeneral);
+
+                $fechaVenta = now();
+                $telefonoEntrega = !empty($validated['telefono']) ? trim($validated['telefono']) : null;
+
+                // Determinar tipo de venta y estado inicial según regla de negocio
+                $tipoVenta = $validated['tipo_venta'] ?? null;
+                if (!$tipoVenta) {
+                    if (!empty($validated['direccion_entrega']) && $validated['direccion_entrega'] !== 'Venta en mostrador / POS') {
+                        $tipoVenta = 'Envio';
+                    } elseif ($costoEnvio > 0) {
+                        $tipoVenta = 'Envio';
+                    } else {
+                        $tipoVenta = 'Tienda';
+                    }
+                }
+                if ($tipoVenta === 'Envío') {
+                    $tipoVenta = 'Envio';
+                }
+
+                // Tienda -> Inmediatamente Entregada; Envio -> Pendiente
+                $estadoInicial = ($tipoVenta === 'Tienda') ? 'Entregada' : 'Pendiente';
+                $fechaEntregaInicial = ($tipoVenta === 'Tienda') ? $fechaVenta : null;
 
                 // A. Crear registro principal en la tabla `venta`
                 $venta = Venta::create([
                     'id_usuario' => $userId,
-                    'fecha' => now(),
+                    'fecha' => $fechaVenta,
                     'total' => $totalPagar,
                     'metodo_pago' => $validated['metodo_pago'],
+                    'comprobante_pago' => null,
+                    'telefono' => $telefonoEntrega,
+                    'precio_envio' => $costoEnvio,
+                    'tipo_venta' => $tipoVenta,
+                    'estado' => $estadoInicial,
+                    'fecha_entrega' => $fechaEntregaInicial,
                 ]);
 
-                // B. Iterar sobre el carrito e insertar en `detalleventa` y `salida`
+                // B. Guardar el archivo del comprobante con el nombre del día y folio de la venta
+                if ($request->hasFile('comprobante_pago')) {
+                    $archivo = $request->file('comprobante_pago');
+                    $diaVenta = $fechaVenta->format('Y-m-d');
+                    $folioVenta = 'VNT-' . str_pad($venta->id, 5, '0', STR_PAD_LEFT);
+                    $extension = strtolower($archivo->getClientOriginalExtension() ?: $archivo->extension() ?: 'jpg');
+                    $nombreArchivo = "{$diaVenta}_{$folioVenta}.{$extension}";
+
+                    $rutaComprobante = $archivo->storeAs('comprobantes_pago', $nombreArchivo, 'public');
+                    $venta->comprobante_pago = $rutaComprobante;
+                    $venta->save();
+                }
+
+                $direccionFinal = !empty($validated['direccion_entrega'])
+                    ? trim($validated['direccion_entrega'])
+                    : 'Venta en mostrador / POS';
+
+                if (!empty($validated['punto_referencia']) && $direccionFinal !== 'Venta en mostrador / POS') {
+                    $direccionFinal .= ' (Ref: ' . trim($validated['punto_referencia']) . ')';
+                }
+
+                $fechaSalidaFinal = !empty($validated['fecha_salida']) ? $validated['fecha_salida'] : now()->toDateString();
+                $horaSalidaFinal = !empty($validated['hora_salida']) ? $validated['hora_salida'] : now()->toTimeString();
+
+                // C. Iterar sobre el carrito e insertar en `detalleventa` y `salida`
                 foreach ($lineas as $linea) {
                     $variante = $variantes->get($linea['id_variante']);
                     $cantidad = (int) $linea['cantidad'];
@@ -294,16 +362,17 @@ class VentaController extends Controller
                     $comisionUnitaria = (float) ($variante->comision ?? 0);
                     $comisionTotal = $comisionUnitaria * $cantidad;
 
-                    // 2. Generar el registro de salida asociado para control de inventario con costo_extra
+                    // 2. Generar el registro de salida asociado para control de inventario con costo_extra, precio_envio y datos de entrega
                     $salida = Salida::create([
                         'id_variante' => $variante->id,
                         'id_usuario' => $userId,
                         'cantidad' => $cantidad,
-                        'fecha_salida' => now()->toDateString(),
-                        'hora_salida' => now()->toTimeString(),
-                        'fecha_entrega' => now()->toDateString(),
-                        'direccion' => 'Venta en mostrador / POS',
-                        'precio_envio' => 0.00,
+                        'fecha_salida' => $fechaSalidaFinal,
+                        'hora_salida' => $horaSalidaFinal,
+                        'fecha_entrega' => $fechaEntregaInicial ? $fechaSalidaFinal : null,
+                        'direccion' => $direccionFinal,
+                        'telefono' => $telefonoEntrega,
+                        'precio_envio' => $costoEnvio,
                         'costo_extra' => $costoExtra,
                         'precio_unitario' => $precioUnitario,
                         'subtotal' => $subtotalBase,
@@ -312,7 +381,7 @@ class VentaController extends Controller
                         'costo_total_aplicado' => $costoTotal,
                         'comision_aplicada' => $comisionTotal,
                         'observaciones' => "Venta #{$venta->id}" . ($costoExtra > 0 ? " (Costo extra: $" . number_format($costoExtra, 2) . ")" : ""),
-                        'estado' => 'Entregado',
+                        'estado' => $estadoInicial,
                         'fecha_cancelacion' => null,
                         'created_at' => now(),
                     ]);
@@ -363,6 +432,189 @@ class VentaController extends Controller
     }
 
     /**
+     * Actualiza el estado de una venta según la máquina de estados y reglas de negocio.
+     */
+    public function actualizarEstado(Request $request, string|int $id)
+    {
+        $venta = Venta::with(['detalles.variante', 'usuario'])->findOrFail($id);
+
+        $validated = $request->validate([
+            'estado' => ['required', 'string', 'in:Pendiente,Confirmada,En ruta,Entregada,Cancelada,Devolución'],
+            'observaciones' => ['nullable', 'string', 'max:1000'],
+            'comprobante_paquete' => ['nullable', 'image', 'mimes:jpeg,png,jpg,webp', 'max:5120'],
+            'comprobante_devolucion' => ['nullable', 'image', 'mimes:jpeg,png,jpg,webp', 'max:5120'],
+        ]);
+
+        $nuevoEstado = $validated['estado'];
+
+        // 1. Verificar si la venta está bloqueada
+        if ($venta->estado_bloqueado) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Esta venta se encuentra en estado definitivo (' . $venta->estado . ') y ya no puede ser modificada.',
+            ], 422);
+        }
+
+        // 2. Verificar regla de garantía en días para Devolución
+        if ($venta->estado === 'Entregada') {
+            if ($nuevoEstado !== 'Devolución') {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Una venta ya entregada únicamente puede cambiar a "Devolución" dentro del plazo de garantía.',
+                ], 422);
+            }
+
+            if (!$venta->puede_devolver) {
+                $dias = $venta->dias_garantia;
+                $limiteStr = $venta->fecha_limite_devolucion ? $venta->fecha_limite_devolucion->format('d/m/Y') : '';
+                return response()->json([
+                    'success' => false,
+                    'message' => "El plazo de garantía de devolución ({$dias} días, vencido el {$limiteStr}) ha expirado.",
+                ], 422);
+            }
+        }
+
+        // 3. Verificar si el estado solicitado está en los estados permitidos
+        $estadosPermitidos = $venta->estados_permitidos;
+        if (!in_array($nuevoEstado, $estadosPermitidos)) {
+            return response()->json([
+                'success' => false,
+                'message' => "Transición no permitida de '{$venta->estado}' hacia '{$nuevoEstado}'.",
+            ], 422);
+        }
+
+        // 4. Validaciones específicas requeridas por estado
+        if ($nuevoEstado === 'En ruta') {
+            if (!$request->hasFile('comprobante_paquete')) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Para cambiar al estado "En ruta" es obligatorio adjuntar la fotografía/comprobante del paquete entregado a paquetería.',
+                ], 422);
+            }
+        }
+
+        if ($nuevoEstado === 'Cancelada') {
+            if (empty(trim($validated['observaciones'] ?? ''))) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Para cancelar la venta es obligatorio ingresar el motivo en el campo observaciones.',
+                ], 422);
+            }
+        }
+
+        if ($nuevoEstado === 'Devolución') {
+            if (empty(trim($validated['observaciones'] ?? ''))) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Para procesar una devolución es obligatorio ingresar la justificación/motivo en el campo observaciones.',
+                ], 422);
+            }
+
+            if (!$request->hasFile('comprobante_devolucion')) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Para procesar una devolución es obligatorio adjuntar la fotografía del paquete devuelto.',
+                ], 422);
+            }
+        }
+
+        DB::beginTransaction();
+        try {
+            $diaVenta = now()->format('Y-m-d');
+            $folioVenta = 'VNT-' . str_pad($venta->id, 5, '0', STR_PAD_LEFT);
+
+            // A. Guardar imagen comprobante paquete si va a En ruta
+            if ($nuevoEstado === 'En ruta' && $request->hasFile('comprobante_paquete')) {
+                $archivo = $request->file('comprobante_paquete');
+                $extension = strtolower($archivo->getClientOriginalExtension() ?: $archivo->extension() ?: 'jpg');
+                $nombreArchivo = "{$diaVenta}_{$folioVenta}_paquete.{$extension}";
+                $rutaPaquete = $archivo->storeAs('comprobantes_paquete', $nombreArchivo, 'public');
+                $venta->comprobante_paquete = $rutaPaquete;
+            }
+
+            // B. Guardar imagen comprobante devolución si va a Devolución
+            if ($nuevoEstado === 'Devolución' && $request->hasFile('comprobante_devolucion')) {
+                $archivo = $request->file('comprobante_devolucion');
+                $extension = strtolower($archivo->getClientOriginalExtension() ?: $archivo->extension() ?: 'jpg');
+                $nombreArchivo = "{$diaVenta}_{$folioVenta}_devolucion.{$extension}";
+                $rutaDevolucion = $archivo->storeAs('comprobantes_devolucion', $nombreArchivo, 'public');
+                $venta->comprobante_devolucion = $rutaDevolucion;
+            }
+
+            // C. Observaciones
+            if (!empty($validated['observaciones'])) {
+                $venta->observaciones = trim($validated['observaciones']);
+            }
+
+            // D. Fechas de estado
+            if ($nuevoEstado === 'Entregada' && !$venta->fecha_entrega) {
+                $venta->fecha_entrega = now();
+            }
+
+            if ($nuevoEstado === 'Cancelada') {
+                $venta->fecha_cancelacion = now();
+            }
+
+            $venta->estado = $nuevoEstado;
+            $venta->save();
+
+            // E. Si es Cancelada o Devolución, restaurar stock de inventario y anular comisiones
+            if (in_array($nuevoEstado, ['Cancelada', 'Devolución'])) {
+                foreach ($venta->detalles as $detalle) {
+                    if ($detalle->variante) {
+                        $detalle->variante->increment('stock', (int) $detalle->cantidad);
+                    }
+                }
+
+                // Anular comisiones de vendedores asociadas a las salidas de esta venta
+                $salidasIds = Salida::where('observaciones', 'like', "Venta #{$venta->id}%")->pluck('id');
+                if ($salidasIds->isNotEmpty()) {
+                    ComisionVendedor::whereIn('id_salida', $salidasIds)
+                        ->update(['estado' => 'Cancelada']);
+                }
+            }
+
+            // F. Actualizar salidas asociadas para reflejar el estado actual
+            $salidasUpdates = [
+                'estado' => $nuevoEstado,
+            ];
+
+            if ($nuevoEstado === 'Entregada') {
+                $salidasUpdates['fecha_entrega'] = now()->toDateString();
+            } elseif ($nuevoEstado === 'Cancelada') {
+                $salidasUpdates['fecha_cancelacion'] = now()->toDateString();
+            }
+
+            if ($venta->comprobante_paquete) {
+                $salidasUpdates['comprobante_paquete'] = $venta->comprobante_paquete;
+            }
+            if ($venta->comprobante_devolucion) {
+                $salidasUpdates['comprobante_devolucion'] = $venta->comprobante_devolucion;
+            }
+            if (!empty($validated['observaciones'])) {
+                $salidasUpdates['observaciones'] = "Venta #{$venta->id} - {$nuevoEstado}: " . trim($validated['observaciones']);
+            }
+
+            Salida::where('observaciones', 'like', "Venta #{$venta->id}%")->update($salidasUpdates);
+
+            DB::commit();
+
+            return response()->json([
+                'success' => true,
+                'message' => "Estado de la venta #{$venta->id} actualizado exitosamente a \"{$nuevoEstado}\".",
+                'venta' => $venta->fresh(['usuario', 'detalles.variante.producto']),
+            ]);
+
+        } catch (\Throwable $e) {
+            DB::rollBack();
+            return response()->json([
+                'success' => false,
+                'message' => 'Error al actualizar el estado: ' . $e->getMessage(),
+            ], 500);
+        }
+    }
+
+    /**
      * Muestra la información detallada de una venta específica (soporta JSON y vista).
      */
     public function show(string|int $id)
@@ -389,7 +641,15 @@ class VentaController extends Controller
 
         $venta->total_costo_extra = $totalCostoExtra;
         $subtotalGeneral = $venta->detalles->sum('subtotal');
-        $venta->descuento_aplicado = max(0, $subtotalGeneral - (float) $venta->total);
+
+        $primeraSalida = $salidas->first();
+        $venta->direccion_entrega = $primeraSalida?->direccion;
+        $venta->fecha_salida = $primeraSalida?->fecha_salida;
+        $venta->hora_salida = $primeraSalida?->hora_salida;
+        $venta->telefono = $venta->telefono ?? $primeraSalida?->telefono ?? $venta->usuario?->telefono;
+        $venta->precio_envio = (float) ($venta->precio_envio ?? $primeraSalida?->precio_envio ?? 0);
+
+        $venta->descuento_aplicado = max(0, ($subtotalGeneral + $venta->precio_envio) - (float) $venta->total);
 
         if (request()->wantsJson() || request()->ajax()) {
             return response()->json([
@@ -539,6 +799,7 @@ class VentaController extends Controller
                 'lineas' => $lineas,
                 'subtotal_productos' => $venta->detalles->sum('subtotal_base'),
                 'total_costos_extras' => (float) ($venta->total_costo_extra ?? 0),
+                'precio_envio' => (float) ($venta->precio_envio ?? 0),
                 'subtotal_general' => $venta->detalles->sum('subtotal'),
                 'descuento' => $descuento,
                 'ventas_no_sujetas' => 0.00,

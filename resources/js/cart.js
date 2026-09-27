@@ -120,6 +120,18 @@ class CartManager {
     }
 
     /**
+     * Actualiza el costo extra de un producto
+     */
+    updateCostoExtra(id, extra) {
+        const item = this.cart.find(i => Number(i.id) === Number(id));
+        if (!item) return;
+
+        const val = Math.max(0, parseFloat(extra) || 0);
+        item.costo_extra = val;
+        this.saveCart();
+    }
+
+    /**
      * Remueve un ítem de la bolsa
      */
     removeItem(id) {
@@ -157,6 +169,18 @@ class CartManager {
         menu.classList.add('opacity-0', 'invisible', '-translate-y-2', 'pointer-events-none');
         menu.classList.remove('opacity-100', 'visible', 'translate-y-0', 'pointer-events-auto');
         if (btn) btn.setAttribute('aria-expanded', 'false');
+    }
+
+    /**
+     * Abre el modal de Registrar Entrega de Producto para procesar la venta
+     */
+    openEntregaModal() {
+        if (this.getTotalCount() === 0) {
+            this.showToast('Tu bolsa está vacía. Agrega productos antes de pagar.', 'warning');
+            return;
+        }
+        this.closeDropdown();
+        window.dispatchEvent(new CustomEvent('abrir-modal-entrega', { detail: this.cart }));
     }
 
     /**
