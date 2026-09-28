@@ -128,6 +128,7 @@ Route::middleware('auth')->group(function () {
     // ── Productos: índice visible para todos los usuarios autenticados ──
     Route::get('/productos', [ProductoController::class, 'index'])->name('productos.index');
 
-    // ── Comisiones: vendedor ve las suyas ──────────────────────────────────
-    Route::get('/comisiones', [ComisionVendedorController::class, 'index'])->name('comisiones.index');
+    // ── Comisiones: vendedor ve las suyas / admin ve todo ─────────────────
+    Route::get('/comisiones',              [ComisionVendedorController::class, 'index'])->name('comisiones.index');
+    Route::get('/comisiones/por-vendedor', [ComisionVendedorController::class, 'porVendedor'])->name('comisiones.porVendedor');
 });

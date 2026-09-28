@@ -79,6 +79,79 @@ class ComisionVendedorController extends Controller
     }
 
     // ─────────────────────────────────────────────────────────────────────────
+    // POR VENDEDOR — Historial completo, suma general y desglose por vendedor
+    // ─────────────────────────────────────────────────────────────────────────
+
+    public function porVendedor(Request $request)
+    {
+        $user    = Auth::user();
+        $isAdmin = $user->rol === 'admin';
+
+        $desde    = $request->input('fecha_desde');
+        $hasta    = $request->input('fecha_hasta');
+        $busqueda = trim($request->input('q', ''));
+
+        $vendedoresQuery = User::query()->orderBy('nombre_real');
+
+        if (!$isAdmin) {
+            $vendedoresQuery->where('id', $user->id);
+        } else {
+            if (!empty($busqueda)) {
+                $vendedoresQuery->where(function ($q) use ($busqueda) {
+                    $q->where('nombre_real', 'like', "%{$busqueda}%")
+                      ->orWhere('username', 'like', "%{$busqueda}%");
+                });
+            }
+        }
+
+        $usuarios = $vendedoresQuery->get();
+
+        $reporte = $usuarios->map(function ($vendedor) use ($desde, $hasta) {
+            $comisionesQuery = ComisionVendedor::with(['salida.variante.producto', 'liquidadoPor'])
+                ->where('id_vendedor', $vendedor->id)
+                ->orderBy('fecha_registro', 'desc');
+
+            if ($desde) {
+                $comisionesQuery->whereDate('fecha_registro', '>=', $desde);
+            }
+            if ($hasta) {
+                $comisionesQuery->whereDate('fecha_registro', '<=', $hasta);
+            }
+
+            $comisiones = $comisionesQuery->get();
+
+            $pendiente = (float) $comisiones->where('estado', 'Pendiente')->sum('monto');
+            $pagada    = (float) $comisiones->where('estado', 'Pagada')->sum('monto');
+            $cancelada = (float) $comisiones->where('estado', 'Cancelada')->sum('monto');
+            $total     = (float) $comisiones->sum('monto');
+
+            return [
+                'vendedor'         => $vendedor,
+                'comisiones'       => $comisiones,
+                'total_comisiones' => $total,
+                'total_pendiente'  => $pendiente,
+                'total_pagada'     => $pagada,
+                'total_cancelada'  => $cancelada,
+                'total_ventas'     => $comisiones->count(),
+                'total_pendientes' => $comisiones->where('estado', 'Pendiente')->count(),
+            ];
+        });
+
+        // Totales globales para KPIs
+        $kpis = [
+            'total'      => (float) $reporte->sum('total_comisiones'),
+            'pendiente'  => (float) $reporte->sum('total_pendiente'),
+            'pagada'     => (float) $reporte->sum('total_pagada'),
+            'cancelada'  => (float) $reporte->sum('total_cancelada'),
+            'vendedores' => $reporte->where('total_comisiones', '>', 0)->count(),
+        ];
+
+        $vendedores = $isAdmin ? User::orderBy('nombre_real')->get() : collect();
+
+        return view('comisiones.por_vendedor', compact('reporte', 'kpis', 'vendedores', 'isAdmin', 'desde', 'hasta', 'busqueda'));
+    }
+
+    // ─────────────────────────────────────────────────────────────────────────
     // PENDIENTES VENDEDOR — Obtiene comisiones pendientes para liquidación (admin)
     // ─────────────────────────────────────────────────────────────────────────
 

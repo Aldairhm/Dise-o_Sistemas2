@@ -49,6 +49,10 @@
                 <i class="fas fa-coins"></i>
                 <span>Comisiones</span>
             </a>
+            <a href="{{ route('comisiones.porVendedor') }}" class="rounded-xl px-4 py-2 text-sm font-bold text-slate-600 hover:bg-slate-50 hover:text-blue-600 transition-all flex items-center gap-2">
+                <i class="fas fa-users-gear text-slate-400"></i>
+                <span>Comisiones por Vendedor</span>
+            </a>
             @if($isAdmin)
             <a href="{{ route('ventas.index') }}" class="rounded-xl px-4 py-2 text-sm font-bold text-slate-600 hover:bg-slate-50 hover:text-blue-600 transition-all flex items-center gap-2">
                 <i class="fas fa-chart-line text-slate-400"></i>
