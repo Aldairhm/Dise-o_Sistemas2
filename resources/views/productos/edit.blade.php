@@ -236,9 +236,11 @@
                     </div>
 
                     <button type="button" id="btnAgregarVariante"
-                            class="inline-flex items-center justify-center gap-2 px-4 py-2.5 text-sm font-extrabold text-white bg-emerald-600 hover:bg-emerald-700 rounded-xl shadow-lg shadow-emerald-500/25 transition-all hover:scale-[1.02] active:scale-[0.98] whitespace-nowrap">
-                        <i class="fas fa-plus text-xs"></i>
-                        Agregar Variante
+                            class="inline-flex items-center justify-center gap-2 px-4 py-2.5 text-sm font-extrabold text-white bg-blue-600 hover:bg-blue-700 rounded-xl shadow-lg shadow-blue-500/25 transition-all hover:scale-[1.02] active:scale-[0.98] whitespace-nowrap cursor-pointer">
+                        <div class="w-5 h-5 rounded-lg bg-white/20 flex items-center justify-center text-xs">
+                            <i class="fas fa-plus"></i>
+                        </div>
+                        <span>AGREGAR VARIANTE</span>
                     </button>
                 </div>
             </div>

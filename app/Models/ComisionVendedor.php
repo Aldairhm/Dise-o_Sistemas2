@@ -2,17 +2,27 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class ComisionVendedor extends Model
 {
+    use HasFactory;
+
     public $timestamps = false;
     protected $table = 'comision_vendedor';
 
     protected $fillable = [
-        'id_vendedor','id_salida','monto','porcentaje',
-        'estado','notas','liquidado_por','fecha_liquidacion','fecha_registro',
+        'id_vendedor',
+        'id_salida',
+        'monto',
+        'porcentaje',
+        'estado',
+        'notas',
+        'liquidado_por',
+        'fecha_liquidacion',
+        'fecha_registro',
     ];
 
     protected $casts = [
@@ -37,8 +47,8 @@ class ComisionVendedor extends Model
         return $this->belongsTo(User::class, 'liquidado_por');
     }
 
-    public function scopePendientes($query) { return $query->where('estado','Pendiente'); }
-    public function scopePagadas($query)    { return $query->where('estado','Pagada'); }
-    public function scopeCanceladas($query) { return $query->where('estado','Cancelada'); }
-    public function scopeDeVendedor($query, int $id) { return $query->where('id_vendedor',$id); }
+    public function scopePendientes($query) { return $query->where('estado', 'Pendiente'); }
+    public function scopePagadas($query)    { return $query->where('estado', 'Pagada'); }
+    public function scopeCanceladas($query) { return $query->where('estado', 'Cancelada'); }
+    public function scopeDeVendedor($query, int $id) { return $query->where('id_vendedor', $id); }
 }

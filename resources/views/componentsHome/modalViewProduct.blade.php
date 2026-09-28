@@ -101,9 +101,12 @@
                             <i class="fas fa-copy text-gray-400"></i> 
                             Copiar Info
                         </button>
-                        <button class="w-full sm:flex-1 bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 sm:py-4 px-4 sm:px-6 rounded-xl sm:rounded-2xl shadow-lg shadow-blue-600/30 transition-all transform hover:-translate-y-1 flex items-center justify-center gap-2 sm:gap-3 text-sm sm:text-base">
+                        <button type="button" 
+                                id="btnModalAddToCart"
+                                onclick="addToCartFromModal()" 
+                                class="w-full sm:flex-1 bg-blue-600 hover:bg-blue-700 text-white font-extrabold py-3 sm:py-4 px-4 sm:px-6 rounded-xl sm:rounded-2xl shadow-lg shadow-blue-600/30 transition-all transform hover:-translate-y-1 flex items-center justify-center gap-2 sm:gap-3 text-sm sm:text-base cursor-pointer">
                             <i class="fas fa-shopping-cart"></i>
-                            Al Carrito
+                            <span>Agregar a la Bolsa</span>
                         </button>
                     </div>
                     
@@ -147,12 +150,26 @@
             }
         }
 
+        let currentProductData = null;
+        let currentSelectedVariant = null;
+
         function openModal(btn) {
             // Extraer los datos básicos del botón
             const name = btn.getAttribute('data-name') || '';
             const category = btn.getAttribute('data-category') || '';
             const marca = btn.getAttribute('data-marca') || '';
             const desc = btn.getAttribute('data-description') || '';
+            
+            currentProductData = {
+                name: name,
+                category: category,
+                marca: marca,
+                desc: desc,
+                sku: btn.getAttribute('data-sku') || '',
+                price: (btn.getAttribute('data-price') || '0').replace('$', ''),
+                stock: parseInt((btn.getAttribute('data-stock') || '0').replace(' un.', '')) || 0,
+                image: btn.getAttribute('data-image') || '',
+            };
 
             // Extraer JSON de variantes
             let variants = [];
@@ -213,6 +230,7 @@
                 
                 // Función para actualizar modal según variante seleccionada
                 const selectVariant = (variant, btnElement) => {
+                    currentSelectedVariant = variant;
                     // Actualizar UI de botones de variante
                     Array.from(variantsList.children).forEach(c => {
                         c.classList.remove('border-blue-600', 'bg-blue-50', 'text-blue-700');
@@ -373,6 +391,80 @@
             modal.classList.add('hidden');
             // Restaurar scroll
             document.body.style.overflow = '';
+        }
+
+        function addToCartFromModal() {
+            if (!window.AXCart) {
+                console.error("AXCart no está inicializado");
+                return;
+            }
+
+            let itemToAdd = null;
+
+            if (currentSelectedVariant) {
+                const vStock = parseInt(currentSelectedVariant.stock) || 0;
+                if (vStock <= 0) {
+                    if (typeof Swal !== 'undefined') {
+                        Swal.fire({
+                            icon: 'warning',
+                            title: 'Producto Agotado',
+                            text: `El producto "${currentProductData ? currentProductData.name : 'seleccionado'}" está agotado en tienda.`,
+                            customClass: { popup: 'swal-axstore' }
+                        });
+                    } else {
+                        alert(`El producto "${currentProductData ? currentProductData.name : 'seleccionado'}" está agotado.`);
+                    }
+                    return;
+                }
+
+                itemToAdd = {
+                    id: currentSelectedVariant.id,
+                    producto: currentProductData ? currentProductData.name : 'Producto',
+                    variante: currentSelectedVariant.nombre || '',
+                    sku: currentSelectedVariant.sku || '',
+                    precio_venta: Number(currentSelectedVariant.precio || 0),
+                    stock: vStock,
+                    imagen: currentSelectedVariant.imgUrl || currentSelectedVariant.imagenes?.[0] || (currentProductData ? currentProductData.image : null),
+                    cantidad: 1,
+                    costo_extra: 0,
+                };
+            } else if (currentProductData) {
+                if (currentProductData.stock <= 0) {
+                    if (typeof Swal !== 'undefined') {
+                        Swal.fire({
+                            icon: 'warning',
+                            title: 'Producto Agotado',
+                            text: `El producto "${currentProductData.name}" está agotado en tienda.`,
+                            customClass: { popup: 'swal-axstore' }
+                        });
+                    } else {
+                        alert(`El producto "${currentProductData.name}" está agotado.`);
+                    }
+                    return;
+                }
+
+                itemToAdd = {
+                    id: Date.now(),
+                    producto: currentProductData.name,
+                    variante: 'Estándar',
+                    sku: currentProductData.sku,
+                    precio_venta: Number(currentProductData.price || 0),
+                    stock: currentProductData.stock,
+                    imagen: currentProductData.image || null,
+                    cantidad: 1,
+                    costo_extra: 0,
+                };
+            }
+
+            if (itemToAdd) {
+                const agregado = window.AXCart.addItem(itemToAdd);
+                if (agregado) {
+                    closeModal();
+                    // Scroll hacia arriba para que el usuario visualice la bolsa abierta en el navbar
+                    window.scrollTo({ top: 0, behavior: 'smooth' });
+                    window.AXCart.openDropdown();
+                }
+            }
         }
 
         // Cerrar con tecla ESC

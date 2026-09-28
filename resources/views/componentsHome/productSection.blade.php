@@ -212,34 +212,26 @@
                         </p>
                     </div>
 
-                    <div class="flex items-center gap-2">
-                        {{-- Ver detalles --}}
-                        <button type="button"
-                                onclick="openModal(this)"
-                                data-name="{{ $prod->nombre }}"
-                                data-price="{{ number_format($precio, 2) }}"
-                                data-category="{{ $catNombre }}"
-                                data-marca="{{ $prod->marca ?? '' }}"
-                                data-sku="{{ $sku }}"
-                                data-stock="{{ $stock }}"
-                                data-reserva="{{ $reserva }}"
-                                data-image="{{ $imgUrl ?? '' }}"
-                                data-images="{{ json_encode($imagenesUrls) }}"
-                                data-variants="{{ json_encode($variantesData) }}"
-                                data-description="{{ $prod->descripcion ?? 'No hay descripción disponible.' }}"
-                                data-atributos="{{ json_encode($prod->atributos->map(fn($a) => $a->nombre)->values()) }}"
-                                class="w-10 h-10 rounded-full bg-slate-100 hover:bg-slate-200 text-gray-600 flex items-center justify-center transition-colors"
-                                title="Ver detalles">
-                            <i class="fas fa-eye"></i>
-                        </button>
-
-                        {{-- Agregar al carrito --}}
-                        <button type="button"
-                                class="w-10 h-10 rounded-full bg-blue-600 hover:bg-blue-700 text-white flex items-center justify-center shadow-lg shadow-blue-500/30 transition-all hover:scale-105"
-                                title="Agregar al carrito">
-                            <i class="fas fa-shopping-cart"></i>
-                        </button>
-                    </div>
+                    {{-- Botón Ver con ícono de ojo --}}
+                    <button type="button"
+                            onclick="openModal(this)"
+                            data-name="{{ $prod->nombre }}"
+                            data-price="{{ number_format($precio, 2) }}"
+                            data-category="{{ $catNombre }}"
+                            data-marca="{{ $prod->marca ?? '' }}"
+                            data-sku="{{ $sku }}"
+                            data-stock="{{ $stock }}"
+                            data-reserva="{{ $reserva }}"
+                            data-image="{{ $imgUrl ?? '' }}"
+                            data-images="{{ json_encode($imagenesUrls) }}"
+                            data-variants="{{ json_encode($variantesData) }}"
+                            data-description="{{ $prod->descripcion ?? 'No hay descripción disponible.' }}"
+                            data-atributos="{{ json_encode($prod->atributos->map(fn($a) => $a->nombre)->values()) }}"
+                            class="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-slate-100 hover:bg-blue-600 text-slate-700 hover:text-white font-bold text-xs transition-all shadow-sm hover:shadow-md hover:shadow-blue-600/20 active:scale-95 group cursor-pointer"
+                            title="Ver detalles de {{ $prod->nombre }}">
+                        <i class="fas fa-eye text-slate-400 group-hover:text-white transition-colors text-xs"></i>
+                        <span class="tracking-wide">Ver</span>
+                    </button>
                 </div>
             </div>
         </div>

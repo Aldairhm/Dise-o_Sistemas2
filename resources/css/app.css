@@ -205,3 +205,9 @@ html.dark .swal2-popup .swal2-html-container {
 html.dark .swal2-popup .swal2-html-container strong {
     color: #e2e8f0 !important;
 }
+
+/* SweetAlert2 siempre debe posicionarse por encima de cualquier modal, drawer o backdrop */
+.swal2-container,
+.swal2-topmost {
+    z-index: 100000 !important;
+}
