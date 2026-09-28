@@ -61,7 +61,7 @@ class ComisionVendedorController extends Controller
             'total'     => (clone $baseStats)->sum('monto'),
         ];
 
-        $vendedores = $isAdmin ? User::where('rol', 'vendedor')->orderBy('nombre_real')->get() : collect();
+        $vendedores = $isAdmin ? User::orderBy('nombre_real')->get() : collect();
 
         if ($request->ajax()) {
             return response()->json([

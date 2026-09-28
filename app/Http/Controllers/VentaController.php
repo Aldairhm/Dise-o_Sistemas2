@@ -383,7 +383,8 @@ class VentaController extends Controller
                 $lineas = collect($validated['lineas']);
 
                 // Bloqueo pesimista de variantes para garantizar coherencia de stock ante concurrencia
-                $variantes = Variante::whereIn('id', $lineas->pluck('id_variante'))
+                $variantes = Variante::with('producto')
+                    ->whereIn('id', $lineas->pluck('id_variante'))
                     ->lockForUpdate()
                     ->get()
                     ->keyBy('id');
@@ -473,6 +474,9 @@ class VentaController extends Controller
                 $horaSalidaFinal = !empty($validated['hora_salida']) ? $validated['hora_salida'] : now()->toTimeString();
 
                 // C. Iterar sobre el carrito e insertar en `detalleventa` y `salida`
+                $comisionService = app(\App\Services\ComisionService::class);
+                $usuarioVendedor = User::find($userId);
+
                 foreach ($lineas as $linea) {
                     $variante = $variantes->get($linea['id_variante']);
                     $cantidad = (int) $linea['cantidad'];
@@ -493,8 +497,10 @@ class VentaController extends Controller
                     // Costos y comisiones asociados
                     $costoUnitario = (float) ($variante->costo_promedio ?? 0);
                     $costoTotal = $costoUnitario * $cantidad;
-                    $comisionUnitaria = (float) ($variante->comision ?? 0);
-                    $comisionTotal = $comisionUnitaria * $cantidad;
+
+                    // Resolver porcentaje y monto de comisión usando la cascada del servicio
+                    $porcentajeComision = $usuarioVendedor ? $comisionService->resolverPorcentaje($usuarioVendedor, $variante) : 0;
+                    $comisionTotal = $comisionService->calcularMonto($subtotalLinea, $porcentajeComision);
 
                     // 2. Generar el registro de salida asociado para control de inventario con costo_extra, precio_envio y datos de entrega
                     $salida = Salida::create([
@@ -523,13 +529,14 @@ class VentaController extends Controller
                     // 3. Descontar el stock físico de la variante
                     $variante->decrement('stock', $cantidad);
 
-                    // 4. Si la variante tiene comisión asignada, registrar en `comision_vendedor`
+                    // 4. Si la comisión calculada es mayor a 0, registrar en `comision_vendedor`
                     if ($comisionTotal > 0) {
                         ComisionVendedor::create([
-                            'id_vendedor' => $userId,
-                            'id_salida' => $salida->id,
-                            'monto' => $comisionTotal,
-                            'estado' => 'Pendiente',
+                            'id_vendedor'    => $userId,
+                            'id_salida'      => $salida->id,
+                            'monto'          => $comisionTotal,
+                            'porcentaje'     => $porcentajeComision,
+                            'estado'         => 'Pendiente',
                             'fecha_registro' => now(),
                         ]);
                     }

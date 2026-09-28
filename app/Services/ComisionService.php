@@ -31,8 +31,13 @@ class ComisionService
         }
 
         // cascada (default)
-        if ($variante && (float) ($variante->comision ?? 0) > 0) {
-            return (float) $variante->comision;
+        if ($variante) {
+            if ((float) ($variante->comision ?? 0) > 0) {
+                return (float) $variante->comision;
+            }
+            if (!empty($variante->producto) && (float) ($variante->producto->comision ?? 0) > 0) {
+                return (float) $variante->producto->comision;
+            }
         }
 
         if (!is_null($vendedor->porcentaje_comision) && (float) $vendedor->porcentaje_comision > 0) {
