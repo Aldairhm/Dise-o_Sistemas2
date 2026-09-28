@@ -19,6 +19,7 @@ class User extends Authenticatable
         'rol',
         'estado',
         'token',
+        'porcentaje_comision',
     ];
 
     protected $hidden = [
@@ -29,8 +30,16 @@ class User extends Authenticatable
     protected function casts(): array
     {
         return [
-            'password' => 'hashed',
+            'password'            => 'hashed',
+            'porcentaje_comision' => 'decimal:2',
         ];
     }
 
+    // ── Relaciones ────────────────────────────────────────────────────────────
+
+    public function comisiones()
+    {
+        return $this->hasMany(ComisionVendedor::class, 'id_vendedor');
+    }
 }
+

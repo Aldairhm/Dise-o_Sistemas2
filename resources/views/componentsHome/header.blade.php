@@ -19,6 +19,7 @@
                     <a href="{{ route('compras.create') }}" class="text-sm font-medium text-gray-600 hover:text-blue-600 transition-colors flex items-center gap-2"><i class="fas fa-cart-plus"></i> Compras</a>
                     <a href="{{ route('categorias.index') }}" class="text-sm font-medium text-gray-600 hover:text-blue-600 transition-colors flex items-center gap-2"><i class="fas fa-folder-open"></i> Categorías</a>              
                     <a href="{{ route('usuarios.index') }}" class="text-sm font-medium text-gray-600 hover:text-blue-600 transition-colors flex items-center gap-2"><i class="fas fa-users-gear"></i> Usuarios</a>
+                    <a href="{{ route('comisiones.index') }}" class="text-sm font-medium text-gray-600 hover:text-indigo-600 transition-colors flex items-center gap-2"><i class="fas fa-hand-holding-dollar"></i> Comisiones</a>
                 </nav>
 
                  <!-- Icons -->

@@ -14,6 +14,7 @@
                  <!-- Desktop Menu -->
                   <nav class="hidden lg:flex items-center gap-8">
                     <a href="/home" class="text-sm font-semibold text-blue-600 flex items-center gap-2"><i class="fas fa-home"></i> Inicio</a>
+                    <a href="{{ route('comisiones.index') }}" class="text-sm font-medium text-gray-600 hover:text-indigo-600 transition-colors flex items-center gap-2"><i class="fas fa-hand-holding-dollar"></i> Mis Comisiones</a>
                     </nav>
 
                  <!-- Icons -->

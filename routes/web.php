@@ -19,6 +19,7 @@ use App\Http\Controllers\VarianteController;
 
 use App\Http\Controllers\ProveedorController;
 use App\Http\Controllers\CatalogoController;
+use App\Http\Controllers\ComisionVendedorController;
 
 // ── Autenticación (Rutas públicas) ───────────────────────────
 
@@ -105,8 +106,17 @@ Route::middleware('auth')->group(function () {
         Route::put('/variantes/{id}', [VarianteController::class, 'update'])->name('variantes.update');
         Route::delete('/variantes/{id}', [VarianteController::class, 'destroy'])->name('variantes.destroy');
         Route::patch('/variantes/{id}/toggle-status', [VarianteController::class, 'toggleStatus'])->name('variantes.toggleStatus');
+
+        // ── Comisiones: gestión admin ──────────────────────────────────────
+        Route::post('/comisiones',                         [ComisionVendedorController::class, 'store'])->name('comisiones.store');
+        Route::put('/comisiones/{comision}',               [ComisionVendedorController::class, 'update'])->name('comisiones.update');
+        Route::post('/comisiones/liquidar',                [ComisionVendedorController::class, 'liquidar'])->name('comisiones.liquidar');
+        Route::patch('/comisiones/{comision}/cancelar',    [ComisionVendedorController::class, 'cancelar'])->name('comisiones.cancelar');
     });
 
     // ── Productos: índice visible para todos los usuarios autenticados ──
     Route::get('/productos', [ProductoController::class, 'index'])->name('productos.index');
+
+    // ── Comisiones: vendedor ve las suyas ──────────────────────────────────
+    Route::get('/comisiones', [ComisionVendedorController::class, 'index'])->name('comisiones.index');
 });
