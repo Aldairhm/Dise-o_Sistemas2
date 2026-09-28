@@ -1,151 +1,114 @@
-<!DOCTYPE html>
-<html lang="es" class="h-full bg-slate-50/60">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="csrf-token" content="{{ csrf_token() }}">
-    <title>Comisiones de Vendedores — AXStore</title>
-
-    <script>
-        (function() {
-            var t = localStorage.getItem('ax_theme') || 'system';
-            if (t === 'dark' || (t === 'system' && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
-                document.documentElement.classList.add('dark');
-            }
-        })();
-    </script>
-
-    <link rel="icon" type="image/png" href="{{ asset('assets/images/logo.png') }}">
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=Space+Grotesk:wght@600;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<x-app title="Dashboard de Comisiones | AXStore">
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
-    @vite(['resources/css/home.css', 'resources/css/app.css', 'resources/js/app.js'])
-</head>
-<body class="min-h-screen text-slate-800 antialiased font-['Plus_Jakarta_Sans',sans-serif] bg-slate-50 flex flex-col">
+    <div class="max-w-[1440px] mx-auto space-y-6">
 
-    <header class="bg-white/85 backdrop-blur-md sticky top-0 z-40 border-b border-slate-200/80 transition-all duration-300">
-        @include('componentsHome.header')
-    </header>
-
-    <main class="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8">
-
-        {{-- ENCABEZADO --}}
-        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8">
+        <!-- HEADER DEL DASHBOARD -->
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
             <div>
-                <div class="flex items-center gap-2 text-xs font-bold text-indigo-600 uppercase tracking-widest mb-1.5">
-                    <i class="fas fa-hand-holding-dollar"></i>
-                    <span>Módulo de Comisiones</span>
+                <a href="{{ route('home') }}" class="inline-flex items-center gap-2 text-xs font-bold uppercase tracking-widest text-slate-400 hover:text-blue-600 transition-colors mb-3">
+                    <i class="fas fa-arrow-left"></i> Volver al inicio
+                </a>
+                <div class="flex items-center gap-3.5">
+                    <div class="w-12 h-12 rounded-2xl bg-blue-600 text-white flex items-center justify-center shadow-lg shadow-blue-600/20">
+                        <i class="fas fa-hand-holding-dollar text-xl"></i>
+                    </div>
+                    <div>
+                        <p class="text-xs font-black uppercase tracking-[0.18em] text-blue-600 mb-0.5">Gestión Financiera</p>
+                        <h1 class="text-2xl sm:text-3xl font-black tracking-tight text-slate-900">
+                            {{ $isAdmin ? 'Dashboard de Comisiones' : 'Mis Comisiones' }}
+                        </h1>
+                    </div>
                 </div>
-                <h1 class="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight">
-                    {{ $isAdmin ? 'Gestión de Comisiones y Liquidaciones' : 'Mis Comisiones Ganadas' }}
-                </h1>
-                <p class="text-sm text-slate-500 mt-1">
-                    {{ $isAdmin ? 'Control de pagos de comisiones, bonificaciones y liquidación con comprobantes.' : 'Consulta el estado y pagos de tus comisiones generadas por venta.' }}
-                </p>
             </div>
 
+            <!-- BOTONES DE ACCIÓN RÁPIDA -->
             @if($isAdmin)
             <div class="flex items-center gap-3 flex-wrap">
                 {{-- Botón Liquidar --}}
                 <button type="button" onclick="openLiquidarModal()"
                         id="btnLiquidar"
-                        class="inline-flex items-center justify-center gap-2.5 px-5 py-3 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold text-sm shadow-lg shadow-emerald-500/25 transition-all duration-200 hover:scale-[1.02] active:scale-[0.98] cursor-pointer">
-                    <div class="w-6 h-6 rounded-lg bg-white/20 flex items-center justify-center text-xs">
-                        <i class="fas fa-circle-check"></i>
-                    </div>
+                        class="inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold text-xs shadow-lg shadow-emerald-500/25 transition-all duration-200 hover:scale-[1.02] active:scale-[0.98] cursor-pointer">
+                    <i class="fas fa-circle-check"></i>
                     <span>LIQUIDAR PAGO</span>
                 </button>
-                {{-- Botón Registro manual / Bono --}}
+                {{-- Botón Nuevo Bono --}}
                 <button type="button" onclick="openCreateModal()"
                         id="btnNuevaComision"
-                        class="inline-flex items-center justify-center gap-2.5 px-5 py-3 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-extrabold text-sm shadow-lg shadow-indigo-500/25 transition-all duration-200 hover:scale-[1.02] active:scale-[0.98] cursor-pointer">
-                    <div class="w-6 h-6 rounded-lg bg-white/20 flex items-center justify-center text-xs">
-                        <i class="fas fa-plus"></i>
-                    </div>
+                        class="inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-extrabold text-xs shadow-lg shadow-blue-500/25 transition-all duration-200 hover:scale-[1.02] active:scale-[0.98] cursor-pointer">
+                    <i class="fas fa-plus"></i>
                     <span>NUEVO BONO</span>
                 </button>
             </div>
             @endif
         </div>
 
-        {{-- KPI CARDS --}}
-        <div class="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-8">
-            <div class="bg-white rounded-2xl p-4 sm:p-5 border border-slate-200/80 shadow-xs">
-                <div class="flex items-center justify-between">
-                    <span class="text-xs font-bold text-slate-500 uppercase tracking-wider">Total Histórico</span>
-                    <div class="w-9 h-9 rounded-xl bg-slate-100 text-slate-600 flex items-center justify-center text-sm">
-                        <i class="fas fa-chart-line"></i>
-                    </div>
-                </div>
-                <p class="text-2xl font-black text-slate-900 mt-3" id="kpiTotal">${{ number_format($stats['total'], 2) }}</p>
-            </div>
-            <div class="bg-white rounded-2xl p-4 sm:p-5 border border-amber-200 shadow-xs">
-                <div class="flex items-center justify-between">
-                    <span class="text-xs font-bold text-amber-600 uppercase tracking-wider">Por Pagar (Pendiente)</span>
-                    <div class="w-9 h-9 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center text-sm">
-                        <i class="fas fa-clock"></i>
-                    </div>
-                </div>
-                <p class="text-2xl font-black text-amber-700 mt-3" id="kpiPendiente">${{ number_format($stats['pendiente'], 2) }}</p>
-            </div>
-            <div class="bg-white rounded-2xl p-4 sm:p-5 border border-emerald-200 shadow-xs">
-                <div class="flex items-center justify-between">
-                    <span class="text-xs font-bold text-emerald-600 uppercase tracking-wider">Pagadas</span>
-                    <div class="w-9 h-9 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center text-sm">
-                        <i class="fas fa-check-circle"></i>
-                    </div>
-                </div>
-                <p class="text-2xl font-black text-emerald-700 mt-3" id="kpiPagada">${{ number_format($stats['pagada'], 2) }}</p>
-            </div>
-            <div class="bg-white rounded-2xl p-4 sm:p-5 border border-slate-200 shadow-xs">
-                <div class="flex items-center justify-between">
-                    <span class="text-xs font-bold text-slate-500 uppercase tracking-wider">Canceladas</span>
-                    <div class="w-9 h-9 rounded-xl bg-slate-100 text-slate-500 flex items-center justify-center text-sm">
-                        <i class="fas fa-ban"></i>
-                    </div>
-                </div>
-                <p class="text-2xl font-black text-slate-900 mt-3" id="kpiCancelada">${{ number_format($stats['cancelada'], 2) }}</p>
-            </div>
-        </div>
+        <!-- SUB-NAV / PESTAÑAS -->
+        <nav class="flex flex-wrap items-center gap-2 rounded-2xl border border-slate-200 bg-white p-1.5 shadow-sm" aria-label="Secciones">
+            <a href="{{ route('comisiones.index') }}" class="rounded-xl bg-blue-600 px-4 py-2 text-sm font-bold text-white shadow-sm flex items-center gap-2 transition-all">
+                <i class="fas fa-coins"></i>
+                <span>Comisiones</span>
+            </a>
+            @if($isAdmin)
+            <a href="{{ route('ventas.index') }}" class="rounded-xl px-4 py-2 text-sm font-bold text-slate-600 hover:bg-slate-50 hover:text-blue-600 transition-all flex items-center gap-2">
+                <i class="fas fa-chart-line text-slate-400"></i>
+                <span>Dashboard de Ventas</span>
+            </a>
+            <a href="{{ route('ventas.pedidos') }}" class="rounded-xl px-4 py-2 text-sm font-bold text-slate-600 hover:bg-slate-50 hover:text-blue-600 transition-all flex items-center gap-2">
+                <i class="fas fa-boxes-packing text-slate-400"></i>
+                <span>Control de Envíos</span>
+            </a>
+            @endif
+            <a href="{{ route('ventas.create') }}" class="rounded-xl px-4 py-2 text-sm font-bold text-slate-600 hover:bg-slate-50 hover:text-blue-600 transition-all flex items-center gap-2">
+                <i class="fas fa-cash-register text-slate-400"></i>
+                <span>Terminal de Ventas</span>
+            </a>
+        </nav>
 
-        {{-- FILTROS --}}
-        <div class="bg-white rounded-2xl p-4 sm:p-5 border border-slate-200/80 shadow-xs mb-6">
-            <form id="filtrosForm" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3 items-center">
+        <!-- FILTROS GLOBALES -->
+        <section class="bg-white border border-slate-200 rounded-2xl p-4 sm:p-5 shadow-sm">
+            <form id="filtrosForm" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-12 gap-3.5 items-end">
 
                 @if($isAdmin)
-                {{-- Filtro vendedor --}}
-                <div>
+                {{-- SELECT VENDEDOR --}}
+                <div class="lg:col-span-3">
+                    <label for="filtroVendedor" class="block text-[11px] font-bold uppercase tracking-wider text-slate-600 mb-1.5">
+                        <i class="fas fa-user-tie text-slate-400 mr-1"></i> Vendedor
+                    </label>
                     <select id="filtroVendedor" name="vendedor_id"
-                            class="w-full py-2.5 px-3.5 bg-slate-50 border border-slate-200 focus:border-indigo-500 rounded-xl text-xs sm:text-sm text-slate-700 focus:ring-2 focus:ring-indigo-500/20 focus:outline-none transition-all">
+                            class="w-full rounded-xl border border-slate-300 bg-slate-50 px-3 py-2 text-xs font-semibold text-slate-700 focus:border-blue-500 focus:bg-white focus:outline-none focus:ring-4 focus:ring-blue-500/10 transition-all">
                         <option value="">Todos los vendedores</option>
                         @foreach($vendedores as $v)
                             <option value="{{ $v->id }}" {{ request('vendedor_id') == $v->id ? 'selected' : '' }}>
-                                {{ $v->nombre_real }}
+                                {{ $v->nombre_real }} ({{ $v->username }})
                             </option>
                         @endforeach
                     </select>
                 </div>
                 @endif
 
-                {{-- Estado --}}
-                <div>
+                {{-- ESTADO --}}
+                <div class="{{ $isAdmin ? 'lg:col-span-2' : 'lg:col-span-3' }}">
+                    <label for="filtroEstado" class="block text-[11px] font-bold uppercase tracking-wider text-slate-600 mb-1.5">
+                        <i class="fas fa-tag text-slate-400 mr-1"></i> Estado
+                    </label>
                     <select id="filtroEstado" name="estado"
-                            class="w-full py-2.5 px-3.5 bg-slate-50 border border-slate-200 focus:border-indigo-500 rounded-xl text-xs sm:text-sm text-slate-700 focus:ring-2 focus:ring-indigo-500/20 focus:outline-none transition-all">
+                            class="w-full rounded-xl border border-slate-300 bg-slate-50 px-3 py-2 text-xs font-semibold text-slate-700 focus:border-blue-500 focus:bg-white focus:outline-none focus:ring-4 focus:ring-blue-500/10 transition-all">
                         <option value="todos">Todos los estados</option>
-                        <option value="Pendiente" {{ request('estado') === 'Pendiente' ? 'selected' : '' }}>Pendiente (Por pagar)</option>
+                        <option value="Pendiente" {{ request('estado') === 'Pendiente' ? 'selected' : '' }}>Pendiente (Por liquidar)</option>
                         <option value="Pagada"    {{ request('estado') === 'Pagada'    ? 'selected' : '' }}>Pagada</option>
                         <option value="Cancelada" {{ request('estado') === 'Cancelada' ? 'selected' : '' }}>Cancelada</option>
                     </select>
                 </div>
 
-                {{-- Método de Pago --}}
-                <div>
+                {{-- MÉTODO DE PAGO --}}
+                <div class="{{ $isAdmin ? 'lg:col-span-2' : 'lg:col-span-3' }}">
+                    <label for="filtroMetodoPago" class="block text-[11px] font-bold uppercase tracking-wider text-slate-600 mb-1.5">
+                        <i class="fas fa-wallet text-slate-400 mr-1"></i> Método de Pago
+                    </label>
                     <select id="filtroMetodoPago" name="metodo_pago"
-                            class="w-full py-2.5 px-3.5 bg-slate-50 border border-slate-200 focus:border-indigo-500 rounded-xl text-xs sm:text-sm text-slate-700 focus:ring-2 focus:ring-indigo-500/20 focus:outline-none transition-all">
-                        <option value="todos">Todos los métodos de pago</option>
+                            class="w-full rounded-xl border border-slate-300 bg-slate-50 px-3 py-2 text-xs font-semibold text-slate-700 focus:border-blue-500 focus:bg-white focus:outline-none focus:ring-4 focus:ring-blue-500/10 transition-all">
+                        <option value="todos">Todos los métodos</option>
                         <option value="Efectivo" {{ request('metodo_pago') === 'Efectivo' ? 'selected' : '' }}>Efectivo</option>
                         <option value="Transferencia Bancaria" {{ request('metodo_pago') === 'Transferencia Bancaria' ? 'selected' : '' }}>Transferencia Bancaria</option>
                         <option value="Cheque" {{ request('metodo_pago') === 'Cheque' ? 'selected' : '' }}>Cheque</option>
@@ -153,37 +116,110 @@
                     </select>
                 </div>
 
-                {{-- Fechas --}}
-                <div class="flex items-center gap-1.5">
+                {{-- FECHA DESDE --}}
+                <div class="lg:col-span-2">
+                    <label for="filtroDesde" class="block text-[11px] font-bold uppercase tracking-wider text-slate-600 mb-1.5">
+                        <i class="fas fa-calendar-day text-slate-400 mr-1"></i> Desde
+                    </label>
                     <input type="date" id="filtroDesde" name="fecha_desde"
                            value="{{ request('fecha_desde') }}"
-                           class="w-1/2 py-2 px-2 bg-slate-50 border border-slate-200 focus:border-indigo-500 rounded-xl text-xs text-slate-700 focus:outline-none"
-                           placeholder="Desde">
-                    <span class="text-slate-400 text-xs">—</span>
-                    <input type="date" id="filtroHasta" name="fecha_hasta"
-                           value="{{ request('fecha_hasta') }}"
-                           class="w-1/2 py-2 px-2 bg-slate-50 border border-slate-200 focus:border-indigo-500 rounded-xl text-xs text-slate-700 focus:outline-none"
-                           placeholder="Hasta">
+                           class="w-full rounded-xl border border-slate-300 bg-slate-50 px-3 py-2 text-xs font-semibold text-slate-700 focus:border-blue-500 focus:bg-white focus:outline-none focus:ring-4 focus:ring-blue-500/10 transition-all">
                 </div>
 
-                <div class="flex items-center gap-2">
+                {{-- FECHA HASTA --}}
+                <div class="lg:col-span-2">
+                    <label for="filtroHasta" class="block text-[11px] font-bold uppercase tracking-wider text-slate-600 mb-1.5">
+                        <i class="fas fa-calendar-check text-slate-400 mr-1"></i> Hasta
+                    </label>
+                    <input type="date" id="filtroHasta" name="fecha_hasta"
+                           value="{{ request('fecha_hasta') }}"
+                           class="w-full rounded-xl border border-slate-300 bg-slate-50 px-3 py-2 text-xs font-semibold text-slate-700 focus:border-blue-500 focus:bg-white focus:outline-none focus:ring-4 focus:ring-blue-500/10 transition-all">
+                </div>
+
+                {{-- BOTONES DE FILTRADO --}}
+                <div class="lg:col-span-1 flex items-center gap-1.5">
                     <button type="button" onclick="aplicarFiltros()"
-                            class="flex-1 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs sm:text-sm rounded-xl transition-all duration-200 cursor-pointer text-center">
-                        <i class="fas fa-filter mr-1"></i>Filtrar
+                            class="w-full rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-bold py-2 px-2.5 text-xs transition-all shadow-md shadow-blue-600/15 flex items-center justify-center gap-1 cursor-pointer"
+                            title="Aplicar filtros">
+                        <i class="fas fa-filter text-[11px]"></i>
+                        <span>Filtrar</span>
                     </button>
                     <button type="button" onclick="limpiarFiltros()"
-                            class="p-2.5 text-slate-400 hover:text-indigo-600 rounded-xl hover:bg-slate-100 transition-colors cursor-pointer flex-shrink-0" title="Limpiar filtros">
-                        <i class="fas fa-rotate-right text-sm"></i>
+                            class="rounded-xl border border-slate-300 hover:bg-slate-100 text-slate-500 p-2 text-xs transition-all cursor-pointer"
+                            title="Restablecer">
+                        <i class="fas fa-rotate-left"></i>
                     </button>
                 </div>
             </form>
+        </section>
+
+        <!-- KPI CARDS (ESTILO VENTAS) -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            <!-- TOTAL COMISIONES -->
+            <div class="bg-white border border-slate-200 rounded-2xl p-5 shadow-sm relative overflow-hidden flex flex-col justify-between">
+                <div class="flex items-center justify-between mb-3">
+                    <span class="text-[11px] font-black uppercase tracking-wider text-slate-500">Total Comisiones</span>
+                    <div class="w-8 h-8 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center text-xs">
+                        <i class="fas fa-file-invoice-dollar"></i>
+                    </div>
+                </div>
+                <div>
+                    <h3 class="text-3xl font-black text-slate-900 tracking-tight" id="kpiTotal">${{ number_format($stats['total'], 2) }}</h3>
+                    <p class="text-xs font-semibold text-slate-500 mt-1 flex items-center gap-1.5">
+                        <span class="w-2 h-2 rounded-full bg-blue-600"></span>
+                        <span>{{ $comisiones->total() }} registros</span>
+                    </p>
+                </div>
+            </div>
+
+            <!-- POR PAGAR (PENDIENTE) -->
+            <div class="bg-white border border-slate-200 rounded-2xl p-5 shadow-sm relative overflow-hidden flex flex-col justify-between">
+                <div class="flex items-center justify-between mb-3">
+                    <span class="text-[11px] font-black uppercase tracking-wider text-slate-500">Por Pagar (Pendiente)</span>
+                    <div class="w-8 h-8 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center text-xs">
+                        <i class="fas fa-clock"></i>
+                    </div>
+                </div>
+                <div>
+                    <h3 class="text-3xl font-black text-slate-900 tracking-tight" id="kpiPendiente">${{ number_format($stats['pendiente'], 2) }}</h3>
+                    <p class="text-xs font-semibold text-amber-600 mt-1">Por liquidar a vendedores</p>
+                </div>
+            </div>
+
+            <!-- PAGADAS / LIQUIDADAS -->
+            <div class="bg-white border border-slate-200 rounded-2xl p-5 shadow-sm relative overflow-hidden flex flex-col justify-between">
+                <div class="flex items-center justify-between mb-3">
+                    <span class="text-[11px] font-black uppercase tracking-wider text-slate-500">Pagadas / Liquidadas</span>
+                    <div class="w-8 h-8 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center text-xs">
+                        <i class="fas fa-check-circle"></i>
+                    </div>
+                </div>
+                <div>
+                    <h3 class="text-3xl font-black text-slate-900 tracking-tight" id="kpiPagada">${{ number_format($stats['pagada'], 2) }}</h3>
+                    <p class="text-xs font-semibold text-emerald-600 mt-1">Total transferido / entregado</p>
+                </div>
+            </div>
+
+            <!-- CANCELADAS -->
+            <div class="bg-white border border-slate-200 rounded-2xl p-5 shadow-sm relative overflow-hidden flex flex-col justify-between">
+                <div class="flex items-center justify-between mb-3">
+                    <span class="text-[11px] font-black uppercase tracking-wider text-slate-500">Canceladas</span>
+                    <div class="w-8 h-8 rounded-xl bg-rose-50 text-rose-600 flex items-center justify-center text-xs">
+                        <i class="fas fa-ban"></i>
+                    </div>
+                </div>
+                <div>
+                    <h3 class="text-3xl font-black text-slate-900 tracking-tight" id="kpiCancelada">${{ number_format($stats['cancelada'], 2) }}</h3>
+                    <p class="text-xs font-semibold text-slate-400 mt-1">Anuladas por devoluciones</p>
+                </div>
+            </div>
         </div>
 
-        {{-- TABLA --}}
-        <div class="bg-white rounded-2xl border border-slate-200/80 shadow-xs overflow-hidden relative" id="tableContainer">
+        <!-- TABLA PRINCIPAL DE COMISIONES -->
+        <div class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden relative" id="tableContainer">
             {{-- Loader --}}
             <div id="tableLoading" class="absolute inset-0 bg-white/70 backdrop-blur-xs flex items-center justify-center z-20 hidden">
-                <div class="flex items-center gap-3 bg-white px-5 py-3 rounded-2xl shadow-xl border border-slate-100 text-indigo-600 text-sm font-bold">
+                <div class="flex items-center gap-3 bg-white px-5 py-3 rounded-2xl shadow-xl border border-slate-100 text-blue-600 text-sm font-bold">
                     <i class="fas fa-spinner fa-spin text-lg"></i>
                     <span>Cargando comisiones...</span>
                 </div>
@@ -194,20 +230,12 @@
             </div>
         </div>
 
-    </main>
+    </div>
 
-    <footer class="bg-white border-t border-slate-200/80 mt-12">
-        @include('componentsHome.footer')
-    </footer>
-
-    {{-- ═══════════════════════════════════════════════════════════════════
-         MODALES
-    ═══════════════════════════════════════════════════════════════════════ --}}
+    {{-- MODALES --}}
     @include('comisiones.modals')
 
-    {{-- ═══════════════════════════════════════════════════════════════════
-         JS
-    ═══════════════════════════════════════════════════════════════════════ --}}
+    {{-- SCRIPTS --}}
     <script>
     const ROUTES = {
         index:      "{{ route('comisiones.index') }}",
@@ -534,6 +562,4 @@
         }
     });
     </script>
-
-</body>
-</html>
+</x-app>
