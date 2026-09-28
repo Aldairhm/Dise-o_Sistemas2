@@ -18,10 +18,10 @@ class ComisionVendedorController extends Controller
 
     public function index(Request $request)
     {
-        $user  = Auth::user();
+        $user    = Auth::user();
         $isAdmin = $user->rol === 'admin';
 
-        $query = ComisionVendedor::with(['vendedor', 'salida', 'liquidadoPor'])
+        $query = ComisionVendedor::with(['vendedor', 'salida.variante.producto', 'liquidadoPor'])
             ->orderBy('fecha_registro', 'desc');
 
         // Vendedor solo ve las suyas
@@ -36,6 +36,10 @@ class ComisionVendedorController extends Controller
 
         if ($request->filled('estado') && $request->estado !== 'todos') {
             $query->where('estado', $request->estado);
+        }
+
+        if ($request->filled('metodo_pago') && $request->metodo_pago !== 'todos') {
+            $query->where('metodo_pago', $request->metodo_pago);
         }
 
         if ($request->filled('fecha_desde')) {
@@ -75,39 +79,57 @@ class ComisionVendedorController extends Controller
     }
 
     // ─────────────────────────────────────────────────────────────────────────
-    // STORE — Registro manual de comisión (solo admin)
+    // PENDIENTES VENDEDOR — Obtiene comisiones pendientes para liquidación (admin)
+    // ─────────────────────────────────────────────────────────────────────────
+
+    public function pendientesVendedor(int $idVendedor)
+    {
+        $vendedor = User::findOrFail($idVendedor);
+        $pendientes = $this->comisionService->getPendientesVendedor($idVendedor);
+
+        $data = $pendientes->map(function ($c) {
+            return [
+                'id'             => $c->id,
+                'concepto'       => $c->concepto ?? ($c->salida ? "Venta #{$c->salida->id} ({$c->salida->cantidad} uds)" : "Comisión #{$c->id}"),
+                'monto'          => (float) $c->monto,
+                'fecha_registro' => $c->fecha_registro ? $c->fecha_registro->format('d/m/Y H:i') : 'N/A',
+                'id_salida'      => $c->id_salida,
+            ];
+        });
+
+        return response()->json([
+            'success'    => true,
+            'vendedor'   => $vendedor->nombre_real,
+            'total'      => (float) $pendientes->sum('monto'),
+            'cantidad'   => $pendientes->count(),
+            'comisiones' => $data,
+        ]);
+    }
+
+    // ─────────────────────────────────────────────────────────────────────────
+    // STORE — Registro manual de comisión / bono (solo admin)
     // ─────────────────────────────────────────────────────────────────────────
 
     public function store(Request $request)
     {
         $validated = $request->validate([
             'id_vendedor' => ['required', 'integer', 'exists:usuario,id'],
-            'id_salida'   => ['nullable', 'integer', 'exists:salida,id'],
+            'concepto'    => ['required', 'string', 'max:150'],
             'monto'       => ['required', 'numeric', 'min:0.01'],
-            'porcentaje'  => ['nullable', 'numeric', 'min:0', 'max:100'],
             'notas'       => ['nullable', 'string', 'max:500'],
         ], [
             'id_vendedor.required' => 'Debes seleccionar un vendedor.',
             'id_vendedor.exists'   => 'El vendedor seleccionado no existe.',
+            'concepto.required'    => 'Debes ingresar el concepto o motivo.',
             'monto.required'       => 'El monto de comisión es obligatorio.',
             'monto.min'            => 'El monto debe ser mayor a 0.',
         ]);
 
-        // Anti-duplicado si viene con id_salida
-        if (!empty($validated['id_salida'])) {
-            if (ComisionVendedor::where('id_salida', $validated['id_salida'])->exists()) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Ya existe una comisión registrada para esa salida.',
-                ], 422);
-            }
-        }
-
-        $comision = ComisionVendedor::create([
+        ComisionVendedor::create([
             'id_vendedor'    => $validated['id_vendedor'],
-            'id_salida'      => $validated['id_salida'] ?? null,
+            'concepto'       => $validated['concepto'],
             'monto'          => $validated['monto'],
-            'porcentaje'     => $validated['porcentaje'] ?? 0,
+            'porcentaje'     => null,
             'notas'          => $validated['notas'] ?? null,
             'estado'         => 'Pendiente',
             'fecha_registro' => now(),
@@ -116,15 +138,15 @@ class ComisionVendedorController extends Controller
         if ($request->ajax()) {
             return response()->json([
                 'success' => true,
-                'message' => 'Comisión registrada exitosamente.',
+                'message' => 'Comisión/Bono registrado exitosamente.',
             ]);
         }
 
-        return redirect()->route('comisiones.index')->with('success', 'Comisión registrada exitosamente.');
+        return redirect()->route('comisiones.index')->with('success', 'Comisión/Bono registrado exitosamente.');
     }
 
     // ─────────────────────────────────────────────────────────────────────────
-    // UPDATE — Ajuste manual de monto/notas antes de pagar (solo admin)
+    // UPDATE — Ajuste manual de monto/concepto/notas antes de pagar (solo admin)
     // ─────────────────────────────────────────────────────────────────────────
 
     public function update(Request $request, ComisionVendedor $comision)
@@ -138,15 +160,15 @@ class ComisionVendedorController extends Controller
         }
 
         $validated = $request->validate([
-            'monto'      => ['required', 'numeric', 'min:0.01'],
-            'porcentaje' => ['nullable', 'numeric', 'min:0', 'max:100'],
-            'notas'      => ['nullable', 'string', 'max:500'],
+            'concepto' => ['nullable', 'string', 'max:150'],
+            'monto'    => ['required', 'numeric', 'min:0.01'],
+            'notas'    => ['nullable', 'string', 'max:500'],
         ]);
 
         $comision->update([
-            'monto'      => $validated['monto'],
-            'porcentaje' => $validated['porcentaje'] ?? $comision->porcentaje,
-            'notas'      => $validated['notas'] ?? $comision->notas,
+            'concepto' => $validated['concepto'] ?? $comision->concepto,
+            'monto'    => $validated['monto'],
+            'notas'    => $validated['notas'] ?? $comision->notas,
         ]);
 
         return response()->json([
@@ -156,41 +178,56 @@ class ComisionVendedorController extends Controller
     }
 
     // ─────────────────────────────────────────────────────────────────────────
-    // LIQUIDAR — Marca en lote como Pagadas (solo admin)
+    // LIQUIDAR — Paga y registra el método de pago (solo admin)
     // ─────────────────────────────────────────────────────────────────────────
 
     public function liquidar(Request $request)
     {
         $validated = $request->validate([
-            'id_vendedor' => ['required', 'integer', 'exists:usuario,id'],
-            'hasta_fecha' => ['nullable', 'date'],
-            'notas'       => ['nullable', 'string', 'max:500'],
+            'id_vendedor'      => ['required', 'integer', 'exists:usuario,id'],
+            'metodo_pago'      => ['required', 'string', 'in:Efectivo,Transferencia Bancaria,Cheque,Billetera Digital,Otro'],
+            'referencia_pago'  => ['nullable', 'string', 'max:100'],
+            'comisiones_ids'   => ['nullable', 'array'],
+            'comisiones_ids.*' => ['integer', 'exists:comision_vendedor,id'],
+            'comprobante_pago' => ['nullable', 'file', 'mimes:jpeg,png,jpg,webp,pdf', 'max:5120'],
+            'notas'            => ['nullable', 'string', 'max:500'],
         ], [
             'id_vendedor.required' => 'Debes seleccionar un vendedor.',
+            'metodo_pago.required' => 'Debes seleccionar el método de pago.',
         ]);
 
-        $cantidad = $this->comisionService->liquidarVendedor(
-            $validated['id_vendedor'],
-            $validated['hasta_fecha'] ?? null,
-            $validated['notas']       ?? null
+        $comprobantePath = null;
+        if ($request->hasFile('comprobante_pago')) {
+            $archivo = $request->file('comprobante_pago');
+            $nombreArchivo = 'liquidacion_vendedor_' . $validated['id_vendedor'] . '_' . now()->format('Ymd_His') . '.' . $archivo->getClientOriginalExtension();
+            $comprobantePath = $archivo->storeAs('comprobantes_liquidaciones', $nombreArchivo, 'public');
+        }
+
+        $cantidad = $this->comisionService->liquidarComisiones(
+            (int) $validated['id_vendedor'],
+            $validated['comisiones_ids'] ?? [],
+            $validated['metodo_pago'],
+            $validated['referencia_pago'] ?? null,
+            $comprobantePath,
+            $validated['notas'] ?? null
         );
 
         if ($cantidad === 0) {
             return response()->json([
                 'success' => false,
-                'message' => 'No hay comisiones pendientes para liquidar con los filtros seleccionados.',
+                'message' => 'No se encontraron comisiones pendientes para liquidar con los criterios seleccionados.',
             ], 422);
         }
 
         return response()->json([
             'success'  => true,
-            'message'  => "Se liquidaron {$cantidad} comisión(es) exitosamente.",
+            'message'  => "Se liquidaron exitosamente {$cantidad} comisiones mediante {$validated['metodo_pago']}.",
             'cantidad' => $cantidad,
         ]);
     }
 
     // ─────────────────────────────────────────────────────────────────────────
-    // CANCELAR — Cancela una comisión Pendiente (solo admin)
+    // CANCELAR — Anula una comisión pendiente (solo admin)
     // ─────────────────────────────────────────────────────────────────────────
 
     public function cancelar(Request $request, ComisionVendedor $comision)
@@ -202,9 +239,11 @@ class ComisionVendedorController extends Controller
             ], 422);
         }
 
+        $motivo = $request->input('motivo', 'Cancelada por el administrador.');
+
         $comision->update([
             'estado' => 'Cancelada',
-            'notas'  => ($comision->notas ? $comision->notas . ' | ' : '') . 'Cancelada manualmente por ' . Auth::user()->nombre_real . '.',
+            'notas'  => ($comision->notas ? $comision->notas . ' | ' : '') . $motivo,
         ]);
 
         return response()->json([

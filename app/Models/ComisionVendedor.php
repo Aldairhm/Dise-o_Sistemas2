@@ -5,6 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Support\Facades\Storage;
 
 class ComisionVendedor extends Model
 {
@@ -16,9 +17,13 @@ class ComisionVendedor extends Model
     protected $fillable = [
         'id_vendedor',
         'id_salida',
+        'concepto',
         'monto',
         'porcentaje',
         'estado',
+        'metodo_pago',
+        'referencia_pago',
+        'comprobante_pago',
         'notas',
         'liquidado_por',
         'fecha_liquidacion',
@@ -45,6 +50,14 @@ class ComisionVendedor extends Model
     public function liquidadoPor(): BelongsTo
     {
         return $this->belongsTo(User::class, 'liquidado_por');
+    }
+
+    public function getComprobanteUrlAttribute(): ?string
+    {
+        if (!$this->comprobante_pago) {
+            return null;
+        }
+        return Storage::disk('public')->url($this->comprobante_pago);
     }
 
     public function scopePendientes($query) { return $query->where('estado', 'Pendiente'); }

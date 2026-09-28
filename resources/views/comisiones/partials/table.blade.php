@@ -6,10 +6,10 @@
                 <th class="px-5 py-3 text-left text-xs font-bold text-slate-500 uppercase tracking-wider">Vendedor</th>
                 @endif
                 <th class="px-5 py-3 text-left text-xs font-bold text-slate-500 uppercase tracking-wider">Fecha</th>
-                <th class="px-5 py-3 text-left text-xs font-bold text-slate-500 uppercase tracking-wider">Salida #</th>
-                <th class="px-5 py-3 text-right text-xs font-bold text-slate-500 uppercase tracking-wider">%</th>
-                <th class="px-5 py-3 text-right text-xs font-bold text-slate-500 uppercase tracking-wider">Monto</th>
+                <th class="px-5 py-3 text-left text-xs font-bold text-slate-500 uppercase tracking-wider">Concepto / Venta</th>
+                <th class="px-5 py-3 text-right text-xs font-bold text-slate-500 uppercase tracking-wider">Comisión</th>
                 <th class="px-5 py-3 text-center text-xs font-bold text-slate-500 uppercase tracking-wider">Estado</th>
+                <th class="px-5 py-3 text-left text-xs font-bold text-slate-500 uppercase tracking-wider">Método de Pago</th>
                 <th class="px-5 py-3 text-left text-xs font-bold text-slate-500 uppercase tracking-wider">Notas</th>
                 @if($isAdmin)
                 <th class="px-5 py-3 text-center text-xs font-bold text-slate-500 uppercase tracking-wider">Acciones</th>
@@ -26,31 +26,50 @@
                         <div class="w-8 h-8 rounded-full bg-indigo-100 text-indigo-600 flex items-center justify-center text-xs font-bold flex-shrink-0">
                             {{ strtoupper(substr($c->vendedor->nombre_real ?? '?', 0, 2)) }}
                         </div>
-                        <span class="font-medium text-slate-800">{{ $c->vendedor->nombre_real ?? '—' }}</span>
+                        <div>
+                            <span class="font-bold text-slate-800 block text-xs">{{ $c->vendedor->nombre_real ?? '—' }}</span>
+                            <span class="text-[10px] text-slate-400 capitalize">{{ $c->vendedor->rol ?? 'vendedor' }}</span>
+                        </div>
                     </div>
                 </td>
                 @endif
 
                 <td class="px-5 py-4 text-slate-600 whitespace-nowrap">
-                    {{ $c->fecha_registro ? $c->fecha_registro->format('d/m/Y') : '—' }}
+                    <span class="font-medium text-xs text-slate-800 block">{{ $c->fecha_registro ? $c->fecha_registro->format('d/m/Y') : '—' }}</span>
+                    <span class="text-[10px] text-slate-400">{{ $c->fecha_registro ? $c->fecha_registro->format('h:i A') : '' }}</span>
                 </td>
 
-                <td class="px-5 py-4 text-slate-600">
-                    @if($c->id_salida)
-                        <span class="inline-flex items-center gap-1 px-2 py-0.5 bg-slate-100 rounded-lg text-xs font-mono font-bold text-slate-700">
-                            #{{ $c->id_salida }}
-                        </span>
-                    @else
-                        <span class="text-slate-400 text-xs">Manual</span>
-                    @endif
-                </td>
+                <td class="px-5 py-4 text-slate-700">
+                    <div class="flex flex-col gap-0.5">
+                        <div class="flex items-center gap-1.5 flex-wrap">
+                            @if($c->id_salida)
+                                <span class="inline-flex items-center gap-1 px-2 py-0.5 bg-blue-50 text-blue-700 rounded-md text-[11px] font-bold">
+                                    <i class="fas fa-shopping-bag text-[10px]"></i> Salida #{{ $c->id_salida }}
+                                </span>
+                            @else
+                                <span class="inline-flex items-center gap-1 px-2 py-0.5 bg-purple-50 text-purple-700 rounded-md text-[11px] font-bold">
+                                    <i class="fas fa-award text-[10px]"></i> Bono / Manual
+                                </span>
+                            @endif
 
-                <td class="px-5 py-4 text-right font-mono text-slate-600">
-                    {{ number_format($c->porcentaje, 1) }}%
+                            <span class="font-semibold text-xs text-slate-800">
+                                {{ $c->concepto ?? ($c->salida ? "Venta directa de {$c->salida->cantidad} unidad(es)" : "Comisión directa") }}
+                            </span>
+                        </div>
+
+                        @if($c->salida && $c->salida->variante && $c->salida->variante->producto)
+                            <span class="text-[11px] text-slate-500 pl-1">
+                                {{ $c->salida->variante->producto->nombre }} - {{ $c->salida->variante->nombre_variante }} (Total salida: ${{ number_format($c->salida->total, 2) }})
+                            </span>
+                        @endif
+                    </div>
                 </td>
 
                 <td class="px-5 py-4 text-right">
-                    <span class="font-bold text-slate-900">${{ number_format($c->monto, 2) }}</span>
+                    <span class="font-extrabold text-sm text-slate-900 block">${{ number_format($c->monto, 2) }}</span>
+                    @if($c->porcentaje && $c->porcentaje > 0)
+                        <span class="text-[10px] text-slate-400 font-medium">Ref: ${{ number_format($c->porcentaje, 2) }}/ud</span>
+                    @endif
                 </td>
 
                 <td class="px-5 py-4 text-center">
@@ -72,6 +91,41 @@
                     @endif
                 </td>
 
+                <td class="px-5 py-4 text-slate-700 text-xs">
+                    @if($c->estado === 'Pagada')
+                        <div class="flex flex-col gap-0.5">
+                            <span class="font-semibold text-emerald-800 flex items-center gap-1.5">
+                                @if($c->metodo_pago === 'Transferencia Bancaria')
+                                    <i class="fas fa-university text-blue-600"></i>
+                                @elseif($c->metodo_pago === 'Efectivo')
+                                    <i class="fas fa-money-bill-wave text-emerald-600"></i>
+                                @elseif($c->metodo_pago === 'Cheque')
+                                    <i class="fas fa-money-check text-indigo-600"></i>
+                                @else
+                                    <i class="fas fa-wallet text-purple-600"></i>
+                                @endif
+                                {{ $c->metodo_pago ?? 'Efectivo' }}
+                            </span>
+
+                            @if($c->referencia_pago)
+                                <span class="text-[10px] text-slate-500 font-mono">Ref: {{ $c->referencia_pago }}</span>
+                            @endif
+
+                            @if($c->comprobante_url)
+                                <a href="{{ $c->comprobante_url }}" target="_blank" class="text-[10px] text-blue-600 hover:underline inline-flex items-center gap-1 mt-0.5">
+                                    <i class="fas fa-file-invoice"></i> Ver comprobante
+                                </a>
+                            @endif
+
+                            @if($c->fecha_liquidacion)
+                                <span class="text-[10px] text-slate-400">Pagado: {{ $c->fecha_liquidacion->format('d/m/Y') }}</span>
+                            @endif
+                        </div>
+                    @else
+                        <span class="text-slate-400 text-xs italic">Por liquidar</span>
+                    @endif
+                </td>
+
                 <td class="px-5 py-4 text-slate-500 text-xs max-w-[160px] truncate" title="{{ $c->notas }}">
                     {{ $c->notas ?? '—' }}
                 </td>
@@ -82,9 +136,9 @@
                         @if($c->estado === 'Pendiente')
                             {{-- Editar --}}
                             <button type="button"
-                                    onclick="openEditModal({{ $c->id }}, '{{ $c->monto }}', '{{ $c->porcentaje }}', '{{ addslashes($c->notas ?? '') }}')"
+                                    onclick="openEditModal({{ $c->id }}, '{{ $c->monto }}', '{{ addslashes($c->concepto ?? '') }}', '{{ addslashes($c->notas ?? '') }}')"
                                     class="w-8 h-8 rounded-lg flex items-center justify-center text-blue-600 hover:bg-blue-50 transition-colors cursor-pointer"
-                                    title="Editar monto/notas">
+                                    title="Editar monto/concepto">
                                 <i class="fas fa-pen text-xs"></i>
                             </button>
                             {{-- Cancelar --}}
@@ -109,7 +163,7 @@
                             <i class="fas fa-coins"></i>
                         </div>
                         <p class="font-semibold text-slate-500">No hay comisiones registradas</p>
-                        <p class="text-sm">Ajusta los filtros o espera a que se generen nuevas ventas.</p>
+                        <p class="text-sm">Ajusta los filtros o realiza ventas para generar comisiones.</p>
                     </div>
                 </td>
             </tr>

@@ -498,9 +498,9 @@ class VentaController extends Controller
                     $costoUnitario = (float) ($variante->costo_promedio ?? 0);
                     $costoTotal = $costoUnitario * $cantidad;
 
-                    // Resolver porcentaje y monto de comisión usando la cascada del servicio
-                    $porcentajeComision = $usuarioVendedor ? $comisionService->resolverPorcentaje($usuarioVendedor, $variante) : 0;
-                    $comisionTotal = $comisionService->calcularMonto($subtotalLinea, $porcentajeComision);
+                    // Resolver comisión fija por unidad del producto/variante ($)
+                    $comisionUnitaria = $comisionService->resolverComisionUnitaria($variante);
+                    $comisionTotal = $comisionService->calcularMonto($comisionUnitaria, $cantidad);
 
                     // 2. Generar el registro de salida asociado para control de inventario con costo_extra, precio_envio y datos de entrega
                     $salida = Salida::create([
@@ -531,11 +531,16 @@ class VentaController extends Controller
 
                     // 4. Si la comisión calculada es mayor a 0, registrar en `comision_vendedor`
                     if ($comisionTotal > 0) {
+                        $nombreProd = $variante->producto->nombre ?? 'Producto';
+                        $nombreVar = $variante->nombre_variante ?? '';
+                        $descConcepto = "Venta #{$venta->id} ({$cantidad}x {$nombreProd} - {$nombreVar})";
+
                         ComisionVendedor::create([
                             'id_vendedor'    => $userId,
                             'id_salida'      => $salida->id,
+                            'concepto'       => $descConcepto,
                             'monto'          => $comisionTotal,
-                            'porcentaje'     => $porcentajeComision,
+                            'porcentaje'     => $comisionUnitaria,
                             'estado'         => 'Pendiente',
                             'fecha_registro' => now(),
                         ]);

@@ -10,86 +10,111 @@ use Illuminate\Support\Facades\DB;
 class ComisionService
 {
     /**
-     * Resuelve el % de comisión a aplicar para una salida dada.
+     * Resuelve el monto de comisión unitario ($) para una variante/producto.
+     * Toma el valor directo asignado a la variante o al producto.
      *
-     * Cascada: comision de variante → porcentaje_comision del vendedor → global config
-     *
-     * @param  \App\Models\User       $vendedor
-     * @param  mixed                  $variante   Objeto con propiedad "comision" (puede ser null)
+     * @param  mixed $variante
      * @return float
      */
-    public function resolverPorcentaje(User $vendedor, $variante = null): float
+    public function resolverComisionUnitaria($variante = null): float
     {
-        $fuente = config('comisiones.fuente', 'cascada');
-
-        if ($fuente === 'global') {
-            return (float) config('comisiones.porcentaje_global', 5.0);
+        if (!$variante) {
+            return 0.0;
         }
 
-        if ($fuente === 'vendedor') {
-            return (float) ($vendedor->porcentaje_comision ?? config('comisiones.porcentaje_global', 5.0));
+        // 1. Comisión directa en la variante si existe y es > 0
+        if ((float) ($variante->comision ?? 0) > 0) {
+            return (float) $variante->comision;
         }
 
-        // cascada (default)
-        if ($variante) {
-            if ((float) ($variante->comision ?? 0) > 0) {
-                return (float) $variante->comision;
-            }
-            if (!empty($variante->producto) && (float) ($variante->producto->comision ?? 0) > 0) {
-                return (float) $variante->producto->comision;
-            }
+        // 2. Comisión directa en el producto padre
+        if (!empty($variante->producto) && (float) ($variante->producto->comision ?? 0) > 0) {
+            return (float) $variante->producto->comision;
         }
 
-        if (!is_null($vendedor->porcentaje_comision) && (float) $vendedor->porcentaje_comision > 0) {
-            return (float) $vendedor->porcentaje_comision;
-        }
-
-        return (float) config('comisiones.porcentaje_global', 5.0);
+        return 0.0;
     }
 
     /**
-     * Calcula el monto de comisión.
+     * Calcula el monto total de comisión según la cantidad de unidades vendidas.
      *
-     * @param  float $totalVenta
-     * @param  float $porcentaje
+     * @param  float $comisionUnitaria  Valor de comisión por unidad en dólares ($)
+     * @param  int   $cantidad          Unidades vendidas
      * @return float
      */
-    public function calcularMonto(float $totalVenta, float $porcentaje): float
+    public function calcularMonto(float $comisionUnitaria, int $cantidad): float
     {
-        return round($totalVenta * ($porcentaje / 100), 2);
+        return round($comisionUnitaria * max(1, $cantidad), 2);
     }
 
     /**
-     * Crea un registro de comisión para una salida.
-     * Si ya existe una comisión para esa salida, no crea duplicado.
+     * Obtiene las comisiones pendientes detalladas de un vendedor.
      *
-     * @param  int   $idSalida
-     * @param  int   $idVendedor
-     * @param  float $totalVenta
-     * @param  float $porcentaje
-     * @return \App\Models\ComisionVendedor|null
+     * @param  int $idVendedor
+     * @return \Illuminate\Database\Eloquent\Collection
      */
-    public function crearParaSalida(int $idSalida, int $idVendedor, float $totalVenta, float $porcentaje): ?ComisionVendedor
+    public function getPendientesVendedor(int $idVendedor)
     {
-        // Anti-duplicado
-        if (ComisionVendedor::where('id_salida', $idSalida)->exists()) {
-            return null;
+        return ComisionVendedor::with(['salida.variante.producto'])
+            ->where('id_vendedor', $idVendedor)
+            ->where('estado', 'Pendiente')
+            ->orderBy('fecha_registro', 'asc')
+            ->get();
+    }
+
+    /**
+     * Liquidar comisiones de un vendedor con registro de método de pago.
+     *
+     * @param  int         $idVendedor
+     * @param  array       $comisionesIds     Array de IDs específicos a liquidar (vacío = todas las pendientes)
+     * @param  string      $metodoPago        Efectivo, Transferencia Bancaria, Cheque, etc.
+     * @param  string|null $referenciaPago    N° de transferencia, recibo o cheque
+     * @param  string|null $comprobantePath   Ruta del archivo adjunto
+     * @param  string|null $notas            Comentarios adicionales
+     * @return int Cantidad de comisiones liquidadas
+     */
+    public function liquidarComisiones(
+        int $idVendedor,
+        array $comisionesIds = [],
+        string $metodoPago = 'Efectivo',
+        ?string $referenciaPago = null,
+        ?string $comprobantePath = null,
+        ?string $notas = null
+    ): int {
+        $query = ComisionVendedor::where('id_vendedor', $idVendedor)
+            ->where('estado', 'Pendiente');
+
+        if (!empty($comisionesIds)) {
+            $query->whereIn('id', $comisionesIds);
         }
 
-        $monto = $this->calcularMonto($totalVenta, $porcentaje);
+        $comisiones = $query->get();
 
-        return ComisionVendedor::create([
-            'id_salida'      => $idSalida,
-            'id_vendedor'    => $idVendedor,
-            'monto'          => $monto,
-            'porcentaje'     => $porcentaje,
-            'estado'         => 'Pendiente',
-            'fecha_registro' => now(),
-        ]);
+        if ($comisiones->isEmpty()) {
+            return 0;
+        }
+
+        $adminId = Auth::id();
+        $ahora   = now();
+        $notasFin = $notas ?? 'Liquidación procesada.';
+
+        foreach ($comisiones as $comision) {
+            $comision->update([
+                'estado'             => 'Pagada',
+                'metodo_pago'        => $metodoPago,
+                'referencia_pago'    => $referenciaPago,
+                'comprobante_pago'   => $comprobantePath ?? $comision->comprobante_pago,
+                'liquidado_por'      => $adminId,
+                'fecha_liquidacion'  => $ahora,
+                'notas'              => $notasFin,
+            ]);
+        }
+
+        return $comisiones->count();
     }
 
     /**
-     * Cancela la comisión asociada a una salida (ej: devolución/anulación).
+     * Cancela la comisión asociada a una salida (ej: devolución o anulación de venta).
      *
      * @param  int $idSalida
      * @return bool
@@ -110,46 +135,6 @@ class ComisionService
         ]);
 
         return true;
-    }
-
-    /**
-     * Liquidar en lote: marca como Pagadas todas las comisiones Pendiente
-     * de un vendedor, opcionalmente hasta una fecha límite.
-     *
-     * @param  int         $idVendedor
-     * @param  string|null $hastaFecha   formato Y-m-d
-     * @param  string|null $notas
-     * @return int  Cantidad de comisiones liquidadas
-     */
-    public function liquidarVendedor(int $idVendedor, ?string $hastaFecha = null, ?string $notas = null): int
-    {
-        $query = ComisionVendedor::where('id_vendedor', $idVendedor)
-            ->where('estado', 'Pendiente');
-
-        if ($hastaFecha) {
-            $query->whereDate('fecha_registro', '<=', $hastaFecha);
-        }
-
-        $comisiones = $query->get();
-
-        if ($comisiones->isEmpty()) {
-            return 0;
-        }
-
-        $adminId  = Auth::id();
-        $ahora    = now();
-        $notasFin = $notas ?? 'Liquidación en lote.';
-
-        foreach ($comisiones as $comision) {
-            $comision->update([
-                'estado'             => 'Pagada',
-                'liquidado_por'      => $adminId,
-                'fecha_liquidacion'  => $ahora,
-                'notas'              => $notasFin,
-            ]);
-        }
-
-        return $comisiones->count();
     }
 
     /**

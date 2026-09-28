@@ -118,6 +118,7 @@ Route::middleware('auth')->group(function () {
         Route::patch('/variantes/{id}/toggle-status', [VarianteController::class, 'toggleStatus'])->name('variantes.toggleStatus');
 
         // ── Comisiones: gestión admin ──────────────────────────────────────
+        Route::get('/comisiones/pendientes/{vendedorId}',  [ComisionVendedorController::class, 'pendientesVendedor'])->name('comisiones.pendientes');
         Route::post('/comisiones',                         [ComisionVendedorController::class, 'store'])->name('comisiones.store');
         Route::put('/comisiones/{comision}',               [ComisionVendedorController::class, 'update'])->name('comisiones.update');
         Route::post('/comisiones/liquidar',                [ComisionVendedorController::class, 'liquidar'])->name('comisiones.liquidar');
