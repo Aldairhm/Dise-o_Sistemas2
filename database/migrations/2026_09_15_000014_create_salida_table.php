@@ -38,7 +38,7 @@ return new class extends Migration
             $table->string('comprobante_devolucion', 255)->nullable();
         });
 
-        DB::statement("ALTER TABLE salida ADD CONSTRAINT chk_salida_estado CHECK (estado IN ('Pendiente', 'Confirmada', 'En ruta', 'En camino', 'Entregada', 'Entregado', 'Cancelada', 'Cancelado', 'Devolución', 'Devolucion'))");
+        DB::statement("ALTER TABLE salida ADD CONSTRAINT chk_salida_estado CHECK (estado IN ('Pendiente', 'Confirmada', 'En ruta', 'En camino', 'Entregada', 'Entregado', 'Cancelada', 'Cancelado', 'Devolución', 'Devolucion', 'Cambio'))");
     }
 
     /**

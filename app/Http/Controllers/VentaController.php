@@ -300,6 +300,7 @@ class VentaController extends Controller
             'En ruta' => $todasVentas->where('estado', 'En ruta')->count(),
             'Cancelada' => $todasVentas->where('estado', 'Cancelada')->count(),
             'Devolución' => $todasVentas->where('estado', 'Devolución')->count(),
+            'Cambio' => $todasVentas->where('estado', 'Cambio')->count(),
         ];
 
         $vendedores = User::where('estado', 1)->orderBy('nombre_real')->get(['id', 'nombre_real', 'username', 'rol']);
@@ -328,7 +329,11 @@ class VentaController extends Controller
                     : ($variante->imagen ? asset('storage/' . $variante->imagen) : null),
             ]);
 
-        return view('ventas.create', compact('variantes'));
+        $vendedores = User::where('estado', 1)
+            ->orderBy('nombre_real')
+            ->get(['id', 'nombre_real', 'username', 'rol']);
+
+        return view('ventas.create', compact('variantes', 'vendedores'));
     }
 
     /**
@@ -355,6 +360,7 @@ class VentaController extends Controller
         $validated = $request->validate([
             'metodo_pago' => ['required', 'string', 'in:Efectivo,Transferencia Bancaria'],
             'tipo_venta' => ['nullable', 'string', 'in:Tienda,Envio,Envío'],
+            'id_usuario' => ['nullable', 'integer', 'exists:usuario,id'],
             'comprobante_pago' => ['nullable', 'image', 'mimes:jpeg,png,jpg,webp', 'max:5120'],
             'descuento' => ['nullable', 'numeric', 'min:0'],
             'precio_envio' => ['nullable', 'numeric', 'min:0'],
@@ -378,8 +384,11 @@ class VentaController extends Controller
         }
 
         try {
+            // Si se envió un vendedor asignado ("otro vendedor"), la venta y comisiones pertenecen a él
+            $vendedorVentaId = !empty($validated['id_usuario']) ? (int) $validated['id_usuario'] : (int) $userId;
+
             // 3. Transacción de base de datos atómica
-            $venta = DB::transaction(function () use ($validated, $userId, $request) {
+            $venta = DB::transaction(function () use ($validated, $vendedorVentaId, $request) {
                 $lineas = collect($validated['lineas']);
 
                 // Bloqueo pesimista de variantes para garantizar coherencia de stock ante concurrencia
@@ -436,7 +445,7 @@ class VentaController extends Controller
 
                 // A. Crear registro principal en la tabla `venta`
                 $venta = Venta::create([
-                    'id_usuario' => $userId,
+                    'id_usuario' => $vendedorVentaId,
                     'fecha' => $fechaVenta,
                     'total' => $totalPagar,
                     'metodo_pago' => $validated['metodo_pago'],
@@ -499,7 +508,7 @@ class VentaController extends Controller
                     // 2. Generar el registro de salida asociado para control de inventario con costo_extra, precio_envio y datos de entrega
                     $salida = Salida::create([
                         'id_variante' => $variante->id,
-                        'id_usuario' => $userId,
+                        'id_usuario' => $vendedorVentaId,
                         'cantidad' => $cantidad,
                         'fecha_salida' => $fechaSalidaFinal,
                         'hora_salida' => $horaSalidaFinal,
@@ -523,10 +532,10 @@ class VentaController extends Controller
                     // 3. Descontar el stock físico de la variante
                     $variante->decrement('stock', $cantidad);
 
-                    // 4. Si la variante tiene comisión asignada, registrar en `comision_vendedor`
+                    // 4. Si la variante tiene comisión asignada, registrar en `comision_vendedor` para el vendedor asignado
                     if ($comisionTotal > 0) {
                         ComisionVendedor::create([
-                            'id_vendedor' => $userId,
+                            'id_vendedor' => $vendedorVentaId,
                             'id_salida' => $salida->id,
                             'monto' => $comisionTotal,
                             'estado' => 'Pendiente',
@@ -573,7 +582,7 @@ class VentaController extends Controller
         $venta = Venta::with(['detalles.variante', 'usuario'])->findOrFail($id);
 
         $validated = $request->validate([
-            'estado' => ['required', 'string', 'in:Pendiente,Confirmada,En ruta,Entregada,Cancelada,Devolución'],
+            'estado' => ['required', 'string', 'in:Pendiente,Confirmada,En ruta,Entregada,Cancelada,Devolución,Cambio'],
             'observaciones' => ['nullable', 'string', 'max:1000'],
             'comprobante_paquete' => ['nullable', 'image', 'mimes:jpeg,png,jpg,webp', 'max:5120'],
             'comprobante_devolucion' => ['nullable', 'image', 'mimes:jpeg,png,jpg,webp', 'max:5120'],
@@ -589,12 +598,12 @@ class VentaController extends Controller
             ], 422);
         }
 
-        // 2. Verificar regla de garantía en días para Devolución
+        // 2. Verificar regla de garantía en días para Devolución o Cambio
         if ($venta->estado === 'Entregada') {
-            if ($nuevoEstado !== 'Devolución') {
+            if (!in_array($nuevoEstado, ['Devolución', 'Cambio'])) {
                 return response()->json([
                     'success' => false,
-                    'message' => 'Una venta ya entregada únicamente puede cambiar a "Devolución" dentro del plazo de garantía.',
+                    'message' => 'Una venta ya entregada únicamente puede cambiar a "Devolución" o "Cambio" dentro del plazo de garantía.',
                 ], 422);
             }
 
@@ -636,18 +645,20 @@ class VentaController extends Controller
             }
         }
 
-        if ($nuevoEstado === 'Devolución') {
+        if (in_array($nuevoEstado, ['Devolución', 'Cambio'])) {
             if (empty(trim($validated['observaciones'] ?? ''))) {
+                $label = $nuevoEstado === 'Cambio' ? 'cambio' : 'devolución';
                 return response()->json([
                     'success' => false,
-                    'message' => 'Para procesar una devolución es obligatorio ingresar la justificación/motivo en el campo observaciones.',
+                    'message' => "Para procesar un {$label} es obligatorio ingresar la justificación/motivo en el campo observaciones.",
                 ], 422);
             }
 
             if (!$request->hasFile('comprobante_devolucion')) {
+                $label = $nuevoEstado === 'Cambio' ? 'cambio' : 'devolución';
                 return response()->json([
                     'success' => false,
-                    'message' => 'Para procesar una devolución es obligatorio adjuntar la fotografía del paquete devuelto.',
+                    'message' => "Para procesar un {$label} es obligatorio adjuntar la fotografía del paquete.",
                 ], 422);
             }
         }
@@ -666,11 +677,12 @@ class VentaController extends Controller
                 $venta->comprobante_paquete = $rutaPaquete;
             }
 
-            // B. Guardar imagen comprobante devolución si va a Devolución
-            if ($nuevoEstado === 'Devolución' && $request->hasFile('comprobante_devolucion')) {
+            // B. Guardar imagen comprobante devolución si va a Devolución o Cambio
+            if (in_array($nuevoEstado, ['Devolución', 'Cambio']) && $request->hasFile('comprobante_devolucion')) {
                 $archivo = $request->file('comprobante_devolucion');
                 $extension = strtolower($archivo->getClientOriginalExtension() ?: $archivo->extension() ?: 'jpg');
-                $nombreArchivo = "{$folioVenta}_{$diaVenta}_devolucion.{$extension}";
+                $sufijo = $nuevoEstado === 'Cambio' ? 'cambio' : 'devolucion';
+                $nombreArchivo = "{$folioVenta}_{$diaVenta}_{$sufijo}.{$extension}";
                 $rutaDevolucion = $archivo->storeAs('comprobantes_devolucion', $nombreArchivo, 'public');
                 $venta->comprobante_devolucion = $rutaDevolucion;
             }
@@ -692,8 +704,8 @@ class VentaController extends Controller
             $venta->estado = $nuevoEstado;
             $venta->save();
 
-            // E. Si es Cancelada o Devolución, restaurar stock de inventario y anular comisiones
-            if (in_array($nuevoEstado, ['Cancelada', 'Devolución'])) {
+            // E. Si es Cancelada, Devolución o Cambio, restaurar stock de inventario y anular comisiones
+            if (in_array($nuevoEstado, ['Cancelada', 'Devolución', 'Cambio'])) {
                 foreach ($venta->detalles as $detalle) {
                     if ($detalle->variante) {
                         $detalle->variante->increment('stock', (int) $detalle->cantidad);

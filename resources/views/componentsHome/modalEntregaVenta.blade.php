@@ -41,9 +41,17 @@
                     <div class="w-6 h-6 rounded-full bg-white text-blue-600 flex items-center justify-center text-xs font-black shadow-xs shrink-0">
                         <i class="fas fa-check"></i>
                     </div>
-                    <h3 class="text-base sm:text-lg font-bold text-white tracking-wide">
-                        Registrar Entrega de Producto
-                    </h3>
+                    <div>
+                        <h3 class="text-base sm:text-lg font-bold text-white tracking-wide">
+                            Registrar Entrega de Producto
+                        </h3>
+                        <template x-if="nombreVendedorAsignado">
+                            <p class="text-[11px] text-blue-100 flex items-center gap-1 font-medium">
+                                <i class="fas fa-user-tag text-xs"></i>
+                                Venta para vendedor: <strong class="text-white underline" x-text="nombreVendedorAsignado"></strong>
+                            </p>
+                        </template>
+                    </div>
                 </div>
                 <button 
                     type="button" 
@@ -520,6 +528,8 @@
             procesando: false,
             items: [],
             indiceActivo: 0,
+            idVendedorAsignado: null,
+            nombreVendedorAsignado: '',
 
             fechaSalida: '',
             horaSalida: '',
@@ -567,8 +577,21 @@
                 });
             },
 
-            abrir(cartItems = null) {
-                const source = cartItems || (window.AXCart ? window.AXCart.getItems() : []);
+            abrir(payload = null) {
+                let source = [];
+                this.idVendedorAsignado = null;
+                this.nombreVendedorAsignado = '';
+
+                if (Array.isArray(payload)) {
+                    source = payload;
+                } else if (payload && typeof payload === 'object') {
+                    source = payload.items || [];
+                    this.idVendedorAsignado = payload.id_usuario || null;
+                    this.nombreVendedorAsignado = payload.nombre_vendedor || '';
+                } else {
+                    source = (window.AXCart ? window.AXCart.getItems() : []);
+                }
+
                 this.items = JSON.parse(JSON.stringify(source || []));
                 this.items.forEach(item => {
                     item.costo_extra = Math.max(0, Number(item.costo_extra || 0));
@@ -826,6 +849,10 @@
                 formData.append('telefono', this.telefono.trim());
                 formData.append('fecha_salida', this.fechaSalida);
                 formData.append('hora_salida', this.horaSalida);
+
+                if (this.idVendedorAsignado) {
+                    formData.append('id_usuario', this.idVendedorAsignado);
+                }
 
                 this.items.forEach((item, index) => {
                     formData.append(`lineas[${index}][id_variante]`, item.id);
