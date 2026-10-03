@@ -23,13 +23,25 @@ class VentaController extends Controller
     public function index(Request $request)
     {
         // 1. Filtros recibidos
-        $desde = $request->filled('desde')
-            ? $request->input('desde')
-            : now()->startOfMonth()->toDateString();
-
+        $tieneFiltroFecha = $request->filled('desde') || $request->filled('hasta');
+        
         $hasta = $request->filled('hasta')
             ? $request->input('hasta')
             : now()->toDateString();
+
+        if ($request->filled('desde')) {
+            $desde = $request->input('desde');
+        } else {
+            // Por defecto, si el mes actual tiene ventas entregadas usamos inicio de mes; 
+            // de lo contrario, abrimos a los últimos 30 días para asegurar que el dashboard histórico siempre muestre datos relevantes.
+            $ventasEsteMes = Venta::whereIn('estado', ['Entregada', 'Entregado'])
+                ->whereDate('fecha', '>=', now()->startOfMonth()->toDateString())
+                ->exists();
+
+            $desde = $ventasEsteMes
+                ? now()->startOfMonth()->toDateString()
+                : now()->subDays(30)->toDateString();
+        }
 
         $vendedorId = $request->input('vendedor_id');
         $productoId = $request->input('producto_id');
@@ -57,7 +69,10 @@ class VentaController extends Controller
                 if (!empty($cleanId)) {
                     $q->orWhere('id', (int) $cleanId);
                 }
-                $q->orWhere('telefono', 'like', "%{$busqueda}%")
+                $q->orWhere('nombre_cliente', 'like', "%{$busqueda}%")
+                  ->orWhere('departamento', 'like', "%{$busqueda}%")
+                  ->orWhere('municipio', 'like', "%{$busqueda}%")
+                  ->orWhere('telefono', 'like', "%{$busqueda}%")
                   ->orWhere('observaciones', 'like', "%{$busqueda}%")
                   ->orWhereHas('usuario', function ($u) use ($busqueda) {
                       $u->where('nombre_real', 'like', "%{$busqueda}%")
@@ -65,7 +80,8 @@ class VentaController extends Controller
                   });
 
                 $salidasVentasIds = Salida::where(function ($sq) use ($busqueda) {
-                    $sq->where('direccion', 'like', "%{$busqueda}%")
+                    $sq->where('nombre_cliente', 'like', "%{$busqueda}%")
+                       ->orWhere('direccion', 'like', "%{$busqueda}%")
                        ->orWhere('telefono', 'like', "%{$busqueda}%");
                 })->where('observaciones', 'like', 'Venta #%')
                   ->pluck('observaciones')
@@ -203,6 +219,9 @@ class VentaController extends Controller
             foreach ($ventas as $v) {
                 $salidasDeVenta = $salidas[$v->id] ?? collect();
                 $primeraSalida = $salidasDeVenta->first();
+                $v->nombre_cliente = $v->nombre_cliente ?? $primeraSalida?->nombre_cliente;
+                $v->departamento = $v->departamento ?? $primeraSalida?->departamento;
+                $v->municipio = $v->municipio ?? $primeraSalida?->municipio;
                 $v->direccion_entrega = $primeraSalida?->direccion;
                 $v->telefono_entrega = $v->telefono ?? $primeraSalida?->telefono ?? $v->usuario?->telefono;
                 $v->precio_envio = (float) ($v->precio_envio ?? $primeraSalida?->precio_envio ?? 0);
@@ -256,7 +275,10 @@ class VentaController extends Controller
                 if (!empty($cleanId)) {
                     $q->orWhere('id', (int) $cleanId);
                 }
-                $q->orWhere('telefono', 'like', "%{$busqueda}%")
+                $q->orWhere('nombre_cliente', 'like', "%{$busqueda}%")
+                  ->orWhere('departamento', 'like', "%{$busqueda}%")
+                  ->orWhere('municipio', 'like', "%{$busqueda}%")
+                  ->orWhere('telefono', 'like', "%{$busqueda}%")
                   ->orWhere('observaciones', 'like', "%{$busqueda}%")
                   ->orWhereHas('usuario', function ($u) use ($busqueda) {
                       $u->where('nombre_real', 'like', "%{$busqueda}%")
@@ -287,15 +309,30 @@ class VentaController extends Controller
         foreach ($todasVentas as $v) {
             $salidasDeVenta = $salidasMap[$v->id] ?? collect();
             $primeraSalida = $salidasDeVenta->first();
+            $v->nombre_cliente = $v->nombre_cliente ?? $primeraSalida?->nombre_cliente;
+            $v->departamento = $v->departamento ?? $primeraSalida?->departamento;
+            $v->municipio = $v->municipio ?? $primeraSalida?->municipio;
             $v->direccion_entrega = $primeraSalida?->direccion;
             $v->telefono_entrega = $v->telefono ?? $primeraSalida?->telefono ?? $v->usuario?->telefono;
             $v->precio_envio = (float) ($v->precio_envio ?? $primeraSalida?->precio_envio ?? 0);
         }
 
         // Conteos por estado para los apartados (excluyendo entregadas que se ven en historial)
+        $ventasPendientes = $todasVentas->where('estado', 'Pendiente');
+        $conteoPendienteSS = $ventasPendientes->filter(function ($v) {
+            $depto = strtolower(trim($v->departamento ?? ''));
+            if (empty($depto) && !empty($v->direccion_entrega)) {
+                return str_contains(strtolower($v->direccion_entrega), 'san salvador');
+            }
+            return $depto === 'san salvador';
+        })->count();
+        $conteoPendienteOtros = $ventasPendientes->count() - $conteoPendienteSS;
+
         $conteoEstados = [
             'todos' => $todasVentas->count(),
-            'Pendiente' => $todasVentas->where('estado', 'Pendiente')->count(),
+            'Pendiente' => $ventasPendientes->count(),
+            'Pendiente_SS' => $conteoPendienteSS,
+            'Pendiente_Otros' => $conteoPendienteOtros,
             'Confirmada' => $todasVentas->where('estado', 'Confirmada')->count(),
             'En ruta' => $todasVentas->where('estado', 'En ruta')->count(),
             'Cancelada' => $todasVentas->where('estado', 'Cancelada')->count(),
@@ -306,6 +343,232 @@ class VentaController extends Controller
         $vendedores = User::where('estado', 1)->orderBy('nombre_real')->get(['id', 'nombre_real', 'username', 'rol']);
 
         return view('ventas.pedidos', compact('todasVentas', 'conteoEstados', 'vendedores', 'desde', 'hasta', 'vendedorId', 'busqueda', 'estadoTab'));
+    }
+
+    /**
+     * Muestra el módulo "Mis Ventas" exclusivo para el vendedor autenticado.
+     * Incluye ventas en curso y pasadas/historial con filtros por estado, fechas, buscador y regla de negocio.
+     */
+    public function misVentas(Request $request)
+    {
+        $user = Auth::user();
+        $desde = $request->input('desde');
+        $hasta = $request->input('hasta');
+        $busqueda = trim($request->input('q', ''));
+        $estadoTab = $request->input('tab', 'todos');
+
+        // Consultamos únicamente las ventas pertenecientes al usuario autenticado
+        $query = Venta::with(['usuario', 'detalles.variante.producto'])
+            ->where('id_usuario', $user->id)
+            ->when($desde, fn($q) => $q->whereDate('fecha', '>=', $desde))
+            ->when($hasta, fn($q) => $q->whereDate('fecha', '<=', $hasta));
+
+        if (!empty($busqueda)) {
+            $query->where(function ($q) use ($busqueda) {
+                $cleanId = preg_replace('/[^0-9]/', '', $busqueda);
+                if (!empty($cleanId)) {
+                    $q->orWhere('id', (int) $cleanId);
+                }
+                $q->orWhere('nombre_cliente', 'like', "%{$busqueda}%")
+                  ->orWhere('departamento', 'like', "%{$busqueda}%")
+                  ->orWhere('municipio', 'like', "%{$busqueda}%")
+                  ->orWhere('telefono', 'like', "%{$busqueda}%")
+                  ->orWhere('observaciones', 'like', "%{$busqueda}%")
+                  ->orWhere('metodo_pago', 'like', "%{$busqueda}%");
+            });
+        }
+
+        $todasVentas = $query->orderByDesc('fecha')->orderByDesc('id')->get();
+
+        // Asociar salidas y direcciones
+        $ventasIds = $todasVentas->pluck('id')->toArray();
+        $salidasMap = [];
+        if (!empty($ventasIds)) {
+            $salidas = Salida::where(function ($q) use ($ventasIds) {
+                foreach ($ventasIds as $vId) {
+                    $q->orWhere('observaciones', 'like', "Venta #{$vId}%");
+                }
+            })->get()->groupBy(function ($s) {
+                if (preg_match('/Venta #(\d+)/', $s->observaciones, $m)) {
+                    return (int) $m[1];
+                }
+                return 0;
+            });
+            $salidasMap = $salidas;
+        }
+
+        // Calcular comisiones y costos extras por venta y ganancia total del vendedor
+        $totalGananciaVendedor = 0.0;
+        $totalComisiones = 0.0;
+        $totalExtras = 0.0;
+
+        foreach ($todasVentas as $v) {
+            $salidasDeVenta = $salidasMap[$v->id] ?? collect();
+            $primeraSalida = $salidasDeVenta->first();
+            $v->nombre_cliente = $v->nombre_cliente ?? $primeraSalida?->nombre_cliente;
+            $v->departamento = $v->departamento ?? $primeraSalida?->departamento;
+            $v->municipio = $v->municipio ?? $primeraSalida?->municipio;
+            $v->direccion_entrega = $primeraSalida?->direccion;
+            $v->telefono_entrega = $v->telefono ?? $primeraSalida?->telefono ?? $v->usuario?->telefono;
+            $v->precio_envio = (float) ($v->precio_envio ?? $primeraSalida?->precio_envio ?? 0);
+
+            // 1. Comisión que da el producto por la cantidad vendida
+            $comisionVenta = 0.0;
+            foreach ($v->detalles as $det) {
+                // Se toma la comisión configurada en el producto (o en la variante si aplica)
+                $prodComision = (float) ($det->variante?->producto?->comision ?? 0);
+                $varComision = (float) ($det->variante?->comision ?? 0);
+                $comisionUnitaria = $prodComision > 0 ? $prodComision : $varComision;
+                $comisionVenta += $comisionUnitaria * (int) $det->cantidad;
+            }
+
+            // Si por alguna razón no vino del producto, fallback a comision_aplicada en salidas si existiera
+            if ($comisionVenta <= 0 && (float) $salidasDeVenta->sum('comision_aplicada') > 0) {
+                $comisionVenta = (float) $salidasDeVenta->sum('comision_aplicada');
+            }
+
+            // 2. Extra que le ponen a veces a las ventas (costo_extra de salidas o diferencia en subtotal)
+            $extraVenta = (float) $salidasDeVenta->sum('costo_extra');
+            if ($extraVenta <= 0) {
+                foreach ($v->detalles as $det) {
+                    $subBase = (int)$det->cantidad * (float)$det->precio_unitario;
+                    $diff = (float)$det->subtotal - $subBase;
+                    if ($diff > 0) {
+                        $extraVenta += $diff;
+                    }
+                }
+            }
+
+            $v->comision_total = $comisionVenta;
+            $v->extra_total = $extraVenta;
+            $v->ganancia_vendedor = $comisionVenta + $extraVenta;
+        }
+
+        // Conteos por estado para los filtros/apartados
+        $conteoEstados = [
+            'todos' => $todasVentas->count(),
+            'Pendiente' => $todasVentas->where('estado', 'Pendiente')->count(),
+            'Confirmada' => $todasVentas->where('estado', 'Confirmada')->count(),
+            'En ruta' => $todasVentas->where('estado', 'En ruta')->count(),
+            'Entregada' => $todasVentas->whereIn('estado', ['Entregada', 'Entregado'])->count(),
+            'Cancelada' => $todasVentas->where('estado', 'Cancelada')->count(),
+            'Devolución' => $todasVentas->where('estado', 'Devolución')->count(),
+            'Cambio' => $todasVentas->where('estado', 'Cambio')->count(),
+        ];
+
+        // Función auxiliar para sumar métricas de una colección de ventas
+        $fnMetricas = function ($coleccion) {
+            return [
+                'ganancia' => (float) $coleccion->sum('ganancia_vendedor'),
+                'comisiones' => (float) $coleccion->sum('comision_total'),
+                'extras' => (float) $coleccion->sum('extra_total'),
+                'total_ventas' => (float) $coleccion->sum('total'),
+                'cantidad' => $coleccion->count(),
+            ];
+        };
+
+        // Métricas calculadas para cada apartado/pestaña
+        $metricasPorTab = [
+            'todos' => $fnMetricas($todasVentas),
+            'Pendiente' => $fnMetricas($todasVentas->where('estado', 'Pendiente')),
+            'Confirmada' => $fnMetricas($todasVentas->where('estado', 'Confirmada')),
+            'En ruta' => $fnMetricas($todasVentas->where('estado', 'En ruta')),
+            'Entregada' => $fnMetricas($todasVentas->whereIn('estado', ['Entregada', 'Entregado'])),
+            'Cancelada' => $fnMetricas($todasVentas->where('estado', 'Cancelada')),
+        ];
+
+        // Métricas generales por defecto (de todas las ventas consultadas)
+        $metricas = [
+            'total_ganado' => $metricasPorTab['todos']['ganancia'],
+            'total_comisiones' => $metricasPorTab['todos']['comisiones'],
+            'total_extras' => $metricasPorTab['todos']['extras'],
+            'total_monto' => $metricasPorTab['todos']['total_ventas'],
+            'total_en_curso' => $todasVentas->whereIn('estado', ['Pendiente', 'Confirmada', 'En ruta'])->count(),
+            'total_entregadas' => $todasVentas->whereIn('estado', ['Entregada', 'Entregado'])->count(),
+            'total_canceladas' => $todasVentas->where('estado', 'Cancelada')->count(),
+            'por_tab' => $metricasPorTab,
+        ];
+
+        return view('ventas.mis-ventas', compact('todasVentas', 'conteoEstados', 'desde', 'hasta', 'busqueda', 'estadoTab', 'metricas'));
+    }
+
+    /**
+     * Permite al vendedor cancelar una de sus ventas únicamente ANTES de estar "En ruta".
+     * Reglas:
+     * - Debe ser propietario de la venta (o admin).
+     * - No puede cancelar si la venta ya está En ruta, Entregada, Cancelada, Devolución o Cambio.
+     * - Restaura stock físico y anula comisiones.
+     */
+    public function cancelarPorVendedor(Request $request, string|int $id)
+    {
+        $venta = Venta::with(['detalles.variante', 'usuario'])->findOrFail($id);
+        $user = Auth::user();
+
+        // Verificar pertenencia si no es admin
+        if ($user->rol !== 'admin' && (int)$venta->id_usuario !== (int)$user->id) {
+            return response()->json([
+                'success' => false,
+                'message' => 'No tienes permiso para gestionar esta venta.',
+            ], 403);
+        }
+
+        // Regla estricta: NO se puede cancelar si ya está en ruta o posterior
+        if (in_array($venta->estado, ['En ruta', 'Entregada', 'Entregado', 'Cancelada', 'Devolución', 'Cambio'])) {
+            return response()->json([
+                'success' => false,
+                'message' => 'No es posible cancelar la venta porque ya se encuentra en estado "' . $venta->estado . '". Solo puedes cancelar ventas en estado "Pendiente" o "Confirmada" antes de ser enviadas.',
+            ], 422);
+        }
+
+        $validated = $request->validate([
+            'motivo' => ['required', 'string', 'min:5', 'max:500'],
+        ]);
+
+        $motivo = trim($validated['motivo']);
+
+        DB::beginTransaction();
+        try {
+            $nuevoEstado = 'Cancelada';
+            $venta->estado = $nuevoEstado;
+            $venta->fecha_cancelacion = now();
+            $venta->observaciones = ($venta->observaciones ? $venta->observaciones . ' | ' : '') . "Cancelada por vendedor ({$user->nombre_real}): {$motivo}";
+            $venta->save();
+
+            // Restaurar stock
+            foreach ($venta->detalles as $detalle) {
+                if ($detalle->variante) {
+                    $detalle->variante->increment('stock', (int) $detalle->cantidad);
+                }
+            }
+
+            // Anular comisiones
+            $salidasIds = Salida::where('observaciones', 'like', "Venta #{$venta->id}%")->pluck('id');
+            if ($salidasIds->isNotEmpty()) {
+                ComisionVendedor::whereIn('id_salida', $salidasIds)
+                    ->update(['estado' => 'Cancelada']);
+            }
+
+            // Actualizar salidas asociadas
+            Salida::where('observaciones', 'like', "Venta #{$venta->id}%")->update([
+                'estado' => $nuevoEstado,
+                'fecha_cancelacion' => now()->toDateString(),
+                'observaciones' => DB::raw("CONCAT(observaciones, ' - Cancelada por vendedor: {$motivo}')"),
+            ]);
+
+            DB::commit();
+
+            return response()->json([
+                'success' => true,
+                'message' => "La venta #VNT-" . str_pad($venta->id, 5, '0', STR_PAD_LEFT) . " ha sido cancelada exitosamente y el stock restaurado.",
+            ]);
+
+        } catch (\Throwable $e) {
+            DB::rollBack();
+            return response()->json([
+                'success' => false,
+                'message' => 'Error al cancelar la venta: ' . $e->getMessage(),
+            ], 500);
+        }
     }
 
     /**
@@ -364,6 +627,9 @@ class VentaController extends Controller
             'comprobante_pago' => ['nullable', 'image', 'mimes:jpeg,png,jpg,webp', 'max:5120'],
             'descuento' => ['nullable', 'numeric', 'min:0'],
             'precio_envio' => ['nullable', 'numeric', 'min:0'],
+            'nombre_cliente' => ['nullable', 'string', 'max:255'],
+            'departamento' => ['nullable', 'string', 'max:100'],
+            'municipio' => ['nullable', 'string', 'max:100'],
             'direccion_entrega' => ['nullable', 'string', 'max:255'],
             'punto_referencia' => ['nullable', 'string', 'max:255'],
             'telefono' => ['nullable', 'string', 'regex:/^[267]\d{3}-\d{4}$/'],
@@ -443,6 +709,18 @@ class VentaController extends Controller
                 $estadoInicial = ($tipoVenta === 'Tienda') ? 'Entregada' : 'Pendiente';
                 $fechaEntregaInicial = ($tipoVenta === 'Tienda') ? $fechaVenta : null;
 
+                $nombreCliente = !empty($validated['nombre_cliente']) ? trim($validated['nombre_cliente']) : null;
+                $departamento = !empty($validated['departamento']) ? trim($validated['departamento']) : null;
+                $municipio = !empty($validated['municipio']) ? trim($validated['municipio']) : null;
+
+                $observacionesVenta = null;
+                if ($nombreCliente) {
+                    $observacionesVenta = "Cliente: {$nombreCliente}";
+                    if ($departamento && $municipio) {
+                        $observacionesVenta .= " | {$departamento}, {$municipio}";
+                    }
+                }
+
                 // A. Crear registro principal en la tabla `venta`
                 $venta = Venta::create([
                     'id_usuario' => $vendedorVentaId,
@@ -450,11 +728,15 @@ class VentaController extends Controller
                     'total' => $totalPagar,
                     'metodo_pago' => $validated['metodo_pago'],
                     'comprobante_pago' => null,
+                    'nombre_cliente' => $nombreCliente,
+                    'departamento' => $departamento,
+                    'municipio' => $municipio,
                     'telefono' => $telefonoEntrega,
                     'precio_envio' => $costoEnvio,
                     'tipo_venta' => $tipoVenta,
                     'estado' => $estadoInicial,
                     'fecha_entrega' => $fechaEntregaInicial,
+                    'observaciones' => $observacionesVenta,
                 ]);
 
                 // B. Guardar el archivo del comprobante con el nombre de folio y fecha de la venta
@@ -470,12 +752,23 @@ class VentaController extends Controller
                     $venta->save();
                 }
 
-                $direccionFinal = !empty($validated['direccion_entrega'])
-                    ? trim($validated['direccion_entrega'])
-                    : 'Venta en mostrador / POS';
+                // Estructurar la dirección detallada: Departamento, Municipio, Dirección específica y Referencia
+                if (!empty($validated['direccion_entrega'])) {
+                    $partesUbicacion = [];
+                    if ($departamento && $municipio) {
+                        $partesUbicacion[] = "{$departamento}, {$municipio}";
+                    } elseif ($departamento) {
+                        $partesUbicacion[] = $departamento;
+                    }
+                    $partesUbicacion[] = trim($validated['direccion_entrega']);
 
-                if (!empty($validated['punto_referencia']) && $direccionFinal !== 'Venta en mostrador / POS') {
-                    $direccionFinal .= ' (Ref: ' . trim($validated['punto_referencia']) . ')';
+                    $direccionFinal = implode(' - ', $partesUbicacion);
+
+                    if (!empty($validated['punto_referencia'])) {
+                        $direccionFinal .= ' (Ref: ' . trim($validated['punto_referencia']) . ')';
+                    }
+                } else {
+                    $direccionFinal = 'Venta en mostrador / POS';
                 }
 
                 $fechaSalidaFinal = !empty($validated['fecha_salida']) ? $validated['fecha_salida'] : now()->toDateString();
@@ -513,6 +806,9 @@ class VentaController extends Controller
                         'fecha_salida' => $fechaSalidaFinal,
                         'hora_salida' => $horaSalidaFinal,
                         'fecha_entrega' => $fechaEntregaInicial ? $fechaSalidaFinal : null,
+                        'nombre_cliente' => $nombreCliente,
+                        'departamento' => $departamento,
+                        'municipio' => $municipio,
                         'direccion' => $direccionFinal,
                         'telefono' => $telefonoEntrega,
                         'precio_envio' => $costoEnvio,
@@ -783,15 +1079,27 @@ class VentaController extends Controller
             $detalle->costo_extra = $costoExtra;
             $detalle->subtotal_base = (int) $detalle->cantidad * (float) $detalle->precio_unitario;
             $totalCostoExtra += $costoExtra;
+
+            // Comisión del producto o variante
+            $prodComision = (float) ($detalle->variante?->producto?->comision ?? 0);
+            $varComision = (float) ($detalle->variante?->comision ?? 0);
+            $comisionUnitaria = $prodComision > 0 ? $prodComision : $varComision;
+            $detalle->comision_unitaria = $comisionUnitaria;
+            $detalle->comision_total = $comisionUnitaria * (int)$detalle->cantidad;
         }
 
         $venta->total_costo_extra = $totalCostoExtra;
+        $venta->total_comision = $venta->detalles->sum('comision_total');
+        $venta->total_ganancia_vendedor = $venta->total_comision + $totalCostoExtra;
         $subtotalGeneral = $venta->detalles->sum('subtotal');
 
         $primeraSalida = $salidas->first();
+        $venta->nombre_cliente = $venta->nombre_cliente ?? $primeraSalida?->nombre_cliente;
+        $venta->departamento = $venta->departamento ?? $primeraSalida?->departamento;
+        $venta->municipio = $venta->municipio ?? $primeraSalida?->municipio;
         $venta->direccion_entrega = $primeraSalida?->direccion;
-        $venta->fecha_salida = $primeraSalida?->fecha_salida;
-        $venta->hora_salida = $primeraSalida?->hora_salida;
+        $venta->fecha_salida = $primeraSalida?->fecha_salida ? \Carbon\Carbon::parse($primeraSalida->fecha_salida)->format('d-m-Y') : null;
+        $venta->hora_salida = $primeraSalida?->hora_salida ? \Carbon\Carbon::parse($primeraSalida->hora_salida)->format('h:i A') : null;
         $venta->telefono = $venta->telefono ?? $primeraSalida?->telefono ?? $venta->usuario?->telefono;
         $venta->precio_envio = (float) ($venta->precio_envio ?? $primeraSalida?->precio_envio ?? 0);
 
@@ -841,14 +1149,14 @@ class VentaController extends Controller
         $subtotalGeneral = $venta->detalles->sum('subtotal');
         $venta->descuento_aplicado = max(0, $subtotalGeneral - (float) $venta->total);
 
-        // Datos del receptor / cliente según parámetros recibidos
+        // Datos del receptor / cliente según parámetros recibidos o registrados en la venta
         $cliente = [
-            'nombre' => $request->query('cliente_nombre') ?: ($request->query('cliente_razon_social') ?: 'Consumidor Final'),
+            'nombre' => $request->query('cliente_nombre') ?: ($request->query('cliente_razon_social') ?: ($venta->nombre_cliente ?: 'Consumidor Final')),
             'documento' => $request->query('cliente_documento') ?: ($request->query('cliente_nit') ?: 'No especificado'),
             'nrc' => $request->query('cliente_nrc') ?: '',
             'giro' => $request->query('cliente_giro') ?: 'Comercio General',
-            'direccion' => $request->query('cliente_direccion') ?: 'San Salvador, El Salvador',
-            'departamento' => $request->query('cliente_departamento') ?: 'San Salvador',
+            'direccion' => $request->query('cliente_direccion') ?: ($salidas->first()?->direccion ?: 'San Salvador, El Salvador'),
+            'departamento' => $request->query('cliente_departamento') ?: ($venta->departamento ?: 'San Salvador'),
             'retencion_1' => (bool) $request->query('retencion_1', false),
         ];
 

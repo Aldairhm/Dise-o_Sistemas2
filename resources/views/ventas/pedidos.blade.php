@@ -286,6 +286,64 @@
                 </div>
             </div>
 
+            <!-- SUB-APARTADOS CUANDO EL ESTADO ES PENDIENTE: SAN SALVADOR VS OTROS DEPARTAMENTOS -->
+            <div 
+                x-show="tabActiva === 'Pendiente'" 
+                class="px-5 py-3 bg-amber-50/40 border-b border-amber-100 flex flex-wrap items-center justify-between gap-3"
+                style="display: none;"
+            >
+                <div class="flex items-center gap-1.5 text-xs text-amber-900 font-bold">
+                    <i class="fas fa-map-location-dot text-amber-600 text-sm"></i>
+                    <span>Filtrar Envíos por Zona / Departamento:</span>
+                </div>
+
+                <div class="inline-flex p-1 bg-white border border-amber-200 rounded-xl shadow-2xs gap-1">
+                    <!-- Opción 1: Todos los Pendientes -->
+                    <button 
+                        type="button" 
+                        @click="subFiltroPendiente = 'todos'"
+                        class="px-3 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer"
+                        :class="subFiltroPendiente === 'todos' ? 'bg-amber-500 text-white shadow-xs' : 'text-slate-600 hover:text-amber-800 hover:bg-amber-50'"
+                    >
+                        <span>Todos</span>
+                        <span class="px-1.5 py-0.2 rounded-md text-[10px] font-black"
+                              :class="subFiltroPendiente === 'todos' ? 'bg-white/20 text-white' : 'bg-slate-100 text-slate-600'">
+                            {{ $conteoEstados['Pendiente'] }}
+                        </span>
+                    </button>
+
+                    <!-- Opción 2: San Salvador -->
+                    <button 
+                        type="button" 
+                        @click="subFiltroPendiente = 'san_salvador'"
+                        class="px-3 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer"
+                        :class="subFiltroPendiente === 'san_salvador' ? 'bg-blue-600 text-white shadow-xs' : 'text-slate-600 hover:text-blue-800 hover:bg-blue-50'"
+                    >
+                        <i class="fas fa-city text-[10px]" :class="subFiltroPendiente === 'san_salvador' ? 'text-white' : 'text-blue-500'"></i>
+                        <span>San Salvador</span>
+                        <span class="px-1.5 py-0.2 rounded-md text-[10px] font-black"
+                              :class="subFiltroPendiente === 'san_salvador' ? 'bg-white/20 text-white' : 'bg-blue-100 text-blue-800'">
+                            {{ $conteoEstados['Pendiente_SS'] }}
+                        </span>
+                    </button>
+
+                    <!-- Opción 3: Otros Departamentos -->
+                    <button 
+                        type="button" 
+                        @click="subFiltroPendiente = 'otros'"
+                        class="px-3 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer"
+                        :class="subFiltroPendiente === 'otros' ? 'bg-indigo-600 text-white shadow-xs' : 'text-slate-600 hover:text-indigo-800 hover:bg-indigo-50'"
+                    >
+                        <i class="fas fa-signs-post text-[10px]" :class="subFiltroPendiente === 'otros' ? 'text-white' : 'text-indigo-500'"></i>
+                        <span>Otros Departamentos</span>
+                        <span class="px-1.5 py-0.2 rounded-md text-[10px] font-black"
+                              :class="subFiltroPendiente === 'otros' ? 'bg-white/20 text-white' : 'bg-indigo-100 text-indigo-800'">
+                            {{ $conteoEstados['Pendiente_Otros'] }}
+                        </span>
+                    </button>
+                </div>
+            </div>
+
             <!-- TABLA RESPONSIVA -->
             <div class="overflow-x-auto">
                 <table class="w-full text-left text-xs min-w-[1050px]">
@@ -313,7 +371,7 @@
                                 $diasGarantia = $venta->dias_garantia;
                                 $textoGarantia = $venta->texto_garantia_devolucion;
                                 $fechaLimite = $venta->fecha_limite_devolucion;
-                                $limiteFechaFormatted = $fechaLimite ? $fechaLimite->format('d/m/Y') : '';
+                                $limiteFechaFormatted = $fechaLimite ? $fechaLimite->format('d-m-Y') : '';
 
                                 $badgeClasses = match($estado) {
                                     'Pendiente' => 'bg-amber-50 text-amber-700 border-amber-200 hover:bg-amber-100/80',
@@ -338,8 +396,17 @@
                                 };
                             @endphp
 
+                            @php
+                                $deptoVenta = trim($venta->departamento ?? '');
+                                if (empty($deptoVenta) && !empty($venta->direccion_entrega)) {
+                                    if (str_contains(strtolower($venta->direccion_entrega), 'san salvador')) {
+                                        $deptoVenta = 'San Salvador';
+                                    }
+                                }
+                            @endphp
+
                             <tr 
-                                x-show="ventaVisible('{{ $estado }}')" 
+                                x-show="ventaVisible('{{ $estado }}', '{{ addslashes($deptoVenta) }}')" 
                                 class="hover:bg-slate-50/70 transition-colors"
                             >
                                 <!-- FOLIO -->
@@ -352,7 +419,7 @@
                                 <!-- FECHA Y HORA -->
                                 <td class="px-4 py-3.5 text-slate-600">
                                     <p class="font-bold text-slate-800">
-                                        {{ \Carbon\Carbon::parse($venta->fecha)->format('d/m/Y') }}
+                                        {{ \Carbon\Carbon::parse($venta->fecha)->format('d-m-Y') }}
                                     </p>
                                     <span class="text-[10px] text-slate-400">
                                         {{ \Carbon\Carbon::parse($venta->fecha)->format('h:i A') }}
@@ -373,13 +440,20 @@
 
                                 <!-- TIPO Y DESTINO -->
                                 <td class="px-4 py-3.5">
-                                    <div class="space-y-0.5">
+                                    <div class="space-y-1">
                                         @if($tipo === 'Envio')
-                                            <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-bold bg-indigo-50 text-indigo-700 border border-indigo-200">
-                                                <i class="fas fa-truck text-[9px]"></i> Entrega a Domicilio
-                                            </span>
+                                            <div class="flex items-center gap-1.5 flex-wrap">
+                                                <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-bold bg-indigo-50 text-indigo-700 border border-indigo-200">
+                                                    <i class="fas fa-truck text-[9px]"></i> Entrega a Domicilio
+                                                </span>
+                                                @if(!empty($venta->nombre_cliente))
+                                                    <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-extrabold bg-blue-50 text-blue-800 border border-blue-200" title="Cliente">
+                                                        <i class="fas fa-user text-[8px] text-blue-600"></i> {{ $venta->nombre_cliente }}
+                                                    </span>
+                                                @endif
+                                            </div>
                                             @if($venta->direccion_entrega)
-                                                <p class="text-[11px] text-slate-700 font-medium truncate max-w-[200px]" title="{{ $venta->direccion_entrega }}">
+                                                <p class="text-[11px] text-slate-700 font-medium truncate max-w-[220px]" title="{{ $venta->direccion_entrega }}">
                                                     {{ $venta->direccion_entrega }}
                                                 </p>
                                             @endif
@@ -389,9 +463,16 @@
                                                 </p>
                                             @endif
                                         @else
-                                            <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
-                                                <i class="fas fa-store text-[9px]"></i> Venta en Tienda
-                                            </span>
+                                            <div class="flex items-center gap-1.5 flex-wrap">
+                                                <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
+                                                    <i class="fas fa-store text-[9px]"></i> Venta en Tienda
+                                                </span>
+                                                @if(!empty($venta->nombre_cliente))
+                                                    <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-bold bg-slate-100 text-slate-700 border border-slate-200" title="Cliente">
+                                                        <i class="fas fa-user text-[8px]"></i> {{ $venta->nombre_cliente }}
+                                                    </span>
+                                                @endif
+                                            </div>
                                         @endif
                                     </div>
                                 </td>
@@ -534,15 +615,27 @@
                     </div>
                     <h4 class="text-sm font-bold text-slate-700">No hay ventas en este apartado</h4>
                     <p class="text-xs text-slate-400 mt-1">
-                        Actualmente no existen registros con el estado seleccionado.
+                        <span x-show="tabActiva === 'Pendiente' && subFiltroPendiente !== 'todos'">No hay pedidos pendientes para la zona o departamento seleccionado.</span>
+                        <span x-show="tabActiva !== 'Pendiente' || subFiltroPendiente === 'todos'">Actualmente no existen registros con el estado seleccionado.</span>
                     </p>
-                    <button 
-                        type="button" 
-                        @click="cambiarTab('todos')"
-                        class="mt-3 text-xs font-bold text-blue-600 hover:underline cursor-pointer"
-                    >
-                        Ver todas las ventas
-                    </button>
+                    <div class="flex items-center gap-2 mt-3">
+                        <button 
+                            type="button" 
+                            x-show="tabActiva === 'Pendiente' && subFiltroPendiente !== 'todos'"
+                            @click="subFiltroPendiente = 'todos'"
+                            class="text-xs font-bold text-amber-600 hover:underline cursor-pointer"
+                        >
+                            Ver todos los pendientes
+                        </button>
+                        <span x-show="tabActiva === 'Pendiente' && subFiltroPendiente !== 'todos'" class="text-slate-300">•</span>
+                        <button 
+                            type="button" 
+                            @click="cambiarTab('todos')"
+                            class="text-xs font-bold text-blue-600 hover:underline cursor-pointer"
+                        >
+                            Ver todas las ventas
+                        </button>
+                    </div>
                 </div>
             </div>
 
@@ -1026,8 +1119,16 @@
 
                                 <!-- SI TIENE DIRECCIÓN DE ENVÍO -->
                                 <template x-if="ventaSeleccionada.direccion_entrega">
-                                    <div class="p-3 bg-indigo-50/60 border border-indigo-200 rounded-xl space-y-1">
-                                        <span class="text-[10px] uppercase font-bold text-indigo-900 block">Datos del Envío:</span>
+                                    <div class="p-3.5 bg-indigo-50/70 border border-indigo-200 rounded-xl space-y-1.5">
+                                        <div class="flex items-center justify-between">
+                                            <span class="text-[10px] uppercase font-bold text-indigo-900 block">Datos del Envío:</span>
+                                            <template x-if="ventaSeleccionada.nombre_cliente">
+                                                <span class="inline-flex items-center gap-1 text-[11px] font-bold text-indigo-900 bg-white px-2 py-0.5 rounded-md border border-indigo-200 shadow-2xs">
+                                                    <i class="fas fa-user text-indigo-600 text-[10px]"></i>
+                                                    <span x-text="ventaSeleccionada.nombre_cliente"></span>
+                                                </span>
+                                            </template>
+                                        </div>
                                         <p class="text-xs text-indigo-950 font-medium" x-text="ventaSeleccionada.direccion_entrega"></p>
                                         <template x-if="ventaSeleccionada.telefono">
                                             <p class="text-[11px] text-indigo-700 font-mono">
@@ -1796,6 +1897,7 @@
         function gestorPedidosEstados() {
             return {
                 tabActiva: '{{ $estadoTab ?? "todos" }}',
+                subFiltroPendiente: 'todos', // 'todos', 'san_salvador', 'otros'
 
                 // Conteos dinámicos
                 conteoEstados: @json($conteoEstados),
@@ -1887,12 +1989,37 @@
                     return descripciones[this.tabActiva] || '';
                 },
 
-                ventaVisible(estado) {
+                ventaVisible(estado, depto = '') {
                     if (this.tabActiva === 'todos') return true;
-                    return estado === this.tabActiva;
+                    if (estado !== this.tabActiva) return false;
+
+                    // Si está en el apartado 'Pendiente', evaluar el subfiltro de departamento
+                    if (this.tabActiva === 'Pendiente') {
+                        if (this.subFiltroPendiente === 'todos') return true;
+
+                        const d = (depto || '').toLowerCase().trim();
+                        const esSanSalvador = d.includes('san salvador');
+
+                        if (this.subFiltroPendiente === 'san_salvador') {
+                            return esSanSalvador;
+                        }
+                        if (this.subFiltroPendiente === 'otros') {
+                            return !esSanSalvador;
+                        }
+                    }
+
+                    return true;
                 },
 
                 conteoFiltradas() {
+                    if (this.tabActiva === 'Pendiente') {
+                        if (this.subFiltroPendiente === 'san_salvador') {
+                            return this.conteoEstados['Pendiente_SS'] || 0;
+                        }
+                        if (this.subFiltroPendiente === 'otros') {
+                            return this.conteoEstados['Pendiente_Otros'] || 0;
+                        }
+                    }
                     return this.conteoEstados[this.tabActiva] || 0;
                 },
 
@@ -2257,7 +2384,7 @@
                         const ampm = horas >= 12 ? 'PM' : 'AM';
                         horas = horas % 12;
                         horas = horas ? horas : 12;
-                        return `${dia}/${mes}/${anio} ${String(horas).padStart(2, '0')}:${minutos} ${ampm}`;
+                        return `${dia}-${mes}-${anio} ${String(horas).padStart(2, '0')}:${minutos} ${ampm}`;
                     } catch (e) {
                         return fechaStr;
                     }

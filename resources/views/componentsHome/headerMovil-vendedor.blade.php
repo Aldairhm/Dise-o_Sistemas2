@@ -1,6 +1,8 @@
         <div id="mobile-menu" class="hidden lg:hidden border-t border-gray-100 bg-white">
             <nav class="flex flex-col px-4 pt-2 pb-4 space-y-2">
                 <a href="/home" class="text-sm font-semibold text-blue-600 flex items-center gap-2 p-2 rounded-lg hover:bg-gray-50 transition-colors"><i class="fas fa-home w-5 text-center"></i> Inicio</a>
+                <a href="{{ route('ventas.create') }}" class="text-sm font-medium text-gray-600 hover:text-blue-600 flex items-center gap-2 p-2 rounded-lg hover:bg-gray-50 transition-colors"><i class="fas fa-cash-register w-5 text-center"></i> Ventas / Carrito</a>
+                <a href="{{ route('ventas.mis-ventas') }}" class="text-sm font-medium text-gray-600 hover:text-blue-600 flex items-center gap-2 p-2 rounded-lg hover:bg-gray-50 transition-colors"><i class="fas fa-boxes-packing w-5 text-center"></i> Mis Ventas</a>
                 <!-- Auth block removed from mobile menu because profile is now on the top navbar -->
             </nav>
         </div>

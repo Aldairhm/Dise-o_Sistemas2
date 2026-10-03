@@ -21,7 +21,7 @@
                             </span>
                         </div>
                         <p class="text-xs text-slate-500">
-                            Registrada el {{ \Carbon\Carbon::parse($venta->fecha)->format('d/m/Y h:i A') }} • Atendido por {{ $venta->usuario?->nombre_real ?? $venta->usuario?->username }}
+                            Registrada el {{ \Carbon\Carbon::parse($venta->fecha)->format('d-m-Y h:i A') }} • Atendido por {{ $venta->usuario?->nombre_real ?? $venta->usuario?->username }}
                         </p>
                     </div>
                 </div>
@@ -172,18 +172,26 @@
                 <i class="fas fa-truck-fast"></i>
             </div>
             <div class="space-y-1 text-xs flex-1">
-                <div class="flex items-center gap-2">
-                    <h2 class="text-sm font-black text-slate-900 uppercase tracking-tight">Datos de Entrega a Domicilio</h2>
-                    <span class="text-[10px] font-bold text-blue-700 bg-blue-50 border border-blue-200 px-2.5 py-0.5 rounded-full">
-                        Despachado
-                    </span>
+                <div class="flex items-center justify-between gap-2 flex-wrap">
+                    <div class="flex items-center gap-2">
+                        <h2 class="text-sm font-black text-slate-900 uppercase tracking-tight">Datos de Entrega a Domicilio</h2>
+                        <span class="text-[10px] font-bold text-blue-700 bg-blue-50 border border-blue-200 px-2.5 py-0.5 rounded-full">
+                            Despachado
+                        </span>
+                    </div>
+                    @if(!empty($venta->nombre_cliente))
+                        <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-lg text-xs font-black bg-blue-50 text-blue-900 border border-blue-200">
+                            <i class="fas fa-user text-blue-600 text-[11px]"></i>
+                            <span>Cliente: {{ $venta->nombre_cliente }}</span>
+                        </span>
+                    @endif
                 </div>
                 <p class="text-slate-800 font-bold text-sm">
                     {{ $venta->direccion_entrega }}
                 </p>
                 @if($venta->fecha_salida)
                 <p class="text-slate-500 text-[11px]">
-                    Salida registrada: <strong class="text-slate-700">{{ \Carbon\Carbon::parse($venta->fecha_salida)->format('d/m/Y') }}</strong>
+                    Salida registrada: <strong class="text-slate-700">{{ \Carbon\Carbon::parse($venta->fecha_salida)->format('d-m-Y') }}</strong>
                     @if($venta->hora_salida)
                     a las <strong class="text-slate-700">{{ $venta->hora_salida }}</strong>
                     @endif
@@ -281,7 +289,7 @@
                             <span class="font-mono text-slate-600">{{ $venta->comprobante_pago }}</span>
                         </p>
                         <p class="text-[11px] text-slate-500">
-                            <strong>Fecha de registro:</strong> {{ \Carbon\Carbon::parse($venta->fecha)->format('d/m/Y h:i A') }}
+                            <strong>Fecha de registro:</strong> {{ \Carbon\Carbon::parse($venta->fecha)->format('d-m-Y h:i A') }}
                         </p>
                     </div>
                     <div>

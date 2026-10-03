@@ -5,6 +5,9 @@
                 <a href="#entregas" class="text-sm font-medium text-gray-600 hover:text-blue-600 flex items-center gap-2 p-2 rounded-lg hover:bg-gray-50 transition-colors"><i class="fas fa-truck w-5 text-center"></i> Entregas</a>
                 <a href="{{ route('compras.create') }}" class="text-sm font-medium text-gray-600 hover:text-blue-600 flex items-center gap-2 p-2 rounded-lg hover:bg-gray-50 transition-colors"><i class="fas fa-cart-plus w-5 text-center"></i> Compras</a>
                 <a href="{{ Auth::check() && Auth::user()->rol === 'vendedor' ? route('ventas.create') : route('ventas.index') }}" class="text-sm font-medium text-gray-600 hover:text-blue-600 flex items-center gap-2 p-2 rounded-lg hover:bg-gray-50 transition-colors"><i class="fas fa-cash-register w-5 text-center"></i> Ventas</a>
+                @if(Auth::check() && in_array(Auth::user()->rol, ['vendedor', 'admin']))
+                <a href="{{ route('ventas.mis-ventas') }}" class="text-sm font-medium text-gray-600 hover:text-blue-600 flex items-center gap-2 p-2 rounded-lg hover:bg-gray-50 transition-colors"><i class="fas fa-boxes-packing w-5 text-center"></i> Mis Ventas</a>
+                @endif
                 <a href="{{ route('categorias.index') }}" class="text-sm font-medium text-gray-600 hover:text-blue-600 flex items-center gap-2 p-2 rounded-lg hover:bg-gray-50 transition-colors"><i class="fas fa-folder-open w-5 text-center"></i> Categorías</a>
                 <a href="{{ route('usuarios.index') }}" class="text-sm font-medium text-gray-600 hover:text-blue-600 flex items-center gap-2 p-2 rounded-lg hover:bg-gray-50 transition-colors"><i class="fas fa-users-gear w-5 text-center"></i> Usuarios</a>
                 <!-- Auth block removed from mobile menu because profile is now on the top navbar -->

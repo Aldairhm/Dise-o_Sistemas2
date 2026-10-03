@@ -76,6 +76,8 @@ Route::middleware('auth')->group(function () {
         Route::post('/movimientos-bodega/transferencia-tienda', [MovimientoBodegaController::class, 'transferirATienda'])->name('movimientos-bodega.transferencia-tienda');
 
         // ── Módulo de Ventas ──
+        Route::get('/ventas/mis-ventas', [VentaController::class, 'misVentas'])->name('ventas.mis-ventas');
+        Route::post('/ventas/{id}/cancelar-vendedor', [VentaController::class, 'cancelarPorVendedor'])->name('ventas.cancelar-vendedor');
         Route::get('/ventas/nueva', [VentaController::class, 'create'])->name('ventas.create');
         Route::get('/ventas/pedidos', [VentaController::class, 'pedidos'])->name('ventas.pedidos');
         Route::get('/ventas', [VentaController::class, 'index'])->name('ventas.index');

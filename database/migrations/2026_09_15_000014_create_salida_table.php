@@ -20,6 +20,9 @@ return new class extends Migration
             $table->date('fecha_salida');
             $table->time('hora_salida');
             $table->date('fecha_entrega')->nullable();
+            $table->string('nombre_cliente', 255)->nullable();
+            $table->string('departamento', 100)->nullable();
+            $table->string('municipio', 100)->nullable();
             $table->string('direccion', 255)->nullable();
             $table->string('telefono', 20)->nullable();
             $table->decimal('precio_envio', 10, 2)->default(0.00);

@@ -294,7 +294,7 @@
                 @foreach($productoSeleccionado && $ventasProductoPorDia->count() > 0 ? $ventasProductoPorDia : $ventasPorDia as $item)
                     <div class="rounded-xl border border-slate-100 bg-slate-50/70 p-3 hover:border-blue-300 hover:bg-white transition-all text-center">
                         <span class="text-[10px] font-bold uppercase text-slate-400 block mb-1">
-                            {{ \Carbon\Carbon::parse($item->dia)->format('d M Y') }}
+                            {{ \Carbon\Carbon::parse($item->dia)->format('d-m-Y') }}
                         </span>
                         <p class="text-sm font-black text-slate-900 leading-tight">
                             ${{ number_format($item->monto_total ?? $item->total_monto ?? $item->subtotal ?? 0, 2) }}
@@ -358,7 +358,7 @@
                                 $diasGarantia = $venta->dias_garantia;
                                 $textoGarantia = $venta->texto_garantia_devolucion;
                                 $fechaLimite = $venta->fecha_limite_devolucion;
-                                $limiteFechaFormatted = $fechaLimite ? $fechaLimite->format('d/m/Y') : '';
+                                $limiteFechaFormatted = $fechaLimite ? $fechaLimite->format('d-m-Y') : '';
 
                                 $badgeClasses = match($estado) {
                                     'Pendiente' => 'bg-amber-50 text-amber-700 border-amber-200 hover:bg-amber-100/80',
@@ -398,7 +398,7 @@
                                 <!-- FECHA Y HORA -->
                                 <td class="px-4 py-3.5 text-slate-600">
                                     <p class="font-bold text-slate-800">
-                                        {{ \Carbon\Carbon::parse($venta->fecha)->format('d/m/Y') }}
+                                        {{ \Carbon\Carbon::parse($venta->fecha)->format('d-m-Y') }}
                                     </p>
                                     <span class="text-[10px] text-slate-400">
                                         {{ \Carbon\Carbon::parse($venta->fecha)->format('h:i A') }}
@@ -419,13 +419,20 @@
 
                                 <!-- TIPO Y DESTINO -->
                                 <td class="px-4 py-3.5">
-                                    <div class="space-y-0.5">
+                                    <div class="space-y-1">
                                         @if($tipo === 'Envio')
-                                            <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-bold bg-indigo-50 text-indigo-700 border border-indigo-200">
-                                                <i class="fas fa-truck text-[9px]"></i> Entrega a Domicilio
-                                            </span>
+                                            <div class="flex items-center gap-1.5 flex-wrap">
+                                                <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-bold bg-indigo-50 text-indigo-700 border border-indigo-200">
+                                                    <i class="fas fa-truck text-[9px]"></i> Entrega a Domicilio
+                                                </span>
+                                                @if(!empty($venta->nombre_cliente))
+                                                    <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-extrabold bg-blue-50 text-blue-800 border border-blue-200" title="Cliente">
+                                                        <i class="fas fa-user text-[8px] text-blue-600"></i> {{ $venta->nombre_cliente }}
+                                                    </span>
+                                                @endif
+                                            </div>
                                             @if($venta->direccion_entrega)
-                                                <p class="text-[11px] text-slate-700 font-medium truncate max-w-[200px]" title="{{ $venta->direccion_entrega }}">
+                                                <p class="text-[11px] text-slate-700 font-medium truncate max-w-[220px]" title="{{ $venta->direccion_entrega }}">
                                                     {{ $venta->direccion_entrega }}
                                                 </p>
                                             @endif
@@ -435,9 +442,16 @@
                                                 </p>
                                             @endif
                                         @else
-                                            <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
-                                                <i class="fas fa-store text-[9px]"></i> Venta en Tienda
-                                            </span>
+                                            <div class="flex items-center gap-1.5 flex-wrap">
+                                                <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
+                                                    <i class="fas fa-store text-[9px]"></i> Venta en Tienda
+                                                </span>
+                                                @if(!empty($venta->nombre_cliente))
+                                                    <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-bold bg-slate-100 text-slate-700 border border-slate-200" title="Cliente">
+                                                        <i class="fas fa-user text-[8px]"></i> {{ $venta->nombre_cliente }}
+                                                    </span>
+                                                @endif
+                                            </div>
                                         @endif
                                     </div>
                                 </td>
@@ -719,15 +733,23 @@
                                             <i class="fas fa-truck-fast text-sm"></i>
                                         </div>
                                         <div class="min-w-0 flex-1 text-xs">
-                                            <div class="flex items-center gap-2 mb-0.5">
-                                                <h4 class="font-black text-slate-900 uppercase tracking-wider text-[11px]">Entrega a Domicilio</h4>
-                                                <span class="inline-flex items-center gap-1 text-[10px] font-bold text-blue-700 bg-blue-100 border border-blue-200 px-2 py-0.5 rounded-full">
-                                                    Despachado
-                                                </span>
+                                            <div class="flex items-center justify-between gap-2 mb-1 flex-wrap">
+                                                <div class="flex items-center gap-2">
+                                                    <h4 class="font-black text-slate-900 uppercase tracking-wider text-[11px]">Entrega a Domicilio</h4>
+                                                    <span class="inline-flex items-center gap-1 text-[10px] font-bold text-blue-700 bg-blue-100 border border-blue-200 px-2 py-0.5 rounded-full">
+                                                        Despachado
+                                                    </span>
+                                                </div>
+                                                <template x-if="ventaSeleccionada.nombre_cliente">
+                                                    <span class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-lg text-xs font-black bg-white text-blue-900 border border-blue-200 shadow-2xs">
+                                                        <i class="fas fa-user text-blue-600 text-[10px]"></i>
+                                                        <span x-text="ventaSeleccionada.nombre_cliente"></span>
+                                                    </span>
+                                                </template>
                                             </div>
                                             <p class="text-slate-800 font-bold" x-text="ventaSeleccionada.direccion_entrega"></p>
                                             <p class="text-[11px] text-slate-500 mt-0.5" x-show="ventaSeleccionada.fecha_salida">
-                                                Creación registrada: <span class="font-semibold text-slate-700" x-text="ventaSeleccionada.fecha_salida + (ventaSeleccionada.hora_salida ? ' • ' + ventaSeleccionada.hora_salida : '')"></span>
+                                                Salida registrada: <span class="font-semibold text-slate-700" x-text="formatearFechaSalida(ventaSeleccionada.fecha_salida, ventaSeleccionada.hora_salida)"></span>
                                             </p>
                                             <template x-if="Number(ventaSeleccionada.precio_envio || 0) > 0">
                                                 <p class="text-[11px] text-blue-700 mt-0.5 font-bold">
@@ -2667,9 +2689,55 @@
 
                 formatearFecha(fechaStr) {
                     if (!fechaStr) return '';
-                    const f = new Date(fechaStr);
-                    if (isNaN(f.getTime())) return fechaStr;
-                    return f.toLocaleDateString('es-SV', { day: '2-digit', month: '2-digit', year: 'numeric' }) + ' ' + f.toLocaleTimeString('es-SV', { hour: '2-digit', minute: '2-digit' });
+                    try {
+                        const d = new Date(fechaStr);
+                        if (isNaN(d.getTime())) return fechaStr;
+                        const dia = String(d.getDate()).padStart(2, '0');
+                        const mes = String(d.getMonth() + 1).padStart(2, '0');
+                        const anio = d.getFullYear();
+                        let horas = d.getHours();
+                        const minutos = String(d.getMinutes()).padStart(2, '0');
+                        const ampm = horas >= 12 ? 'PM' : 'AM';
+                        horas = horas % 12;
+                        horas = horas ? horas : 12;
+                        return `${dia}-${mes}-${anio} ${String(horas).padStart(2, '0')}:${minutos} ${ampm}`;
+                    } catch (e) {
+                        return fechaStr;
+                    }
+                },
+
+                formatearFechaSalida(fechaStr, horaStr) {
+                    if (!fechaStr) return '';
+                    let fechaLimpia = fechaStr;
+                    // Si viene en formato ISO (ej. 2026-09-27T06:00:00.000000Z), extraer solo fecha
+                    if (fechaStr.includes('T')) {
+                        const partesIso = fechaStr.split('T')[0].split('-');
+                        if (partesIso.length === 3) {
+                            fechaLimpia = `${partesIso[2]}-${partesIso[1]}-${partesIso[0]}`;
+                        }
+                    } else if (fechaStr.includes('-') && fechaStr.split('-')[0].length === 4) {
+                        const partes = fechaStr.split('-');
+                        fechaLimpia = `${partes[2]}-${partes[1]}-${partes[0]}`;
+                    }
+
+                    let horaLimpia = '';
+                    if (horaStr) {
+                        if (horaStr.includes('AM') || horaStr.includes('PM')) {
+                            horaLimpia = horaStr;
+                        } else {
+                            const partesH = horaStr.split(':');
+                            if (partesH.length >= 2) {
+                                let h = parseInt(partesH[0], 10);
+                                const m = partesH[1];
+                                const ampm = h >= 12 ? 'PM' : 'AM';
+                                h = h % 12;
+                                h = h ? h : 12;
+                                horaLimpia = `${String(h).padStart(2, '0')}:${m} ${ampm}`;
+                            }
+                        }
+                    }
+
+                    return horaLimpia ? `${fechaLimpia} • ${horaLimpia}` : fechaLimpia;
                 },
 
                 totalUnidadesVenta(venta) {
