@@ -107,6 +107,10 @@
                                 </div>
                             </div>
                             <div class="p-1.5 space-y-1">
+                                <a href="{{ route('ventas.mis-ventas') }}" class="w-full text-left px-3 py-2 text-xs font-bold text-gray-700 hover:bg-blue-50 hover:text-blue-600 rounded-lg flex items-center gap-2 transition-colors">
+                                    <i class="fas fa-boxes-packing text-blue-500"></i>
+                                    <span>Mis Ventas</span>
+                                </a>
                                 <a href="{{ route('perfil.show') }}" class="w-full text-left px-3 py-2 text-xs font-bold text-gray-700 hover:bg-blue-50 hover:text-blue-600 rounded-lg flex items-center gap-2 transition-colors">
                                     <i class="fas fa-user-gear text-blue-500"></i>
                                     <span>Configurar Perfil</span>

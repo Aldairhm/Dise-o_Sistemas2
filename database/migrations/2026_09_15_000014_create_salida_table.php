@@ -20,7 +20,11 @@ return new class extends Migration
             $table->date('fecha_salida');
             $table->time('hora_salida');
             $table->date('fecha_entrega')->nullable();
+            $table->string('nombre_cliente', 255)->nullable();
+            $table->string('departamento', 100)->nullable();
+            $table->string('municipio', 100)->nullable();
             $table->string('direccion', 255)->nullable();
+            $table->string('telefono', 20)->nullable();
             $table->decimal('precio_envio', 10, 2)->default(0.00);
             $table->decimal('costo_extra', 10, 2)->default(0.00);
             $table->decimal('precio_unitario', 10, 2);
@@ -33,9 +37,11 @@ return new class extends Migration
             $table->string('estado', 20)->default('Pendiente');
             $table->timestamp('fecha_cancelacion')->nullable();
             $table->timestamp('created_at')->useCurrent();
+            $table->string('comprobante_paquete', 255)->nullable();
+            $table->string('comprobante_devolucion', 255)->nullable();
         });
 
-        DB::statement("ALTER TABLE salida ADD CONSTRAINT chk_salida_estado CHECK (estado IN ('Pendiente', 'En camino', 'Entregado', 'Cancelado'))");
+        DB::statement("ALTER TABLE salida ADD CONSTRAINT chk_salida_estado CHECK (estado IN ('Pendiente', 'Confirmada', 'En ruta', 'En camino', 'Entregada', 'Entregado', 'Cancelada', 'Cancelado', 'Devolución', 'Devolucion', 'Cambio'))");
     }
 
     /**

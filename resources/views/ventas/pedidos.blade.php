@@ -228,6 +228,21 @@
                     {{ $conteoEstados['Devolución'] }}
                 </span>
             </button>
+
+            <!-- 8. CAMBIO -->
+            <button 
+                type="button" 
+                @click="cambiarTab('Cambio')"
+                class="rounded-xl px-3.5 py-2 text-xs font-bold transition-all flex items-center gap-2 cursor-pointer"
+                :class="tabActiva === 'Cambio' ? 'bg-teal-600 text-white shadow-xs' : 'text-slate-600 hover:bg-teal-50 hover:text-teal-700'"
+            >
+                <i class="fas fa-arrow-right-arrow-left text-[11px]" :class="tabActiva === 'Cambio' ? 'text-white' : 'text-teal-500'"></i>
+                <span>Cambio</span>
+                <span class="px-1.5 py-0.5 rounded-md text-[10px] font-black"
+                      :class="tabActiva === 'Cambio' ? 'bg-white/20 text-white' : 'bg-teal-100 text-teal-800'">
+                    {{ $conteoEstados['Cambio'] }}
+                </span>
+            </button>
         </div>
 
         <!-- 3. TABLA DEL APARTADO SELECCIONADO -->
@@ -242,7 +257,8 @@
                              'bg-blue-100 text-blue-700': tabActiva === 'Confirmada',
                              'bg-indigo-100 text-indigo-700': tabActiva === 'En ruta',
                              'bg-rose-100 text-rose-700': tabActiva === 'Cancelada',
-                             'bg-purple-100 text-purple-700': tabActiva === 'Devolución'
+                             'bg-purple-100 text-purple-700': tabActiva === 'Devolución',
+                             'bg-teal-100 text-teal-700': tabActiva === 'Cambio'
                          }">
                         <i class="fas" :class="{
                             'fa-layer-group': tabActiva === 'todos',
@@ -250,7 +266,8 @@
                             'fa-circle-check': tabActiva === 'Confirmada',
                             'fa-truck-fast': tabActiva === 'En ruta',
                             'fa-ban': tabActiva === 'Cancelada',
-                            'fa-rotate-left': tabActiva === 'Devolución'
+                            'fa-rotate-left': tabActiva === 'Devolución',
+                            'fa-arrow-right-arrow-left': tabActiva === 'Cambio'
                         }"></i>
                     </div>
                     <div>
@@ -266,6 +283,64 @@
                     <span class="text-xs font-bold text-slate-600 bg-white border border-slate-200 px-3 py-1.5 rounded-xl shadow-2xs">
                         Mostrando <strong class="text-blue-600" x-text="conteoFiltradas()"></strong> ventas en este apartado
                     </span>
+                </div>
+            </div>
+
+            <!-- SUB-APARTADOS CUANDO EL ESTADO ES PENDIENTE: SAN SALVADOR VS OTROS DEPARTAMENTOS -->
+            <div 
+                x-show="tabActiva === 'Pendiente'" 
+                class="px-5 py-3 bg-amber-50/40 border-b border-amber-100 flex flex-wrap items-center justify-between gap-3"
+                style="display: none;"
+            >
+                <div class="flex items-center gap-1.5 text-xs text-amber-900 font-bold">
+                    <i class="fas fa-map-location-dot text-amber-600 text-sm"></i>
+                    <span>Filtrar Envíos por Zona / Departamento:</span>
+                </div>
+
+                <div class="inline-flex p-1 bg-white border border-amber-200 rounded-xl shadow-2xs gap-1">
+                    <!-- Opción 1: Todos los Pendientes -->
+                    <button 
+                        type="button" 
+                        @click="subFiltroPendiente = 'todos'"
+                        class="px-3 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer"
+                        :class="subFiltroPendiente === 'todos' ? 'bg-amber-500 text-white shadow-xs' : 'text-slate-600 hover:text-amber-800 hover:bg-amber-50'"
+                    >
+                        <span>Todos</span>
+                        <span class="px-1.5 py-0.2 rounded-md text-[10px] font-black"
+                              :class="subFiltroPendiente === 'todos' ? 'bg-white/20 text-white' : 'bg-slate-100 text-slate-600'">
+                            {{ $conteoEstados['Pendiente'] }}
+                        </span>
+                    </button>
+
+                    <!-- Opción 2: San Salvador -->
+                    <button 
+                        type="button" 
+                        @click="subFiltroPendiente = 'san_salvador'"
+                        class="px-3 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer"
+                        :class="subFiltroPendiente === 'san_salvador' ? 'bg-blue-600 text-white shadow-xs' : 'text-slate-600 hover:text-blue-800 hover:bg-blue-50'"
+                    >
+                        <i class="fas fa-city text-[10px]" :class="subFiltroPendiente === 'san_salvador' ? 'text-white' : 'text-blue-500'"></i>
+                        <span>San Salvador</span>
+                        <span class="px-1.5 py-0.2 rounded-md text-[10px] font-black"
+                              :class="subFiltroPendiente === 'san_salvador' ? 'bg-white/20 text-white' : 'bg-blue-100 text-blue-800'">
+                            {{ $conteoEstados['Pendiente_SS'] }}
+                        </span>
+                    </button>
+
+                    <!-- Opción 3: Otros Departamentos -->
+                    <button 
+                        type="button" 
+                        @click="subFiltroPendiente = 'otros'"
+                        class="px-3 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer"
+                        :class="subFiltroPendiente === 'otros' ? 'bg-indigo-600 text-white shadow-xs' : 'text-slate-600 hover:text-indigo-800 hover:bg-indigo-50'"
+                    >
+                        <i class="fas fa-signs-post text-[10px]" :class="subFiltroPendiente === 'otros' ? 'text-white' : 'text-indigo-500'"></i>
+                        <span>Otros Departamentos</span>
+                        <span class="px-1.5 py-0.2 rounded-md text-[10px] font-black"
+                              :class="subFiltroPendiente === 'otros' ? 'bg-white/20 text-white' : 'bg-indigo-100 text-indigo-800'">
+                            {{ $conteoEstados['Pendiente_Otros'] }}
+                        </span>
+                    </button>
                 </div>
             </div>
 
@@ -296,7 +371,7 @@
                                 $diasGarantia = $venta->dias_garantia;
                                 $textoGarantia = $venta->texto_garantia_devolucion;
                                 $fechaLimite = $venta->fecha_limite_devolucion;
-                                $limiteFechaFormatted = $fechaLimite ? $fechaLimite->format('d/m/Y') : '';
+                                $limiteFechaFormatted = $fechaLimite ? $fechaLimite->format('d-m-Y') : '';
 
                                 $badgeClasses = match($estado) {
                                     'Pendiente' => 'bg-amber-50 text-amber-700 border-amber-200 hover:bg-amber-100/80',
@@ -305,6 +380,7 @@
                                     'Entregada', 'Entregado' => 'bg-emerald-50 text-emerald-700 border-emerald-200 hover:bg-emerald-100/80',
                                     'Cancelada' => 'bg-rose-50 text-rose-700 border-rose-200',
                                     'Devolución' => 'bg-purple-50 text-purple-700 border-purple-200',
+                                    'Cambio' => 'bg-teal-50 text-teal-700 border-teal-200',
                                     default => 'bg-slate-50 text-slate-700 border-slate-200'
                                 };
 
@@ -315,12 +391,22 @@
                                     'Entregada', 'Entregado' => 'fa-box-open',
                                     'Cancelada' => 'fa-ban',
                                     'Devolución' => 'fa-rotate-left',
+                                    'Cambio' => 'fa-arrow-right-arrow-left',
                                     default => 'fa-info-circle'
                                 };
                             @endphp
 
+                            @php
+                                $deptoVenta = trim($venta->departamento ?? '');
+                                if (empty($deptoVenta) && !empty($venta->direccion_entrega)) {
+                                    if (str_contains(strtolower($venta->direccion_entrega), 'san salvador')) {
+                                        $deptoVenta = 'San Salvador';
+                                    }
+                                }
+                            @endphp
+
                             <tr 
-                                x-show="ventaVisible('{{ $estado }}')" 
+                                x-show="ventaVisible('{{ $estado }}', '{{ addslashes($deptoVenta) }}')" 
                                 class="hover:bg-slate-50/70 transition-colors"
                             >
                                 <!-- FOLIO -->
@@ -333,7 +419,7 @@
                                 <!-- FECHA Y HORA -->
                                 <td class="px-4 py-3.5 text-slate-600">
                                     <p class="font-bold text-slate-800">
-                                        {{ \Carbon\Carbon::parse($venta->fecha)->format('d/m/Y') }}
+                                        {{ \Carbon\Carbon::parse($venta->fecha)->format('d-m-Y') }}
                                     </p>
                                     <span class="text-[10px] text-slate-400">
                                         {{ \Carbon\Carbon::parse($venta->fecha)->format('h:i A') }}
@@ -354,13 +440,25 @@
 
                                 <!-- TIPO Y DESTINO -->
                                 <td class="px-4 py-3.5">
-                                    <div class="space-y-0.5">
+                                    <div class="space-y-1">
                                         @if($tipo === 'Envio')
-                                            <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-bold bg-indigo-50 text-indigo-700 border border-indigo-200">
-                                                <i class="fas fa-truck text-[9px]"></i> Entrega a Domicilio
-                                            </span>
+                                            <div class="flex items-center gap-1.5 flex-wrap">
+                                                <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-bold bg-indigo-50 text-indigo-700 border border-indigo-200">
+                                                    <i class="fas fa-truck text-[9px]"></i> Entrega a Domicilio
+                                                </span>
+                                                @if(!empty($venta->nombre_cliente))
+                                                    <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-extrabold bg-blue-50 text-blue-800 border border-blue-200" title="Cliente">
+                                                        <i class="fas fa-user text-[8px] text-blue-600"></i> {{ $venta->nombre_cliente }}
+                                                    </span>
+                                                @endif
+                                                @if(!empty($venta->departamento))
+                                                    <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-bold bg-amber-50 text-amber-800 border border-amber-200" title="Destino">
+                                                        <i class="fas fa-map-pin text-[8px] text-amber-600"></i> {{ $venta->departamento }}{{ !empty($venta->municipio) ? ', ' . $venta->municipio : '' }}
+                                                    </span>
+                                                @endif
+                                            </div>
                                             @if($venta->direccion_entrega)
-                                                <p class="text-[11px] text-slate-700 font-medium truncate max-w-[200px]" title="{{ $venta->direccion_entrega }}">
+                                                <p class="text-[11px] text-slate-700 font-medium truncate max-w-[220px]" title="{{ $venta->direccion_entrega }}">
                                                     {{ $venta->direccion_entrega }}
                                                 </p>
                                             @endif
@@ -370,9 +468,16 @@
                                                 </p>
                                             @endif
                                         @else
-                                            <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
-                                                <i class="fas fa-store text-[9px]"></i> Venta en Tienda
-                                            </span>
+                                            <div class="flex items-center gap-1.5 flex-wrap">
+                                                <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
+                                                    <i class="fas fa-store text-[9px]"></i> Venta en Tienda
+                                                </span>
+                                                @if(!empty($venta->nombre_cliente))
+                                                    <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-bold bg-slate-100 text-slate-700 border border-slate-200" title="Cliente">
+                                                        <i class="fas fa-user text-[8px]"></i> {{ $venta->nombre_cliente }}
+                                                    </span>
+                                                @endif
+                                            </div>
                                         @endif
                                     </div>
                                 </td>
@@ -515,15 +620,27 @@
                     </div>
                     <h4 class="text-sm font-bold text-slate-700">No hay ventas en este apartado</h4>
                     <p class="text-xs text-slate-400 mt-1">
-                        Actualmente no existen registros con el estado seleccionado.
+                        <span x-show="tabActiva === 'Pendiente' && subFiltroPendiente !== 'todos'">No hay pedidos pendientes para la zona o departamento seleccionado.</span>
+                        <span x-show="tabActiva !== 'Pendiente' || subFiltroPendiente === 'todos'">Actualmente no existen registros con el estado seleccionado.</span>
                     </p>
-                    <button 
-                        type="button" 
-                        @click="cambiarTab('todos')"
-                        class="mt-3 text-xs font-bold text-blue-600 hover:underline cursor-pointer"
-                    >
-                        Ver todas las ventas
-                    </button>
+                    <div class="flex items-center gap-2 mt-3">
+                        <button 
+                            type="button" 
+                            x-show="tabActiva === 'Pendiente' && subFiltroPendiente !== 'todos'"
+                            @click="subFiltroPendiente = 'todos'"
+                            class="text-xs font-bold text-amber-600 hover:underline cursor-pointer"
+                        >
+                            Ver todos los pendientes
+                        </button>
+                        <span x-show="tabActiva === 'Pendiente' && subFiltroPendiente !== 'todos'" class="text-slate-300">•</span>
+                        <button 
+                            type="button" 
+                            @click="cambiarTab('todos')"
+                            class="text-xs font-bold text-blue-600 hover:underline cursor-pointer"
+                        >
+                            Ver todas las ventas
+                        </button>
+                    </div>
                 </div>
             </div>
 
@@ -613,7 +730,9 @@
                             </div>
                             <template x-if="estadoModalData.puedeDevolver">
                                 <div class="text-right">
-                                    <span class="text-[10px] uppercase font-bold text-amber-600 block">Garantía de Devolución</span>
+                                    <span class="text-[10px] uppercase font-bold text-amber-600 block flex items-center justify-end gap-1">
+                                        <i class="fas fa-shield-halved text-[9px]"></i> Garantía Cambio / Devolución
+                                    </span>
                                     <span class="text-xs font-black text-amber-700" x-text="estadoModalData.textoGarantia || (estadoModalData.diasRestantes + ' días restantes')"></span>
                                 </div>
                             </template>
@@ -636,28 +755,50 @@
                                     <button 
                                         type="button" 
                                         @click="seleccionarNuevoEstado(st)"
-                                        class="p-3 rounded-xl border text-left transition-all duration-200 flex items-start gap-3 cursor-pointer"
-                                        :class="nuevoEstadoSeleccionado === st ? 'border-blue-600 bg-blue-50/70 shadow-sm ring-2 ring-blue-500/20' : 'border-slate-200 hover:border-slate-300 hover:bg-slate-50/60'"
+                                        class="p-3.5 rounded-xl border text-left transition-all duration-200 flex items-start gap-3 cursor-pointer group relative overflow-hidden"
+                                        :class="nuevoEstadoSeleccionado === st ? (st === 'Cambio' ? 'border-teal-500 bg-teal-50/70 shadow-sm ring-2 ring-teal-500/25' : (st === 'Devolución' ? 'border-purple-500 bg-purple-50/70 shadow-sm ring-2 ring-purple-500/25' : 'border-blue-600 bg-blue-50/70 shadow-sm ring-2 ring-blue-500/20')) : 'border-slate-200 hover:border-slate-300 hover:bg-slate-50/60'"
                                     >
-                                        <div class="w-8 h-8 rounded-lg flex items-center justify-center shrink-0 text-sm font-bold mt-0.5"
+                                        <div class="w-8 h-8 rounded-lg flex items-center justify-center shrink-0 text-sm font-bold mt-0.5 shadow-2xs transition-transform group-hover:scale-105"
                                              :class="{
                                                  'bg-blue-100 text-blue-700': st === 'Confirmada',
                                                  'bg-indigo-100 text-indigo-700': st === 'En ruta',
                                                  'bg-emerald-100 text-emerald-700': st === 'Entregada',
                                                  'bg-rose-100 text-rose-700': st === 'Cancelada',
-                                                 'bg-purple-100 text-purple-700': st === 'Devolución'
+                                                 'bg-purple-100 text-purple-700': st === 'Devolución',
+                                                 'bg-teal-100 text-teal-700': st === 'Cambio'
                                              }">
                                             <i class="fas" :class="{
                                                 'fa-circle-check': st === 'Confirmada',
                                                 'fa-truck-fast': st === 'En ruta',
                                                 'fa-box-open': st === 'Entregada',
                                                 'fa-ban': st === 'Cancelada',
-                                                'fa-rotate-left': st === 'Devolución'
+                                                'fa-rotate-left': st === 'Devolución',
+                                                'fa-arrow-right-arrow-left': st === 'Cambio'
                                             }"></i>
                                         </div>
                                         <div class="min-w-0 flex-1">
-                                            <h4 class="font-bold text-slate-900 leading-tight" x-text="st"></h4>
-                                            <p class="text-[10px] text-slate-500 mt-0.5 leading-snug" x-text="obtenerDescripcionEstado(st)"></p>
+                                            <div class="flex items-center gap-1.5 flex-wrap">
+                                                <h4 class="font-bold text-slate-900 leading-tight flex items-center gap-1.5"
+                                                    :class="{
+                                                        'text-teal-950 font-black': st === 'Cambio' && nuevoEstadoSeleccionado === st,
+                                                        'text-purple-950 font-black': st === 'Devolución' && nuevoEstadoSeleccionado === st
+                                                    }">
+                                                    <span x-text="st"></span>
+                                                </h4>
+                                                <!-- ADORNO / BADGE DE CAMBIO -->
+                                                <template x-if="st === 'Cambio'">
+                                                    <span class="inline-flex items-center gap-1 text-[9px] font-extrabold uppercase px-1.5 py-0.5 rounded-full bg-teal-100 text-teal-800 border border-teal-200">
+                                                        <i class="fas fa-arrows-rotate text-[8px] animate-spin-slow"></i> Por Garantía
+                                                    </span>
+                                                </template>
+                                                <!-- BADGE DE DEVOLUCIÓN -->
+                                                <template x-if="st === 'Devolución'">
+                                                    <span class="inline-flex items-center gap-1 text-[9px] font-extrabold uppercase px-1.5 py-0.5 rounded-full bg-purple-100 text-purple-800 border border-purple-200">
+                                                        <i class="fas fa-box text-[8px]"></i> Retorno Paquete
+                                                    </span>
+                                                </template>
+                                            </div>
+                                            <p class="text-[10px] text-slate-500 mt-1 leading-snug" x-text="obtenerDescripcionEstado(st)"></p>
                                         </div>
                                     </button>
                                 </template>
@@ -746,16 +887,16 @@
                         <!-- SECCIÓN DINÁMICA: DEVOLUCIÓN (EVIDENCIA Y MOTIVO) -->
                         <div 
                             id="seccion-foto-devolucion"
-                            x-show="nuevoEstadoSeleccionado === 'Devolución'" 
+                            x-show="nuevoEstadoSeleccionado === 'Devolución' || nuevoEstadoSeleccionado === 'Cambio'" 
                             class="space-y-3 p-4 rounded-xl border transition-all"
-                            :class="errorFotoDevolucion ? 'bg-rose-50/80 border-rose-400 ring-2 ring-rose-500/20' : 'bg-purple-50/60 border-purple-200'"
+                            :class="errorFotoDevolucion ? 'bg-rose-50/80 border-rose-400 ring-2 ring-rose-500/20' : (nuevoEstadoSeleccionado === 'Cambio' ? 'bg-teal-50/60 border-teal-200' : 'bg-purple-50/60 border-purple-200')"
                             x-transition
                         >
                             <div class="flex items-center justify-between">
                                 <div class="flex items-center gap-2">
-                                    <i class="fas fa-rotate-left text-sm" :class="errorFotoDevolucion ? 'text-rose-600' : 'text-purple-600'"></i>
-                                    <h4 class="font-bold text-xs uppercase tracking-wide" :class="errorFotoDevolucion ? 'text-rose-950 font-black' : 'text-purple-950'">
-                                        Evidencia y Justificación de Devolución <span class="text-rose-500">*</span>
+                                    <i class="fas text-sm" :class="errorFotoDevolucion ? 'fa-triangle-exclamation text-rose-600' : (nuevoEstadoSeleccionado === 'Cambio' ? 'fa-arrows-rotate text-teal-600' : 'fa-rotate-left text-purple-600')"></i>
+                                    <h4 class="font-bold text-xs uppercase tracking-wide" :class="errorFotoDevolucion ? 'text-rose-950 font-black' : (nuevoEstadoSeleccionado === 'Cambio' ? 'text-teal-950 font-black' : 'text-purple-950 font-black')">
+                                        <span x-text="nuevoEstadoSeleccionado === 'Cambio' ? 'Evidencia y Fotografía para Cambio' : 'Evidencia y Justificación de Devolución'"></span> <span class="text-rose-500">*</span>
                                     </h4>
                                 </div>
                                 <span x-show="errorFotoDevolucion" class="text-[10px] font-bold px-2 py-0.5 rounded-full text-rose-700 bg-rose-100 border border-rose-300 animate-pulse">
@@ -763,44 +904,46 @@
                                 </span>
                             </div>
 
-                            <!-- ALERTA INLINE VISIBLE CUANDO FALTA LA FOTO DE DEVOLUCIÓN -->
+                            <!-- ALERTA INLINE VISIBLE CUANDO FALTA LA FOTO -->
                             <template x-if="errorFotoDevolucion">
                                 <div class="p-3 bg-rose-100/90 border border-rose-300 rounded-xl text-rose-900 text-xs font-semibold flex items-start gap-2.5 shadow-2xs">
                                     <i class="fas fa-circle-exclamation text-rose-600 mt-0.5 text-base shrink-0"></i>
                                     <div class="flex-1">
-                                        <p class="font-bold leading-snug">¡Falta la fotografía de devolución!</p>
-                                        <p class="text-[11px] text-rose-700 mt-0.5 leading-relaxed" x-text="errorFotoDevolucionMensaje || 'Para procesar una devolución debes adjuntar la fotografía del paquete devuelto.'"></p>
+                                        <p class="font-bold leading-snug" x-text="nuevoEstadoSeleccionado === 'Cambio' ? '¡Falta la fotografía del paquete para cambio!' : '¡Falta la fotografía de devolución!'"></p>
+                                        <p class="text-[11px] text-rose-700 mt-0.5 leading-relaxed" x-text="errorFotoDevolucionMensaje || 'Debes adjuntar la fotografía del paquete correspondiente.'"></p>
                                     </div>
                                 </div>
                             </template>
 
-                            <p class="text-[11px]" :class="errorFotoDevolucion ? 'text-rose-700 font-medium' : 'text-slate-600'">
-                                Adjunta la fotografía del estado del producto devuelto por el cliente.
+                            <p class="text-[11px]" :class="errorFotoDevolucion ? 'text-rose-700 font-medium' : 'text-slate-600'"
+                               x-text="nuevoEstadoSeleccionado === 'Cambio' ? 'Adjunta la fotografía del estado del paquete/producto para procesar el cambio en tienda.' : 'Adjunta la fotografía del estado del paquete devuelto por el cliente o paquetería.'">
                             </p>
 
                             <template x-if="!previewDevolucion">
                                 <div>
                                     <label class="border-2 border-dashed bg-white rounded-xl p-5 flex flex-col items-center justify-center cursor-pointer transition-colors group shadow-2xs"
-                                           :class="errorFotoDevolucion ? 'border-rose-400 hover:border-rose-600 hover:bg-rose-50/40 ring-1 ring-rose-300' : 'border-purple-300 hover:border-purple-500'">
+                                           :class="errorFotoDevolucion ? 'border-rose-400 hover:border-rose-600 hover:bg-rose-50/40 ring-1 ring-rose-300' : (nuevoEstadoSeleccionado === 'Cambio' ? 'border-teal-300 hover:border-teal-500' : 'border-purple-300 hover:border-purple-500')">
                                         <div class="w-10 h-10 rounded-full flex items-center justify-center text-lg mb-2 group-hover:scale-110 transition-transform"
-                                             :class="errorFotoDevolucion ? 'bg-rose-100 text-rose-600' : 'bg-purple-50 text-purple-600'">
+                                             :class="errorFotoDevolucion ? 'bg-rose-100 text-rose-600' : (nuevoEstadoSeleccionado === 'Cambio' ? 'bg-teal-50 text-teal-600' : 'bg-purple-50 text-purple-600')">
                                             <i class="fas" :class="errorFotoDevolucion ? 'fa-triangle-exclamation' : 'fa-camera'"></i>
                                         </div>
-                                        <span class="font-bold text-xs" :class="errorFotoDevolucion ? 'text-rose-800' : 'text-purple-700'">Subir fotografía del paquete devuelto</span>
+                                        <span class="font-bold text-xs" :class="errorFotoDevolucion ? 'text-rose-800' : (nuevoEstadoSeleccionado === 'Cambio' ? 'text-teal-700' : 'text-purple-700')"
+                                              x-text="nuevoEstadoSeleccionado === 'Cambio' ? 'Subir fotografía del paquete para cambio' : 'Subir fotografía del paquete devuelto'"></span>
                                         <span class="text-[10px] mt-1" :class="errorFotoDevolucion ? 'text-rose-500' : 'text-slate-400'">Formatos soportados: JPG, PNG, WEBP (Máx 5MB)</span>
                                         <input type="file" accept="image/jpeg,image/png,image/jpg,image/webp" class="hidden" @change="onArchivoDevolucionSeleccionado($event)">
                                     </label>
                                     <template x-if="errorFotoDevolucion">
                                         <span class="text-[11px] font-bold text-rose-600 flex items-center gap-1 mt-1.5 pl-1">
-                                            <i class="fas fa-arrow-up text-[10px]"></i> Haz clic arriba para seleccionar la imagen de la devolución.
+                                            <i class="fas fa-arrow-up text-[10px]"></i> Haz clic arriba para seleccionar la imagen requerida.
                                         </span>
                                     </template>
                                 </div>
                             </template>
 
                             <template x-if="previewDevolucion">
-                                <div class="flex items-center gap-3 p-2 bg-white rounded-xl border border-purple-200">
-                                    <img :src="previewDevolucion" alt="Preview Devolución" class="w-16 h-16 rounded-lg object-cover border border-slate-200 shrink-0">
+                                <div class="flex items-center gap-3 p-2 bg-white rounded-xl border"
+                                     :class="nuevoEstadoSeleccionado === 'Cambio' ? 'border-teal-200' : 'border-purple-200'">
+                                    <img :src="previewDevolucion" alt="Preview Devolución / Cambio" class="w-16 h-16 rounded-lg object-cover border border-slate-200 shrink-0">
                                     <div class="min-w-0 flex-1">
                                         <p class="font-bold text-slate-800 truncate" x-text="nombreArchivoDevolucion"></p>
                                         <span class="text-[10px] text-emerald-600 font-bold flex items-center gap-1 mt-0.5">
@@ -824,7 +967,7 @@
                             <div class="flex items-center justify-between mb-1.5">
                                 <label class="block text-[11px] font-bold uppercase tracking-wider text-slate-700">
                                     Observaciones / Motivo del cambio
-                                    <span x-show="nuevoEstadoSeleccionado === 'Cancelada' || nuevoEstadoSeleccionado === 'Devolución'" class="text-rose-500">* (Obligatorio)</span>
+                                    <span x-show="nuevoEstadoSeleccionado === 'Cancelada' || nuevoEstadoSeleccionado === 'Devolución' || nuevoEstadoSeleccionado === 'Cambio'" class="text-rose-500">* (Obligatorio)</span>
                                 </label>
                                 <span x-show="errorObservacionesEstado" class="text-[10px] font-bold text-rose-600 bg-rose-50 px-2 py-0.5 rounded border border-rose-200">
                                     Requerido
@@ -835,7 +978,7 @@
                                 x-model="observacionesEstado"
                                 @input="errorObservacionesEstado = false"
                                 rows="3" 
-                                placeholder="Ingresa notas operativas, motivo de cancelación o justificación de devolución..."
+                                placeholder="Ingresa notas operativas, motivo de cancelación, justificación de devolución o cambio..."
                                 :class="errorObservacionesEstado ? 'border-rose-500 bg-rose-50/40 text-rose-900 focus:border-rose-500 focus:ring-rose-500/20 ring-1 ring-rose-400' : 'border-slate-300 text-slate-700 focus:border-blue-500 focus:ring-blue-500/10'"
                                 class="w-full rounded-xl border p-3 text-xs font-semibold focus:outline-none focus:ring-4 transition-all resize-none"
                             ></textarea>
@@ -851,7 +994,7 @@
                             <div class="text-[11px]">
                                 <span class="font-bold block">Acción con impacto en inventario y comisiones:</span>
                                 <span class="text-amber-800">
-                                    Si cancelas la venta o procesas devolución, el stock de las variantes se devolverá automáticamente a la bodega y se anularán las comisiones asociadas.
+                                    Si cancelas la venta, procesas devolución o cambio, el stock de las variantes se devolverá automáticamente a la bodega y se anularán las comisiones asociadas.
                                 </span>
                             </div>
                         </div>
@@ -925,7 +1068,8 @@
                                               'bg-indigo-100 text-indigo-800': ventaSeleccionada?.estado === 'En ruta',
                                               'bg-emerald-100 text-emerald-800': ventaSeleccionada?.estado === 'Entregada',
                                               'bg-rose-100 text-rose-800': ventaSeleccionada?.estado === 'Cancelada',
-                                              'bg-purple-100 text-purple-800': ventaSeleccionada?.estado === 'Devolución'
+                                              'bg-purple-100 text-purple-800': ventaSeleccionada?.estado === 'Devolución',
+                                              'bg-teal-100 text-teal-800': ventaSeleccionada?.estado === 'Cambio'
                                           }"
                                           x-text="ventaSeleccionada?.estado || ''">
                                     </span>
@@ -980,8 +1124,16 @@
 
                                 <!-- SI TIENE DIRECCIÓN DE ENVÍO -->
                                 <template x-if="ventaSeleccionada.direccion_entrega">
-                                    <div class="p-3 bg-indigo-50/60 border border-indigo-200 rounded-xl space-y-1">
-                                        <span class="text-[10px] uppercase font-bold text-indigo-900 block">Datos del Envío:</span>
+                                    <div class="p-3.5 bg-indigo-50/70 border border-indigo-200 rounded-xl space-y-1.5">
+                                        <div class="flex items-center justify-between">
+                                            <span class="text-[10px] uppercase font-bold text-indigo-900 block">Datos del Envío:</span>
+                                            <template x-if="ventaSeleccionada.nombre_cliente">
+                                                <span class="inline-flex items-center gap-1 text-[11px] font-bold text-indigo-900 bg-white px-2 py-0.5 rounded-md border border-indigo-200 shadow-2xs">
+                                                    <i class="fas fa-user text-indigo-600 text-[10px]"></i>
+                                                    <span x-text="ventaSeleccionada.nombre_cliente"></span>
+                                                </span>
+                                            </template>
+                                        </div>
                                         <p class="text-xs text-indigo-950 font-medium" x-text="ventaSeleccionada.direccion_entrega"></p>
                                         <template x-if="ventaSeleccionada.telefono">
                                             <p class="text-[11px] text-indigo-700 font-mono">
@@ -1133,7 +1285,8 @@
                                                     <h4 class="text-xs font-black text-slate-900 uppercase tracking-wider flex items-center gap-2">
                                                         <span>Evidencia de Paquete Devuelto</span>
                                                         <span class="inline-flex items-center gap-1 text-[10px] font-bold text-purple-700 bg-purple-100 border border-purple-200 px-2 py-0.5 rounded-full">
-                                                            <i class="fas fa-arrow-rotate-left text-[9px]"></i> Devolución
+                                                            <i class="fas" :class="ventaSeleccionada.estado === 'Cambio' ? 'fa-arrow-right-arrow-left' : 'fa-arrow-rotate-left'" style="font-size:9px"></i>
+                                                            <span x-text="ventaSeleccionada.estado === 'Cambio' ? 'Cambio' : 'Devolución'"></span>
                                                         </span>
                                                     </h4>
                                                     <p class="text-[11px] text-slate-500">Fotografía del paquete o producto retornado al inventario</p>
@@ -1749,6 +1902,7 @@
         function gestorPedidosEstados() {
             return {
                 tabActiva: '{{ $estadoTab ?? "todos" }}',
+                subFiltroPendiente: 'todos', // 'todos', 'san_salvador', 'otros'
 
                 // Conteos dinámicos
                 conteoEstados: @json($conteoEstados),
@@ -1821,7 +1975,8 @@
                         'Confirmada': 'Confirmadas y Listas',
                         'En ruta': 'En Ruta con Paquetería',
                         'Cancelada': 'Canceladas',
-                        'Devolución': 'En Devolución por Garantía'
+                        'Devolución': 'En Devolución por Garantía',
+                        'Cambio': 'En Proceso de Cambio'
                     };
                     return nombres[this.tabActiva] || 'Todos los Pedidos en Proceso';
                 },
@@ -1833,17 +1988,43 @@
                         'Confirmada': 'Órdenes listas para ser empaquetadas o despachadas a mensajería.',
                         'En ruta': 'Envíos en tránsito con fotografía de comprobante de paquetería registrada.',
                         'Cancelada': 'Transacciones que han sido anuladas, con stock retornado a bodega.',
-                        'Devolución': 'Productos devueltos por el cliente bajo garantía de satisfacción.'
+                        'Devolución': 'Paquetes de envío no recibidos por el cliente, devueltos a la tienda.',
+                        'Cambio': 'Producto entregado al cliente que regresa a la tienda para un cambio.'
                     };
                     return descripciones[this.tabActiva] || '';
                 },
 
-                ventaVisible(estado) {
+                ventaVisible(estado, depto = '') {
                     if (this.tabActiva === 'todos') return true;
-                    return estado === this.tabActiva;
+                    if (estado !== this.tabActiva) return false;
+
+                    // Si está en el apartado 'Pendiente', evaluar el subfiltro de departamento
+                    if (this.tabActiva === 'Pendiente') {
+                        if (this.subFiltroPendiente === 'todos') return true;
+
+                        const d = (depto || '').toLowerCase().trim();
+                        const esSanSalvador = d.includes('san salvador');
+
+                        if (this.subFiltroPendiente === 'san_salvador') {
+                            return esSanSalvador;
+                        }
+                        if (this.subFiltroPendiente === 'otros') {
+                            return !esSanSalvador;
+                        }
+                    }
+
+                    return true;
                 },
 
                 conteoFiltradas() {
+                    if (this.tabActiva === 'Pendiente') {
+                        if (this.subFiltroPendiente === 'san_salvador') {
+                            return this.conteoEstados['Pendiente_SS'] || 0;
+                        }
+                        if (this.subFiltroPendiente === 'otros') {
+                            return this.conteoEstados['Pendiente_Otros'] || 0;
+                        }
+                    }
                     return this.conteoEstados[this.tabActiva] || 0;
                 },
 
@@ -1906,10 +2087,12 @@
                         case 'En ruta':
                             return 'Entregado a paquetería / encomienda. Requiere foto del paquete.';
                         case 'Entregada':
-                            return 'Entregado al cliente. Inicia garantía de devolución.';
+                            return 'Entregado al cliente. Inicia garantía de devolución / cambio.';
                         case 'Cancelada':
                             return 'Cancela la venta. Reintegra stock a bodega y anula comisiones.';
                         case 'Devolución':
+                            return 'Paquete no recibido por el cliente en ruta. Requiere motivo y foto del paquete.';
+                        case 'Cambio':
                             return 'Retorno por garantía. Requiere justificación y foto del paquete.';
                         default:
                             return '';
@@ -2027,10 +2210,11 @@
                         return;
                     }
 
-                    if (this.nuevoEstadoSeleccionado === 'Devolución') {
+                    if (this.nuevoEstadoSeleccionado === 'Devolución' || this.nuevoEstadoSeleccionado === 'Cambio') {
+                        const labelEstado = this.nuevoEstadoSeleccionado === 'Cambio' ? 'cambio' : 'devolución';
                         if (!this.observacionesEstado.trim()) {
                             this.errorObservacionesEstado = true;
-                            this.errorObservacionesEstadoMensaje = 'Por favor ingresa la justificación o motivo por el cual se procesa la devolución.';
+                            this.errorObservacionesEstadoMensaje = `Por favor ingresa la justificación o motivo por el cual se procesa el ${labelEstado}.`;
                             this.$nextTick(() => {
                                 const el = document.getElementById('input-observaciones-estado');
                                 el?.focus();
@@ -2041,7 +2225,7 @@
 
                         if (!this.archivoDevolucion) {
                             this.errorFotoDevolucion = true;
-                            this.errorFotoDevolucionMensaje = 'Para procesar una devolución debes adjuntar la fotografía del paquete devuelto.';
+                            this.errorFotoDevolucionMensaje = `Para procesar un ${labelEstado} debes adjuntar la fotografía del paquete.`;
                             this.$nextTick(() => {
                                 document.getElementById('seccion-foto-devolucion')?.scrollIntoView({ behavior: 'smooth', block: 'center' });
                             });
@@ -2062,7 +2246,7 @@
                         formData.append('comprobante_paquete', this.archivoPaquete);
                     }
 
-                    if (this.nuevoEstadoSeleccionado === 'Devolución' && this.archivoDevolucion) {
+                    if ((this.nuevoEstadoSeleccionado === 'Devolución' || this.nuevoEstadoSeleccionado === 'Cambio') && this.archivoDevolucion) {
                         formData.append('comprobante_devolucion', this.archivoDevolucion);
                     }
 
@@ -2205,7 +2389,7 @@
                         const ampm = horas >= 12 ? 'PM' : 'AM';
                         horas = horas % 12;
                         horas = horas ? horas : 12;
-                        return `${dia}/${mes}/${anio} ${String(horas).padStart(2, '0')}:${minutos} ${ampm}`;
+                        return `${dia}-${mes}-${anio} ${String(horas).padStart(2, '0')}:${minutos} ${ampm}`;
                     } catch (e) {
                         return fechaStr;
                     }

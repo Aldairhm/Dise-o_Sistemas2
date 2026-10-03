@@ -1,10 +1,20 @@
 document.addEventListener("alpine:init", () => {
-    Alpine.data("carritoVentas", (variantesIniciales = []) => ({
+    Alpine.data("carritoVentas", (variantesIniciales = [], listaVendedores = [], currentUserId = null) => ({
         variantes: variantesIniciales,
+        vendedores: listaVendedores,
+        currentUserId: currentUserId,
         carrito: [],
         busqueda: "",
         descuentoGlobal: 0,
         metodoPago: "Efectivo",
+
+        // Asignación de otro vendedor
+        asignarOtroVendedor: false,
+        busquedaVendedor: "",
+        dropdownVendedoresAbierto: false,
+        idVendedorAsignado: null,
+        errorVendedor: false,
+
         modalTipoVentaAbierto: false,
         varianteSeleccionada: null,
         archivoComprobante: null,
@@ -69,6 +79,42 @@ document.addEventListener("alpine:init", () => {
         },
 
         /**
+         * Filtra la lista de vendedores dinámicamente según lo que escribe el usuario
+         */
+        get vendedoresFiltrados() {
+            if (!this.vendedores || !Array.isArray(this.vendedores)) return [];
+            if (!this.busquedaVendedor.trim()) {
+                return this.vendedores;
+            }
+            const q = this.busquedaVendedor.toLowerCase().trim();
+            return this.vendedores.filter((v) => {
+                const nombre = (v.nombre_real || "").toLowerCase();
+                const username = (v.username || "").toLowerCase();
+                const rol = (v.rol || "").toLowerCase();
+                return nombre.includes(q) || username.includes(q) || rol.includes(q);
+            });
+        },
+
+        get vendedorSeleccionado() {
+            if (!this.idVendedorAsignado) return null;
+            return this.vendedores.find((v) => v.id === this.idVendedorAsignado) || null;
+        },
+
+        seleccionarVendedor(vend) {
+            this.idVendedorAsignado = vend.id;
+            this.busquedaVendedor = vend.nombre_real || vend.username;
+            this.dropdownVendedoresAbierto = false;
+            this.errorVendedor = false;
+        },
+
+        limpiarVendedor() {
+            this.idVendedorAsignado = null;
+            this.busquedaVendedor = "";
+            this.dropdownVendedoresAbierto = true;
+            this.errorVendedor = false;
+        },
+
+        /**
          * Filtra variantes en el catálogo en tiempo real
          */
         get variantesFiltradas() {
@@ -121,31 +167,13 @@ document.addEventListener("alpine:init", () => {
             this.modalTipoVentaAbierto = false;
             this.varianteSeleccionada = null;
 
-            // Clonamos el carrito actual de la terminal para incluir lo que ya esté o agregar el nuevo
-            let itemsParaEntrega = JSON.parse(JSON.stringify(this.carrito || []));
-            const index = itemsParaEntrega.findIndex((item) => item.id === variante.id);
-            if (index >= 0) {
-                itemsParaEntrega[index].cantidad = Math.max(1, Number(itemsParaEntrega[index].cantidad || 1));
-            } else {
-                itemsParaEntrega.push({
-                    id: variante.id,
-                    producto: variante.producto,
-                    variante: variante.variante,
-                    sku: variante.sku,
-                    precio_venta: Number(variante.precio_venta || 0),
-                    precio: Number(variante.precio_venta || 0),
-                    stock: Number(variante.stock || 0),
-                    imagen: variante.imagen || null,
-                    cantidad: 1,
-                    costo_extra: 0,
-                });
-            }
+            // Agregar el producto al carrito
+            this.agregarProducto(variante);
 
-            // Sincronizar el carrito de la terminal
-            this.carrito = itemsParaEntrega;
-
-            // Abrir el modal de entrega con el/los productos
-            window.dispatchEvent(new CustomEvent('abrir-modal-entrega', { detail: itemsParaEntrega }));
+            this.mostrarToast(
+                `"${variante.producto}" agregado. Puedes seguir agregando productos o pulsar "Despachar Pedido como Envío" al terminar.`,
+                "info"
+            );
         },
 
         abrirEntregaDesdeCarrito() {
@@ -153,7 +181,22 @@ document.addEventListener("alpine:init", () => {
                 this.mostrarToast("El carrito está vacío. Agrega productos primero.", "warning");
                 return;
             }
-            window.dispatchEvent(new CustomEvent('abrir-modal-entrega', { detail: this.carrito }));
+            if (this.asignarOtroVendedor && !this.idVendedorAsignado) {
+                this.errorVendedor = true;
+                this.dropdownVendedoresAbierto = true;
+                this.mostrarToast(
+                    "Has marcado 'Otro vendedor'. Por favor selecciona el vendedor de la lista.",
+                    "warning"
+                );
+                return;
+            }
+            window.dispatchEvent(new CustomEvent('abrir-modal-entrega', { 
+                detail: {
+                    items: this.carrito,
+                    id_usuario: (this.asignarOtroVendedor && this.idVendedorAsignado) ? this.idVendedorAsignado : null,
+                    nombre_vendedor: this.vendedorSeleccionado ? (this.vendedorSeleccionado.nombre_real || this.vendedorSeleccionado.username) : null
+                }
+            }));
         },
 
         /**
@@ -442,6 +485,16 @@ document.addEventListener("alpine:init", () => {
         async procesarVenta() {
             if (this.procesando) return;
 
+            if (this.asignarOtroVendedor && !this.idVendedorAsignado) {
+                this.errorVendedor = true;
+                this.dropdownVendedoresAbierto = true;
+                this.mostrarToast(
+                    "Has marcado 'Otro vendedor'. Por favor selecciona el vendedor de la lista.",
+                    "warning"
+                );
+                return;
+            }
+
             if (this.metodoPago === "Transferencia Bancaria" && !this.archivoComprobante) {
                 this.mostrarToast(
                     "Es obligatorio adjuntar el comprobante de la transferencia bancaria.",
@@ -460,6 +513,11 @@ document.addEventListener("alpine:init", () => {
             formData.append("tipo_venta", "Tienda");
             formData.append("direccion_entrega", "Venta en mostrador / POS");
             formData.append("descuento", Number(this.descuentoGlobal || 0));
+
+            // Si se asignó a otro vendedor, adjuntar id_usuario
+            if (this.asignarOtroVendedor && this.idVendedorAsignado) {
+                formData.append("id_usuario", this.idVendedorAsignado);
+            }
 
             this.carrito.forEach((item, index) => {
                 formData.append(`lineas[${index}][id_variante]`, item.id);
@@ -505,6 +563,11 @@ document.addEventListener("alpine:init", () => {
                 this.carrito = [];
                 this.descuentoGlobal = 0;
                 this.removerComprobante();
+                this.asignarOtroVendedor = false;
+                this.idVendedorAsignado = null;
+                this.busquedaVendedor = "";
+                this.errorVendedor = false;
+                this.dropdownVendedoresAbierto = false;
             } catch (error) {
                 this.mostrarToast(error.message, "error");
             } finally {

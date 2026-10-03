@@ -1,6 +1,6 @@
 <x-app title="Nueva Venta | AXStore">
     <div 
-        x-data="carritoVentas({{ Js::from($variantes ?? []) }})" 
+        x-data="carritoVentas({{ Js::from($variantes ?? []) }}, {{ Js::from($vendedores ?? []) }}, {{ (int) Auth::id() }})" 
         class="max-w-[1440px] mx-auto space-y-6"
     >
 
@@ -138,7 +138,7 @@
                                 </div>
                                 <button 
                                     type="button" 
-                                    @click="solicitarTipoVenta(variante)"
+                                    @click="agregarProducto(variante)"
                                     :disabled="variante.stock <= 0"
                                     class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer"
                                     :class="variante.stock > 0 ? 'bg-blue-50 text-blue-700 hover:bg-blue-600 hover:text-white' : 'bg-slate-100 text-slate-400'"
@@ -330,6 +330,108 @@
                         </select>
                     </div>
 
+                    <!-- ASIGNAR A OTRO VENDEDOR (CHECKBOX Y COMBOBOX CON BÚSQUEDA) - SOLO ADMINISTRADORES -->
+                    @if(Auth::user()?->rol === 'admin')
+                    <div class="pt-1">
+                        <label class="inline-flex items-center gap-2 cursor-pointer select-none group">
+                            <input 
+                                type="checkbox" 
+                                x-model="asignarOtroVendedor" 
+                                class="w-4 h-4 rounded text-blue-600 border-slate-300 focus:ring-blue-500/20 focus:ring-offset-0 cursor-pointer"
+                            >
+                            <span class="text-xs font-bold text-slate-700 group-hover:text-blue-600 transition-colors flex items-center gap-1.5">
+                                <i class="fas fa-user-tag text-slate-400 group-hover:text-blue-500 text-[11px]"></i>
+                                Otro vendedor
+                            </span>
+                        </label>
+
+                        <!-- COMBOBOX FILTRABLE DE VENDEDORES -->
+                        <div 
+                            x-show="asignarOtroVendedor" 
+                            x-transition:enter="transition ease-out duration-200"
+                            x-transition:enter-start="opacity-0 -translate-y-2"
+                            x-transition:enter-end="opacity-100 translate-y-0"
+                            x-transition:leave="transition ease-in duration-150"
+                            x-transition:leave-start="opacity-100 translate-y-0"
+                            x-transition:leave-end="opacity-0 -translate-y-2"
+                            class="mt-2.5 p-3 rounded-xl border border-blue-200 bg-blue-50/40 space-y-2 relative"
+                            @click.away="dropdownVendedoresAbierto = false"
+                        >
+                            <div class="flex items-center justify-between">
+                                <label class="block text-[10px] font-black uppercase tracking-wider text-blue-900">
+                                    Vendedor responsable <span class="text-rose-500">*</span>
+                                </label>
+                                <template x-if="vendedorSeleccionado">
+                                    <span class="text-[9px] font-bold text-emerald-700 bg-emerald-100 px-1.5 py-0.5 rounded">
+                                        Asignado: <span x-text="vendedorSeleccionado.nombre_real || vendedorSeleccionado.username"></span>
+                                    </span>
+                                </template>
+                            </div>
+
+                            <!-- INPUT COMBOBOX DE BÚSQUEDA -->
+                            <div class="relative">
+                                <i class="fas fa-magnifying-glass absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-xs"></i>
+                                <input 
+                                    type="text" 
+                                    x-model="busquedaVendedor"
+                                    @focus="dropdownVendedoresAbierto = true"
+                                    @input="dropdownVendedoresAbierto = true; idVendedorAsignado = null"
+                                    placeholder="Escribe el nombre del vendedor..."
+                                    class="w-full rounded-lg border border-slate-300 bg-white pl-8 pr-8 py-2 text-xs font-semibold text-slate-800 placeholder:text-slate-400 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20 shadow-2xs"
+                                    :class="errorVendedor ? 'border-rose-400 ring-2 ring-rose-400/20' : ''"
+                                >
+                                <template x-if="busquedaVendedor">
+                                    <button 
+                                        type="button" 
+                                        @click="limpiarVendedor()" 
+                                        class="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 p-0.5 cursor-pointer"
+                                        title="Limpiar vendedor"
+                                    >
+                                        <i class="fas fa-times text-xs"></i>
+                                    </button>
+                                </template>
+                            </div>
+
+                            <!-- MENÚ DESPLEGABLE DEPILADO EN TIEMPO REAL -->
+                            <div 
+                                x-show="dropdownVendedoresAbierto"
+                                x-transition
+                                class="absolute left-3 right-3 top-full mt-1 bg-white rounded-xl shadow-xl border border-slate-200 z-50 max-h-48 overflow-y-auto custom-scrollbar divide-y divide-slate-100 text-xs"
+                                style="display: none;"
+                            >
+                                <template x-for="vend in vendedoresFiltrados" :key="vend.id">
+                                    <button 
+                                        type="button" 
+                                        @click="seleccionarVendedor(vend)"
+                                        class="w-full text-left px-3 py-2 hover:bg-blue-50 flex items-center justify-between gap-2 transition-colors cursor-pointer"
+                                        :class="idVendedorAsignado === vend.id ? 'bg-blue-50/80 font-bold text-blue-700' : 'text-slate-700'"
+                                    >
+                                        <div class="min-w-0">
+                                            <p class="font-bold truncate" x-text="vend.nombre_real || vend.username"></p>
+                                            <p class="text-[10px] text-slate-400 truncate" x-text="'@' + vend.username + ' · ' + (vend.rol || 'Vendedor')"></p>
+                                        </div>
+                                        <template x-if="idVendedorAsignado === vend.id">
+                                            <i class="fas fa-check text-blue-600 text-xs shrink-0"></i>
+                                        </template>
+                                    </button>
+                                </template>
+
+                                <template x-if="vendedoresFiltrados.length === 0">
+                                    <div class="p-3 text-center text-slate-400 text-xs">
+                                        <i class="fas fa-user-slash text-slate-300 block mb-1 text-sm"></i>
+                                        No se encontró ningún vendedor con ese nombre
+                                    </div>
+                                </template>
+                            </div>
+
+                            <p class="text-[10px] text-blue-800/80 flex items-center gap-1">
+                                <i class="fas fa-circle-info text-[9px] text-blue-600"></i>
+                                La venta y sus comisiones se registrarán a nombre del vendedor seleccionado.
+                            </p>
+                        </div>
+                    </div>
+                    @endif
+
                     <!-- SECCIÓN DE COMPROBANTE DE TRANSFERENCIA (CONDICIONAL) -->
                     <div 
                         x-show="metodoPago === 'Transferencia Bancaria'" 
@@ -442,29 +544,32 @@
                         </div>
                     </div>
 
-                    <!-- BOTÓN PROCESAR VENTA EN TIENDA -->
-                    <button 
-                        type="button" 
-                        id="btn-procesar-venta"
-                        @click="procesarVenta()"
-                        :disabled="!puedeProcesar() || procesando"
-                        class="w-full rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-extrabold py-3.5 text-sm transition-all shadow-lg shadow-blue-500/25 flex items-center justify-center gap-2 cursor-pointer active:scale-[0.99] disabled:opacity-40 disabled:cursor-not-allowed disabled:shadow-none"
-                    >
-                        <i class="fas" :class="procesando ? 'fa-spinner fa-spin' : 'fa-check-circle text-base'"></i>
-                        <span x-text="procesando ? 'Procesando Venta...' : 'Facturar Venta en Tienda'"></span>
-                    </button>
+                    <!-- ACCIONES DE FACTURACIÓN Y DESPACHO -->
+                    <div class="space-y-2 pt-1">
+                        <!-- BOTÓN PROCESAR VENTA EN TIENDA -->
+                        <button 
+                            type="button" 
+                            id="btn-procesar-venta"
+                            @click="procesarVenta()"
+                            :disabled="!puedeProcesar() || procesando"
+                            class="w-full rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-extrabold py-3.5 text-sm transition-all duration-200 shadow-lg shadow-blue-500/25 flex items-center justify-center gap-2 cursor-pointer hover:scale-[1.01] active:scale-[0.99] disabled:opacity-40 disabled:cursor-not-allowed disabled:shadow-none disabled:hover:scale-100 disabled:hover:bg-blue-600"
+                        >
+                            <i class="fas" :class="procesando ? 'fa-spinner fa-spin' : 'fa-check-circle text-base'"></i>
+                            <span x-text="procesando ? 'Procesando Venta...' : 'Facturar Venta en Tienda (Mostrador)'"></span>
+                        </button>
 
-                    <!-- BOTÓN SECUNDARIO DESPACHAR COMO ENVÍO -->
-                    <button 
-                        type="button" 
-                        x-show="carrito.length > 0"
-                        @click="abrirEntregaDesdeCarrito()"
-                        :disabled="procesando"
-                        class="w-full rounded-xl bg-blue-50 hover:bg-blue-100 text-blue-700 font-bold py-2.5 text-xs transition-all flex items-center justify-center gap-2 cursor-pointer border border-blue-200 shadow-2xs"
-                    >
-                        <i class="fas fa-truck-fast"></i>
-                        <span>Despachar pedido como Envío / Delivery</span>
-                    </button>
+                        <!-- BOTÓN SECUNDARIO DESPACHAR COMO ENVÍO -->
+                        <button 
+                            type="button" 
+                            x-show="carrito.length > 0"
+                            @click="abrirEntregaDesdeCarrito()"
+                            :disabled="procesando"
+                            class="w-full rounded-xl bg-blue-50 hover:bg-blue-100 text-blue-700 font-bold py-2.5 text-xs transition-all flex items-center justify-center gap-2 cursor-pointer border border-blue-200 shadow-2xs hover:scale-[1.01] active:scale-[0.99] disabled:opacity-40 disabled:cursor-not-allowed"
+                        >
+                            <i class="fas fa-truck-fast"></i>
+                            <span>Despachar pedido como Envío / Delivery</span>
+                        </button>
+                    </div>
 
                 </div>
 

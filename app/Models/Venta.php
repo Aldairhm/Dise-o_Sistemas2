@@ -19,6 +19,9 @@ class Venta extends Model
         'total',
         'metodo_pago',
         'comprobante_pago',
+        'nombre_cliente',
+        'departamento',
+        'municipio',
         'telefono',
         'precio_envio',
         'estado',
@@ -170,7 +173,7 @@ class Venta extends Model
      */
     public function getEstadoBloqueadoAttribute(): bool
     {
-        if (in_array($this->estado, ['Cancelada', 'Devolución'])) {
+        if (in_array($this->estado, ['Cancelada', 'Devolución', 'Cambio'])) {
             return true;
         }
 
@@ -190,9 +193,9 @@ class Venta extends Model
             return [];
         }
 
-        // Si está Entregada y dentro de las 72 horas, SOLO puede pasar a Devolución
+        // Si está Entregada y dentro del plazo de garantía, puede pasar a Devolución o Cambio
         if ($this->estado === 'Entregada') {
-            return $this->puede_devolver ? ['Devolución'] : [];
+            return $this->puede_devolver ? ['Cambio', 'Devolución'] : [];
         }
 
         // Flujo para envíos:
@@ -200,7 +203,7 @@ class Venta extends Model
             return match ($this->estado) {
                 'Pendiente' => ['Confirmada', 'Cancelada'],
                 'Confirmada' => ['En ruta', 'Cancelada'],
-                'En ruta' => ['Entregada', 'Cancelada', 'Devolución'],
+                'En ruta' => ['Entregada', 'Cancelada', 'Devolución', 'Cambio'],
                 default => [],
             };
         }

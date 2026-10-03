@@ -137,7 +137,7 @@
             </div>
             <div class="flex justify-between">
                 <span>Fecha:</span>
-                <span>{{ \Carbon\Carbon::parse($venta->fecha)->format('d/m/Y') }}</span>
+                <span>{{ \Carbon\Carbon::parse($venta->fecha)->format('d-m-Y') }}</span>
             </div>
             <div class="flex justify-between">
                 <span>Hora:</span>
@@ -264,7 +264,7 @@
             <div class="col-span-5 space-y-1.5 border-l border-slate-200 pl-4">
                 <div class="flex justify-between">
                     <span class="font-bold text-slate-600">Fecha de Emisión:</span>
-                    <span class="font-bold text-slate-800">{{ \Carbon\Carbon::parse($venta->fecha)->format('d/m/Y') }}</span>
+                    <span class="font-bold text-slate-800">{{ \Carbon\Carbon::parse($venta->fecha)->format('d-m-Y') }}</span>
                 </div>
                 <div class="flex justify-between">
                     <span class="font-bold text-slate-600">Hora:</span>
@@ -406,7 +406,7 @@
                 </div>
                 <div class="col-span-4 flex items-baseline gap-2 justify-end">
                     <span class="font-bold text-slate-600">Fecha:</span>
-                    <span class="font-bold text-slate-900">{{ \Carbon\Carbon::parse($venta->fecha)->format('d/m/Y') }}</span>
+                    <span class="font-bold text-slate-900">{{ \Carbon\Carbon::parse($venta->fecha)->format('d-m-Y') }}</span>
                 </div>
             </div>
 

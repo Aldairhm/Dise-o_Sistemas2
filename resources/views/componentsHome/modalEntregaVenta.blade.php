@@ -41,9 +41,17 @@
                     <div class="w-6 h-6 rounded-full bg-white text-blue-600 flex items-center justify-center text-xs font-black shadow-xs shrink-0">
                         <i class="fas fa-check"></i>
                     </div>
-                    <h3 class="text-base sm:text-lg font-bold text-white tracking-wide">
-                        Registrar Entrega de Producto
-                    </h3>
+                    <div>
+                        <h3 class="text-base sm:text-lg font-bold text-white tracking-wide">
+                            Registrar Entrega de Producto
+                        </h3>
+                        <template x-if="nombreVendedorAsignado">
+                            <p class="text-[11px] text-blue-100 flex items-center gap-1 font-medium">
+                                <i class="fas fa-user-tag text-xs"></i>
+                                Venta para vendedor: <strong class="text-white underline" x-text="nombreVendedorAsignado"></strong>
+                            </p>
+                        </template>
+                    </div>
                 </div>
                 <button 
                     type="button" 
@@ -219,10 +227,81 @@
                         </div>
                     </div>
 
-                    {{-- Fila 3: Dirección de Entrega (Sin icono de ubicación) --}}
+                    {{-- Fila 3: Nombre del Cliente (Obligatorio) --}}
+                    <div id="seccion-cliente-entrega">
+                        <label class="block text-xs font-bold text-slate-700 mb-1 flex items-center justify-between">
+                            <span>Nombre del Cliente <span class="text-red-500">*</span></span>
+                            <span x-show="errorCliente" class="text-[10px] font-bold text-rose-600 bg-rose-50 px-1.5 py-0.2 rounded border border-rose-200">Requerido</span>
+                        </label>
+                        <input 
+                            id="input-cliente-entrega"
+                            type="text" 
+                            x-model="nombreCliente" 
+                            @input="errorCliente = false"
+                            placeholder="Ej. Juan Carlos Pérez" 
+                            :class="errorCliente ? 'border-rose-500 bg-rose-50/40 text-rose-800 focus:border-rose-500 focus:ring-rose-500/20' : 'border-slate-300 text-slate-800 focus:border-blue-500 focus:ring-blue-500/20'"
+                            class="w-full rounded-lg border px-3.5 py-2 text-xs font-semibold focus:outline-none focus:ring-2 transition-all"
+                        >
+                        <span x-show="!errorCliente" class="text-[11px] text-slate-400 block mt-0.5">Nombre completo del destinatario o comprador</span>
+                        <span x-show="errorCliente" class="text-[11px] font-bold text-rose-600 flex items-center gap-1 mt-0.5">
+                            <i class="fas fa-triangle-exclamation text-[10px]"></i> Por favor ingresa el nombre del cliente.
+                        </span>
+                    </div>
+
+                    {{-- Fila 4: Departamento y Municipio de El Salvador (Obligatorios) --}}
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                        <div id="seccion-departamento-entrega">
+                            <label class="block text-xs font-bold text-slate-700 mb-1 flex items-center justify-between">
+                                <span>Departamento <span class="text-red-500">*</span></span>
+                                <span x-show="errorDepartamento" class="text-[10px] font-bold text-rose-600 bg-rose-50 px-1.5 py-0.2 rounded border border-rose-200">Requerido</span>
+                            </label>
+                            <select 
+                                id="select-departamento-entrega"
+                                x-model="departamento" 
+                                @change="onDepartamentoChange()"
+                                :class="errorDepartamento ? 'border-rose-500 bg-rose-50/40 text-rose-800 focus:border-rose-500 focus:ring-rose-500/20' : 'border-slate-300 text-slate-800 focus:border-blue-500 focus:ring-blue-500/20'"
+                                class="w-full rounded-lg border px-3 py-2 text-xs font-semibold focus:outline-none focus:ring-2 transition-all bg-white"
+                            >
+                                <option value="">Selecciona departamento</option>
+                                <template x-for="dep in listaDepartamentos" :key="dep">
+                                    <option :value="dep" x-text="dep"></option>
+                                </template>
+                            </select>
+                            <span x-show="!errorDepartamento" class="text-[11px] text-slate-400 block mt-0.5">Departamento destino</span>
+                            <span x-show="errorDepartamento" class="text-[11px] font-bold text-rose-600 flex items-center gap-1 mt-0.5">
+                                <i class="fas fa-triangle-exclamation text-[10px]"></i> Selecciona departamento.
+                            </span>
+                        </div>
+
+                        <div id="seccion-municipio-entrega">
+                            <label class="block text-xs font-bold text-slate-700 mb-1 flex items-center justify-between">
+                                <span>Municipio <span class="text-red-500">*</span></span>
+                                <span x-show="errorMunicipio" class="text-[10px] font-bold text-rose-600 bg-rose-50 px-1.5 py-0.2 rounded border border-rose-200">Requerido</span>
+                            </label>
+                            <select 
+                                id="select-municipio-entrega"
+                                x-model="municipio" 
+                                @change="errorMunicipio = false"
+                                :disabled="!departamento"
+                                :class="errorMunicipio ? 'border-rose-500 bg-rose-50/40 text-rose-800 focus:border-rose-500 focus:ring-rose-500/20' : 'border-slate-300 text-slate-800 focus:border-blue-500 focus:ring-blue-500/20 disabled:bg-slate-100 disabled:text-slate-400'"
+                                class="w-full rounded-lg border px-3 py-2 text-xs font-semibold focus:outline-none focus:ring-2 transition-all bg-white"
+                            >
+                                <option value="" x-text="departamento ? 'Selecciona municipio' : 'Primero elige departamento'"></option>
+                                <template x-for="mun in municipiosDisponibles" :key="mun">
+                                    <option :value="mun" x-text="mun"></option>
+                                </template>
+                            </select>
+                            <span x-show="!errorMunicipio" class="text-[11px] text-slate-400 block mt-0.5">Municipio según departamento</span>
+                            <span x-show="errorMunicipio" class="text-[11px] font-bold text-rose-600 flex items-center gap-1 mt-0.5">
+                                <i class="fas fa-triangle-exclamation text-[10px]"></i> Selecciona municipio.
+                            </span>
+                        </div>
+                    </div>
+
+                    {{-- Fila 5: Dirección de Entrega (Sin icono de ubicación) --}}
                     <div id="seccion-direccion-entrega">
                         <label class="block text-xs font-bold text-slate-700 mb-1 flex items-center justify-between">
-                            <span>Dirección de Entrega <span class="text-red-500">*</span></span>
+                            <span>Dirección Específica <span class="text-red-500">*</span></span>
                             <span x-show="errorDireccion" class="text-[10px] font-bold text-rose-600 bg-rose-50 px-1.5 py-0.2 rounded border border-rose-200">Requerido</span>
                         </label>
                         <input 
@@ -234,7 +313,7 @@
                             :class="errorDireccion ? 'border-rose-500 bg-rose-50/40 text-rose-800 focus:border-rose-500 focus:ring-rose-500/20' : 'border-slate-300 text-slate-800 focus:border-blue-500 focus:ring-blue-500/20'"
                             class="w-full rounded-lg border px-3.5 py-2 text-xs font-semibold focus:outline-none focus:ring-2 transition-all"
                         >
-                        <span x-show="!errorDireccion" class="text-[11px] text-slate-400 block mt-0.5">Dirección exacta para la entrega del producto</span>
+                        <span x-show="!errorDireccion" class="text-[11px] text-slate-400 block mt-0.5">Colonia, calle, pasaje o número de casa</span>
                         <span x-show="errorDireccion" class="text-[11px] font-bold text-rose-600 flex items-center gap-1 mt-0.5">
                             <i class="fas fa-triangle-exclamation text-[10px]"></i> Por favor ingresa la dirección de entrega.
                         </span>
@@ -520,18 +599,60 @@
             procesando: false,
             items: [],
             indiceActivo: 0,
+            idVendedorAsignado: null,
+            nombreVendedorAsignado: '',
+
+            nombreCliente: '',
+            departamento: '',
+            municipio: '',
+
+            listaDepartamentos: [
+                'Ahuachapán',
+                'Cabañas',
+                'Chalatenango',
+                'Cuscatlán',
+                'La Libertad',
+                'La Paz',
+                'La Unión',
+                'Morazán',
+                'San Miguel',
+                'San Salvador',
+                'San Vicente',
+                'Santa Ana',
+                'Sonsonate',
+                'Usulután'
+            ],
+
+            municipiosPorDepartamento: {
+                'Ahuachapán': ['Ahuachapán', 'Apaneca', 'Atiquizaya', 'Concepción de Ataco', 'El Refugio', 'Guaymango', 'Jujutla', 'San Francisco Menéndez', 'San Lorenzo', 'San Pedro Puxtla', 'Tacuba', 'Turín'],
+                'Cabañas': ['Sensuntepeque', 'Cinquera', 'Dolores', 'Guacotecti', 'Ilobasco', 'Jutiapa', 'San Isidro', 'Tejutepeque', 'Victoria'],
+                'Chalatenango': ['Chalatenango', 'Agua Caliente', 'Arcatao', 'Azacualpa', 'Cancasque', 'Citalá', 'Comalapa', 'Concepción Quezaltepeque', 'Dulce Nombre de María', 'El Carrizal', 'El Paraíso', 'La Laguna', 'La Palma', 'La Reina', 'Las Vueltas', 'Nombre de Jesús', 'Nueva Concepción', 'Nueva Trinidad', 'Ojos de Agua', 'Potonico', 'San Antonio de la Cruz', 'San Antonio Los Ranchos', 'San Fernando', 'San Francisco Lempa', 'San Francisco Morazán', 'San Ignacio', 'San Isidro Labrador', 'San José Cancasque', 'San José Las Flores', 'San Luis del Carmen', 'San Miguel de Mercedes', 'San Rafael', 'Santa Rita', 'Tejutla'],
+                'Cuscatlán': ['Cojutepeque', 'Candelaria', 'El Carmen', 'El Rosario', 'Monte San Juan', 'Oratorio de Concepción', 'San Bartolomé Perulapía', 'San Cristóbal', 'San José Guayabal', 'San Pedro Perulapán', 'San Rafael Cedros', 'San Ramón', 'Santa Cruz Analquito', 'Santa Cruz Michapa', 'Suchitoto', 'Tenancingo'],
+                'La Libertad': ['Santa Tecla', 'Antiguo Cuscatlán', 'Chiltiupán', 'Ciudad Arce', 'Colón', 'Comasagua', 'Huizúcar', 'Jayaque', 'Jicalapa', 'La Libertad', 'Nuevo Cuscatlán', 'Quezaltepeque', 'Sacacoyo', 'San José Villanueva', 'San Juan Opico', 'San Matías', 'San Pablo Tacachico', 'Talnique', 'Tamanique', 'Teotepeque', 'Tepecoyo', 'Zaragoza'],
+                'La Paz': ['Zacatecoluca', 'Cuyultitán', 'El Rosario', 'Jerusalén', 'Mercedes La Ceiba', 'Olocuilta', 'Paraíso de Osorio', 'San Antonio Masahuat', 'San Emigdio', 'San Francisco Chinameca', 'San Juan Nonualco', 'San Juan Talpa', 'San Juan Tepezontes', 'San Luis La Herradura', 'San Luis Talpa', 'San Miguel Tepezontes', 'San Pedro Masahuat', 'San Pedro Nonualco', 'San Rafael Obrajuelo', 'Santa María Ostuma', 'Santiago Nonualco', 'Tapalhuaca'],
+                'La Unión': ['La Unión', 'Anamorós', 'Bolívar', 'Concepción de Oriente', 'Conchagua', 'El Carmen', 'El Sauce', 'Intipucá', 'Lislique', 'Meanguera del Golfo', 'Nueva Esparta', 'Pasaquina', 'Polorós', 'San Alejo', 'San José', 'Santa Rosa de Lima', 'Yayantique', 'Yucuaiquín'],
+                'Morazán': ['San Francisco Gotera', 'Arambala', 'Cacaopera', 'Chilanga', 'Corinto', 'Delicias de Concepción', 'El Divisadero', 'El Rosario', 'Gualococti', 'Guatajiagua', 'Joateca', 'Jocoaitique', 'Jocoro', 'Lolotiquillo', 'Meanguera', 'Osicala', 'Perquín', 'San Carlos', 'San Fernando', 'San Isidro', 'San Simón', 'Sensembra', 'Sociedad', 'Torola', 'Yamabal', 'Yoloaiquín'],
+                'San Miguel': ['San Miguel', 'Carolina', 'Chapeltique', 'Chinameca', 'Chirilagua', 'Ciudad Barrios', 'Comacarán', 'El Tránsito', 'Lolotique', 'Moncagua', 'Nueva Guadalupe', 'Nuevo Edén de San Juan', 'Quelepa', 'San Antonio del Mosco', 'San Gerardo', 'San Jorge', 'San Luis de la Reina', 'San Rafael Oriente', 'Sesori', 'Uluazapa'],
+                'San Salvador': ['San Salvador', 'Aguilares', 'Apopa', 'Ayutuxtepeque', 'Cuscatancingo', 'Delgado', 'El Paisnal', 'Guazapa', 'Ilopango', 'Mejicanos', 'Nejapa', 'Panchimalco', 'Rosario de Mora', 'San Marcos', 'San Martín', 'Santiago Texacuangos', 'Santo Tomás', 'Soyapango', 'Tonacatepeque'],
+                'San Vicente': ['San Vicente', 'Apastepeque', 'Guadalupe', 'San Cayetano Istepeque', 'San Esteban Catarina', 'San Ildefonso', 'San Lorenzo', 'San Sebastián', 'Santa Clara', 'Santo Domingo', 'Tecoluca', 'Tepetitán', 'Verapaz'],
+                'Santa Ana': ['Santa Ana', 'Candelaria de la Frontera', 'Chalchuapa', 'Coatepeque', 'El Congo', 'El Porvenir', 'Masahuat', 'Metapán', 'San Antonio Pajonal', 'San Sebastián Salitrillo', 'Santa Rosa Guachipilín', 'Santiago de la Frontera', 'Texistepeque'],
+                'Sonsonate': ['Sonsonate', 'Acajutla', 'Armenia', 'Caluco', 'Cuisnahuat', 'Izalco', 'Juayúa', 'Nahuizalco', 'Nahulingo', 'Salcoatitán', 'San Antonio del Monte', 'San Julián', 'Santa Catarina Masahuat', 'Santa Isabel Ishuatán', 'Santo Domingo de Guzmán', 'Sonzacate'],
+                'Usulután': ['Usulután', 'Alegría', 'Berlín', 'California', 'Concepción Batres', 'El Triunfo', 'Ereguayquín', 'Estanzuelas', 'Jiquilisco', 'Jucuapa', 'Jucuarán', 'Mercedes Umaña', 'Nueva Granada', 'Ozatlán', 'Puerto El Triunfo', 'San Agustín', 'San Buenaventura', 'San Dionisio', 'San Francisco Javier', 'Santa Elena', 'Santa María', 'Santiago de María', 'Tecapán']
+            },
 
             fechaSalida: '',
             horaSalida: '',
             direccionEntrega: '',
             puntoReferencia: '',
-            telefono: '{{ auth()->user()?->telefono ?? '' }}',
-            telefonoBaseUsuario: '{{ auth()->user()?->telefono ?? '' }}',
+            telefono: '',
             costoEnvio: 0,
             descuento: 0,
             metodoPago: 'Efectivo',
 
             errorGeneral: '',
+            errorCliente: false,
+            errorDepartamento: false,
+            errorMunicipio: false,
             errorDireccion: false,
             errorTelefonoTocado: false,
 
@@ -541,6 +662,19 @@
             comprobanteTamano: '',
             errorComprobante: false,
             errorComprobanteMensaje: '',
+
+            get municipiosDisponibles() {
+                if (!this.departamento || !this.municipiosPorDepartamento[this.departamento]) {
+                    return [];
+                }
+                return this.municipiosPorDepartamento[this.departamento];
+            },
+
+            onDepartamentoChange() {
+                this.municipio = '';
+                this.errorDepartamento = false;
+                this.errorMunicipio = false;
+            },
 
             init() {
                 // Escuchar evento para abrir modal desde la bolsa de compras
@@ -567,19 +701,35 @@
                 });
             },
 
-            abrir(cartItems = null) {
-                const source = cartItems || (window.AXCart ? window.AXCart.getItems() : []);
+            abrir(payload = null) {
+                let source = [];
+                this.idVendedorAsignado = null;
+                this.nombreVendedorAsignado = '';
+
+                if (Array.isArray(payload)) {
+                    source = payload;
+                } else if (payload && typeof payload === 'object') {
+                    source = payload.items || [];
+                    this.idVendedorAsignado = payload.id_usuario || null;
+                    this.nombreVendedorAsignado = payload.nombre_vendedor || '';
+                } else {
+                    source = (window.AXCart ? window.AXCart.getItems() : []);
+                }
+
                 this.items = JSON.parse(JSON.stringify(source || []));
                 this.items.forEach(item => {
                     item.costo_extra = Math.max(0, Number(item.costo_extra || 0));
                 });
                 this.indiceActivo = 0;
                 this.costoEnvio = 0;
-
-                // Pre-cargar teléfono desde la base de datos si no ha sido ingresado aún
-                if (!this.telefono && this.telefonoBaseUsuario) {
-                    this.telefono = this.telefonoBaseUsuario;
-                }
+                this.descuento = 0;
+                this.metodoPago = 'Efectivo';
+                this.nombreCliente = '';
+                this.departamento = '';
+                this.municipio = '';
+                this.direccionEntrega = '';
+                this.puntoReferencia = '';
+                this.telefono = '';
 
                 // Fechas por defecto locales
                 const hoy = new Date();
@@ -593,6 +743,9 @@
                 this.horaSalida = `${hh}:${min}`;
 
                 this.errorGeneral = '';
+                this.errorCliente = false;
+                this.errorDepartamento = false;
+                this.errorMunicipio = false;
                 this.errorDireccion = false;
                 this.errorTelefonoTocado = false;
                 this.errorComprobante = false;
@@ -602,7 +755,18 @@
 
             cerrar() {
                 this.abierto = false;
+                this.nombreCliente = '';
+                this.departamento = '';
+                this.municipio = '';
+                this.direccionEntrega = '';
+                this.puntoReferencia = '';
+                this.telefono = '';
+                this.descuento = 0;
+                this.costoEnvio = 0;
                 this.errorGeneral = '';
+                this.errorCliente = false;
+                this.errorDepartamento = false;
+                this.errorMunicipio = false;
                 this.errorDireccion = false;
                 this.errorTelefonoTocado = false;
                 this.removerComprobante();
@@ -776,6 +940,40 @@
                     return;
                 }
 
+                // 1. Validación de Nombre del Cliente (Obligatorio)
+                if (!this.nombreCliente || !this.nombreCliente.trim()) {
+                    this.errorCliente = true;
+                    this.$nextTick(() => {
+                        const el = document.getElementById('input-cliente-entrega');
+                        el?.focus();
+                        el?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    });
+                    return;
+                }
+
+                // 2. Validación de Departamento de El Salvador (Obligatorio)
+                if (!this.departamento || !this.departamento.trim()) {
+                    this.errorDepartamento = true;
+                    this.$nextTick(() => {
+                        const el = document.getElementById('select-departamento-entrega');
+                        el?.focus();
+                        el?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    });
+                    return;
+                }
+
+                // 3. Validación de Municipio de El Salvador (Obligatorio)
+                if (!this.municipio || !this.municipio.trim()) {
+                    this.errorMunicipio = true;
+                    this.$nextTick(() => {
+                        const el = document.getElementById('select-municipio-entrega');
+                        el?.focus();
+                        el?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    });
+                    return;
+                }
+
+                // 4. Validación de Dirección Específica (Obligatorio)
                 if (!this.direccionEntrega.trim()) {
                     this.errorDireccion = true;
                     this.$nextTick(() => {
@@ -786,6 +984,7 @@
                     return;
                 }
 
+                // 5. Validación de Teléfono (Obligatorio)
                 if (!this.telefono || !this.esTelefonoValido) {
                     this.errorTelefonoTocado = true;
                     this.$nextTick(() => {
@@ -821,11 +1020,18 @@
                 formData.append('tipo_venta', 'Envio');
                 formData.append('descuento', Number(this.descuento || 0));
                 formData.append('precio_envio', this.costoEnvioCalculado);
+                formData.append('nombre_cliente', this.nombreCliente.trim());
+                formData.append('departamento', this.departamento.trim());
+                formData.append('municipio', this.municipio.trim());
                 formData.append('direccion_entrega', this.direccionEntrega.trim());
                 formData.append('punto_referencia', (this.puntoReferencia || '').trim());
                 formData.append('telefono', this.telefono.trim());
                 formData.append('fecha_salida', this.fechaSalida);
                 formData.append('hora_salida', this.horaSalida);
+
+                if (this.idVendedorAsignado) {
+                    formData.append('id_usuario', this.idVendedorAsignado);
+                }
 
                 this.items.forEach((item, index) => {
                     formData.append(`lineas[${index}][id_variante]`, item.id);
@@ -852,10 +1058,20 @@
                         throw new Error('La sesión de seguridad ha expirado. Por favor recarga la página para procesar la venta.');
                     }
 
-                    const data = await response.json();
+                    const rawText = await response.text();
+                    let data = null;
+                    try {
+                        // Limpiar posible BOM (UTF-8) o whitespace antes/después del JSON
+                        const cleanText = rawText.replace(/^\uFEFF/, '').trim();
+                        data = JSON.parse(cleanText);
+                    } catch (e) {
+                        console.warn('JSON parse falló, rawText (primeros 200 chars):', rawText.substring(0, 200));
+                        data = null;
+                    }
 
+                    // Si el servidor devolvió un error HTTP (4xx, 5xx)
                     if (!response.ok) {
-                        if (data.message && data.message.toLowerCase().includes('comprobante')) {
+                        if (data && data.message && data.message.toLowerCase().includes('comprobante')) {
                             this.errorComprobante = true;
                             this.errorComprobanteMensaje = data.message;
                             this.$nextTick(() => {
@@ -866,30 +1082,65 @@
                             });
                             return;
                         }
-                        this.errorGeneral = data.message || 'Error al procesar la venta y entrega.';
+                        
+                        let mensajeError = (data && data.message) ? data.message : '';
+                        if (!mensajeError && data && data.errors) {
+                            mensajeError = Object.values(data.errors).flat().join(' ');
+                        }
+                        if (!mensajeError && rawText) {
+                            const doc = new DOMParser().parseFromString(rawText, 'text/html');
+                            const title = doc.querySelector('.exception_title, title, h1, .text-xl')?.textContent?.trim();
+                            mensajeError = title || `Error al procesar la venta (${response.status} ${response.statusText}).`;
+                        }
+                        if (!mensajeError) {
+                            mensajeError = `Error del servidor (${response.status} ${response.statusText}). Por favor revisa los datos e intenta nuevamente.`;
+                        }
+
+                        this.errorGeneral = mensajeError;
                         this.$nextTick(() => {
                             document.getElementById('modal-entrega-body')?.scrollTo({ top: 0, behavior: 'smooth' });
                         });
                         return;
                     }
 
+                    // ── RESPUESTA EXITOSA (2xx) ──
+                    // Si response.ok es true, la venta YA se registró en el servidor.
+                    // Aunque JSON.parse falle, tratamos como éxito para no confundir al usuario.
+
                     this.cerrar();
 
-                    // Limpiar carrito local y global
-                    if (window.AXCart) {
+                    // Limpiar carrito local, global y persistencia en navegador
+                    try {
+                        localStorage.removeItem('ax_carrito');
+                    } catch (e) {}
+
+                    if (window.AXCart && typeof window.AXCart.clearCart === 'function') {
                         window.AXCart.clearCart();
+                    } else {
+                        window.dispatchEvent(new CustomEvent('ax-cart-updated', { detail: [] }));
                     }
+
+                    this.items = [];
+
+                    // Extraer datos del JSON si se pudo parsear, o usar valores genéricos
+                    const idVenta = data ? data.id_venta : null;
+                    const totalVenta = data ? data.total : null;
 
                     // Mostrar confirmación y redirigir directamente al dashboard de ventas
                     if (typeof Swal !== 'undefined') {
+                        let htmlContent = '<div class="text-sm space-y-1 text-slate-600">';
+                        if (idVenta) {
+                            htmlContent += `<p>Folio: <strong class="text-blue-600 font-mono">#VNT-${String(idVenta).padStart(5, '0')}</strong></p>`;
+                        }
+                        if (totalVenta !== null) {
+                            htmlContent += `<p>Total: <strong class="text-emerald-600 font-black">$${Number(totalVenta).toFixed(2)}</strong></p>`;
+                        }
+                        htmlContent += '<p class="text-xs text-amber-600 font-semibold mt-2">Redirigiendo a Control de Envíos y Estados...</p></div>';
+
                         Swal.fire({
                             icon: 'success',
                             title: '¡Entrega y Venta Registrada!',
-                            html: `<div class="text-sm space-y-1 text-slate-600">
-                                <p>Folio: <strong class="text-blue-600 font-mono">#VNT-${String(data.id_venta).padStart(5, '0')}</strong></p>
-                                <p>Total: <strong class="text-emerald-600 font-black">$${Number(data.total).toFixed(2)}</strong></p>
-                                <p class="text-xs text-slate-400 mt-2">Redirigiendo al dashboard de ventas...</p>
-                            </div>`,
+                            html: htmlContent,
                             timer: 2000,
                             timerProgressBar: true,
                             showConfirmButton: false,
@@ -897,10 +1148,10 @@
                                 container: '!z-[100000]'
                             }
                         }).then(() => {
-                            window.location.href = '{{ route("ventas.index") }}';
+                            window.location.href = '{{ route("ventas.pedidos") }}';
                         });
                     } else {
-                        window.location.href = '{{ route("ventas.index") }}';
+                        window.location.href = '{{ route("ventas.pedidos") }}';
                     }
                 } catch (err) {
                     console.error('Error al procesar venta:', err);
