@@ -138,7 +138,7 @@
                                 </div>
                                 <button 
                                     type="button" 
-                                    @click="solicitarTipoVenta(variante)"
+                                    @click="agregarProducto(variante)"
                                     :disabled="variante.stock <= 0"
                                     class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer"
                                     :class="variante.stock > 0 ? 'bg-blue-50 text-blue-700 hover:bg-blue-600 hover:text-white' : 'bg-slate-100 text-slate-400'"
@@ -330,7 +330,8 @@
                         </select>
                     </div>
 
-                    <!-- ASIGNAR A OTRO VENDEDOR (CHECKBOX Y COMBOBOX CON BÚSQUEDA) -->
+                    <!-- ASIGNAR A OTRO VENDEDOR (CHECKBOX Y COMBOBOX CON BÚSQUEDA) - SOLO ADMINISTRADORES -->
+                    @if(Auth::user()?->rol === 'admin')
                     <div class="pt-1">
                         <label class="inline-flex items-center gap-2 cursor-pointer select-none group">
                             <input 
@@ -429,6 +430,7 @@
                             </p>
                         </div>
                     </div>
+                    @endif
 
                     <!-- SECCIÓN DE COMPROBANTE DE TRANSFERENCIA (CONDICIONAL) -->
                     <div 
@@ -542,29 +544,32 @@
                         </div>
                     </div>
 
-                    <!-- BOTÓN PROCESAR VENTA EN TIENDA -->
-                    <button 
-                        type="button" 
-                        id="btn-procesar-venta"
-                        @click="procesarVenta()"
-                        :disabled="!puedeProcesar() || procesando"
-                        class="w-full rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-extrabold py-3.5 text-sm transition-all shadow-lg shadow-blue-500/25 flex items-center justify-center gap-2 cursor-pointer active:scale-[0.99] disabled:opacity-40 disabled:cursor-not-allowed disabled:shadow-none"
-                    >
-                        <i class="fas" :class="procesando ? 'fa-spinner fa-spin' : 'fa-check-circle text-base'"></i>
-                        <span x-text="procesando ? 'Procesando Venta...' : 'Facturar Venta en Tienda'"></span>
-                    </button>
+                    <!-- ACCIONES DE FACTURACIÓN Y DESPACHO -->
+                    <div class="space-y-2 pt-1">
+                        <!-- BOTÓN PROCESAR VENTA EN TIENDA -->
+                        <button 
+                            type="button" 
+                            id="btn-procesar-venta"
+                            @click="procesarVenta()"
+                            :disabled="!puedeProcesar() || procesando"
+                            class="w-full rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-extrabold py-3.5 text-sm transition-all duration-200 shadow-lg shadow-blue-500/25 flex items-center justify-center gap-2 cursor-pointer hover:scale-[1.01] active:scale-[0.99] disabled:opacity-40 disabled:cursor-not-allowed disabled:shadow-none disabled:hover:scale-100 disabled:hover:bg-blue-600"
+                        >
+                            <i class="fas" :class="procesando ? 'fa-spinner fa-spin' : 'fa-check-circle text-base'"></i>
+                            <span x-text="procesando ? 'Procesando Venta...' : 'Facturar Venta en Tienda (Mostrador)'"></span>
+                        </button>
 
-                    <!-- BOTÓN SECUNDARIO DESPACHAR COMO ENVÍO -->
-                    <button 
-                        type="button" 
-                        x-show="carrito.length > 0"
-                        @click="abrirEntregaDesdeCarrito()"
-                        :disabled="procesando"
-                        class="w-full rounded-xl bg-blue-50 hover:bg-blue-100 text-blue-700 font-bold py-2.5 text-xs transition-all flex items-center justify-center gap-2 cursor-pointer border border-blue-200 shadow-2xs"
-                    >
-                        <i class="fas fa-truck-fast"></i>
-                        <span>Despachar pedido como Envío / Delivery</span>
-                    </button>
+                        <!-- BOTÓN SECUNDARIO DESPACHAR COMO ENVÍO -->
+                        <button 
+                            type="button" 
+                            x-show="carrito.length > 0"
+                            @click="abrirEntregaDesdeCarrito()"
+                            :disabled="procesando"
+                            class="w-full rounded-xl bg-blue-50 hover:bg-blue-100 text-blue-700 font-bold py-2.5 text-xs transition-all flex items-center justify-center gap-2 cursor-pointer border border-blue-200 shadow-2xs hover:scale-[1.01] active:scale-[0.99] disabled:opacity-40 disabled:cursor-not-allowed"
+                        >
+                            <i class="fas fa-truck-fast"></i>
+                            <span>Despachar pedido como Envío / Delivery</span>
+                        </button>
+                    </div>
 
                 </div>
 

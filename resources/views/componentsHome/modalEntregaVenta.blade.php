@@ -644,8 +644,7 @@
             horaSalida: '',
             direccionEntrega: '',
             puntoReferencia: '',
-            telefono: '{{ auth()->user()?->telefono ?? '' }}',
-            telefonoBaseUsuario: '{{ auth()->user()?->telefono ?? '' }}',
+            telefono: '',
             costoEnvio: 0,
             descuento: 0,
             metodoPago: 'Efectivo',
@@ -723,11 +722,14 @@
                 });
                 this.indiceActivo = 0;
                 this.costoEnvio = 0;
-
-                // Pre-cargar teléfono desde la base de datos si no ha sido ingresado aún
-                if (!this.telefono && this.telefonoBaseUsuario) {
-                    this.telefono = this.telefonoBaseUsuario;
-                }
+                this.descuento = 0;
+                this.metodoPago = 'Efectivo';
+                this.nombreCliente = '';
+                this.departamento = '';
+                this.municipio = '';
+                this.direccionEntrega = '';
+                this.puntoReferencia = '';
+                this.telefono = '';
 
                 // Fechas por defecto locales
                 const hoy = new Date();
@@ -753,6 +755,14 @@
 
             cerrar() {
                 this.abierto = false;
+                this.nombreCliente = '';
+                this.departamento = '';
+                this.municipio = '';
+                this.direccionEntrega = '';
+                this.puntoReferencia = '';
+                this.telefono = '';
+                this.descuento = 0;
+                this.costoEnvio = 0;
                 this.errorGeneral = '';
                 this.errorCliente = false;
                 this.errorDepartamento = false;
@@ -1048,10 +1058,20 @@
                         throw new Error('La sesión de seguridad ha expirado. Por favor recarga la página para procesar la venta.');
                     }
 
-                    const data = await response.json();
+                    const rawText = await response.text();
+                    let data = null;
+                    try {
+                        // Limpiar posible BOM (UTF-8) o whitespace antes/después del JSON
+                        const cleanText = rawText.replace(/^\uFEFF/, '').trim();
+                        data = JSON.parse(cleanText);
+                    } catch (e) {
+                        console.warn('JSON parse falló, rawText (primeros 200 chars):', rawText.substring(0, 200));
+                        data = null;
+                    }
 
+                    // Si el servidor devolvió un error HTTP (4xx, 5xx)
                     if (!response.ok) {
-                        if (data.message && data.message.toLowerCase().includes('comprobante')) {
+                        if (data && data.message && data.message.toLowerCase().includes('comprobante')) {
                             this.errorComprobante = true;
                             this.errorComprobanteMensaje = data.message;
                             this.$nextTick(() => {
@@ -1062,30 +1082,65 @@
                             });
                             return;
                         }
-                        this.errorGeneral = data.message || 'Error al procesar la venta y entrega.';
+                        
+                        let mensajeError = (data && data.message) ? data.message : '';
+                        if (!mensajeError && data && data.errors) {
+                            mensajeError = Object.values(data.errors).flat().join(' ');
+                        }
+                        if (!mensajeError && rawText) {
+                            const doc = new DOMParser().parseFromString(rawText, 'text/html');
+                            const title = doc.querySelector('.exception_title, title, h1, .text-xl')?.textContent?.trim();
+                            mensajeError = title || `Error al procesar la venta (${response.status} ${response.statusText}).`;
+                        }
+                        if (!mensajeError) {
+                            mensajeError = `Error del servidor (${response.status} ${response.statusText}). Por favor revisa los datos e intenta nuevamente.`;
+                        }
+
+                        this.errorGeneral = mensajeError;
                         this.$nextTick(() => {
                             document.getElementById('modal-entrega-body')?.scrollTo({ top: 0, behavior: 'smooth' });
                         });
                         return;
                     }
 
+                    // ── RESPUESTA EXITOSA (2xx) ──
+                    // Si response.ok es true, la venta YA se registró en el servidor.
+                    // Aunque JSON.parse falle, tratamos como éxito para no confundir al usuario.
+
                     this.cerrar();
 
-                    // Limpiar carrito local y global
-                    if (window.AXCart) {
+                    // Limpiar carrito local, global y persistencia en navegador
+                    try {
+                        localStorage.removeItem('ax_carrito');
+                    } catch (e) {}
+
+                    if (window.AXCart && typeof window.AXCart.clearCart === 'function') {
                         window.AXCart.clearCart();
+                    } else {
+                        window.dispatchEvent(new CustomEvent('ax-cart-updated', { detail: [] }));
                     }
+
+                    this.items = [];
+
+                    // Extraer datos del JSON si se pudo parsear, o usar valores genéricos
+                    const idVenta = data ? data.id_venta : null;
+                    const totalVenta = data ? data.total : null;
 
                     // Mostrar confirmación y redirigir directamente al dashboard de ventas
                     if (typeof Swal !== 'undefined') {
+                        let htmlContent = '<div class="text-sm space-y-1 text-slate-600">';
+                        if (idVenta) {
+                            htmlContent += `<p>Folio: <strong class="text-blue-600 font-mono">#VNT-${String(idVenta).padStart(5, '0')}</strong></p>`;
+                        }
+                        if (totalVenta !== null) {
+                            htmlContent += `<p>Total: <strong class="text-emerald-600 font-black">$${Number(totalVenta).toFixed(2)}</strong></p>`;
+                        }
+                        htmlContent += '<p class="text-xs text-amber-600 font-semibold mt-2">Redirigiendo a Control de Envíos y Estados...</p></div>';
+
                         Swal.fire({
                             icon: 'success',
                             title: '¡Entrega y Venta Registrada!',
-                            html: `<div class="text-sm space-y-1 text-slate-600">
-                                <p>Folio: <strong class="text-blue-600 font-mono">#VNT-${String(data.id_venta).padStart(5, '0')}</strong></p>
-                                <p>Total: <strong class="text-emerald-600 font-black">$${Number(data.total).toFixed(2)}</strong></p>
-                                <p class="text-xs text-slate-400 mt-2">Redirigiendo al dashboard de ventas...</p>
-                            </div>`,
+                            html: htmlContent,
                             timer: 2000,
                             timerProgressBar: true,
                             showConfirmButton: false,
@@ -1093,10 +1148,10 @@
                                 container: '!z-[100000]'
                             }
                         }).then(() => {
-                            window.location.href = '{{ route("ventas.index") }}';
+                            window.location.href = '{{ route("ventas.pedidos") }}';
                         });
                     } else {
-                        window.location.href = '{{ route("ventas.index") }}';
+                        window.location.href = '{{ route("ventas.pedidos") }}';
                     }
                 } catch (err) {
                     console.error('Error al procesar venta:', err);

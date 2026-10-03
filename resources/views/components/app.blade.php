@@ -38,7 +38,11 @@
 
     <!-- 3. Recuperamos el contenedor original del Header (Fondo blanco, borde y blur) -->
     <header class="bg-white/80 backdrop-blur-md sticky top-0 z-50 border-b border-gray-100 transition-all duration-300">
-        @include('componentsHome.header')
+        @if(Auth::check() && Auth::user()->rol === 'vendedor')
+            @include('componentsHome.header-vendedor')
+        @else
+            @include('componentsHome.header')
+        @endif
     </header>
 
     <main class="flex-grow p-6 w-full max-w-7xl mx-auto mt-4">

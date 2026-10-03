@@ -51,6 +51,14 @@ Route::middleware('auth')->group(function () {
 
     // Rutas de proveedores movidas a middleware admin
 
+    // ── Módulo de Ventas, Carrito y Mis Ventas (Vendedores y Administradores) ──
+    Route::get('/ventas/mis-ventas', [VentaController::class, 'misVentas'])->name('ventas.mis-ventas');
+    Route::post('/ventas/{id}/cancelar-vendedor', [VentaController::class, 'cancelarPorVendedor'])->name('ventas.cancelar-vendedor')->whereNumber('id');
+    Route::get('/ventas/nueva', [VentaController::class, 'create'])->name('ventas.create');
+    Route::post('/ventas', [VentaController::class, 'store'])->name('ventas.store');
+    Route::get('/ventas/{id}', [VentaController::class, 'show'])->name('ventas.show')->whereNumber('id');
+    Route::get('/ventas/{id}/imprimir', [VentaController::class, 'imprimir'])->name('ventas.imprimir')->whereNumber('id');
+
     // ── Módulo de Gestión de Usuarios (CRUD) - Solo Administradores ──
     Route::middleware('admin')->group(function () {
         Route::get('/usuarios', [UserController::class, 'index'])->name('usuarios.index');
@@ -75,16 +83,10 @@ Route::middleware('auth')->group(function () {
         Route::get('/compras/movimientos', [CompraController::class, 'movimientos'])->name('compras.movimientos');
         Route::post('/movimientos-bodega/transferencia-tienda', [MovimientoBodegaController::class, 'transferirATienda'])->name('movimientos-bodega.transferencia-tienda');
 
-        // ── Módulo de Ventas ──
-        Route::get('/ventas/mis-ventas', [VentaController::class, 'misVentas'])->name('ventas.mis-ventas');
-        Route::post('/ventas/{id}/cancelar-vendedor', [VentaController::class, 'cancelarPorVendedor'])->name('ventas.cancelar-vendedor');
-        Route::get('/ventas/nueva', [VentaController::class, 'create'])->name('ventas.create');
+        // ── Módulo de Ventas (Solo Administradores: Dashboard general, Pedidos y Despacho) ──
         Route::get('/ventas/pedidos', [VentaController::class, 'pedidos'])->name('ventas.pedidos');
         Route::get('/ventas', [VentaController::class, 'index'])->name('ventas.index');
-        Route::post('/ventas', [VentaController::class, 'store'])->name('ventas.store');
-        Route::patch('/ventas/{id}/estado', [VentaController::class, 'actualizarEstado'])->name('ventas.actualizar-estado');
-        Route::get('/ventas/{id}', [VentaController::class, 'show'])->name('ventas.show');
-        Route::get('/ventas/{id}/imprimir', [VentaController::class, 'imprimir'])->name('ventas.imprimir');
+        Route::patch('/ventas/{id}/estado', [VentaController::class, 'actualizarEstado'])->name('ventas.actualizar-estado')->whereNumber('id');
 
         // ── Módulo de Atributos ──
         Route::resource('atributos', AtributoController::class)->except(['create', 'show', 'edit']);

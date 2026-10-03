@@ -583,11 +583,14 @@
                                     <div class="w-14 h-14 rounded-full bg-slate-50 text-slate-300 flex items-center justify-center mx-auto mb-3 border border-slate-100">
                                         <i class="fas fa-folder-open text-2xl"></i>
                                     </div>
-                                    <p class="text-sm font-bold text-slate-600">No se encontraron ventas registradas</p>
-                                    <p class="text-xs text-slate-400 mt-1 max-w-sm mx-auto">
-                                        Prueba ajustando los filtros de fecha o vendedor, o registra tu primera venta en el sistema.
+                                    <p class="text-sm font-bold text-slate-600">No se encontraron ventas entregadas en este periodo</p>
+                                    <p class="text-xs text-slate-400 mt-1 max-w-md mx-auto">
+                                        Este dashboard muestra exclusivamente ventas que han sido <b>entregadas y liquidadas</b>. Si tus ventas están en estado <i>Pendiente</i>, <i>Confirmada</i> o <i>En ruta</i>, consúltalas en el apartado logístico.
                                     </p>
-                                    <div class="mt-4">
+                                    <div class="mt-4 flex items-center justify-center gap-2">
+                                        <a href="{{ route('ventas.pedidos') }}" class="inline-flex items-center gap-2 rounded-xl bg-amber-500 hover:bg-amber-600 text-white px-4 py-2 text-xs font-bold transition-all shadow-sm">
+                                            <i class="fas fa-boxes-packing"></i> Ver Envíos y Pedidos en Proceso
+                                        </a>
                                         <a href="{{ route('ventas.create') }}" class="inline-flex items-center gap-2 rounded-xl bg-blue-600 hover:bg-blue-500 text-white px-4 py-2 text-xs font-bold transition-all shadow-sm">
                                             <i class="fas fa-plus"></i> Registrar Nueva Venta
                                         </a>

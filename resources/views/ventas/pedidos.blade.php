@@ -451,6 +451,11 @@
                                                         <i class="fas fa-user text-[8px] text-blue-600"></i> {{ $venta->nombre_cliente }}
                                                     </span>
                                                 @endif
+                                                @if(!empty($venta->departamento))
+                                                    <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-bold bg-amber-50 text-amber-800 border border-amber-200" title="Destino">
+                                                        <i class="fas fa-map-pin text-[8px] text-amber-600"></i> {{ $venta->departamento }}{{ !empty($venta->municipio) ? ', ' . $venta->municipio : '' }}
+                                                    </span>
+                                                @endif
                                             </div>
                                             @if($venta->direccion_entrega)
                                                 <p class="text-[11px] text-slate-700 font-medium truncate max-w-[220px]" title="{{ $venta->direccion_entrega }}">

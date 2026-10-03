@@ -14,8 +14,6 @@
                  <!-- Desktop Menu -->
                   <nav class="hidden lg:flex items-center gap-8">
                     <a href="/home" class="text-sm font-semibold text-blue-600 flex items-center gap-2"><i class="fas fa-home"></i> Inicio</a>
-                    <a href="{{ route('ventas.create') }}" class="text-sm font-medium text-gray-600 hover:text-blue-600 transition-colors flex items-center gap-2 {{ request()->routeIs('ventas.create') ? 'text-blue-600 font-bold' : '' }}"><i class="fas fa-cash-register"></i> Ventas / Carrito</a>
-                    <a href="{{ route('ventas.mis-ventas') }}" class="text-sm font-medium text-gray-600 hover:text-blue-600 transition-colors flex items-center gap-2 {{ request()->routeIs('ventas.mis-ventas') ? 'text-blue-600 font-bold' : '' }}"><i class="fas fa-boxes-packing"></i> Mis Ventas</a>
                   </nav>
 
                  <!-- Icons -->

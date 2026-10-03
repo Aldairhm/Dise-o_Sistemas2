@@ -620,7 +620,7 @@ class VentaController extends Controller
         }
 
         // 2. Validación exhaustiva de los datos del carrito
-        $validated = $request->validate([
+        $validator = \Illuminate\Support\Facades\Validator::make($request->all(), [
             'metodo_pago' => ['required', 'string', 'in:Efectivo,Transferencia Bancaria'],
             'tipo_venta' => ['nullable', 'string', 'in:Tienda,Envio,Envío'],
             'id_usuario' => ['nullable', 'integer', 'exists:usuario,id'],
@@ -632,7 +632,7 @@ class VentaController extends Controller
             'municipio' => ['nullable', 'string', 'max:100'],
             'direccion_entrega' => ['nullable', 'string', 'max:255'],
             'punto_referencia' => ['nullable', 'string', 'max:255'],
-            'telefono' => ['nullable', 'string', 'regex:/^[267]\d{3}-\d{4}$/'],
+            'telefono' => ['nullable', 'string'],
             'fecha_salida' => ['nullable', 'string'],
             'hora_salida' => ['nullable', 'string'],
             'lineas' => ['required', 'array', 'min:1'],
@@ -642,7 +642,20 @@ class VentaController extends Controller
             'lineas.*.costo_extra' => ['nullable', 'numeric', 'min:0'],
         ]);
 
+        if ($validator->fails()) {
+            Cache::forget($lockKey);
+            $primerError = $validator->errors()->first();
+            return response()->json([
+                'success' => false,
+                'message' => $primerError ?: 'Datos de la venta inválidos.',
+                'errors' => $validator->errors()->toArray(),
+            ], 422);
+        }
+
+        $validated = $validator->validated();
+
         if ($validated['metodo_pago'] === 'Transferencia Bancaria' && !$request->hasFile('comprobante_pago')) {
+            Cache::forget($lockKey);
             return response()->json([
                 'success' => false,
                 'message' => 'El comprobante de pago es obligatorio cuando el método de pago es Transferencia Bancaria.',
@@ -650,8 +663,11 @@ class VentaController extends Controller
         }
 
         try {
-            // Si se envió un vendedor asignado ("otro vendedor"), la venta y comisiones pertenecen a él
-            $vendedorVentaId = !empty($validated['id_usuario']) ? (int) $validated['id_usuario'] : (int) $userId;
+            // Si se envió un vendedor asignado ("otro vendedor"), la venta y comisiones pertenecen a él.
+            // Solo administradores pueden asignar a otro vendedor; para un vendedor siempre se registra a sí mismo.
+            $vendedorVentaId = (Auth::user()?->rol === 'admin' && !empty($validated['id_usuario']))
+                ? (int) $validated['id_usuario']
+                : (int) (Auth::id() ?? $userId);
 
             // 3. Transacción de base de datos atómica
             $venta = DB::transaction(function () use ($validated, $vendedorVentaId, $request) {
@@ -843,30 +859,22 @@ class VentaController extends Controller
                 return $venta;
             });
 
-            // Respuesta limpia según el tipo de petición
-            if ($request->wantsJson() || $request->ajax()) {
-                return response()->json([
-                    'success' => true,
-                    'message' => '¡Venta procesada con éxito!',
-                    'id_venta' => $venta->id,
-                    'total' => number_format((float) $venta->total, 2, '.', ''),
-                ], 201);
-            }
-
-            return redirect()->route('ventas.create')->with('success', 'Venta registrada con éxito.');
+            // Retornar siempre respuesta JSON estandarizada para el cliente AJAX / fetch
+            return response()->json([
+                'success' => true,
+                'message' => '¡Venta procesada con éxito!',
+                'id_venta' => $venta->id,
+                'total' => number_format((float) $venta->total, 2, '.', ''),
+            ], 201);
 
         } catch (\Throwable $e) {
             // Liberar el bloqueo si falló para permitir reintentos
             Cache::forget($lockKey);
 
-            if ($request->wantsJson() || $request->ajax()) {
-                return response()->json([
-                    'success' => false,
-                    'message' => $e->getMessage() ?: 'Error inesperado al procesar la venta.',
-                ], 422);
-            }
-
-            return back()->withInput()->withErrors(['error' => $e->getMessage()]);
+            return response()->json([
+                'success' => false,
+                'message' => $e->getMessage() ?: 'Error inesperado al procesar la venta.',
+            ], 422);
         }
     }
 
@@ -1064,6 +1072,17 @@ class VentaController extends Controller
         $venta = Venta::with(['usuario', 'detalles.variante.producto'])
             ->findOrFail($id);
 
+        $user = Auth::user();
+        if ($user && $user->rol !== 'admin' && (int)$venta->id_usuario !== (int)$user->id) {
+            if (request()->wantsJson() || request()->ajax()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'No tienes permiso para ver los detalles de esta venta.',
+                ], 403);
+            }
+            abort(403, 'No tienes permiso para ver los detalles de esta venta.');
+        }
+
         // Asociar costos extras guardados en la tabla salida
         $salidas = Salida::where('observaciones', 'like', "Venta #{$venta->id}%")
             ->get()
@@ -1122,6 +1141,11 @@ class VentaController extends Controller
     {
         $venta = Venta::with(['usuario', 'detalles.variante.producto'])
             ->findOrFail($id);
+
+        $user = Auth::user();
+        if ($user && $user->rol !== 'admin' && (int)$venta->id_usuario !== (int)$user->id) {
+            abort(403, 'No tienes permiso para imprimir los comprobantes de esta venta.');
+        }
 
         $tipo = $request->query('tipo', 'ticket');
         if (!in_array($tipo, ['ticket', 'factura_comercial', 'credito_fiscal'])) {

@@ -167,31 +167,13 @@ document.addEventListener("alpine:init", () => {
             this.modalTipoVentaAbierto = false;
             this.varianteSeleccionada = null;
 
-            // Clonamos el carrito actual de la terminal para incluir lo que ya esté o agregar el nuevo
-            let itemsParaEntrega = JSON.parse(JSON.stringify(this.carrito || []));
-            const index = itemsParaEntrega.findIndex((item) => item.id === variante.id);
-            if (index >= 0) {
-                itemsParaEntrega[index].cantidad = Math.max(1, Number(itemsParaEntrega[index].cantidad || 1));
-            } else {
-                itemsParaEntrega.push({
-                    id: variante.id,
-                    producto: variante.producto,
-                    variante: variante.variante,
-                    sku: variante.sku,
-                    precio_venta: Number(variante.precio_venta || 0),
-                    precio: Number(variante.precio_venta || 0),
-                    stock: Number(variante.stock || 0),
-                    imagen: variante.imagen || null,
-                    cantidad: 1,
-                    costo_extra: 0,
-                });
-            }
+            // Agregar el producto al carrito
+            this.agregarProducto(variante);
 
-            // Sincronizar el carrito de la terminal
-            this.carrito = itemsParaEntrega;
-
-            // Abrir el modal de entrega con el/los productos
-            window.dispatchEvent(new CustomEvent('abrir-modal-entrega', { detail: itemsParaEntrega }));
+            this.mostrarToast(
+                `"${variante.producto}" agregado. Puedes seguir agregando productos o pulsar "Despachar Pedido como Envío" al terminar.`,
+                "info"
+            );
         },
 
         abrirEntregaDesdeCarrito() {
