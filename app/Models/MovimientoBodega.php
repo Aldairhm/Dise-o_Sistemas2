@@ -14,6 +14,7 @@ class MovimientoBodega extends Model
     protected $fillable = [
         'id_variante',
         'id_compra',
+        'devolucion_id',
         'id_usuario',
         'tipo',
         'cantidad',
@@ -21,6 +22,8 @@ class MovimientoBodega extends Model
         'reserva_nueva',
         'stock_anterior',
         'stock_nuevo',
+        'stock_cuarentena_anterior',
+        'stock_cuarentena_nuevo',
         'observacion',
     ];
 
@@ -32,5 +35,10 @@ class MovimientoBodega extends Model
     public function compra()
     {
         return $this->belongsTo(Compra::class, 'id_compra');
+    }
+
+    public function devolucion()
+    {
+        return $this->belongsTo(Devolucion::class, 'devolucion_id');
     }
 }

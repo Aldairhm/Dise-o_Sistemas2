@@ -21,8 +21,8 @@
 
             <!-- BOTONES DE ACCIÓN RÁPIDA -->
             <div class="flex items-center gap-3">
-                <a href="{{ route('ventas.create') }}" 
-                   class="inline-flex items-center justify-center gap-2.5 px-5 py-3 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-extrabold text-sm shadow-lg shadow-blue-500/25 transition-all duration-200 hover:scale-[1.02] active:scale-[0.98]">
+                <a href="{{ route('ventas.create') }}"
+                    class="inline-flex items-center justify-center gap-2.5 px-5 py-3 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-extrabold text-sm shadow-lg shadow-blue-500/25 transition-all duration-200 hover:scale-[1.02] active:scale-[0.98]">
                     <div class="w-6 h-6 rounded-lg bg-white/20 flex items-center justify-center text-xs">
                         <i class="fas fa-plus"></i>
                     </div>
@@ -45,26 +45,29 @@
                 <i class="fas fa-boxes-packing text-slate-400"></i>
                 <span>Control de Envíos y Estados</span>
             </a>
+            <a href="{{ route('ventas.devoluciones') }}" class="rounded-xl px-4 py-2 text-sm font-bold text-slate-600 hover:bg-slate-50 hover:text-blue-600 transition-all flex items-center gap-2">
+                <i class="fas fa-clock-rotate-left text-slate-400"></i>
+                <span>Historial de Devoluciones</span>
+            </a>
         </nav>
 
         <!-- 1. SECCIÓN SUPERIOR: FILTROS GLOBALES -->
         <section class="bg-white border border-slate-200 rounded-2xl p-4 sm:p-5 shadow-sm">
             <form method="GET" action="{{ route('ventas.index') }}" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-12 gap-3.5 items-end">
-                
+
                 <!-- BÚSQUEDA RÁPIDA -->
                 <div class="sm:col-span-2 md:col-span-3 lg:col-span-3">
                     <label for="q" class="block text-[11px] font-bold uppercase tracking-wider text-slate-600 mb-1.5">
                         <i class="fas fa-magnifying-glass text-slate-400 mr-1"></i> Buscar por Folio / Cliente / Teléfono
                     </label>
                     <div class="relative">
-                        <input 
-                            type="text" 
-                            name="q" 
-                            id="q" 
-                            value="{{ $busqueda ?? '' }}" 
-                            placeholder="Ej: 00004 o 7123-4567..." 
-                            class="w-full rounded-xl border border-slate-300 bg-slate-50 pl-9 pr-3 py-2 text-xs font-semibold text-slate-700 focus:border-blue-500 focus:bg-white focus:outline-none focus:ring-4 focus:ring-blue-500/10 transition-all"
-                        >
+                        <input
+                            type="text"
+                            name="q"
+                            id="q"
+                            value="{{ $busqueda ?? '' }}"
+                            placeholder="Ej: 00004 o 7123-4567..."
+                            class="w-full rounded-xl border border-slate-300 bg-slate-50 pl-9 pr-3 py-2 text-xs font-semibold text-slate-700 focus:border-blue-500 focus:bg-white focus:outline-none focus:ring-4 focus:ring-blue-500/10 transition-all">
                         <i class="fas fa-search absolute left-3 top-2.5 text-slate-400 text-xs"></i>
                     </div>
                 </div>
@@ -74,13 +77,12 @@
                     <label for="desde" class="block text-[11px] font-bold uppercase tracking-wider text-slate-600 mb-1.5">
                         <i class="fas fa-calendar-day text-slate-400 mr-1"></i> Desde
                     </label>
-                    <input 
-                        type="date" 
-                        name="desde" 
-                        id="desde" 
-                        value="{{ $desde }}" 
-                        class="w-full rounded-xl border border-slate-300 bg-slate-50 px-3 py-2 text-xs font-semibold text-slate-700 focus:border-blue-500 focus:bg-white focus:outline-none focus:ring-4 focus:ring-blue-500/10 transition-all"
-                    >
+                    <input
+                        type="date"
+                        name="desde"
+                        id="desde"
+                        value="{{ $desde }}"
+                        class="w-full rounded-xl border border-slate-300 bg-slate-50 px-3 py-2 text-xs font-semibold text-slate-700 focus:border-blue-500 focus:bg-white focus:outline-none focus:ring-4 focus:ring-blue-500/10 transition-all">
                 </div>
 
                 <!-- FECHA HASTA -->
@@ -88,13 +90,12 @@
                     <label for="hasta" class="block text-[11px] font-bold uppercase tracking-wider text-slate-600 mb-1.5">
                         <i class="fas fa-calendar-check text-slate-400 mr-1"></i> Hasta
                     </label>
-                    <input 
-                        type="date" 
-                        name="hasta" 
-                        id="hasta" 
-                        value="{{ $hasta }}" 
-                        class="w-full rounded-xl border border-slate-300 bg-slate-50 px-3 py-2 text-xs font-semibold text-slate-700 focus:border-blue-500 focus:bg-white focus:outline-none focus:ring-4 focus:ring-blue-500/10 transition-all"
-                    >
+                    <input
+                        type="date"
+                        name="hasta"
+                        id="hasta"
+                        value="{{ $hasta }}"
+                        class="w-full rounded-xl border border-slate-300 bg-slate-50 px-3 py-2 text-xs font-semibold text-slate-700 focus:border-blue-500 focus:bg-white focus:outline-none focus:ring-4 focus:ring-blue-500/10 transition-all">
                 </div>
 
                 <!-- SELECT VENDEDOR -->
@@ -102,16 +103,15 @@
                     <label for="vendedor_id" class="block text-[11px] font-bold uppercase tracking-wider text-slate-600 mb-1.5">
                         <i class="fas fa-user-tie text-slate-400 mr-1"></i> Vendedor
                     </label>
-                    <select 
-                        name="vendedor_id" 
-                        id="vendedor_id" 
-                        class="w-full rounded-xl border border-slate-300 bg-slate-50 px-3 py-2 text-xs font-semibold text-slate-700 focus:border-blue-500 focus:bg-white focus:outline-none focus:ring-4 focus:ring-blue-500/10 transition-all"
-                    >
+                    <select
+                        name="vendedor_id"
+                        id="vendedor_id"
+                        class="w-full rounded-xl border border-slate-300 bg-slate-50 px-3 py-2 text-xs font-semibold text-slate-700 focus:border-blue-500 focus:bg-white focus:outline-none focus:ring-4 focus:ring-blue-500/10 transition-all">
                         <option value="">Todos</option>
                         @foreach($vendedores as $v)
-                            <option value="{{ $v->id }}" {{ (string)$vendedorId === (string)$v->id ? 'selected' : '' }}>
-                                {{ $v->nombre_real ?: $v->username }}
-                            </option>
+                        <option value="{{ $v->id }}" {{ (string)$vendedorId === (string)$v->id ? 'selected' : '' }}>
+                            {{ $v->nombre_real ?: $v->username }}
+                        </option>
                         @endforeach
                     </select>
                 </div>
@@ -121,38 +121,35 @@
                     <label for="producto_id" class="block text-[11px] font-bold uppercase tracking-wider text-slate-600 mb-1.5">
                         <i class="fas fa-box text-slate-400 mr-1"></i> Producto
                     </label>
-                    <select 
-                        name="producto_id" 
-                        id="producto_id" 
-                        class="w-full rounded-xl border border-slate-300 bg-slate-50 px-3 py-2 text-xs font-semibold text-slate-700 focus:border-blue-500 focus:bg-white focus:outline-none focus:ring-4 focus:ring-blue-500/10 transition-all"
-                    >
+                    <select
+                        name="producto_id"
+                        id="producto_id"
+                        class="w-full rounded-xl border border-slate-300 bg-slate-50 px-3 py-2 text-xs font-semibold text-slate-700 focus:border-blue-500 focus:bg-white focus:outline-none focus:ring-4 focus:ring-blue-500/10 transition-all">
                         <option value="">Todos</option>
                         @foreach($productos as $p)
-                            <option value="{{ $p->id }}" {{ (string)$productoId === (string)$p->id ? 'selected' : '' }}>
-                                {{ $p->nombre }}
-                            </option>
+                        <option value="{{ $p->id }}" {{ (string)$productoId === (string)$p->id ? 'selected' : '' }}>
+                            {{ $p->nombre }}
+                        </option>
                         @endforeach
                     </select>
                 </div>
 
                 <!-- BOTONES DE FILTRADO -->
                 <div class="lg:col-span-1 flex items-center gap-1.5">
-                    <button 
-                        type="submit" 
+                    <button
+                        type="submit"
                         class="w-full rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-bold py-2 px-2.5 text-xs transition-all shadow-md shadow-blue-600/15 flex items-center justify-center gap-1 cursor-pointer"
-                        title="Aplicar filtros"
-                    >
+                        title="Aplicar filtros">
                         <i class="fas fa-filter text-[11px]"></i>
                         <span class="hidden sm:inline lg:hidden xl:inline">Filtrar</span>
                     </button>
                     @if(request()->hasAny(['desde', 'hasta', 'vendedor_id', 'producto_id', 'q']))
-                        <a 
-                            href="{{ route('ventas.index') }}" 
-                            class="rounded-xl border border-slate-200 bg-slate-50 hover:bg-slate-100 text-slate-600 font-bold py-2 px-2.5 text-xs transition-colors flex items-center justify-center shrink-0"
-                            title="Limpiar filtros"
-                        >
-                            <i class="fas fa-rotate-left text-[11px]"></i>
-                        </a>
+                    <a
+                        href="{{ route('ventas.index') }}"
+                        class="rounded-xl border border-slate-200 bg-slate-50 hover:bg-slate-100 text-slate-600 font-bold py-2 px-2.5 text-xs transition-colors flex items-center justify-center shrink-0"
+                        title="Limpiar filtros">
+                        <i class="fas fa-rotate-left text-[11px]"></i>
+                    </a>
                     @endif
                 </div>
 
@@ -161,7 +158,7 @@
 
         <!-- 2. SECCIÓN MEDIA: KPIS Y TARJETAS DE MÉTRICAS -->
         <section class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
-            
+
             <!-- KPI 1: TOTAL DE VENTAS -->
             <div class="bg-white border border-slate-200 rounded-2xl p-5 shadow-sm flex flex-col justify-between">
                 <div class="flex items-center justify-between mb-3">
@@ -191,15 +188,15 @@
                 </div>
                 <div>
                     @if($productoMasVendido)
-                        <h3 class="text-base font-black text-slate-900 truncate" title="{{ $productoMasVendido->nombre }}">
-                            {{ $productoMasVendido->nombre }}
-                        </h3>
-                        <p class="text-xs font-bold text-amber-600 mt-1">
-                            {{ number_format($productoMasVendido->total_unidades) }} unidades vendidas
-                        </p>
+                    <h3 class="text-base font-black text-slate-900 truncate" title="{{ $productoMasVendido->nombre }}">
+                        {{ $productoMasVendido->nombre }}
+                    </h3>
+                    <p class="text-xs font-bold text-amber-600 mt-1">
+                        {{ number_format($productoMasVendido->total_unidades) }} unidades vendidas
+                    </p>
                     @else
-                        <h3 class="text-sm font-bold text-slate-400">Sin datos en el periodo</h3>
-                        <p class="text-xs text-slate-400 mt-1">0 unidades</p>
+                    <h3 class="text-sm font-bold text-slate-400">Sin datos en el periodo</h3>
+                    <p class="text-xs text-slate-400 mt-1">0 unidades</p>
                     @endif
                 </div>
             </div>
@@ -214,63 +211,63 @@
                 </div>
                 <div>
                     @if($productoMenosVendido)
-                        <h3 class="text-base font-black text-slate-900 truncate" title="{{ $productoMenosVendido->nombre }}">
-                            {{ $productoMenosVendido->nombre }}
-                        </h3>
-                        <p class="text-xs font-bold text-rose-500 mt-1">
-                            {{ number_format($productoMenosVendido->total_unidades) }} unidades vendidas
-                        </p>
+                    <h3 class="text-base font-black text-slate-900 truncate" title="{{ $productoMenosVendido->nombre }}">
+                        {{ $productoMenosVendido->nombre }}
+                    </h3>
+                    <p class="text-xs font-bold text-rose-500 mt-1">
+                        {{ number_format($productoMenosVendido->total_unidades) }} unidades vendidas
+                    </p>
                     @else
-                        <h3 class="text-sm font-bold text-slate-400">Sin variación</h3>
-                        <p class="text-xs text-slate-400 mt-1">Registros insuficientes</p>
+                    <h3 class="text-sm font-bold text-slate-400">Sin variación</h3>
+                    <p class="text-xs text-slate-400 mt-1">Registros insuficientes</p>
                     @endif
                 </div>
             </div>
 
             <!-- KPI 4: TENDENCIA O TICKET PROMEDIO -->
             @if($tendenciaProducto)
-                <!-- KPI ESPECÍFICO DE PRODUCTO CON TENDENCIA (%) -->
-                <div class="bg-white border border-slate-200 rounded-2xl p-5 shadow-sm flex flex-col justify-between hover:border-blue-300 transition-colors">
-                    <div class="flex items-center justify-between mb-3">
-                        <span class="text-xs font-bold uppercase tracking-wider text-slate-500">Tendencia Producto</span>
-                        <div class="flex items-center gap-2">
-                            <span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-lg text-xs font-black {{ $tendenciaProducto['es_positivo'] ? 'bg-emerald-50 text-emerald-700 border border-emerald-200' : 'bg-rose-50 text-rose-700 border border-rose-200' }}">
-                                <i class="fas {{ $tendenciaProducto['es_positivo'] ? 'fa-arrow-trend-up' : 'fa-arrow-trend-down' }}"></i>
-                                <span>{{ $tendenciaProducto['porcentaje'] >= 0 ? '+' : '' }}{{ $tendenciaProducto['porcentaje'] }}%</span>
-                            </span>
-                            <div class="w-9 h-9 rounded-xl {{ $tendenciaProducto['es_positivo'] ? 'bg-emerald-50 text-emerald-600' : 'bg-rose-50 text-rose-600' }} flex items-center justify-center text-sm font-bold">
-                                <i class="fas fa-chart-line"></i>
-                            </div>
-                        </div>
-                    </div>
-                    <div>
-                        <h3 class="text-base font-black text-slate-900 truncate" title="{{ $tendenciaProducto['producto']->nombre }}">
-                            {{ $tendenciaProducto['producto']->nombre }}
-                        </h3>
-                        <div class="flex items-center justify-between mt-1 text-xs">
-                            <span class="font-bold text-slate-700">{{ $tendenciaProducto['unidades_actual'] }} uds (${{ number_format($tendenciaProducto['monto_actual'], 2) }})</span>
-                            <span class="text-[11px] font-semibold text-slate-400">vs {{ $tendenciaProducto['unidades_anterior'] }} previas</span>
+            <!-- KPI ESPECÍFICO DE PRODUCTO CON TENDENCIA (%) -->
+            <div class="bg-white border border-slate-200 rounded-2xl p-5 shadow-sm flex flex-col justify-between hover:border-blue-300 transition-colors">
+                <div class="flex items-center justify-between mb-3">
+                    <span class="text-xs font-bold uppercase tracking-wider text-slate-500">Tendencia Producto</span>
+                    <div class="flex items-center gap-2">
+                        <span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-lg text-xs font-black {{ $tendenciaProducto['es_positivo'] ? 'bg-emerald-50 text-emerald-700 border border-emerald-200' : 'bg-rose-50 text-rose-700 border border-rose-200' }}">
+                            <i class="fas {{ $tendenciaProducto['es_positivo'] ? 'fa-arrow-trend-up' : 'fa-arrow-trend-down' }}"></i>
+                            <span>{{ $tendenciaProducto['porcentaje'] >= 0 ? '+' : '' }}{{ $tendenciaProducto['porcentaje'] }}%</span>
+                        </span>
+                        <div class="w-9 h-9 rounded-xl {{ $tendenciaProducto['es_positivo'] ? 'bg-emerald-50 text-emerald-600' : 'bg-rose-50 text-rose-600' }} flex items-center justify-center text-sm font-bold">
+                            <i class="fas fa-chart-line"></i>
                         </div>
                     </div>
                 </div>
+                <div>
+                    <h3 class="text-base font-black text-slate-900 truncate" title="{{ $tendenciaProducto['producto']->nombre }}">
+                        {{ $tendenciaProducto['producto']->nombre }}
+                    </h3>
+                    <div class="flex items-center justify-between mt-1 text-xs">
+                        <span class="font-bold text-slate-700">{{ $tendenciaProducto['unidades_actual'] }} uds (${{ number_format($tendenciaProducto['monto_actual'], 2) }})</span>
+                        <span class="text-[11px] font-semibold text-slate-400">vs {{ $tendenciaProducto['unidades_anterior'] }} previas</span>
+                    </div>
+                </div>
+            </div>
             @else
-                <!-- TICKET PROMEDIO GENERAL -->
-                <div class="bg-white border border-slate-200 rounded-2xl p-5 shadow-sm flex flex-col justify-between">
-                    <div class="flex items-center justify-between mb-3">
-                        <span class="text-xs font-bold uppercase tracking-wider text-slate-500">Ticket Promedio</span>
-                        <div class="w-9 h-9 rounded-xl bg-purple-50 text-purple-600 flex items-center justify-center text-sm font-bold">
-                            <i class="fas fa-calculator"></i>
-                        </div>
-                    </div>
-                    <div>
-                        <h3 class="text-2xl font-black text-slate-900 leading-none">
-                            ${{ number_format($totalVentasCount > 0 ? $totalVentasMonto / $totalVentasCount : 0, 2) }}
-                        </h3>
-                        <p class="text-xs font-bold text-slate-400 mt-2">
-                            Promedio por cliente
-                        </p>
+            <!-- TICKET PROMEDIO GENERAL -->
+            <div class="bg-white border border-slate-200 rounded-2xl p-5 shadow-sm flex flex-col justify-between">
+                <div class="flex items-center justify-between mb-3">
+                    <span class="text-xs font-bold uppercase tracking-wider text-slate-500">Ticket Promedio</span>
+                    <div class="w-9 h-9 rounded-xl bg-purple-50 text-purple-600 flex items-center justify-center text-sm font-bold">
+                        <i class="fas fa-calculator"></i>
                     </div>
                 </div>
+                <div>
+                    <h3 class="text-2xl font-black text-slate-900 leading-none">
+                        ${{ number_format($totalVentasCount > 0 ? $totalVentasMonto / $totalVentasCount : 0, 2) }}
+                    </h3>
+                    <p class="text-xs font-bold text-slate-400 mt-2">
+                        Promedio por cliente
+                    </p>
+                </div>
+            </div>
             @endif
 
         </section>
@@ -292,17 +289,17 @@
 
             <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-7 gap-3">
                 @foreach($productoSeleccionado && $ventasProductoPorDia->count() > 0 ? $ventasProductoPorDia : $ventasPorDia as $item)
-                    <div class="rounded-xl border border-slate-100 bg-slate-50/70 p-3 hover:border-blue-300 hover:bg-white transition-all text-center">
-                        <span class="text-[10px] font-bold uppercase text-slate-400 block mb-1">
-                            {{ \Carbon\Carbon::parse($item->dia)->format('d M Y') }}
-                        </span>
-                        <p class="text-sm font-black text-slate-900 leading-tight">
-                            ${{ number_format($item->monto_total ?? $item->total_monto ?? $item->subtotal ?? 0, 2) }}
-                        </p>
-                        <span class="text-[11px] font-bold text-blue-600 block mt-0.5">
-                            {{ $item->total_transacciones ?? $item->unidades ?? $item->total_unidades ?? 0 }} {{ isset($item->total_transacciones) ? 'ventas' : 'uds' }}
-                        </span>
-                    </div>
+                <div class="rounded-xl border border-slate-100 bg-slate-50/70 p-3 hover:border-blue-300 hover:bg-white transition-all text-center">
+                    <span class="text-[10px] font-bold uppercase text-slate-400 block mb-1">
+                        {{ \Carbon\Carbon::parse($item->dia)->format('d M Y') }}
+                    </span>
+                    <p class="text-sm font-black text-slate-900 leading-tight">
+                        ${{ number_format($item->monto_total ?? $item->total_monto ?? $item->subtotal ?? 0, 2) }}
+                    </p>
+                    <span class="text-[11px] font-bold text-blue-600 block mt-0.5">
+                        {{ $item->total_transacciones ?? $item->unidades ?? $item->total_unidades ?? 0 }} {{ isset($item->total_transacciones) ? 'ventas' : 'uds' }}
+                    </span>
+                </div>
                 @endforeach
             </div>
         </section>
@@ -348,238 +345,231 @@
                     </thead>
                     <tbody class="divide-y divide-slate-100">
                         @forelse($ventas as $venta)
-                            @php
-                                $estado = $venta->estado ?? 'Pendiente';
-                                $tipo = $venta->tipo_venta ?? 'Tienda';
-                                $bloqueado = $venta->estado_bloqueado;
-                                $permitidos = $venta->estados_permitidos;
-                                $puedeDevolver = $venta->puede_devolver;
-                                $diasRestantes = $venta->dias_restantes_devolucion;
-                                $diasGarantia = $venta->dias_garantia;
-                                $textoGarantia = $venta->texto_garantia_devolucion;
-                                $fechaLimite = $venta->fecha_limite_devolucion;
-                                $limiteFechaFormatted = $fechaLimite ? $fechaLimite->format('d/m/Y') : '';
+                        @php
+                        $estado = $venta->estado ?? 'Pendiente';
+                        $tipo = $venta->tipo_venta ?? 'Tienda';
+                        $bloqueado = $venta->estado_bloqueado;
+                        $permitidos = $venta->estados_permitidos;
+                        $puedeDevolver = $venta->puede_devolver;
+                        $diasRestantes = $venta->dias_restantes_devolucion;
+                        $diasGarantia = $venta->dias_garantia;
+                        $textoGarantia = $venta->texto_garantia_devolucion;
+                        $fechaLimite = $venta->fecha_limite_devolucion;
+                        $limiteFechaFormatted = $fechaLimite ? $fechaLimite->format('d/m/Y') : '';
 
-                                $badgeClasses = match($estado) {
-                                    'Pendiente' => 'bg-amber-50 text-amber-700 border-amber-200 hover:bg-amber-100/80',
-                                    'Confirmada' => 'bg-blue-50 text-blue-700 border-blue-200 hover:bg-blue-100/80',
-                                    'En ruta' => 'bg-indigo-50 text-indigo-700 border-indigo-200 hover:bg-indigo-100/80',
-                                    'Entregada' => 'bg-emerald-50 text-emerald-700 border-emerald-200 hover:bg-emerald-100/80',
-                                    'Cancelada' => 'bg-rose-50 text-rose-700 border-rose-200',
-                                    'Devolución' => 'bg-purple-50 text-purple-700 border-purple-200',
-                                    'Cambio' => 'bg-teal-50 text-teal-700 border-teal-200',
-                                    default => 'bg-slate-50 text-slate-700 border-slate-200'
-                                };
+                        $badgeClasses = match($estado) {
+                        'Pendiente' => 'bg-amber-50 text-amber-700 border-amber-200 hover:bg-amber-100/80',
+                        'Confirmada' => 'bg-blue-50 text-blue-700 border-blue-200 hover:bg-blue-100/80',
+                        'En ruta' => 'bg-indigo-50 text-indigo-700 border-indigo-200 hover:bg-indigo-100/80',
+                        'Entregada' => 'bg-emerald-50 text-emerald-700 border-emerald-200 hover:bg-emerald-100/80',
+                        'Cancelada' => 'bg-rose-50 text-rose-700 border-rose-200',
+                        'Devolución' => 'bg-purple-50 text-purple-700 border-purple-200',
+                        'Cambio' => 'bg-teal-50 text-teal-700 border-teal-200',
+                        default => 'bg-slate-50 text-slate-700 border-slate-200'
+                        };
 
-                                $badgeIcon = match($estado) {
-                                    'Pendiente' => 'fa-clock',
-                                    'Confirmada' => 'fa-circle-check',
-                                    'En ruta' => 'fa-truck-fast',
-                                    'Entregada' => 'fa-box-open',
-                                    'Cancelada' => 'fa-ban',
-                                    'Devolución' => 'fa-rotate-left',
-                                    'Cambio' => 'fa-arrow-right-arrow-left',
-                                    default => 'fa-info-circle'
-                                };
+                        $badgeIcon = match($estado) {
+                        'Pendiente' => 'fa-clock',
+                        'Confirmada' => 'fa-circle-check',
+                        'En ruta' => 'fa-truck-fast',
+                        'Entregada' => 'fa-box-open',
+                        'Cancelada' => 'fa-ban',
+                        'Devolución' => 'fa-rotate-left',
+                        'Cambio' => 'fa-arrow-right-arrow-left',
+                        default => 'fa-info-circle'
+                        };
 
-                                $garantiaBadgeText = $diasRestantes > 1 
-                                    ? "Garantía: {$diasRestantes} días" 
-                                    : ($diasRestantes === 1 ? "Garantía: 1 día" : "Garantía: Hoy último día");
-                            @endphp
+                        $garantiaBadgeText = $diasRestantes > 1
+                        ? "Garantía: {$diasRestantes} días"
+                        : ($diasRestantes === 1 ? "Garantía: 1 día" : "Garantía: Hoy último día");
+                        @endphp
 
-                            <tr class="hover:bg-slate-50/70 transition-colors">
-                                <!-- FOLIO -->
-                                <td class="px-5 py-3.5 font-bold text-slate-900">
-                                    <span class="bg-slate-100 text-slate-700 px-2 py-0.5 rounded text-[11px] font-mono">
-                                        #VNT-{{ str_pad($venta->id, 5, '0', STR_PAD_LEFT) }}
+                        <tr class="hover:bg-slate-50/70 transition-colors">
+                            <!-- FOLIO -->
+                            <td class="px-5 py-3.5 font-bold text-slate-900">
+                                <span class="bg-slate-100 text-slate-700 px-2 py-0.5 rounded text-[11px] font-mono">
+                                    #VNT-{{ str_pad($venta->id, 5, '0', STR_PAD_LEFT) }}
+                                </span>
+                            </td>
+
+                            <!-- FECHA Y HORA -->
+                            <td class="px-4 py-3.5 text-slate-600">
+                                <p class="font-bold text-slate-800">
+                                    {{ \Carbon\Carbon::parse($venta->fecha)->format('d/m/Y') }}
+                                </p>
+                                <span class="text-[10px] text-slate-400">
+                                    {{ \Carbon\Carbon::parse($venta->fecha)->format('h:i A') }}
+                                </span>
+                            </td>
+
+                            <!-- VENDEDOR -->
+                            <td class="px-4 py-3.5">
+                                <div class="flex items-center gap-2">
+                                    <div class="w-6 h-6 rounded-full bg-blue-100 text-blue-600 font-bold text-[10px] flex items-center justify-center shrink-0">
+                                        {{ strtoupper(substr($venta->usuario?->nombre_real ?? $venta->usuario?->username ?? 'U', 0, 1)) }}
+                                    </div>
+                                    <span class="font-bold text-slate-800 truncate max-w-[150px]" title="{{ $venta->usuario?->nombre_real ?? $venta->usuario?->username }}">
+                                        {{ $venta->usuario?->nombre_real ?? $venta->usuario?->username ?? 'Usuario no asignado' }}
                                     </span>
-                                </td>
+                                </div>
+                            </td>
 
-                                <!-- FECHA Y HORA -->
-                                <td class="px-4 py-3.5 text-slate-600">
-                                    <p class="font-bold text-slate-800">
-                                        {{ \Carbon\Carbon::parse($venta->fecha)->format('d/m/Y') }}
+                            <!-- TIPO Y DESTINO -->
+                            <td class="px-4 py-3.5">
+                                <div class="space-y-0.5">
+                                    @if($tipo === 'Envio')
+                                    <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-bold bg-indigo-50 text-indigo-700 border border-indigo-200">
+                                        <i class="fas fa-truck text-[9px]"></i> Entrega a Domicilio
+                                    </span>
+                                    @if($venta->direccion_entrega)
+                                    <p class="text-[11px] text-slate-700 font-medium truncate max-w-[200px]" title="{{ $venta->direccion_entrega }}">
+                                        {{ $venta->direccion_entrega }}
                                     </p>
-                                    <span class="text-[10px] text-slate-400">
-                                        {{ \Carbon\Carbon::parse($venta->fecha)->format('h:i A') }}
+                                    @endif
+                                    @if($venta->telefono_entrega)
+                                    <p class="text-[10px] text-slate-400 flex items-center gap-1 font-mono">
+                                        <i class="fas fa-phone text-[8px]"></i> {{ $venta->telefono_entrega }}
+                                    </p>
+                                    @endif
+                                    @else
+                                    <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
+                                        <i class="fas fa-store text-[9px]"></i> Venta en Tienda
                                     </span>
-                                </td>
+                                    @endif
+                                </div>
+                            </td>
 
-                                <!-- VENDEDOR -->
-                                <td class="px-4 py-3.5">
-                                    <div class="flex items-center gap-2">
-                                        <div class="w-6 h-6 rounded-full bg-blue-100 text-blue-600 font-bold text-[10px] flex items-center justify-center shrink-0">
-                                            {{ strtoupper(substr($venta->usuario?->nombre_real ?? $venta->usuario?->username ?? 'U', 0, 1)) }}
-                                        </div>
-                                        <span class="font-bold text-slate-800 truncate max-w-[150px]" title="{{ $venta->usuario?->nombre_real ?? $venta->usuario?->username }}">
-                                            {{ $venta->usuario?->nombre_real ?? $venta->usuario?->username ?? 'Usuario no asignado' }}
-                                        </span>
-                                    </div>
-                                </td>
+                            <!-- MÉTODO DE PAGO -->
+                            <td class="px-4 py-3.5">
+                                <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[11px] font-bold border {{ $venta->metodo_pago === 'Efectivo' ? 'bg-emerald-50 text-emerald-700 border-emerald-200' : ($venta->metodo_pago === 'Transferencia Bancaria' ? 'bg-purple-50 text-purple-700 border-purple-200' : 'bg-blue-50 text-blue-700 border-blue-200') }}">
+                                    <i class="fas {{ $venta->metodo_pago === 'Efectivo' ? 'fa-money-bill-wave' : ($venta->metodo_pago === 'Transferencia Bancaria' ? 'fa-building-columns' : 'fa-credit-card') }} text-[10px]"></i>
+                                    <span>{{ $venta->metodo_pago }}</span>
+                                </span>
+                            </td>
 
-                                <!-- TIPO Y DESTINO -->
-                                <td class="px-4 py-3.5">
-                                    <div class="space-y-0.5">
-                                        @if($tipo === 'Envio')
-                                            <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-bold bg-indigo-50 text-indigo-700 border border-indigo-200">
-                                                <i class="fas fa-truck text-[9px]"></i> Entrega a Domicilio
-                                            </span>
-                                            @if($venta->direccion_entrega)
-                                                <p class="text-[11px] text-slate-700 font-medium truncate max-w-[200px]" title="{{ $venta->direccion_entrega }}">
-                                                    {{ $venta->direccion_entrega }}
-                                                </p>
-                                            @endif
-                                            @if($venta->telefono_entrega)
-                                                <p class="text-[10px] text-slate-400 flex items-center gap-1 font-mono">
-                                                    <i class="fas fa-phone text-[8px]"></i> {{ $venta->telefono_entrega }}
-                                                </p>
-                                            @endif
-                                        @else
-                                            <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
-                                                <i class="fas fa-store text-[9px]"></i> Venta en Tienda
-                                            </span>
-                                        @endif
-                                    </div>
-                                </td>
-
-                                <!-- MÉTODO DE PAGO -->
-                                <td class="px-4 py-3.5">
-                                    <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[11px] font-bold border {{ $venta->metodo_pago === 'Efectivo' ? 'bg-emerald-50 text-emerald-700 border-emerald-200' : ($venta->metodo_pago === 'Transferencia Bancaria' ? 'bg-purple-50 text-purple-700 border-purple-200' : 'bg-blue-50 text-blue-700 border-blue-200') }}">
-                                        <i class="fas {{ $venta->metodo_pago === 'Efectivo' ? 'fa-money-bill-wave' : ($venta->metodo_pago === 'Transferencia Bancaria' ? 'fa-building-columns' : 'fa-credit-card') }} text-[10px]"></i>
-                                        <span>{{ $venta->metodo_pago }}</span>
+                            <!-- ESTADO ACTUAL INTERACTIVO -->
+                            <td class="px-4 py-3.5 text-center">
+                                <div class="inline-flex flex-col items-center">
+                                    @if(!$bloqueado && count($permitidos) > 0)
+                                    <button
+                                        type="button"
+                                        @click="abrirModalCambiarEstado({{ $venta->id }}, '{{ $estado }}', '{{ $tipo }}', {{ $puedeDevolver ? 'true' : 'false' }}, {{ json_encode($permitidos) }}, {{ $diasRestantes }}, '{{ addslashes($textoGarantia) }}', '{{ $limiteFechaFormatted }}')"
+                                        class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[11px] font-bold border transition-all duration-200 shadow-2xs hover:shadow-xs hover:scale-105 cursor-pointer {{ $badgeClasses }}"
+                                        title="Haz clic para cambiar el estado de la venta">
+                                        <i class="fas {{ $badgeIcon }} text-[10px]"></i>
+                                        <span>{{ $estado }}</span>
+                                        <i class="fas fa-chevron-down text-[8px] opacity-60 ml-0.5"></i>
+                                    </button>
+                                    @else
+                                    <span
+                                        class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[11px] font-bold border shadow-2xs {{ $badgeClasses }}"
+                                        title="{{ $estado === 'Entregada' ? 'Garantía de devolución expirada (' . $diasGarantia . ' días). Estado definitivo.' : 'Estado definitivo bloqueado.' }}">
+                                        <i class="fas {{ $badgeIcon }} text-[10px]"></i>
+                                        <span>{{ $estado }}</span>
+                                        <i class="fas fa-lock text-[8px] opacity-40 ml-0.5"></i>
                                     </span>
-                                </td>
+                                    @endif
 
-                                <!-- ESTADO ACTUAL INTERACTIVO -->
-                                <td class="px-4 py-3.5 text-center">
-                                    <div class="inline-flex flex-col items-center">
-                                        @if(!$bloqueado && count($permitidos) > 0)
-                                            <button 
-                                                type="button" 
-                                                @click="abrirModalCambiarEstado({{ $venta->id }}, '{{ $estado }}', '{{ $tipo }}', {{ $puedeDevolver ? 'true' : 'false' }}, {{ json_encode($permitidos) }}, {{ $diasRestantes }}, '{{ addslashes($textoGarantia) }}', '{{ $limiteFechaFormatted }}')"
-                                                class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[11px] font-bold border transition-all duration-200 shadow-2xs hover:shadow-xs hover:scale-105 cursor-pointer {{ $badgeClasses }}"
-                                                title="Haz clic para cambiar el estado de la venta"
-                                            >
-                                                <i class="fas {{ $badgeIcon }} text-[10px]"></i>
-                                                <span>{{ $estado }}</span>
-                                                <i class="fas fa-chevron-down text-[8px] opacity-60 ml-0.5"></i>
-                                            </button>
-                                        @else
-                                            <span 
-                                                class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[11px] font-bold border shadow-2xs {{ $badgeClasses }}"
-                                                title="{{ $estado === 'Entregada' ? 'Garantía de devolución expirada (' . $diasGarantia . ' días). Estado definitivo.' : 'Estado definitivo bloqueado.' }}"
-                                            >
-                                                <i class="fas {{ $badgeIcon }} text-[10px]"></i>
-                                                <span>{{ $estado }}</span>
-                                                <i class="fas fa-lock text-[8px] opacity-40 ml-0.5"></i>
-                                            </span>
-                                        @endif
+                                    @if($estado === 'Entregada' && $puedeDevolver)
+                                    <span class="text-[9px] font-bold text-amber-600 mt-1 flex items-center gap-0.5" title="Garantía de devolución activa hasta el {{ $limiteFechaFormatted }} a las 23:59 ({{ $diasGarantia }} días en {{ $tipo === 'Envio' ? 'envío' : 'tienda' }})">
+                                        <i class="fas fa-shield-halved text-[8px]"></i>
+                                        <span>{{ $garantiaBadgeText }}</span>
+                                    </span>
+                                    @elseif($estado === 'Entregada' && !$puedeDevolver)
+                                    <span class="text-[9px] font-medium text-slate-400 mt-0.5" title="Garantía de devolución expirada (plazo de {{ $diasGarantia }} días)">
+                                        Garantía expirada
+                                    </span>
+                                    @elseif($tipo === 'Envio')
+                                    <span class="text-[9px] font-medium text-slate-400 mt-0.5">Envío</span>
+                                    @elseif($tipo === 'Tienda')
+                                    <span class="text-[9px] font-medium text-slate-400 mt-0.5">Tienda</span>
+                                    @endif
+                                </div>
+                            </td>
 
-                                        @if($estado === 'Entregada' && $puedeDevolver)
-                                            <span class="text-[9px] font-bold text-amber-600 mt-1 flex items-center gap-0.5" title="Garantía de devolución activa hasta el {{ $limiteFechaFormatted }} a las 23:59 ({{ $diasGarantia }} días en {{ $tipo === 'Envio' ? 'envío' : 'tienda' }})">
-                                                <i class="fas fa-shield-halved text-[8px]"></i>
-                                                <span>{{ $garantiaBadgeText }}</span>
-                                            </span>
-                                        @elseif($estado === 'Entregada' && !$puedeDevolver)
-                                            <span class="text-[9px] font-medium text-slate-400 mt-0.5" title="Garantía de devolución expirada (plazo de {{ $diasGarantia }} días)">
-                                                Garantía expirada
-                                            </span>
-                                        @elseif($tipo === 'Envio')
-                                            <span class="text-[9px] font-medium text-slate-400 mt-0.5">Envío</span>
-                                        @elseif($tipo === 'Tienda')
-                                            <span class="text-[9px] font-medium text-slate-400 mt-0.5">Tienda</span>
-                                        @endif
-                                    </div>
-                                </td>
+                            <!-- TOTAL -->
+                            <td class="px-4 py-3.5 text-right font-black text-slate-900 text-sm whitespace-nowrap">
+                                ${{ number_format($venta->total, 2) }}
+                            </td>
 
-                                <!-- TOTAL -->
-                                <td class="px-4 py-3.5 text-right font-black text-slate-900 text-sm whitespace-nowrap">
-                                    ${{ number_format($venta->total, 2) }}
-                                </td>
+                            <!-- ACCIONES -->
+                            <td class="px-5 py-3.5 text-right whitespace-nowrap">
+                                <div class="flex items-center justify-end gap-1.5 flex-nowrap">
+                                    <!-- COMPROBANTE DE PAGO (TRANSFERENCIA) -->
+                                    @if($venta->comprobante_pago)
+                                    <button
+                                        type="button"
+                                        @click="verImagenAmpliada('{{ asset('storage/' . $venta->comprobante_pago) }}', 'VNT-{{ str_pad($venta->id, 5, '0', STR_PAD_LEFT) }}_{{ \Carbon\Carbon::parse($venta->fecha)->format('Y-m-d') }}_comprobante_pago', 'Comprobante de Pago por Transferencia')"
+                                        class="rounded-lg border border-purple-200 bg-purple-50 hover:bg-purple-600 hover:text-white text-purple-700 px-2 py-1 text-[11px] font-bold transition-all shadow-2xs flex items-center gap-1 cursor-pointer shrink-0"
+                                        title="Ver Comprobante de Pago por Transferencia">
+                                        <i class="fas fa-file-invoice-dollar text-[10px]"></i>
+                                        <span>Comprobante</span>
+                                    </button>
+                                    @endif
 
-                                <!-- ACCIONES -->
-                                <td class="px-5 py-3.5 text-right whitespace-nowrap">
-                                    <div class="flex items-center justify-end gap-1.5 flex-nowrap">
-                                        <!-- COMPROBANTE DE PAGO (TRANSFERENCIA) -->
-                                        @if($venta->comprobante_pago)
-                                            <button 
-                                                type="button" 
-                                                @click="verImagenAmpliada('{{ asset('storage/' . $venta->comprobante_pago) }}', 'VNT-{{ str_pad($venta->id, 5, '0', STR_PAD_LEFT) }}_{{ \Carbon\Carbon::parse($venta->fecha)->format('Y-m-d') }}_comprobante_pago', 'Comprobante de Pago por Transferencia')"
-                                                class="rounded-lg border border-purple-200 bg-purple-50 hover:bg-purple-600 hover:text-white text-purple-700 px-2 py-1 text-[11px] font-bold transition-all shadow-2xs flex items-center gap-1 cursor-pointer shrink-0"
-                                                title="Ver Comprobante de Pago por Transferencia"
-                                            >
-                                                <i class="fas fa-file-invoice-dollar text-[10px]"></i>
-                                                <span>Comprobante</span>
-                                            </button>
-                                        @endif
+                                    <!-- COMPROBANTE DE PAQUETE (EN RUTA) -->
+                                    @if($venta->comprobante_paquete)
+                                    <button
+                                        type="button"
+                                        @click="verImagenAmpliada('{{ asset('storage/' . $venta->comprobante_paquete) }}', 'VNT-{{ str_pad($venta->id, 5, '0', STR_PAD_LEFT) }}_{{ \Carbon\Carbon::parse($venta->fecha)->format('Y-m-d') }}_paquete', 'Comprobante de Paquetería')"
+                                        class="rounded-lg border border-indigo-200 bg-indigo-50 hover:bg-indigo-600 hover:text-white text-indigo-700 px-2 py-1 text-[11px] font-bold transition-all shadow-2xs flex items-center gap-1 cursor-pointer shrink-0"
+                                        title="Ver Comprobante de Paquetería">
+                                        <i class="fas fa-truck-ramp-box text-[10px]"></i>
+                                        <span>Paquete</span>
+                                    </button>
+                                    @endif
 
-                                        <!-- COMPROBANTE DE PAQUETE (EN RUTA) -->
-                                        @if($venta->comprobante_paquete)
-                                            <button 
-                                                type="button" 
-                                                @click="verImagenAmpliada('{{ asset('storage/' . $venta->comprobante_paquete) }}', 'VNT-{{ str_pad($venta->id, 5, '0', STR_PAD_LEFT) }}_{{ \Carbon\Carbon::parse($venta->fecha)->format('Y-m-d') }}_paquete', 'Comprobante de Paquetería')"
-                                                class="rounded-lg border border-indigo-200 bg-indigo-50 hover:bg-indigo-600 hover:text-white text-indigo-700 px-2 py-1 text-[11px] font-bold transition-all shadow-2xs flex items-center gap-1 cursor-pointer shrink-0"
-                                                title="Ver Comprobante de Paquetería"
-                                            >
-                                                <i class="fas fa-truck-ramp-box text-[10px]"></i>
-                                                <span>Paquete</span>
-                                            </button>
-                                        @endif
+                                    <!-- COMPROBANTE DE DEVOLUCIÓN -->
+                                    @if($venta->comprobante_devolucion)
+                                    <button
+                                        type="button"
+                                        @click="verImagenAmpliada('{{ asset('storage/' . $venta->comprobante_devolucion) }}', 'VNT-{{ str_pad($venta->id, 5, '0', STR_PAD_LEFT) }}_{{ \Carbon\Carbon::parse($venta->fecha)->format('Y-m-d') }}_devolucion', 'Comprobante de Devolución')"
+                                        class="rounded-lg border border-rose-200 bg-rose-50 hover:bg-rose-600 hover:text-white text-rose-700 px-2 py-1 text-[11px] font-bold transition-all shadow-2xs flex items-center gap-1 cursor-pointer shrink-0"
+                                        title="Ver Comprobante de Devolución">
+                                        <i class="fas fa-box-archive text-[10px]"></i>
+                                        <span>Devolución</span>
+                                    </button>
+                                    @endif
 
-                                        <!-- COMPROBANTE DE DEVOLUCIÓN -->
-                                        @if($venta->comprobante_devolucion)
-                                            <button 
-                                                type="button" 
-                                                @click="verImagenAmpliada('{{ asset('storage/' . $venta->comprobante_devolucion) }}', 'VNT-{{ str_pad($venta->id, 5, '0', STR_PAD_LEFT) }}_{{ \Carbon\Carbon::parse($venta->fecha)->format('Y-m-d') }}_devolucion', 'Comprobante de Devolución')"
-                                                class="rounded-lg border border-rose-200 bg-rose-50 hover:bg-rose-600 hover:text-white text-rose-700 px-2 py-1 text-[11px] font-bold transition-all shadow-2xs flex items-center gap-1 cursor-pointer shrink-0"
-                                                title="Ver Comprobante de Devolución"
-                                            >
-                                                <i class="fas fa-box-archive text-[10px]"></i>
-                                                <span>Devolución</span>
-                                            </button>
-                                        @endif
+                                    <!-- BOTÓN VER DETALLE -->
+                                    <button
+                                        type="button"
+                                        @click="abrirDetalle({{ $venta->id }})"
+                                        class="rounded-lg border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 px-2 py-1 text-[11px] font-bold transition-all shadow-2xs flex items-center gap-1 cursor-pointer shrink-0"
+                                        title="Ver detalle completo de la venta">
+                                        <i class="fas fa-eye text-slate-400 text-[10px]"></i>
+                                        <span>Detalle</span>
+                                    </button>
 
-                                        <!-- BOTÓN VER DETALLE -->
-                                        <button 
-                                            type="button" 
-                                            @click="abrirDetalle({{ $venta->id }})"
-                                            class="rounded-lg border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 px-2 py-1 text-[11px] font-bold transition-all shadow-2xs flex items-center gap-1 cursor-pointer shrink-0"
-                                            title="Ver detalle completo de la venta"
-                                        >
-                                            <i class="fas fa-eye text-slate-400 text-[10px]"></i>
-                                            <span>Detalle</span>
-                                        </button>
-
-                                        <!-- BOTÓN IMPRIMIR COMPROBANTE -->
-                                        <button 
-                                            type="button" 
-                                            @click="abrirModalImpresion({{ $venta->id }}, '{{ $venta->metodo_pago }}', {{ (float) $venta->total }})"
-                                            class="rounded-lg border border-emerald-200 bg-emerald-50 hover:bg-emerald-600 hover:text-white text-emerald-700 px-2 py-1 text-[11px] font-bold transition-all shadow-2xs flex items-center gap-1 cursor-pointer shrink-0"
-                                            title="Imprimir ticket o factura comercial/tributaria"
-                                        >
-                                            <i class="fas fa-print text-[10px]"></i>
-                                            <span>Imprimir</span>
-                                        </button>
-                                    </div>
-                                </td>
-                            </tr>
+                                    <!-- BOTÓN IMPRIMIR COMPROBANTE -->
+                                    <button
+                                        type="button"
+                                        @click="abrirModalImpresion({{ $venta->id }}, '{{ $venta->metodo_pago }}', {{ (float) $venta->total }})"
+                                        class="rounded-lg border border-emerald-200 bg-emerald-50 hover:bg-emerald-600 hover:text-white text-emerald-700 px-2 py-1 text-[11px] font-bold transition-all shadow-2xs flex items-center gap-1 cursor-pointer shrink-0"
+                                        title="Imprimir ticket o factura comercial/tributaria">
+                                        <i class="fas fa-print text-[10px]"></i>
+                                        <span>Imprimir</span>
+                                    </button>
+                                </div>
+                            </td>
+                        </tr>
                         @empty
-                            <tr>
-                                <td colspan="8" class="py-16 text-center text-slate-400">
-                                    <div class="w-14 h-14 rounded-full bg-slate-50 text-slate-300 flex items-center justify-center mx-auto mb-3 border border-slate-100">
-                                        <i class="fas fa-folder-open text-2xl"></i>
-                                    </div>
-                                    <p class="text-sm font-bold text-slate-600">No se encontraron ventas registradas</p>
-                                    <p class="text-xs text-slate-400 mt-1 max-w-sm mx-auto">
-                                        Prueba ajustando los filtros de fecha o vendedor, o registra tu primera venta en el sistema.
-                                    </p>
-                                    <div class="mt-4">
-                                        <a href="{{ route('ventas.create') }}" class="inline-flex items-center gap-2 rounded-xl bg-blue-600 hover:bg-blue-500 text-white px-4 py-2 text-xs font-bold transition-all shadow-sm">
-                                            <i class="fas fa-plus"></i> Registrar Nueva Venta
-                                        </a>
-                                    </div>
-                                </td>
-                            </tr>
+                        <tr>
+                            <td colspan="8" class="py-16 text-center text-slate-400">
+                                <div class="w-14 h-14 rounded-full bg-slate-50 text-slate-300 flex items-center justify-center mx-auto mb-3 border border-slate-100">
+                                    <i class="fas fa-folder-open text-2xl"></i>
+                                </div>
+                                <p class="text-sm font-bold text-slate-600">No se encontraron ventas registradas</p>
+                                <p class="text-xs text-slate-400 mt-1 max-w-sm mx-auto">
+                                    Prueba ajustando los filtros de fecha o vendedor, o registra tu primera venta en el sistema.
+                                </p>
+                                <div class="mt-4">
+                                    <a href="{{ route('ventas.create') }}" class="inline-flex items-center gap-2 rounded-xl bg-blue-600 hover:bg-blue-500 text-white px-4 py-2 text-xs font-bold transition-all shadow-sm">
+                                        <i class="fas fa-plus"></i> Registrar Nueva Venta
+                                    </a>
+                                </div>
+                            </td>
+                        </tr>
                         @endforelse
                     </tbody>
                 </table>
@@ -587,38 +577,35 @@
 
             <!-- PAGINACIÓN -->
             @if($ventas->hasPages())
-                <div class="p-4 border-t border-slate-100 bg-slate-50/50">
-                    {{ $ventas->links() }}
-                </div>
+            <div class="p-4 border-t border-slate-100 bg-slate-50/50">
+                {{ $ventas->links() }}
+            </div>
             @endif
         </section>
 
         <!-- ========================================================================= -->
         <!-- MODAL 1: DETALLE COMPLETO DE LA VENTA                                     -->
         <!-- ========================================================================= -->
-        <div 
-            x-show="modalDetalleAbierto" 
+        <div
+            x-show="modalDetalleAbierto"
             x-cloak
             class="fixed inset-0 z-50 overflow-y-auto"
             style="display: none;"
             role="dialog"
-            aria-modal="true"
-        >
+            aria-modal="true">
             <!-- Backdrop oscuro con blur idéntico al sistema de modales -->
-            <div 
+            <div
                 x-show="modalDetalleAbierto"
                 x-transition.opacity
                 class="fixed inset-0 bg-slate-900/40 backdrop-blur-sm transition-opacity"
-                @click="if (!modalImprimirAbierto && !comprobanteZoomUrl) cerrarDetalle()"
-            ></div>
+                @click="if (!modalImprimirAbierto && !comprobanteZoomUrl && !openDevolucionModal) cerrarDetalle()"></div>
 
             <div class="flex min-h-screen items-center justify-center p-3 sm:p-5 text-center">
-                <div 
+                <div
                     x-show="modalDetalleAbierto"
                     x-transition
-                    @click.away="if (!modalImprimirAbierto && !comprobanteZoomUrl) cerrarDetalle()"
-                    class="relative z-10 w-full max-w-4xl transform overflow-hidden rounded-2xl bg-white text-left shadow-2xl transition-all border border-gray-100 flex flex-col my-8 max-h-[90vh]"
-                >
+                    @click.away="if (!modalImprimirAbierto && !comprobanteZoomUrl && !openDevolucionModal) cerrarDetalle()"
+                    class="relative z-10 w-full max-w-4xl transform overflow-hidden rounded-2xl bg-white text-left shadow-2xl transition-all border border-gray-100 flex flex-col my-8 max-h-[90vh]">
                     <!-- CABECERA AZUL UNIFICADA -->
                     <div class="bg-blue-600 px-6 py-4.5 flex items-center justify-between text-white shadow-md">
                         <div class="flex items-center gap-3">
@@ -630,7 +617,7 @@
                                     <span>Detalle de Venta</span>
                                     <span class="font-mono text-blue-200 text-sm" x-text="ventaSeleccionada ? '#VNT-' + String(ventaSeleccionada.id).padStart(5, '0') : ''"></span>
                                     <span class="text-[10px] font-bold px-2.5 py-0.5 rounded-full ml-1"
-                                          :class="{
+                                        :class="{
                                               'bg-amber-100 text-amber-800': ventaSeleccionada?.estado === 'Pendiente',
                                               'bg-blue-100 text-blue-800': ventaSeleccionada?.estado === 'Confirmada',
                                               'bg-indigo-100 text-indigo-800': ventaSeleccionada?.estado === 'En ruta',
@@ -639,7 +626,7 @@
                                               'bg-purple-100 text-purple-800': ventaSeleccionada?.estado === 'Devolución',
                                               'bg-teal-100 text-teal-800': ventaSeleccionada?.estado === 'Cambio'
                                           }"
-                                          x-text="ventaSeleccionada?.estado || 'Entregada'">
+                                        x-text="ventaSeleccionada?.estado || 'Entregada'">
                                     </span>
                                 </h3>
                                 <p class="text-xs text-blue-100 mt-0.5" x-show="ventaSeleccionada">
@@ -649,19 +636,18 @@
                         </div>
 
                         <!-- Botón de Cerrar unificado -->
-                        <button 
-                            type="button" 
-                            @click="cerrarDetalle()" 
+                        <button
+                            type="button"
+                            @click="cerrarDetalle()"
                             class="w-8 h-8 rounded-lg bg-white/10 hover:bg-white/25 flex items-center justify-center text-white transition-colors cursor-pointer"
-                            title="Cerrar ventana"
-                        >
+                            title="Cerrar ventana">
                             <i class="fas fa-times text-sm"></i>
                         </button>
                     </div>
 
                     <!-- CUERPO DEL MODAL (SPINNER O DATOS) -->
                     <div class="p-6 sm:p-8 overflow-y-auto space-y-6 flex-1 custom-scrollbar">
-                        
+
                         <!-- ESTADO CARGANDO -->
                         <div x-show="cargandoDetalle" class="py-16 text-center text-slate-400 space-y-3">
                             <i class="fas fa-spinner fa-spin text-3xl text-blue-600"></i>
@@ -671,7 +657,7 @@
                         <!-- CONTENIDO DE LA VENTA -->
                         <template x-if="!cargandoDetalle && ventaSeleccionada">
                             <div class="space-y-6">
-                                
+
                                 <!-- TARJETAS RESUMEN DE LA TRANSACCIÓN -->
                                 <div>
                                     <div class="flex flex-wrap items-center justify-between gap-2 mb-3">
@@ -681,14 +667,14 @@
                                         <div class="flex items-center gap-2">
                                             <template x-if="ventaSeleccionada.estado === 'Entregada' && ventaSeleccionada.puede_devolver">
                                                 <span class="text-[10px] font-bold px-2.5 py-0.5 rounded-full bg-amber-50 text-amber-700 border border-amber-200 flex items-center gap-1"
-                                                      :title="'Garantía válida hasta ' + (ventaSeleccionada.fecha_limite_devolucion ? new Date(ventaSeleccionada.fecha_limite_devolucion).toLocaleDateString() : '')">
+                                                    :title="'Garantía válida hasta ' + (ventaSeleccionada.fecha_limite_devolucion ? new Date(ventaSeleccionada.fecha_limite_devolucion).toLocaleDateString() : '')">
                                                     <i class="fas fa-shield-halved text-[9px]"></i>
                                                     <span x-text="'Garantía: ' + (ventaSeleccionada.texto_garantia_devolucion || (ventaSeleccionada.dias_restantes_devolucion + ' días'))"></span>
                                                 </span>
                                             </template>
                                             <span class="text-[11px] font-bold px-2.5 py-0.5 rounded-full"
-                                                  :class="ventaSeleccionada.tipo_venta === 'Envio' ? 'bg-blue-50 text-blue-700 border border-blue-200' : 'bg-emerald-50 text-emerald-700 border border-emerald-200'"
-                                                  x-text="ventaSeleccionada.tipo_venta === 'Envio' ? 'Modalidad: Entrega a Domicilio' : 'Modalidad: Venta en Mostrador (Tienda)'">
+                                                :class="ventaSeleccionada.tipo_venta === 'Envio' ? 'bg-blue-50 text-blue-700 border border-blue-200' : 'bg-emerald-50 text-emerald-700 border border-emerald-200'"
+                                                x-text="ventaSeleccionada.tipo_venta === 'Envio' ? 'Modalidad: Entrega a Domicilio' : 'Modalidad: Venta en Mostrador (Tienda)'">
                                             </span>
                                         </div>
                                     </div>
@@ -765,11 +751,10 @@
                                             </div>
 
                                             <div class="flex items-center gap-2">
-                                                <a 
-                                                    :href="ventaSeleccionada.comprobante_url" 
-                                                    target="_blank" 
-                                                    class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold text-blue-700 bg-white border border-blue-200 hover:bg-blue-600 hover:text-white hover:border-blue-600 transition-all shadow-2xs"
-                                                >
+                                                <a
+                                                    :href="ventaSeleccionada.comprobante_url"
+                                                    target="_blank"
+                                                    class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold text-blue-700 bg-white border border-blue-200 hover:bg-blue-600 hover:text-white hover:border-blue-600 transition-all shadow-2xs">
                                                     <i class="fas fa-arrow-up-right-from-square text-[11px]"></i>
                                                     <span>Abrir pestaña</span>
                                                 </a>
@@ -778,17 +763,15 @@
 
                                         <!-- VISTA PREVIA INTERACTIVA -->
                                         <div class="flex items-start gap-4 p-3 bg-white rounded-xl border border-blue-100">
-                                            <button 
-                                                type="button" 
+                                            <button
+                                                type="button"
                                                 @click="verImagenAmpliada(ventaSeleccionada.comprobante_url, nombreComprobanteVenta('comprobante_pago'), 'Comprobante de Pago')"
                                                 class="group relative overflow-hidden rounded-lg border border-slate-200 shadow-2xs shrink-0 cursor-pointer block"
-                                                title="Haz clic para ampliar la imagen"
-                                            >
-                                                <img 
-                                                    :src="ventaSeleccionada.comprobante_url" 
-                                                    alt="Comprobante de pago" 
-                                                    class="w-24 h-24 object-cover group-hover:scale-105 transition-transform duration-200"
-                                                >
+                                                title="Haz clic para ampliar la imagen">
+                                                <img
+                                                    :src="ventaSeleccionada.comprobante_url"
+                                                    alt="Comprobante de pago"
+                                                    class="w-24 h-24 object-cover group-hover:scale-105 transition-transform duration-200">
                                                 <div class="absolute inset-0 bg-slate-900/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center text-white text-xs font-bold gap-1">
                                                     <i class="fas fa-magnifying-glass-plus"></i>
                                                     <span>Ampliar</span>
@@ -799,11 +782,10 @@
                                                 <p class="text-[11px] text-slate-500 leading-relaxed">
                                                     Puedes hacer clic en la miniatura para visualizar el comprobante en tamaño completo o abrirlo en una nueva pestaña para descargar o verificar los datos del depósito bancario.
                                                 </p>
-                                                <button 
-                                                    type="button" 
+                                                <button
+                                                    type="button"
                                                     @click="verImagenAmpliada(ventaSeleccionada.comprobante_url, nombreComprobanteVenta('comprobante_pago'), 'Comprobante de Pago')"
-                                                    class="inline-flex items-center gap-1 text-[11px] font-bold text-blue-600 hover:text-blue-800 transition-colors cursor-pointer"
-                                                >
+                                                    class="inline-flex items-center gap-1 text-[11px] font-bold text-blue-600 hover:text-blue-800 transition-colors cursor-pointer">
                                                     <i class="fas fa-expand text-[10px]"></i> Ver imagen ampliada
                                                 </button>
                                             </div>
@@ -814,19 +796,19 @@
                                 <!-- MOTIVO / OBSERVACIONES (SI APLICA) -->
                                 <template x-if="ventaSeleccionada.observaciones">
                                     <div class="rounded-2xl p-4 sm:p-5 border shadow-2xs flex items-start gap-3.5"
-                                         :class="ventaSeleccionada.estado === 'Cancelada' ? 'bg-rose-50/70 border-rose-200/80 text-rose-950' : (ventaSeleccionada.estado === 'Devolución' ? 'bg-purple-50/70 border-purple-200/80 text-purple-950' : (ventaSeleccionada.estado === 'Cambio' ? 'bg-teal-50/70 border-teal-200/80 text-teal-950' : 'bg-slate-50/90 border-slate-200 text-slate-800'))">
+                                        :class="ventaSeleccionada.estado === 'Cancelada' ? 'bg-rose-50/70 border-rose-200/80 text-rose-950' : (ventaSeleccionada.estado === 'Devolución' ? 'bg-purple-50/70 border-purple-200/80 text-purple-950' : (ventaSeleccionada.estado === 'Cambio' ? 'bg-teal-50/70 border-teal-200/80 text-teal-950' : 'bg-slate-50/90 border-slate-200 text-slate-800'))">
                                         <div class="w-9 h-9 rounded-xl flex items-center justify-center shrink-0 shadow-sm"
-                                             :class="ventaSeleccionada.estado === 'Cancelada' ? 'bg-rose-600 text-white' : (ventaSeleccionada.estado === 'Devolución' ? 'bg-purple-600 text-white' : (ventaSeleccionada.estado === 'Cambio' ? 'bg-teal-600 text-white' : 'bg-slate-700 text-white'))">
+                                            :class="ventaSeleccionada.estado === 'Cancelada' ? 'bg-rose-600 text-white' : (ventaSeleccionada.estado === 'Devolución' ? 'bg-purple-600 text-white' : (ventaSeleccionada.estado === 'Cambio' ? 'bg-teal-600 text-white' : 'bg-slate-700 text-white'))">
                                             <i class="fas" :class="ventaSeleccionada.estado === 'Cancelada' ? 'fa-ban' : (ventaSeleccionada.estado === 'Devolución' ? 'fa-rotate-left' : (ventaSeleccionada.estado === 'Cambio' ? 'fa-arrows-rotate' : 'fa-comment-dots'))"></i>
                                         </div>
                                         <div class="min-w-0 flex-1 text-xs">
                                             <div class="flex items-center gap-2 mb-1">
-                                                <h4 class="font-black uppercase tracking-wider text-[11px]" 
+                                                <h4 class="font-black uppercase tracking-wider text-[11px]"
                                                     x-text="ventaSeleccionada.estado === 'Cancelada' ? 'Motivo de Cancelación' : (ventaSeleccionada.estado === 'Devolución' ? 'Motivo de Devolución' : (ventaSeleccionada.estado === 'Cambio' ? 'Motivo de Cambio' : 'Observaciones Registradas'))">
                                                 </h4>
                                                 <span class="inline-flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-full"
-                                                      :class="ventaSeleccionada.estado === 'Cancelada' ? 'bg-rose-100 text-rose-800' : (ventaSeleccionada.estado === 'Devolución' ? 'bg-purple-100 text-purple-800' : (ventaSeleccionada.estado === 'Cambio' ? 'bg-teal-100 text-teal-800' : 'bg-slate-200 text-slate-700'))"
-                                                      x-text="ventaSeleccionada.estado">
+                                                    :class="ventaSeleccionada.estado === 'Cancelada' ? 'bg-rose-100 text-rose-800' : (ventaSeleccionada.estado === 'Devolución' ? 'bg-purple-100 text-purple-800' : (ventaSeleccionada.estado === 'Cambio' ? 'bg-teal-100 text-teal-800' : 'bg-slate-200 text-slate-700'))"
+                                                    x-text="ventaSeleccionada.estado">
                                                 </span>
                                             </div>
                                             <p class="font-medium whitespace-pre-line text-slate-700 leading-relaxed bg-white/70 p-3 rounded-xl border border-black/5" x-text="ventaSeleccionada.observaciones"></p>
@@ -859,11 +841,10 @@
                                             </div>
 
                                             <div class="flex items-center gap-2">
-                                                <a 
-                                                    :href="ventaSeleccionada.comprobante_paquete_url" 
-                                                    target="_blank" 
-                                                    class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold text-indigo-700 bg-white border border-indigo-200 hover:bg-indigo-600 hover:text-white hover:border-indigo-600 transition-all shadow-2xs"
-                                                >
+                                                <a
+                                                    :href="ventaSeleccionada.comprobante_paquete_url"
+                                                    target="_blank"
+                                                    class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold text-indigo-700 bg-white border border-indigo-200 hover:bg-indigo-600 hover:text-white hover:border-indigo-600 transition-all shadow-2xs">
                                                     <i class="fas fa-arrow-up-right-from-square text-[11px]"></i>
                                                     <span>Abrir pestaña</span>
                                                 </a>
@@ -871,17 +852,15 @@
                                         </div>
 
                                         <div class="flex items-start gap-4 p-3 bg-white rounded-xl border border-indigo-100">
-                                            <button 
-                                                type="button" 
+                                            <button
+                                                type="button"
                                                 @click="verImagenAmpliada(ventaSeleccionada.comprobante_paquete_url, nombreComprobanteVenta('paquete'), 'Comprobante de Paquetería')"
                                                 class="group relative overflow-hidden rounded-lg border border-slate-200 shadow-2xs shrink-0 cursor-pointer block"
-                                                title="Haz clic para ampliar la imagen"
-                                            >
-                                                <img 
-                                                    :src="ventaSeleccionada.comprobante_paquete_url" 
-                                                    alt="Paquete en paquetería" 
-                                                    class="w-24 h-24 object-cover group-hover:scale-105 transition-transform duration-200"
-                                                >
+                                                title="Haz clic para ampliar la imagen">
+                                                <img
+                                                    :src="ventaSeleccionada.comprobante_paquete_url"
+                                                    alt="Paquete en paquetería"
+                                                    class="w-24 h-24 object-cover group-hover:scale-105 transition-transform duration-200">
                                                 <div class="absolute inset-0 bg-slate-900/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center text-white text-xs font-bold gap-1">
                                                     <i class="fas fa-magnifying-glass-plus"></i>
                                                     <span>Ampliar</span>
@@ -892,11 +871,10 @@
                                                 <p class="text-[11px] text-slate-500 leading-relaxed">
                                                     Evidencia del paquete rotulado y debidamente recibido por el servicio de encomiendas/delivery.
                                                 </p>
-                                                <button 
-                                                    type="button" 
+                                                <button
+                                                    type="button"
                                                     @click="verImagenAmpliada(ventaSeleccionada.comprobante_paquete_url, nombreComprobanteVenta('paquete'), 'Comprobante de Paquetería')"
-                                                    class="inline-flex items-center gap-1 text-[11px] font-bold text-indigo-600 hover:text-indigo-800 transition-colors cursor-pointer"
-                                                >
+                                                    class="inline-flex items-center gap-1 text-[11px] font-bold text-indigo-600 hover:text-indigo-800 transition-colors cursor-pointer">
                                                     <i class="fas fa-expand text-[10px]"></i> Ver imagen ampliada
                                                 </button>
                                             </div>
@@ -924,11 +902,10 @@
                                             </div>
 
                                             <div class="flex items-center gap-2">
-                                                <a 
-                                                    :href="ventaSeleccionada.comprobante_devolucion_url" 
-                                                    target="_blank" 
-                                                    class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold text-purple-700 bg-white border border-purple-200 hover:bg-purple-600 hover:text-white hover:border-purple-600 transition-all shadow-2xs"
-                                                >
+                                                <a
+                                                    :href="ventaSeleccionada.comprobante_devolucion_url"
+                                                    target="_blank"
+                                                    class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold text-purple-700 bg-white border border-purple-200 hover:bg-purple-600 hover:text-white hover:border-purple-600 transition-all shadow-2xs">
                                                     <i class="fas fa-arrow-up-right-from-square text-[11px]"></i>
                                                     <span>Abrir pestaña</span>
                                                 </a>
@@ -936,17 +913,15 @@
                                         </div>
 
                                         <div class="flex items-start gap-4 p-3 bg-white rounded-xl border border-purple-100">
-                                            <button 
-                                                type="button" 
+                                            <button
+                                                type="button"
                                                 @click="verImagenAmpliada(ventaSeleccionada.comprobante_devolucion_url, nombreComprobanteVenta('devolucion'), 'Comprobante de Devolución')"
                                                 class="group relative overflow-hidden rounded-lg border border-slate-200 shadow-2xs shrink-0 cursor-pointer block"
-                                                title="Haz clic para ampliar la imagen"
-                                            >
-                                                <img 
-                                                    :src="ventaSeleccionada.comprobante_devolucion_url" 
-                                                    alt="Paquete devuelto" 
-                                                    class="w-24 h-24 object-cover group-hover:scale-105 transition-transform duration-200"
-                                                >
+                                                title="Haz clic para ampliar la imagen">
+                                                <img
+                                                    :src="ventaSeleccionada.comprobante_devolucion_url"
+                                                    alt="Paquete devuelto"
+                                                    class="w-24 h-24 object-cover group-hover:scale-105 transition-transform duration-200">
                                                 <div class="absolute inset-0 bg-slate-900/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center text-white text-xs font-bold gap-1">
                                                     <i class="fas fa-magnifying-glass-plus"></i>
                                                     <span>Ampliar</span>
@@ -957,11 +932,10 @@
                                                 <p class="text-[11px] text-slate-500 leading-relaxed">
                                                     Inspección visual del paquete o artículo devuelto por el cliente para retorno a inventario.
                                                 </p>
-                                                <button 
-                                                    type="button" 
+                                                <button
+                                                    type="button"
                                                     @click="verImagenAmpliada(ventaSeleccionada.comprobante_devolucion_url, nombreComprobanteVenta('devolucion'), 'Comprobante de Devolución')"
-                                                    class="inline-flex items-center gap-1 text-[11px] font-bold text-purple-600 hover:text-purple-800 transition-colors cursor-pointer"
-                                                >
+                                                    class="inline-flex items-center gap-1 text-[11px] font-bold text-purple-600 hover:text-purple-800 transition-colors cursor-pointer">
                                                     <i class="fas fa-expand text-[10px]"></i> Ver imagen ampliada
                                                 </button>
                                             </div>
@@ -1041,23 +1015,33 @@
 
                     <!-- PIE DEL MODAL CON ACCIONES (Estilo unificado) -->
                     <div class="px-6 py-4 bg-gray-50/80 border-t border-gray-100 flex items-center justify-between gap-3 rounded-b-2xl">
-                        <button 
-                            type="button" 
+                        <button
+                            type="button"
                             @click="cerrarDetalle()"
-                            class="px-6 py-2.5 rounded-xl font-bold text-xs uppercase tracking-wider text-slate-600 bg-white border border-slate-200 hover:bg-slate-100 hover:text-slate-800 transition-colors shadow-sm cursor-pointer"
-                        >
+                            class="px-6 py-2.5 rounded-xl font-bold text-xs uppercase tracking-wider text-slate-600 bg-white border border-slate-200 hover:bg-slate-100 hover:text-slate-800 transition-colors shadow-sm cursor-pointer">
                             Cerrar
                         </button>
 
-                        <button 
-                            type="button" 
-                            x-show="ventaSeleccionada"
-                            @click="abrirModalImpresionDesdeDetalle()"
-                            class="inline-flex items-center gap-2 px-6 py-2.5 rounded-xl font-black text-xs uppercase tracking-wider text-white shadow-lg transition-all duration-300 hover:scale-[1.02] cursor-pointer bg-slate-900 hover:bg-slate-800 shadow-slate-900/20"
-                        >
-                            <i class="fas fa-print text-xs"></i>
-                            <span>Imprimir Comprobante (Ticket / Factura)</span>
-                        </button>
+                        <div class="flex items-center gap-3">
+                            <template x-if="ventaSeleccionada && ventaSeleccionada.estado === 'Entregada' && ventaSeleccionada.puede_devolver">
+                                <button
+                                    type="button"
+                                    @click="openDevolucionModal = true"
+                                    class="rounded-xl bg-red-600 hover:bg-red-700 text-white font-bold px-3.5 py-2 text-xs transition-all shadow-md shadow-red-600/20 flex items-center gap-2 cursor-pointer">
+                                    <i class="fas fa-rotate-left"></i>
+                                    <span>Registrar Devolución</span>
+                                </button>
+                            </template>
+
+                            <button
+                                type="button"
+                                x-show="ventaSeleccionada"
+                                @click="abrirModalImpresionDesdeDetalle()"
+                                class="inline-flex items-center gap-2 px-6 py-2.5 rounded-xl font-black text-xs uppercase tracking-wider text-white shadow-lg transition-all duration-300 hover:scale-[1.02] cursor-pointer bg-slate-900 hover:bg-slate-800 shadow-slate-900/20">
+                                <i class="fas fa-print text-xs"></i>
+                                <span>Imprimir Comprobante (Ticket / Factura)</span>
+                            </button>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -1066,30 +1050,27 @@
         <!-- ========================================================================= -->
         <!-- MODAL 2: SELECTOR DE COMPROBANTE E IMPRESIÓN (LEYES DE EL SALVADOR)      -->
         <!-- ========================================================================= -->
-        <div 
-            x-show="modalImprimirAbierto" 
+        <div
+            x-show="modalImprimirAbierto"
             x-cloak
             class="fixed inset-0 z-[70] overflow-y-auto"
             style="display: none;"
             role="dialog"
-            aria-modal="true"
-        >
+            aria-modal="true">
             <!-- Backdrop oscuro con blur idéntico al sistema -->
-            <div 
+            <div
                 x-show="modalImprimirAbierto"
                 x-transition.opacity
                 class="fixed inset-0 bg-slate-900/50 backdrop-blur-xs transition-opacity"
-                @click.stop="cerrarModalImpresion()"
-            ></div>
+                @click.stop="cerrarModalImpresion()"></div>
 
             <div class="flex min-h-screen items-center justify-center p-3 sm:p-5 text-center">
-                <div 
+                <div
                     x-show="modalImprimirAbierto"
                     x-transition
                     @click.stop
                     @click.away="cerrarModalImpresion()"
-                    class="relative z-10 w-full max-w-2xl transform overflow-hidden rounded-2xl bg-white text-left shadow-2xl transition-all border border-gray-100 flex flex-col my-8 max-h-[90vh]"
-                >
+                    class="relative z-10 w-full max-w-2xl transform overflow-hidden rounded-2xl bg-white text-left shadow-2xl transition-all border border-gray-100 flex flex-col my-8 max-h-[90vh]">
                     <!-- CABECERA AZUL UNIFICADA -->
                     <div class="bg-blue-600 px-6 py-4.5 flex items-center justify-between text-white shadow-md">
                         <div class="flex items-center gap-3">
@@ -1107,33 +1088,31 @@
                             </div>
                         </div>
 
-                        <button 
-                            type="button" 
+                        <button
+                            type="button"
                             @click.stop="cerrarModalImpresion()"
                             class="w-8 h-8 rounded-lg bg-white/10 hover:bg-white/25 flex items-center justify-center text-white transition-colors cursor-pointer"
-                            title="Cerrar ventana"
-                        >
+                            title="Cerrar ventana">
                             <i class="fas fa-times text-sm"></i>
                         </button>
                     </div>
 
                     <!-- CUERPO CON PREGUNTAS Y OPCIONES TRIBUTARIAS -->
                     <div class="p-6 sm:p-8 overflow-y-auto space-y-6 flex-1 text-xs custom-scrollbar">
-                        
+
                         <div>
                             <h4 class="text-[11px] font-black uppercase tracking-wider text-slate-500 mb-3">
                                 1. SELECCIONA EL TIPO DE DOCUMENTO A EMITIR
                             </h4>
-                            
+
                             <!-- TARJETAS SELECTORAS -->
                             <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                                
+
                                 <!-- OPCIÓN 1: TICKET POS -->
-                                <div 
+                                <div
                                     @click="tipoComprobante = 'ticket'"
                                     :class="tipoComprobante === 'ticket' ? 'border-blue-600 bg-blue-50/50 ring-2 ring-blue-600/20' : 'border-slate-200 bg-white hover:border-slate-300 hover:bg-slate-50/50'"
-                                    class="border rounded-xl p-4 cursor-pointer transition-all flex flex-col justify-between shadow-2xs"
-                                >
+                                    class="border rounded-xl p-4 cursor-pointer transition-all flex flex-col justify-between shadow-2xs">
                                     <div>
                                         <div class="w-8 h-8 rounded-lg bg-blue-100 text-blue-700 flex items-center justify-center mb-2.5 font-bold">
                                             <i class="fas fa-receipt text-xs"></i>
@@ -1147,11 +1126,10 @@
                                 </div>
 
                                 <!-- OPCIÓN 2: FACTURA COMERCIAL -->
-                                <div 
+                                <div
                                     @click="tipoComprobante = 'factura_comercial'"
                                     :class="tipoComprobante === 'factura_comercial' ? 'border-blue-600 bg-blue-50/50 ring-2 ring-blue-600/20' : 'border-slate-200 bg-white hover:border-slate-300 hover:bg-slate-50/50'"
-                                    class="border rounded-xl p-4 cursor-pointer transition-all flex flex-col justify-between shadow-2xs"
-                                >
+                                    class="border rounded-xl p-4 cursor-pointer transition-all flex flex-col justify-between shadow-2xs">
                                     <div>
                                         <div class="w-8 h-8 rounded-lg bg-blue-100 text-blue-700 flex items-center justify-center mb-2.5 font-bold">
                                             <i class="fas fa-file-invoice text-xs"></i>
@@ -1165,11 +1143,10 @@
                                 </div>
 
                                 <!-- OPCIÓN 3: FACTURA TRIBUTARIA (CRÉDITO FISCAL) -->
-                                <div 
+                                <div
                                     @click="tipoComprobante = 'credito_fiscal'"
                                     :class="tipoComprobante === 'credito_fiscal' ? 'border-purple-600 bg-purple-50/50 ring-2 ring-purple-600/20' : 'border-slate-200 bg-white hover:border-slate-300 hover:bg-slate-50/50'"
-                                    class="border rounded-xl p-4 cursor-pointer transition-all flex flex-col justify-between shadow-2xs"
-                                >
+                                    class="border rounded-xl p-4 cursor-pointer transition-all flex flex-col justify-between shadow-2xs">
                                     <div>
                                         <div class="w-8 h-8 rounded-lg bg-purple-100 text-purple-700 flex items-center justify-center mb-2.5 font-bold">
                                             <i class="fas fa-building-columns text-xs"></i>
@@ -1186,7 +1163,7 @@
                         </div>
 
                         <!-- 2. FORMULARIO DINÁMICO SEGÚN TIPO SELECCIONADO -->
-                        
+
                         <!-- CASO TICKET -->
                         <div x-show="tipoComprobante === 'ticket'" class="p-4 bg-slate-50/80 rounded-xl border border-slate-200">
                             <div class="flex items-start gap-3">
@@ -1205,16 +1182,15 @@
                             <h4 class="text-[11px] font-black uppercase tracking-wider text-slate-500">
                                 DATOS DEL CLIENTE (OPCIONALES PARA CONSUMIDOR FINAL)
                             </h4>
-                            
+
                             <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                                 <div>
                                     <label class="block text-xs font-bold text-slate-700 mb-1.5">Nombre o Razón del Cliente:</label>
-                                    <input 
-                                        type="text" 
+                                    <input
+                                        type="text"
                                         x-model="clienteNombreComercial"
                                         placeholder="Ej. Juan Pérez (o Consumidor Final)"
-                                        class="w-full rounded-xl border border-slate-300 px-3.5 py-2.5 text-xs text-slate-900 placeholder:text-slate-400 focus:border-blue-600 focus:ring-2 focus:ring-blue-600/20 focus:outline-none transition-all bg-white"
-                                    >
+                                        class="w-full rounded-xl border border-slate-300 px-3.5 py-2.5 text-xs text-slate-900 placeholder:text-slate-400 focus:border-blue-600 focus:ring-2 focus:ring-blue-600/20 focus:outline-none transition-all bg-white">
                                 </div>
                                 <div>
                                     <label class="block text-xs font-bold text-slate-700 mb-1.5 flex items-center justify-between">
@@ -1222,8 +1198,8 @@
                                         <span class="text-[10px] text-slate-400 font-normal">Opcional</span>
                                     </label>
                                     <div class="relative">
-                                        <input 
-                                            type="text" 
+                                        <input
+                                            type="text"
                                             x-model="clienteDuiNitComercial"
                                             @input="onInputDuiNitComercial($event)"
                                             placeholder="00000000-0 o 0000-000000-000-0"
@@ -1234,8 +1210,7 @@
                                                 'border-emerald-500 focus:border-emerald-600 focus:ring-emerald-500/20 bg-emerald-50/20 text-emerald-950 font-bold': estadoDocComercial.estado === 'valido',
                                                 'border-rose-500 focus:border-rose-600 focus:ring-rose-500/20 bg-rose-50/20 text-rose-950': estadoDocComercial.estado === 'invalido'
                                             }"
-                                            class="w-full rounded-xl border px-3.5 py-2.5 pr-9 text-xs text-slate-900 placeholder:text-slate-400 focus:ring-2 focus:outline-none transition-all bg-white font-mono"
-                                        >
+                                            class="w-full rounded-xl border px-3.5 py-2.5 pr-9 text-xs text-slate-900 placeholder:text-slate-400 focus:ring-2 focus:outline-none transition-all bg-white font-mono">
                                         <div class="absolute right-3 top-1/2 -translate-y-1/2 flex items-center pointer-events-none">
                                             <template x-if="estadoDocComercial.estado === 'valido'">
                                                 <i class="fas fa-circle-check text-emerald-500 text-sm"></i>
@@ -1278,12 +1253,11 @@
                             </div>
                             <div>
                                 <label class="block text-xs font-bold text-slate-700 mb-1.5">Dirección del Cliente:</label>
-                                <input 
-                                    type="text" 
+                                <input
+                                    type="text"
                                     x-model="clienteDireccionComercial"
                                     placeholder="San Salvador, El Salvador"
-                                    class="w-full rounded-xl border border-slate-300 px-3.5 py-2.5 text-xs text-slate-900 placeholder:text-slate-400 focus:border-blue-600 focus:ring-2 focus:ring-blue-600/20 focus:outline-none transition-all bg-white"
-                                >
+                                    class="w-full rounded-xl border border-slate-300 px-3.5 py-2.5 text-xs text-slate-900 placeholder:text-slate-400 focus:border-blue-600 focus:ring-2 focus:ring-blue-600/20 focus:outline-none transition-all bg-white">
                             </div>
                         </div>
 
@@ -1304,26 +1278,24 @@
                                     <label class="block text-xs font-bold text-slate-700 mb-1.5">
                                         Razón Social / Nombre Contribuyente <span class="text-rose-500 font-bold">*</span>:
                                     </label>
-                                    <input 
-                                        type="text" 
+                                    <input
+                                        type="text"
                                         x-model="clienteRazonSocialCCF"
                                         placeholder="Ej. Distribuidora Salvadoreña S.A. de C.V."
-                                        class="w-full rounded-xl border border-purple-200 bg-white px-3.5 py-2.5 text-xs text-slate-900 placeholder:text-slate-400 focus:border-purple-600 focus:ring-2 focus:ring-purple-600/20 focus:outline-none transition-all"
-                                    >
+                                        class="w-full rounded-xl border border-purple-200 bg-white px-3.5 py-2.5 text-xs text-slate-900 placeholder:text-slate-400 focus:border-purple-600 focus:ring-2 focus:ring-purple-600/20 focus:outline-none transition-all">
                                 </div>
 
                                 <div>
                                     <label class="block text-xs font-bold text-slate-700 mb-1.5 flex items-center justify-between">
                                         <span>N° de Registro de Contribuyente (NRC) <span class="text-rose-500 font-bold">*</span>:</span>
                                     </label>
-                                    <input 
-                                        type="text" 
+                                    <input
+                                        type="text"
                                         x-model="clienteNrcCCF"
                                         @input="onInputNrcCCF($event)"
                                         placeholder="Ej. 123456-7"
                                         maxlength="10"
-                                        class="w-full rounded-xl border border-purple-200 bg-white px-3.5 py-2.5 text-xs text-slate-900 font-mono placeholder:text-slate-400 focus:border-purple-600 focus:ring-2 focus:ring-purple-600/20 focus:outline-none transition-all"
-                                    >
+                                        class="w-full rounded-xl border border-purple-200 bg-white px-3.5 py-2.5 text-xs text-slate-900 font-mono placeholder:text-slate-400 focus:border-purple-600 focus:ring-2 focus:ring-purple-600/20 focus:outline-none transition-all">
                                 </div>
                             </div>
 
@@ -1334,8 +1306,8 @@
                                         <span class="text-[10px] text-purple-600 font-semibold">Obligatorio</span>
                                     </label>
                                     <div class="relative">
-                                        <input 
-                                            type="text" 
+                                        <input
+                                            type="text"
                                             x-model="clienteNitCCF"
                                             @input="onInputNitCCF($event)"
                                             placeholder="0614-010190-101-1 o 00000000-0"
@@ -1346,8 +1318,7 @@
                                                 'border-emerald-500 focus:border-emerald-600 focus:ring-emerald-500/20 bg-emerald-50/20 text-emerald-950 font-bold': estadoDocCCF.estado === 'valido',
                                                 'border-rose-500 focus:border-rose-600 focus:ring-rose-500/20 bg-rose-50/20 text-rose-950': estadoDocCCF.estado === 'invalido'
                                             }"
-                                            class="w-full rounded-xl border bg-white px-3.5 py-2.5 pr-9 text-xs font-mono placeholder:text-slate-400 focus:ring-2 focus:outline-none transition-all"
-                                        >
+                                            class="w-full rounded-xl border bg-white px-3.5 py-2.5 pr-9 text-xs font-mono placeholder:text-slate-400 focus:ring-2 focus:outline-none transition-all">
                                         <div class="absolute right-3 top-1/2 -translate-y-1/2 flex items-center pointer-events-none">
                                             <template x-if="estadoDocCCF.estado === 'valido'">
                                                 <i class="fas fa-circle-check text-emerald-500 text-sm"></i>
@@ -1392,32 +1363,29 @@
                                     <label class="block text-xs font-bold text-slate-700 mb-1.5">
                                         Giro o Actividad Económica <span class="text-rose-500 font-bold">*</span>:
                                     </label>
-                                    <input 
-                                        type="text" 
+                                    <input
+                                        type="text"
                                         x-model="clienteGiroCCF"
                                         placeholder="Ej. Servicios de Transporte / Taller"
-                                        class="w-full rounded-xl border border-purple-200 bg-white px-3.5 py-2.5 text-xs text-slate-900 placeholder:text-slate-400 focus:border-purple-600 focus:ring-2 focus:ring-purple-600/20 focus:outline-none transition-all"
-                                    >
+                                        class="w-full rounded-xl border border-purple-200 bg-white px-3.5 py-2.5 text-xs text-slate-900 placeholder:text-slate-400 focus:border-purple-600 focus:ring-2 focus:ring-purple-600/20 focus:outline-none transition-all">
                                 </div>
                             </div>
 
                             <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                                 <div>
                                     <label class="block text-xs font-bold text-slate-700 mb-1.5">Dirección Comercial:</label>
-                                    <input 
-                                        type="text" 
+                                    <input
+                                        type="text"
                                         x-model="clienteDireccionCCF"
                                         placeholder="Colonia Escalón, San Salvador"
-                                        class="w-full rounded-xl border border-purple-200 bg-white px-3.5 py-2.5 text-xs text-slate-900 placeholder:text-slate-400 focus:border-purple-600 focus:ring-2 focus:ring-purple-600/20 focus:outline-none transition-all"
-                                    >
+                                        class="w-full rounded-xl border border-purple-200 bg-white px-3.5 py-2.5 text-xs text-slate-900 placeholder:text-slate-400 focus:border-purple-600 focus:ring-2 focus:ring-purple-600/20 focus:outline-none transition-all">
                                 </div>
 
                                 <div>
                                     <label class="block text-xs font-bold text-slate-700 mb-1.5">Departamento:</label>
-                                    <select 
+                                    <select
                                         x-model="clienteDepartamentoCCF"
-                                        class="w-full rounded-xl border border-purple-200 bg-white px-3.5 py-2.5 text-xs text-slate-900 focus:border-purple-600 focus:ring-2 focus:ring-purple-600/20 focus:outline-none transition-all"
-                                    >
+                                        class="w-full rounded-xl border border-purple-200 bg-white px-3.5 py-2.5 text-xs text-slate-900 focus:border-purple-600 focus:ring-2 focus:ring-purple-600/20 focus:outline-none transition-all">
                                         <option value="San Salvador">San Salvador</option>
                                         <option value="La Libertad">La Libertad</option>
                                         <option value="Santa Ana">Santa Ana</option>
@@ -1439,11 +1407,10 @@
                             <!-- CHECKBOX RETENCIÓN 1% GRAN CONTRIBUYENTE -->
                             <div class="pt-1">
                                 <label class="inline-flex items-center gap-2 cursor-pointer">
-                                    <input 
-                                        type="checkbox" 
+                                    <input
+                                        type="checkbox"
                                         x-model="aplicaRetencion1"
-                                        class="rounded border-purple-300 text-purple-600 focus:ring-purple-500"
-                                    >
+                                        class="rounded border-purple-300 text-purple-600 focus:ring-purple-500">
                                     <span class="text-[11px] font-bold text-slate-700">
                                         Aplicar Retención del 1% de IVA (Cliente es Gran Contribuyente / Agente de Retención)
                                     </span>
@@ -1455,19 +1422,17 @@
 
                     <!-- ACCIONES INFERIORES (Estilo unificado) -->
                     <div class="px-6 py-4 bg-gray-50/80 border-t border-gray-100 flex items-center justify-between gap-3 rounded-b-2xl">
-                        <button 
-                            type="button" 
+                        <button
+                            type="button"
                             @click.stop="cerrarModalImpresion()"
-                            class="px-6 py-2.5 rounded-xl font-bold text-xs uppercase tracking-wider text-slate-600 bg-white border border-slate-200 hover:bg-slate-100 hover:text-slate-800 transition-colors shadow-sm cursor-pointer"
-                        >
+                            class="px-6 py-2.5 rounded-xl font-bold text-xs uppercase tracking-wider text-slate-600 bg-white border border-slate-200 hover:bg-slate-100 hover:text-slate-800 transition-colors shadow-sm cursor-pointer">
                             Cancelar
                         </button>
 
-                        <button 
-                            type="button" 
+                        <button
+                            type="button"
                             @click="procederImpresion()"
-                            class="inline-flex items-center justify-center gap-2 px-6 py-2.5 rounded-xl font-black text-xs uppercase tracking-wider text-white shadow-lg transition-all duration-300 hover:scale-[1.02] cursor-pointer bg-slate-900 hover:bg-slate-800 shadow-slate-900/20"
-                        >
+                            class="inline-flex items-center justify-center gap-2 px-6 py-2.5 rounded-xl font-black text-xs uppercase tracking-wider text-white shadow-lg transition-all duration-300 hover:scale-[1.02] cursor-pointer bg-slate-900 hover:bg-slate-800 shadow-slate-900/20">
                             <i class="fas fa-print text-xs"></i>
                             <span>Generar e Imprimir Documento</span>
                         </button>
@@ -1479,40 +1444,36 @@
         <!-- ========================================================================= -->
         <!-- MODAL 3: LIGHTBOX / ZOOM DEL COMPROBANTE DE TRANSFERENCIA                 -->
         <!-- ========================================================================= -->
-        <div 
-            x-show="comprobanteZoomUrl" 
+        <div
+            x-show="comprobanteZoomUrl"
             x-cloak
             class="fixed inset-0 z-[60] overflow-y-auto"
             style="display: none;"
             role="dialog"
-            aria-modal="true"
-        >
-            <div 
+            aria-modal="true">
+            <div
                 x-show="comprobanteZoomUrl"
                 x-transition.opacity
                 class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm transition-opacity"
-                @click="cerrarImagenAmpliada()"
-            ></div>
+                @click="cerrarImagenAmpliada()"></div>
 
             <div class="flex min-h-screen items-center justify-center p-4 text-center">
-                <div 
+                <div
                     x-show="comprobanteZoomUrl"
                     x-transition
                     class="relative z-10 max-w-3xl w-full bg-white rounded-2xl shadow-2xl overflow-hidden border border-slate-200"
-                    @click.away="cerrarImagenAmpliada()"
-                >
+                    @click.away="cerrarImagenAmpliada()">
                     <div class="bg-blue-600 px-5 py-3.5 flex items-center justify-between text-white shadow-md">
                         <div class="flex items-center gap-2.5">
                             <i class="fas fa-file-invoice text-white text-base"></i>
                             <span class="text-xs font-black uppercase tracking-wider text-white" x-text="comprobanteZoomTitulo || 'Evidencia de Venta'"></span>
                         </div>
                         <div class="flex items-center gap-2">
-                            <button 
-                                type="button" 
-                                @click="descargarImagenActual()" 
+                            <button
+                                type="button"
+                                @click="descargarImagenActual()"
                                 class="text-xs text-white hover:bg-white/20 bg-white/10 flex items-center gap-1.5 font-bold transition-all px-3 py-1.5 rounded-xl cursor-pointer"
-                                title="Descargar imagen con folio y fecha de venta"
-                            >
+                                title="Descargar imagen con folio y fecha de venta">
                                 <i class="fas fa-download"></i>
                                 <span>Descargar</span>
                             </button>
@@ -1537,28 +1498,25 @@
         <!-- ========================================================================= -->
         <!-- MODAL 4: CAMBIAR ESTADO DE LA VENTA (MÁQUINA DE ESTADOS Y VALIDACIONES)  -->
         <!-- ========================================================================= -->
-        <div 
-            x-show="modalCambiarEstadoAbierto" 
+        <div
+            x-show="modalCambiarEstadoAbierto"
             x-cloak
             class="fixed inset-0 z-50 overflow-y-auto"
             style="display: none;"
             role="dialog"
-            aria-modal="true"
-        >
-            <div 
+            aria-modal="true">
+            <div
                 x-show="modalCambiarEstadoAbierto"
                 x-transition.opacity
                 class="fixed inset-0 bg-slate-900/40 backdrop-blur-sm transition-opacity"
-                @click="cerrarModalCambiarEstado()"
-            ></div>
+                @click="cerrarModalCambiarEstado()"></div>
 
             <div class="flex min-h-screen items-center justify-center p-3 sm:p-5 text-center">
-                <div 
+                <div
                     x-show="modalCambiarEstadoAbierto"
                     x-transition
                     @click.away="cerrarModalCambiarEstado()"
-                    class="relative z-10 w-full max-w-xl transform overflow-hidden rounded-2xl bg-white text-left shadow-2xl transition-all border border-gray-100 flex flex-col my-8 max-h-[92vh]"
-                >
+                    class="relative z-10 w-full max-w-xl transform overflow-hidden rounded-2xl bg-white text-left shadow-2xl transition-all border border-gray-100 flex flex-col my-8 max-h-[92vh]">
                     <!-- CABECERA AZUL -->
                     <div class="bg-blue-600 px-6 py-4.5 flex items-center justify-between text-white shadow-md">
                         <div class="flex items-center gap-3">
@@ -1576,19 +1534,18 @@
                             </div>
                         </div>
 
-                        <button 
-                            type="button" 
+                        <button
+                            type="button"
                             @click="cerrarModalCambiarEstado()"
                             class="w-8 h-8 rounded-lg bg-white/10 hover:bg-white/25 flex items-center justify-center text-white transition-colors cursor-pointer"
-                            title="Cerrar ventana"
-                        >
+                            title="Cerrar ventana">
                             <i class="fas fa-times text-sm"></i>
                         </button>
                     </div>
 
                     <!-- CUERPO DEL MODAL -->
                     <div id="modal-cambiar-estado-body" class="p-6 overflow-y-auto space-y-5 flex-1 custom-scrollbar text-xs">
-                        
+
                         <!-- BANNER GENERAL DE ERROR INLINE -->
                         <template x-if="errorEstadoModal">
                             <div class="p-3.5 bg-rose-50 border border-rose-300 rounded-xl text-xs text-rose-800 flex items-start justify-between gap-2 shadow-xs transition-all">
@@ -1612,8 +1569,8 @@
                                 <div class="flex items-center gap-2 mt-0.5">
                                     <span class="text-sm font-black text-slate-800" x-text="estadoModalData.estadoActual"></span>
                                     <span class="text-[10px] font-bold px-2 py-0.5 rounded-full"
-                                          :class="estadoModalData.tipoVenta === 'Envio' ? 'bg-blue-100 text-blue-700' : 'bg-emerald-100 text-emerald-700'"
-                                          x-text="estadoModalData.tipoVenta === 'Envio' ? 'Entrega a Domicilio' : 'Venta en Tienda'"></span>
+                                        :class="estadoModalData.tipoVenta === 'Envio' ? 'bg-blue-100 text-blue-700' : 'bg-emerald-100 text-emerald-700'"
+                                        x-text="estadoModalData.tipoVenta === 'Envio' ? 'Entrega a Domicilio' : 'Venta en Tienda'"></span>
                                 </div>
                             </div>
                             <template x-if="estadoModalData.puedeDevolver">
@@ -1636,18 +1593,17 @@
                                     Selección requerida
                                 </span>
                             </div>
-                            
+
                             <div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5 p-1 rounded-xl transition-all"
-                                 :class="errorNuevoEstado ? 'border border-rose-400 bg-rose-50/30' : ''">
+                                :class="errorNuevoEstado ? 'border border-rose-400 bg-rose-50/30' : ''">
                                 <template x-for="st in estadoModalData.estadosPermitidos" :key="st">
-                                    <button 
-                                        type="button" 
+                                    <button
+                                        type="button"
                                         @click="seleccionarNuevoEstado(st)"
                                         class="p-3.5 rounded-xl border text-left transition-all duration-200 flex items-start gap-3 cursor-pointer group relative overflow-hidden"
-                                        :class="nuevoEstadoSeleccionado === st ? (st === 'Cambio' ? 'border-teal-500 bg-teal-50/70 shadow-sm ring-2 ring-teal-500/25' : (st === 'Devolución' ? 'border-purple-500 bg-purple-50/70 shadow-sm ring-2 ring-purple-500/25' : 'border-blue-600 bg-blue-50/70 shadow-sm ring-2 ring-blue-500/20')) : 'border-slate-200 hover:border-slate-300 hover:bg-slate-50/60'"
-                                    >
+                                        :class="nuevoEstadoSeleccionado === st ? (st === 'Cambio' ? 'border-teal-500 bg-teal-50/70 shadow-sm ring-2 ring-teal-500/25' : (st === 'Devolución' ? 'border-purple-500 bg-purple-50/70 shadow-sm ring-2 ring-purple-500/25' : 'border-blue-600 bg-blue-50/70 shadow-sm ring-2 ring-blue-500/20')) : 'border-slate-200 hover:border-slate-300 hover:bg-slate-50/60'">
                                         <div class="w-8 h-8 rounded-lg flex items-center justify-center shrink-0 text-sm font-bold mt-0.5 shadow-2xs transition-transform group-hover:scale-105"
-                                             :class="{
+                                            :class="{
                                                  'bg-blue-100 text-blue-700': st === 'Confirmada',
                                                  'bg-indigo-100 text-indigo-700': st === 'En ruta',
                                                  'bg-emerald-100 text-emerald-700': st === 'Entregada',
@@ -1697,13 +1653,12 @@
                         </div>
 
                         <!-- SECCIÓN DINÁMICA: EVIDENCIA PAQUETERÍA (EN RUTA) -->
-                        <div 
+                        <div
                             id="seccion-foto-paquete"
-                            x-show="nuevoEstadoSeleccionado === 'En ruta'" 
+                            x-show="nuevoEstadoSeleccionado === 'En ruta'"
                             class="space-y-3 p-4 rounded-xl border transition-all"
                             :class="errorFotoPaquete ? 'bg-rose-50/80 border-rose-400 ring-2 ring-rose-500/20' : 'bg-indigo-50/60 border-indigo-200'"
-                            x-transition
-                        >
+                            x-transition>
                             <div class="flex items-center justify-between">
                                 <div class="flex items-center gap-2">
                                     <i class="fas fa-camera text-sm" :class="errorFotoPaquete ? 'text-rose-600' : 'text-indigo-600'"></i>
@@ -1734,9 +1689,9 @@
                             <template x-if="!previewPaquete">
                                 <div>
                                     <label class="border-2 border-dashed bg-white rounded-xl p-5 flex flex-col items-center justify-center cursor-pointer transition-colors group shadow-2xs"
-                                           :class="errorFotoPaquete ? 'border-rose-400 hover:border-rose-600 hover:bg-rose-50/40 ring-1 ring-rose-300' : 'border-indigo-300 hover:border-indigo-500'">
+                                        :class="errorFotoPaquete ? 'border-rose-400 hover:border-rose-600 hover:bg-rose-50/40 ring-1 ring-rose-300' : 'border-indigo-300 hover:border-indigo-500'">
                                         <div class="w-10 h-10 rounded-full flex items-center justify-center text-lg mb-2 group-hover:scale-110 transition-transform"
-                                             :class="errorFotoPaquete ? 'bg-rose-100 text-rose-600' : 'bg-indigo-50 text-indigo-600'">
+                                            :class="errorFotoPaquete ? 'bg-rose-100 text-rose-600' : 'bg-indigo-50 text-indigo-600'">
                                             <i class="fas" :class="errorFotoPaquete ? 'fa-triangle-exclamation' : 'fa-cloud-arrow-up'"></i>
                                         </div>
                                         <span class="font-bold text-xs" :class="errorFotoPaquete ? 'text-rose-800' : 'text-indigo-700'">Seleccionar fotografía del paquete</span>
@@ -1760,12 +1715,11 @@
                                             <i class="fas fa-check-circle"></i> Imagen lista para adjuntar
                                         </span>
                                     </div>
-                                    <button 
-                                        type="button" 
+                                    <button
+                                        type="button"
                                         @click="removerArchivoPaquete()"
                                         class="p-2 text-rose-500 hover:bg-rose-50 rounded-lg transition-colors cursor-pointer"
-                                        title="Eliminar imagen"
-                                    >
+                                        title="Eliminar imagen">
                                         <i class="fas fa-trash-can text-sm"></i>
                                     </button>
                                 </div>
@@ -1773,13 +1727,12 @@
                         </div>
 
                         <!-- SECCIÓN DINÁMICA: DEVOLUCIÓN O CAMBIO (EVIDENCIA Y MOTIVO) -->
-                        <div 
+                        <div
                             id="seccion-foto-devolucion"
-                            x-show="nuevoEstadoSeleccionado === 'Devolución' || nuevoEstadoSeleccionado === 'Cambio'" 
+                            x-show="nuevoEstadoSeleccionado === 'Devolución' || nuevoEstadoSeleccionado === 'Cambio'"
                             class="space-y-3 p-4 rounded-xl border transition-all"
                             :class="errorFotoDevolucion ? 'bg-rose-50/80 border-rose-400 ring-2 ring-rose-500/20' : (nuevoEstadoSeleccionado === 'Cambio' ? 'bg-teal-50/60 border-teal-200' : 'bg-purple-50/60 border-purple-200')"
-                            x-transition
-                        >
+                            x-transition>
                             <div class="flex items-center justify-between">
                                 <div class="flex items-center gap-2">
                                     <i class="fas text-sm" :class="errorFotoDevolucion ? 'fa-triangle-exclamation text-rose-600' : (nuevoEstadoSeleccionado === 'Cambio' ? 'fa-arrows-rotate text-teal-600' : 'fa-rotate-left text-purple-600')"></i>
@@ -1804,19 +1757,19 @@
                             </template>
 
                             <p class="text-[11px]" :class="errorFotoDevolucion ? 'text-rose-700 font-medium' : 'text-slate-600'"
-                               x-text="nuevoEstadoSeleccionado === 'Cambio' ? 'Adjunta la fotografía del estado del paquete/producto para proceder con el cambio en tienda.' : 'Adjunta la fotografía del estado del paquete/producto devuelto.'">
+                                x-text="nuevoEstadoSeleccionado === 'Cambio' ? 'Adjunta la fotografía del estado del paquete/producto para proceder con el cambio en tienda.' : 'Adjunta la fotografía del estado del paquete/producto devuelto.'">
                             </p>
 
                             <template x-if="!previewDevolucion">
                                 <div>
                                     <label class="border-2 border-dashed bg-white rounded-xl p-5 flex flex-col items-center justify-center cursor-pointer transition-colors group shadow-2xs"
-                                           :class="errorFotoDevolucion ? 'border-rose-400 hover:border-rose-600 hover:bg-rose-50/40 ring-1 ring-rose-300' : (nuevoEstadoSeleccionado === 'Cambio' ? 'border-teal-300 hover:border-teal-500' : 'border-purple-300 hover:border-purple-500')">
+                                        :class="errorFotoDevolucion ? 'border-rose-400 hover:border-rose-600 hover:bg-rose-50/40 ring-1 ring-rose-300' : (nuevoEstadoSeleccionado === 'Cambio' ? 'border-teal-300 hover:border-teal-500' : 'border-purple-300 hover:border-purple-500')">
                                         <div class="w-10 h-10 rounded-full flex items-center justify-center text-lg mb-2 group-hover:scale-110 transition-transform"
-                                             :class="errorFotoDevolucion ? 'bg-rose-100 text-rose-600' : (nuevoEstadoSeleccionado === 'Cambio' ? 'bg-teal-50 text-teal-600' : 'bg-purple-50 text-purple-600')">
+                                            :class="errorFotoDevolucion ? 'bg-rose-100 text-rose-600' : (nuevoEstadoSeleccionado === 'Cambio' ? 'bg-teal-50 text-teal-600' : 'bg-purple-50 text-purple-600')">
                                             <i class="fas" :class="errorFotoDevolucion ? 'fa-triangle-exclamation' : 'fa-camera'"></i>
                                         </div>
                                         <span class="font-bold text-xs" :class="errorFotoDevolucion ? 'text-rose-800' : (nuevoEstadoSeleccionado === 'Cambio' ? 'text-teal-700' : 'text-purple-700')"
-                                              x-text="nuevoEstadoSeleccionado === 'Cambio' ? 'Subir fotografía del paquete para cambio' : 'Subir fotografía del paquete devuelto'"></span>
+                                            x-text="nuevoEstadoSeleccionado === 'Cambio' ? 'Subir fotografía del paquete para cambio' : 'Subir fotografía del paquete devuelto'"></span>
                                         <span class="text-[10px] mt-1" :class="errorFotoDevolucion ? 'text-rose-500' : 'text-slate-400'">Formatos soportados: JPG, PNG, WEBP (Máx 5MB)</span>
                                         <input type="file" accept="image/jpeg,image/png,image/jpg,image/webp" class="hidden" @change="onArchivoDevolucionSeleccionado($event)">
                                     </label>
@@ -1830,7 +1783,7 @@
 
                             <template x-if="previewDevolucion">
                                 <div class="flex items-center gap-3 p-2 bg-white rounded-xl border"
-                                     :class="nuevoEstadoSeleccionado === 'Cambio' ? 'border-teal-200' : 'border-purple-200'">
+                                    :class="nuevoEstadoSeleccionado === 'Cambio' ? 'border-teal-200' : 'border-purple-200'">
                                     <img :src="previewDevolucion" alt="Preview Devolución / Cambio" class="w-16 h-16 rounded-lg object-cover border border-slate-200 shrink-0">
                                     <div class="min-w-0 flex-1">
                                         <p class="font-bold text-slate-800 truncate" x-text="nombreArchivoDevolucion"></p>
@@ -1838,12 +1791,11 @@
                                             <i class="fas fa-check-circle"></i> Fotografía lista
                                         </span>
                                     </div>
-                                    <button 
-                                        type="button" 
+                                    <button
+                                        type="button"
                                         @click="removerArchivoDevolucion()"
                                         class="p-2 text-rose-500 hover:bg-rose-50 rounded-lg transition-colors cursor-pointer"
-                                        title="Eliminar imagen"
-                                    >
+                                        title="Eliminar imagen">
                                         <i class="fas fa-trash-can text-sm"></i>
                                     </button>
                                 </div>
@@ -1861,15 +1813,14 @@
                                     Requerido
                                 </span>
                             </div>
-                            <textarea 
+                            <textarea
                                 id="input-observaciones-estado"
-                                x-model="observacionesEstado" 
+                                x-model="observacionesEstado"
                                 @input="errorObservacionesEstado = false"
-                                rows="3" 
+                                rows="3"
                                 placeholder="Ingresa notas operativas, motivo de cancelación o justificación de devolución..."
                                 :class="errorObservacionesEstado ? 'border-rose-500 bg-rose-50/40 text-rose-900 focus:border-rose-500 focus:ring-rose-500/20 ring-1 ring-rose-400' : 'border-slate-300 text-slate-700 focus:border-blue-500 focus:ring-blue-500/10'"
-                                class="w-full rounded-xl border p-3 text-xs font-semibold focus:outline-none focus:ring-4 transition-all resize-none"
-                            ></textarea>
+                                class="w-full rounded-xl border p-3 text-xs font-semibold focus:outline-none focus:ring-4 transition-all resize-none"></textarea>
                             <span x-show="errorObservacionesEstado" class="text-[11px] font-bold text-rose-600 flex items-center gap-1 mt-1 pl-1">
                                 <i class="fas fa-triangle-exclamation text-[10px]"></i>
                                 <span x-text="errorObservacionesEstadoMensaje || 'Por favor ingresa el motivo u observaciones para continuar.'"></span>
@@ -1891,20 +1842,18 @@
 
                     <!-- PIE DEL MODAL CON BOTONES -->
                     <div class="px-6 py-4 bg-gray-50/80 border-t border-gray-100 flex items-center justify-between gap-3 rounded-b-2xl">
-                        <button 
-                            type="button" 
+                        <button
+                            type="button"
                             @click="cerrarModalCambiarEstado()"
-                            class="px-5 py-2.5 rounded-xl font-bold text-xs uppercase tracking-wider text-slate-600 bg-white border border-slate-200 hover:bg-slate-100 hover:text-slate-800 transition-colors shadow-sm cursor-pointer"
-                        >
+                            class="px-5 py-2.5 rounded-xl font-bold text-xs uppercase tracking-wider text-slate-600 bg-white border border-slate-200 hover:bg-slate-100 hover:text-slate-800 transition-colors shadow-sm cursor-pointer">
                             Cancelar
                         </button>
 
-                        <button 
-                            type="button" 
+                        <button
+                            type="button"
                             @click="guardarCambioEstado()"
                             :disabled="procesandoEstado"
-                            class="inline-flex items-center gap-2 px-6 py-2.5 rounded-xl font-black text-xs uppercase tracking-wider text-white shadow-lg transition-all duration-300 hover:scale-[1.02] cursor-pointer bg-blue-600 hover:bg-blue-700 disabled:opacity-50 disabled:pointer-events-none shadow-blue-600/20"
-                        >
+                            class="inline-flex items-center gap-2 px-6 py-2.5 rounded-xl font-black text-xs uppercase tracking-wider text-white shadow-lg transition-all duration-300 hover:scale-[1.02] cursor-pointer bg-blue-600 hover:bg-blue-700 disabled:opacity-50 disabled:pointer-events-none shadow-blue-600/20">
                             <i class="fas" :class="procesandoEstado ? 'fa-spinner fa-spin' : 'fa-check'"></i>
                             <span x-text="procesandoEstado ? 'Actualizando...' : 'Confirmar Cambio'"></span>
                         </button>
@@ -1913,6 +1862,139 @@
             </div>
         </div>
 
+    <!-- MODAL DE DEVOLUCIÓN (TRADUCIDO A ALPINE.JS) -->
+        <div 
+            x-show="openDevolucionModal" 
+            x-cloak
+            class="fixed inset-0 z-[80] overflow-y-auto"
+            style="display: none;"
+            role="dialog"
+            aria-modal="true"
+        >
+            <div 
+                x-show="openDevolucionModal"
+                x-transition.opacity
+                class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm transition-opacity"
+                @click="openDevolucionModal = false"
+            ></div>
+
+            <div class="flex min-h-screen items-center justify-center p-4 text-center sm:p-0">
+                <div 
+                    x-show="openDevolucionModal"
+                    x-transition
+                    class="relative z-10 w-full max-w-2xl bg-white rounded-2xl shadow-2xl overflow-hidden text-left border border-slate-200"
+                    @click.away="openDevolucionModal = false"
+                >
+                    <div class="bg-red-600 px-6 py-4 flex items-center justify-between text-white shadow-md">
+                        <div class="flex items-center gap-2.5">
+                            <i class="fas fa-rotate-left text-white text-base"></i>
+                            <span class="text-sm font-black uppercase tracking-wider text-white">Registrar Devolución</span>
+                        </div>
+                        <button type="button" @click="openDevolucionModal = false" class="w-8 h-8 rounded-lg bg-white/10 hover:bg-white/20 flex items-center justify-center text-white transition-colors cursor-pointer">
+                            <i class="fas fa-times text-sm"></i>
+                        </button>
+                    </div>
+                    
+                    <form action="/devoluciones/venta" method="POST" enctype="multipart/form-data" novalidate class="p-6 space-y-6" @click.stop onsubmit="event.preventDefault(); if (!this.checkValidity()) { let errorMsg = 'Por favor, completa todos los campos requeridos.'; this.querySelectorAll('input[type=number]').forEach(i => { if(i.validity.rangeOverflow) errorMsg = 'No puedes devolver más unidades de las que vendiste.'; }); Swal.fire({ toast: true, position: 'top-end', showConfirmButton: false, timer: 5000, timerProgressBar: true, icon: 'error', title: 'Datos inválidos', text: errorMsg }); return; } Swal.fire({ title: '¿Estás seguro?', text: 'Verifica que las cantidades sean correctas antes de procesar.', icon: 'warning', showCancelButton: true, confirmButtonColor: '#3085d6', cancelButtonColor: '#d33', confirmButtonText: 'Sí, procesar', cancelButtonText: 'Cancelar' }).then((result) => { if (result.isConfirmed) { this.submit(); } });">
+                        @csrf
+                        <input type="hidden" name="venta_id" :value="ventaSeleccionada?.id">
+
+                        <div>
+                            <h3 class="text-sm font-bold text-slate-900 mb-3 uppercase tracking-wider">Productos a Devolver</h3>
+                            <div class="overflow-x-auto border border-slate-200 rounded-xl max-h-60 overflow-y-auto custom-scrollbar">
+                                <table class="w-full text-left text-xs">
+                                    <thead class="bg-slate-50 border-b border-slate-200 text-slate-500 uppercase font-bold sticky top-0">
+                                        <tr>
+                                            <th class="px-4 py-3 w-10 text-center">Sel.</th>
+                                            <th class="px-4 py-3">Producto / Variante</th>
+                                            <th class="px-4 py-3 text-center w-24">Cantidad</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody class="divide-y divide-slate-100">
+                                        <template x-for="(det, index) in ventaSeleccionada?.detalles" :key="det.id">
+                                            <tr class="hover:bg-slate-50/60 transition-colors">
+                                                <td class="px-4 py-3 text-center">
+                                                    <input type="hidden" :name="'productos['+index+'][id_variante]'" :value="det.id_variante">
+                                                    <input type="checkbox" :name="'productos['+index+'][seleccionado]'" value="1" class="rounded text-red-600 focus:ring-red-500 bg-slate-100 border-slate-300 w-4 h-4 cursor-pointer">
+                                                </td>
+                                                <td class="px-4 py-3">
+                                                    <p class="font-bold text-slate-900 text-xs" x-text="det.variante?.producto?.nombre || 'Producto'"></p>
+                                                    <p class="text-[11px] text-slate-500" x-text="det.variante?.nombre_variante || 'Variante'"></p>
+                                                </td>
+                                                <td class="px-4 py-3">
+                                                    <input type="number" :name="'productos['+index+'][cantidad]'" value="1" min="1" :max="det.cantidad" class="w-full text-xs rounded-lg border-slate-300 focus:border-red-500 focus:ring focus:ring-red-200 py-1.5 px-2 text-center">
+                                                </td>
+                                            </tr>
+                                        </template>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+
+                        <div class="space-y-4 bg-slate-50 p-4 rounded-xl border border-slate-200" x-data="{ tipo_resolucion: '' }">
+                            <h3 class="text-sm font-bold text-slate-900 uppercase tracking-wider">Detalles de la Resolución</h3>
+                            
+                            <div class="space-y-2">
+                                <label class="text-xs font-bold text-slate-700">Resolución al Cliente <span class="text-red-500">*</span></label>
+                                <select name="tipo_resolucion" x-model="tipo_resolucion" required class="w-full text-xs bg-white border border-slate-300 rounded-lg shadow-sm text-slate-700 px-3 py-2.5 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-colors appearance-none cursor-pointer">
+                                    <option value="" disabled selected>¿Qué acción se tomará?</option>
+                                    <option value="reembolso_tienda">Reembolso de dinero (Producto intacto / Paquete no recibido)</option>
+                                    <option value="reembolso_cuarentena">Reembolso de dinero (Producto dañado de fábrica)</option>
+                                    <option value="cambio_tienda">Cambio físico (Talla/Color equivocado)</option>
+                                    <option value="cambio_cuarentena">Cambio físico (Viene defectuoso)</option>
+                                </select>
+
+                                <!-- INFO BOX DINÁMICO -->
+                                <template x-if="tipo_resolucion">
+                                    <div x-transition.opacity.duration.300ms class="mt-2.5 bg-blue-50 border border-blue-200 text-blue-800 p-3 rounded-lg text-xs flex items-start gap-2.5 shadow-sm">
+                                        <template x-if="tipo_resolucion.includes('reembolso')">
+                                            <i class="fas fa-money-bill-wave mt-0.5 shrink-0 text-blue-600"></i>
+                                        </template>
+                                        <template x-if="tipo_resolucion.includes('cambio')">
+                                            <i class="fas fa-boxes-stacked mt-0.5 shrink-0 text-blue-600"></i>
+                                        </template>
+                                        <div class="leading-relaxed font-medium">
+                                            <template x-if="tipo_resolucion.includes('reembolso')">
+                                                <p><strong class="font-bold text-blue-900">Impacto:</strong> Se retornará el artículo a bodega y se registrará un EGRESO de dinero en caja.</p>
+                                            </template>
+                                            <template x-if="tipo_resolucion.includes('cambio')">
+                                                <p><strong class="font-bold text-blue-900">Impacto:</strong> Entra el artículo devuelto y sale automáticamente uno nuevo del inventario. NO hay movimiento de efectivo.</p>
+                                            </template>
+                                        </div>
+                                    </div>
+                                </template>
+                            </div>
+
+                            <div class="space-y-1">
+                                <label class="text-xs font-bold text-slate-700">Motivo de la Devolución <span class="text-red-500">*</span></label>
+                                <textarea name="motivo" required rows="3" class="w-full text-xs bg-white border border-slate-300 rounded-lg shadow-sm text-slate-700 px-3 py-2.5 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-colors placeholder-slate-400 resize-none" placeholder="Escriba el motivo detallado por el cual el cliente devuelve la mercancía..."></textarea>
+                            </div>
+
+                            <div class="space-y-1 pt-1">
+                                <label class="text-xs font-bold text-slate-700">Comprobante (Opcional)</label>
+                                <div class="relative">
+                                    <input type="file" name="comprobante" accept="image/*" class="w-full text-xs text-slate-500 bg-white border border-slate-300 rounded-lg shadow-sm px-3 py-2 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-colors file:mr-4 file:py-1.5 file:px-4 file:rounded-md file:border-0 file:text-[11px] file:font-bold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100 cursor-pointer">
+                                </div>
+                                <p class="text-[10px] text-slate-500 mt-1.5 flex items-center gap-1">
+                                    <i class="fas fa-camera text-slate-400"></i> Sube una fotografía de evidencia si el artículo llegó defectuoso.
+                                </p>
+                            </div>
+                        </div>
+
+                        <div class="flex items-center justify-end gap-3 pt-4 border-t border-slate-200">
+                            <button type="button" @click="openDevolucionModal = false" class="px-5 py-2 bg-white border border-slate-300 text-slate-700 rounded-xl text-xs font-bold hover:bg-slate-50 transition-colors cursor-pointer">
+                                Cancelar
+                            </button>
+                            <button type="submit" class="px-5 py-2 bg-red-600 hover:bg-red-700 text-white rounded-xl text-xs font-bold transition-colors shadow-md shadow-red-600/20 cursor-pointer flex items-center gap-2">
+                                <i class="fas fa-check"></i>
+                                Procesar Devolución
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+        </div>
     </div>
 
     <!-- SCRIPT DE CONTROL REACTIVO ALPINE.JS PARA EL DASHBOARD DE VENTAS -->
@@ -1925,6 +2007,7 @@
                 comprobanteZoomUrl: null,
                 comprobanteZoomNombre: '',
                 comprobanteZoomTitulo: '',
+                openDevolucionModal: false,
 
                 // --- MODAL DE CAMBIO DE ESTADO (MÁQUINA DE ESTADOS) ---
                 modalCambiarEstadoAbierto: false,
@@ -1970,9 +2053,9 @@
                         fechaLimite: fechaLimite || ''
                     };
 
-                    this.nuevoEstadoSeleccionado = this.estadoModalData.estadosPermitidos.length > 0 
-                        ? this.estadoModalData.estadosPermitidos[0] 
-                        : null;
+                    this.nuevoEstadoSeleccionado = this.estadoModalData.estadosPermitidos.length > 0 ?
+                        this.estadoModalData.estadosPermitidos[0] :
+                        null;
                     this.observacionesEstado = '';
                     this.errorEstadoModal = '';
                     this.errorNuevoEstado = false;
@@ -2123,7 +2206,10 @@
                     if (!this.nuevoEstadoSeleccionado) {
                         this.errorNuevoEstado = true;
                         this.$nextTick(() => {
-                            document.getElementById('seccion-seleccion-nuevo-estado')?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                            document.getElementById('seccion-seleccion-nuevo-estado')?.scrollIntoView({
+                                behavior: 'smooth',
+                                block: 'center'
+                            });
                         });
                         return;
                     }
@@ -2133,7 +2219,10 @@
                         this.errorFotoPaquete = true;
                         this.errorFotoPaqueteMensaje = 'Para cambiar al estado "En ruta" es obligatorio adjuntar la fotografía del paquete entregado a la paquetería.';
                         this.$nextTick(() => {
-                            document.getElementById('seccion-foto-paquete')?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                            document.getElementById('seccion-foto-paquete')?.scrollIntoView({
+                                behavior: 'smooth',
+                                block: 'center'
+                            });
                         });
                         return;
                     }
@@ -2144,7 +2233,10 @@
                         this.$nextTick(() => {
                             const el = document.getElementById('input-observaciones-estado');
                             el?.focus();
-                            el?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                            el?.scrollIntoView({
+                                behavior: 'smooth',
+                                block: 'center'
+                            });
                         });
                         return;
                     }
@@ -2157,7 +2249,10 @@
                             this.$nextTick(() => {
                                 const el = document.getElementById('input-observaciones-estado');
                                 el?.focus();
-                                el?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                                el?.scrollIntoView({
+                                    behavior: 'smooth',
+                                    block: 'center'
+                                });
                             });
                             return;
                         }
@@ -2166,7 +2261,10 @@
                             this.errorFotoDevolucion = true;
                             this.errorFotoDevolucionMensaje = `Para procesar un ${labelEstado} debes adjuntar la fotografía del paquete.`;
                             this.$nextTick(() => {
-                                document.getElementById('seccion-foto-devolucion')?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                                document.getElementById('seccion-foto-devolucion')?.scrollIntoView({
+                                    behavior: 'smooth',
+                                    block: 'center'
+                                });
                             });
                             return;
                         }
@@ -2204,7 +2302,10 @@
                         if (!response.ok) {
                             this.errorEstadoModal = data.message || 'No se pudo actualizar el estado de la venta.';
                             this.$nextTick(() => {
-                                document.getElementById('modal-cambiar-estado-body')?.scrollTo({ top: 0, behavior: 'smooth' });
+                                document.getElementById('modal-cambiar-estado-body')?.scrollTo({
+                                    top: 0,
+                                    behavior: 'smooth'
+                                });
                             });
                             return;
                         }
@@ -2229,7 +2330,10 @@
                         console.error('Error al actualizar estado:', err);
                         this.errorEstadoModal = err.message || 'Ocurrió un error inesperado al actualizar el estado.';
                         this.$nextTick(() => {
-                            document.getElementById('modal-cambiar-estado-body')?.scrollTo({ top: 0, behavior: 'smooth' });
+                            document.getElementById('modal-cambiar-estado-body')?.scrollTo({
+                                top: 0,
+                                behavior: 'smooth'
+                            });
                         });
                     } finally {
                         this.procesandoEstado = false;
@@ -2470,9 +2574,8 @@
                             estado: esValido ? 'valido' : 'invalido',
                             valido: esValido,
                             tipo: 'dui',
-                            mensaje: esValido 
-                                ? '✓ DUI válido (Persona Natural / NIT homologado)'
-                                : '✗ Dígito verificador de DUI inválido según normativa de El Salvador'
+                            mensaje: esValido ?
+                                '✓ DUI válido (Persona Natural / NIT homologado)' : '✗ Dígito verificador de DUI inválido según normativa de El Salvador'
                         };
                     }
 
@@ -2491,9 +2594,8 @@
                             estado: esValido ? 'valido' : 'invalido',
                             valido: esValido,
                             tipo: 'nit',
-                            mensaje: esValido
-                                ? '✓ NIT válido de 14 dígitos (Persona Jurídica)'
-                                : '✗ Dígito verificador de NIT inválido según normativa de El Salvador'
+                            mensaje: esValido ?
+                                '✓ NIT válido de 14 dígitos (Persona Jurídica)' : '✗ Dígito verificador de NIT inválido según normativa de El Salvador'
                         };
                     }
 
@@ -2669,7 +2771,14 @@
                     if (!fechaStr) return '';
                     const f = new Date(fechaStr);
                     if (isNaN(f.getTime())) return fechaStr;
-                    return f.toLocaleDateString('es-SV', { day: '2-digit', month: '2-digit', year: 'numeric' }) + ' ' + f.toLocaleTimeString('es-SV', { hour: '2-digit', minute: '2-digit' });
+                    return f.toLocaleDateString('es-SV', {
+                        day: '2-digit',
+                        month: '2-digit',
+                        year: 'numeric'
+                    }) + ' ' + f.toLocaleTimeString('es-SV', {
+                        hour: '2-digit',
+                        minute: '2-digit'
+                    });
                 },
 
                 totalUnidadesVenta(venta) {

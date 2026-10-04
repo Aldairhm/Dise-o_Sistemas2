@@ -35,9 +35,9 @@ class VentaController extends Controller
         $productoId = $request->input('producto_id');
         $busqueda = trim($request->input('q', ''));
 
-        // 2. Consulta base de ventas con filtros aplicados (ÚNICAMENTE VENTAS ENTREGADAS)
+        // 2. Consulta base del histórico: ventas entregadas y ventas con devolución/cambio.
         $query = Venta::with(['usuario', 'detalles.variante.producto'])
-            ->whereIn('estado', ['Entregada', 'Entregado'])
+            ->whereIn('estado', ['Entregada', 'Entregado', 'Devolución', 'Cambio'])
             ->whereDate('fecha', '>=', $desde)
             ->whereDate('fecha', '<=', $hasta);
 
@@ -91,7 +91,7 @@ class VentaController extends Controller
             ->join('venta', 'detalleventa.id_venta', '=', 'venta.id')
             ->join('variante', 'detalleventa.id_variante', '=', 'variante.id')
             ->join('producto', 'variante.id_producto', '=', 'producto.id')
-            ->whereIn('venta.estado', ['Entregada', 'Entregado'])
+            ->whereIn('venta.estado', ['Entregada', 'Entregado', 'Devolución', 'Cambio'])
             ->whereDate('venta.fecha', '>=', $desde)
             ->whereDate('venta.fecha', '<=', $hasta)
             ->when($vendedorId, fn($q) => $q->where('venta.id_usuario', $vendedorId))
@@ -129,7 +129,7 @@ class VentaController extends Controller
                 ->join('venta', 'detalleventa.id_venta', '=', 'venta.id')
                 ->join('variante', 'detalleventa.id_variante', '=', 'variante.id')
                 ->where('variante.id_producto', $productoId)
-                ->whereIn('venta.estado', ['Entregada', 'Entregado'])
+                ->whereIn('venta.estado', ['Entregada', 'Entregado', 'Devolución', 'Cambio'])
                 ->whereDate('venta.fecha', '>=', $desde)
                 ->whereDate('venta.fecha', '<=', $hasta)
                 ->when($vendedorId, fn($q) => $q->where('venta.id_usuario', $vendedorId))
@@ -154,7 +154,7 @@ class VentaController extends Controller
                 ->join('venta', 'detalleventa.id_venta', '=', 'venta.id')
                 ->join('variante', 'detalleventa.id_variante', '=', 'variante.id')
                 ->where('variante.id_producto', $productoId)
-                ->whereIn('venta.estado', ['Entregada', 'Entregado'])
+                ->whereIn('venta.estado', ['Entregada', 'Entregado', 'Devolución', 'Cambio'])
                 ->whereDate('venta.fecha', '>=', $desdeAnterior)
                 ->whereDate('venta.fecha', '<=', $hastaAnterior)
                 ->when($vendedorId, fn($q) => $q->where('venta.id_usuario', $vendedorId))

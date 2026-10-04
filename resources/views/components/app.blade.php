@@ -36,10 +36,50 @@
 
 <body class="bg-gray-50 text-gray-800 antialiased min-h-screen flex flex-col" style="font-family: 'Inter', sans-serif;">
 
-    <!-- 3. Recuperamos el contenedor original del Header (Fondo blanco, borde y blur) -->
     <header class="bg-white/80 backdrop-blur-md sticky top-0 z-50 border-b border-gray-100 transition-all duration-300">
         @include('componentsHome.header')
     </header>
+
+    <!-- SWEETALERT2 -->
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script>
+        document.addEventListener("DOMContentLoaded", function() {
+            const Toast = Swal.mixin({
+                toast: true,
+                position: 'top-end',
+                showConfirmButton: false,
+                timer: 5000,
+                timerProgressBar: true,
+                didOpen: (toast) => {
+                    toast.addEventListener('mouseenter', Swal.stopTimer)
+                    toast.addEventListener('mouseleave', Swal.resumeTimer)
+                }
+            });
+
+            @if(session('success'))
+                Toast.fire({
+                    icon: 'success',
+                    title: "{{ session('success') }}"
+                });
+            @endif
+
+            @if(session('error'))
+                Toast.fire({
+                    icon: 'error',
+                    title: 'Acción Denegada',
+                    text: "{{ session('error') }}"
+                });
+            @endif
+
+            @if($errors->any())
+                Toast.fire({
+                    icon: 'error',
+                    title: 'Error de validación',
+                    html: `{!! implode('<br>', $errors->all()) !!}`
+                });
+            @endif
+        });
+    </script>
 
     <main class="flex-grow p-6 w-full max-w-7xl mx-auto mt-4">
         {{ $slot }}

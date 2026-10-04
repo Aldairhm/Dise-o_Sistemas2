@@ -21,6 +21,7 @@ class Variante extends Model
         'precio_venta',
         'comision',
         'stock',
+        'stock_cuarentena',
         'reserva',
         'hash_combinacion'
     ];

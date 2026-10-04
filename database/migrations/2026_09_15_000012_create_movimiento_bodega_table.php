@@ -11,6 +11,7 @@ return new class extends Migration {
             $table->id();
             $table->foreignId('id_variante')->constrained('variante');
             $table->foreignId('id_compra')->nullable()->constrained('compra')->nullOnDelete();
+            $table->unsignedBigInteger('devolucion_id')->nullable();
             $table->foreignId('id_usuario')->nullable()->constrained('usuario')->nullOnDelete();
             $table->string('tipo', 30);
             $table->unsignedInteger('cantidad');
@@ -18,6 +19,8 @@ return new class extends Migration {
             $table->unsignedInteger('reserva_nueva');
             $table->unsignedInteger('stock_anterior')->nullable();
             $table->unsignedInteger('stock_nuevo')->nullable();
+            $table->unsignedInteger('stock_cuarentena_anterior')->nullable();
+            $table->unsignedInteger('stock_cuarentena_nuevo')->nullable();
             $table->text('observacion')->nullable();
             $table->timestamps();
         });
