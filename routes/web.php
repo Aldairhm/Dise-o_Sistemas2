@@ -15,6 +15,7 @@ use App\Http\Controllers\VentaController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\ProductoController;
 use App\Http\Controllers\VarianteController;
+use App\Http\Controllers\DevolucionController; // Pon esto hasta arriba del archivo
 
 // ── Autenticación ────────────────────────────────────────────
 
@@ -89,6 +90,20 @@ Route::middleware('auth')->group(function () {
         Route::get('/ventas', [VentaController::class, 'index'])->name('ventas.index');
         Route::patch('/ventas/{id}/estado', [VentaController::class, 'actualizarEstado'])->name('ventas.actualizar-estado')->whereNumber('id');
 
+        Route::post('/ventas', [VentaController::class, 'store'])->name('ventas.store');
+        Route::get('/ventas/devoluciones', [DevolucionController::class, 'devolucionesCliente'])->name('ventas.devoluciones');
+        Route::patch('/ventas/{id}/estado', [VentaController::class, 'actualizarEstado'])->name('ventas.actualizar-estado');
+        Route::get('/ventas/{id}', [VentaController::class, 'show'])->name('ventas.show');
+        Route::get('/ventas/{id}/imprimir', [VentaController::class, 'imprimir'])->name('ventas.imprimir');
+
+
+
+        // Pon esto junto a las otras rutas de ventas
+        Route::get('/devoluciones', [DevolucionController::class, 'index'])->name('devoluciones.index');
+        Route::get('/compras/devoluciones', [DevolucionController::class, 'devolucionesProveedor'])->name('compras.devoluciones');
+        Route::post('/devoluciones/venta', [DevolucionController::class, 'storeVenta'])->name('devoluciones.venta.store');
+        Route::post('/devoluciones/compra', [DevolucionController::class, 'storeCompra'])->name('devoluciones.compra.store');
+        Route::patch('/devoluciones/compra/{id}/resolver', [DevolucionController::class, 'resolverCompra'])->name('devoluciones.compra.resolver');
         // ── Módulo de Atributos ──
         Route::resource('atributos', AtributoController::class)->except(['create', 'show', 'edit']);
 

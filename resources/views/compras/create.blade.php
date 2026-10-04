@@ -27,7 +27,8 @@
         <nav class="flex flex-wrap gap-2 rounded-2xl border border-slate-200 bg-white p-2 shadow-sm" aria-label="Secciones de compras">
             <a href="{{ route('compras.create') }}" class="rounded-xl bg-blue-600 px-4 py-2.5 text-sm font-bold text-white shadow-sm"><i class="fas fa-cart-plus mr-2"></i>Nueva compra</a>
             <a href="{{ route('compras.historial') }}" class="rounded-xl px-4 py-2.5 text-sm font-bold text-slate-500 hover:bg-slate-50 hover:text-blue-600"><i class="fas fa-clock-rotate-left mr-2"></i>Historial</a>
-            <a href="{{ route('compras.movimientos') }}" class="rounded-xl px-4 py-2.5 text-sm font-bold text-slate-500 hover:bg-slate-50 hover:text-blue-600"><i class="fas fa-warehouse mr-2"></i>Bodega a tienda</a>
+            <a href="{{ route('compras.movimientos') }}" class="rounded-xl px-4 py-2.5 text-sm font-bold text-slate-500 hover:bg-slate-50 hover:text-blue-600"><i class="fas fa-warehouse mr-2"></i>Gestión de Inventario</a>
+            <a href="{{ route('compras.devoluciones') }}" class="rounded-xl px-4 py-2.5 text-sm font-bold text-slate-500 hover:bg-slate-50 hover:text-blue-600"><i class="fas fa-truck-arrow-right mr-2"></i>Devoluciones a proveedores</a>
         </nav>
 
         <div x-show="guardado" x-transition class="flex items-center gap-3 rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm font-bold text-emerald-700 shadow-sm" style="display:none;">
@@ -214,7 +215,7 @@
                         </div>
                     </div>
                     
-                    <button type="button" @click="guardarCompra()" :disabled="!formularioValido()" class="w-full mt-8 rounded-xl bg-blue-600 hover:bg-blue-500 disabled:bg-slate-800 disabled:text-slate-500 disabled:border border-slate-700 disabled:cursor-not-allowed py-3.5 text-sm font-black transition-all shadow-lg shadow-blue-600/20 disabled:shadow-none flex items-center justify-center gap-2">
+                    <button type="button" @click="Swal.fire({ title: '¿Estás seguro?', text: 'Verifica que las cantidades sean correctas antes de confirmar la recepción.', icon: 'warning', showCancelButton: true, confirmButtonColor: '#3085d6', cancelButtonColor: '#d33', confirmButtonText: 'Sí, confirmar', cancelButtonText: 'Cancelar' }).then((result) => { if (result.isConfirmed) { guardarCompra(); } })" :disabled="!formularioValido()" class="w-full mt-8 rounded-xl bg-blue-600 hover:bg-blue-500 disabled:bg-slate-800 disabled:text-slate-500 disabled:border border-slate-700 disabled:cursor-not-allowed py-3.5 text-sm font-black transition-all shadow-lg shadow-blue-600/20 disabled:shadow-none flex items-center justify-center gap-2">
                         <i class="fas fa-check"></i> Confirmar recepción
                     </button>
                 </section>

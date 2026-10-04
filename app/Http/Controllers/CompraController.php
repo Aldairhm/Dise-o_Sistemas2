@@ -32,12 +32,46 @@ class CompraController extends Controller
             ->limit(10)
             ->get(['id', 'id_producto', 'sku', 'nombre_variante', 'stock', 'reserva']);
 
-        $movimientos = MovimientoBodega::with(['variante.producto', 'variante.imagenes', 'compra.proveedor'])
-            ->where('tipo', 'transferencia_tienda')
-            ->latest()
-            ->paginate(20);
+        $filtroMovimiento = request()->query('tipo', 'todos');
+        $tiposPermitidos = ['todos', 'transferencias', 'devoluciones', 'compras', 'entradas', 'salidas'];
+        if (!in_array($filtroMovimiento, $tiposPermitidos, true)) {
+            $filtroMovimiento = 'todos';
+        }
 
-        return view('compras.movimientos', compact('movimientos', 'variantes'));
+        $movimientosQuery = MovimientoBodega::with([
+            'variante.producto',
+            'variante.imagenes',
+            'compra.proveedor',
+            'devolucion',
+        ]);
+
+        $movimientosQuery->when($filtroMovimiento === 'transferencias', fn ($query) =>
+            $query->where('tipo', 'transferencia_tienda')
+        );
+        $movimientosQuery->when($filtroMovimiento === 'compras', fn ($query) =>
+            $query->where('tipo', 'compra_recibida')
+        );
+        $movimientosQuery->when($filtroMovimiento === 'devoluciones', fn ($query) =>
+            $query->where(function ($subquery) {
+                $subquery->whereNotNull('devolucion_id')
+                    ->orWhereIn('tipo', ['devolucion_cliente', 'devolucion_proveedor'])
+                    ->orWhere('observacion', 'like', '%devolución%')
+                    ->orWhere('observacion', 'like', '%devolucion%');
+            })
+        );
+        $movimientosQuery->when($filtroMovimiento === 'entradas', fn ($query) =>
+            $query->whereIn('tipo', ['Entrada', 'entrada', 'compra_recibida', 'devolucion_cliente', 'devolucion_proveedor'])
+        );
+        $movimientosQuery->when($filtroMovimiento === 'salidas', fn ($query) =>
+            $query->whereIn('tipo', ['Salida', 'salida', 'transferencia_tienda', 'devolucion_proveedor'])
+        );
+
+        $movimientos = $movimientosQuery
+            ->latest()
+            ->paginate(20)
+            ->withQueryString();
+
+        return view('compras.movimientos', compact('movimientos', 'variantes', 'filtroMovimiento'));
     }
 
     public function create()

@@ -1,5 +1,5 @@
 <x-app title="Detalle de Venta #{{ str_pad($venta->id, 5, '0', STR_PAD_LEFT) }} | AXStore">
-    <div class="max-w-5xl mx-auto space-y-6">
+    <div x-data="{ openDevolucionModal: false }" class="max-w-5xl mx-auto space-y-6">
 
         <!-- HEADER CON NAVEGACIÓN -->
         <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
@@ -17,7 +17,7 @@
                                 Venta #VNT-{{ str_pad($venta->id, 5, '0', STR_PAD_LEFT) }}
                             </h1>
                             <span class="text-xs font-bold text-emerald-700 bg-emerald-50 border border-emerald-200 px-2.5 py-0.5 rounded-full">
-                                Completada
+                                {{ $venta->estado }}
                             </span>
                         </div>
                         <p class="text-xs text-slate-500">
@@ -29,6 +29,7 @@
 
             <!-- BOTONES DE IMPRESIÓN RÁPIDA -->
             <div class="flex flex-wrap items-center gap-2">
+                
                 <a 
                     href="{{ route('ventas.imprimir', ['id' => $venta->id, 'tipo' => 'ticket']) }}" 
                     target="_blank"
@@ -664,6 +665,4 @@
                     });
             }
         </script>
-
-    </div>
 </x-app>
