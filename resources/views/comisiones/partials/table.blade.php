@@ -48,7 +48,7 @@
                                 </span>
                             @else
                                 <span class="inline-flex items-center gap-1 px-2 py-0.5 bg-purple-50 text-purple-700 rounded-md text-[11px] font-bold">
-                                    <i class="fas fa-award text-[10px]"></i> Bono / Manual
+                                    <i class="fas fa-award text-[10px]"></i> Bono
                                 </span>
                             @endif
 
@@ -93,8 +93,8 @@
 
                 <td class="px-5 py-4 text-slate-700 text-xs">
                     @if($c->estado === 'Pagada')
-                        <div class="flex flex-col gap-0.5">
-                            <span class="font-semibold text-emerald-800 flex items-center gap-1.5">
+                        <div class="flex flex-col gap-1">
+                            <span class="font-bold text-emerald-800 flex items-center gap-1.5">
                                 @if($c->metodo_pago === 'Transferencia Bancaria')
                                     <i class="fas fa-university text-blue-600"></i>
                                 @elseif($c->metodo_pago === 'Efectivo')
@@ -112,8 +112,10 @@
                             @endif
 
                             @if($c->comprobante_url)
-                                <a href="{{ $c->comprobante_url }}" target="_blank" class="text-[10px] text-blue-600 hover:underline inline-flex items-center gap-1 mt-0.5">
-                                    <i class="fas fa-file-invoice"></i> Ver comprobante
+                                <a href="{{ $c->comprobante_url }}" target="_blank" class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-indigo-50 hover:bg-indigo-100 text-indigo-700 font-bold border border-indigo-200 text-[11px] shadow-2xs transition-all w-fit hover:scale-[1.02]">
+                                    <i class="fas fa-file-invoice-dollar text-indigo-600"></i>
+                                    <span>Ver Comprobante</span>
+                                    <i class="fas fa-arrow-up-right-from-square text-[9px] opacity-70"></i>
                                 </a>
                             @endif
 

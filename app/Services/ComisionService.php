@@ -2,10 +2,13 @@
 
 namespace App\Services;
 
+use App\Mail\ComisionPagadaMail;
 use App\Models\ComisionVendedor;
 use App\Models\User;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Mail;
 
 class ComisionService
 {
@@ -55,11 +58,21 @@ class ComisionService
      */
     public function getPendientesVendedor(int $idVendedor)
     {
-        return ComisionVendedor::with(['salida.variante.producto'])
+        $pendientes = ComisionVendedor::with(['salida.variante.producto'])
             ->where('id_vendedor', $idVendedor)
             ->where('estado', 'Pendiente')
-            ->orderBy('fecha_registro', 'asc')
             ->get();
+
+        $ajustesNegativos = ComisionVendedor::with(['salida.variante.producto'])
+            ->where('id_vendedor', $idVendedor)
+            ->whereIn('estado', ['Cancelada', 'Pendiente'])
+            ->where('monto', '<', 0)
+            ->get();
+
+        return $pendientes->merge($ajustesNegativos)
+            ->unique('id')
+            ->sortBy('fecha_registro')
+            ->values();
     }
 
     /**
@@ -81,33 +94,74 @@ class ComisionService
         ?string $comprobantePath = null,
         ?string $notas = null
     ): int {
-        $query = ComisionVendedor::where('id_vendedor', $idVendedor)
-            ->where('estado', 'Pendiente');
+        $notasFin = $notas ?? 'Liquidación procesada.';
+        $comisiones = DB::transaction(function () use (
+            $idVendedor,
+            $comisionesIds,
+            $metodoPago,
+            $referenciaPago,
+            $comprobantePath,
+            $notasFin
+        ) {
+            $pendientesQuery = ComisionVendedor::where('id_vendedor', $idVendedor)
+                ->where('estado', 'Pendiente')
+                ->where('monto', '>=', 0);
 
-        if (!empty($comisionesIds)) {
-            $query->whereIn('id', $comisionesIds);
-        }
+            if (!empty($comisionesIds)) {
+                $pendientesQuery->whereIn('id', $comisionesIds);
+            }
 
-        $comisiones = $query->get();
+            $pendientes = $pendientesQuery->lockForUpdate()->get();
+            $ajustesNegativos = ComisionVendedor::where('id_vendedor', $idVendedor)
+                ->whereIn('estado', ['Cancelada', 'Pendiente'])
+                ->where('monto', '<', 0)
+                ->lockForUpdate()
+                ->get();
+            $comisiones = $pendientes->merge($ajustesNegativos)->unique('id')->values();
+
+            if ($comisiones->isEmpty() || (float) $comisiones->sum('monto') <= 0) {
+                return collect();
+            }
+
+            $adminId = Auth::id();
+            $ahora = now();
+
+            foreach ($comisiones as $comision) {
+                $notasComision = (float) $comision->monto < 0
+                    ? trim(($comision->notas ? $comision->notas . ' | ' : '') . 'Ajuste negativo aplicado en liquidación.')
+                    : $notasFin;
+
+                $comision->update([
+                    'estado'             => 'Pagada',
+                    'metodo_pago'        => $metodoPago,
+                    'referencia_pago'    => $referenciaPago,
+                    'comprobante_pago'   => $comprobantePath ?? $comision->comprobante_pago,
+                    'liquidado_por'      => $adminId,
+                    'fecha_liquidacion'  => $ahora,
+                    'notas'              => $notasComision,
+                ]);
+            }
+
+            return $comisiones;
+        });
 
         if ($comisiones->isEmpty()) {
             return 0;
         }
 
-        $adminId = Auth::id();
-        $ahora   = now();
-        $notasFin = $notas ?? 'Liquidación procesada.';
+        // Cargar relación de salida para detalle en el correo
+        $comisiones->load('salida');
 
-        foreach ($comisiones as $comision) {
-            $comision->update([
-                'estado'             => 'Pagada',
-                'metodo_pago'        => $metodoPago,
-                'referencia_pago'    => $referenciaPago,
-                'comprobante_pago'   => $comprobantePath ?? $comision->comprobante_pago,
-                'liquidado_por'      => $adminId,
-                'fecha_liquidacion'  => $ahora,
-                'notas'              => $notasFin,
-            ]);
+        // Enviar correo de notificación al vendedor con el resumen de pago
+        try {
+            $vendedor = User::find($idVendedor);
+            if ($vendedor && filter_var($vendedor->username, FILTER_VALIDATE_EMAIL)) {
+                Mail::to($vendedor->username)->send(
+                    new ComisionPagadaMail($vendedor, $comisiones, $metodoPago, $referenciaPago, $notas, $comprobantePath)
+                );
+            }
+        } catch (\Throwable $e) {
+            Log::error("Error al enviar correo de liquidación a vendedor ID {$idVendedor}: " . $e->getMessage());
         }
 
         return $comisiones->count();

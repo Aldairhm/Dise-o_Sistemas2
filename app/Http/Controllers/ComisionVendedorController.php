@@ -59,7 +59,8 @@ class ComisionVendedorController extends Controller
         }
 
         $stats = [
-            'pendiente' => (clone $baseStats)->where('estado', 'Pendiente')->sum('monto'),
+            'pendiente' => max(0, (float) (clone $baseStats)->where('estado', 'Pendiente')->where('monto', '>=', 0)->sum('monto')
+                + (clone $baseStats)->whereIn('estado', ['Cancelada', 'Pendiente'])->where('monto', '<', 0)->sum('monto')),
             'pagada'    => (clone $baseStats)->where('estado', 'Pagada')->sum('monto'),
             'cancelada' => (clone $baseStats)->where('estado', 'Cancelada')->sum('monto'),
             'total'     => (clone $baseStats)->sum('monto'),
@@ -78,6 +79,40 @@ class ComisionVendedorController extends Controller
         return view('comisiones.index', compact('comisiones', 'stats', 'vendedores', 'isAdmin'));
     }
 
+    public function ajustes(Request $request)
+    {
+        $user = Auth::user();
+        $isAdmin = $user->rol === 'admin';
+
+        $query = ComisionVendedor::with(['vendedor', 'salida.variante.producto'])
+            ->where(function ($query) {
+                $query->where('estado', 'Cancelada')
+                    ->orWhere('monto', '<', 0)
+                    ->orWhere('notas', 'like', '%Descuento descontado:%')
+                    ->orWhere('concepto', 'like', 'Deducción envío%');
+            })
+            ->orderByDesc('fecha_registro');
+
+        if (!$isAdmin) {
+            $query->where('id_vendedor', $user->id);
+        } elseif ($request->filled('vendedor_id')) {
+            $query->where('id_vendedor', $request->input('vendedor_id'));
+        }
+
+        if ($request->filled('fecha_desde')) {
+            $query->whereDate('fecha_registro', '>=', $request->input('fecha_desde'));
+        }
+
+        if ($request->filled('fecha_hasta')) {
+            $query->whereDate('fecha_registro', '<=', $request->input('fecha_hasta'));
+        }
+
+        $ajustes = $query->paginate(20)->withQueryString();
+        $vendedores = $isAdmin ? User::orderBy('nombre_real')->get() : collect();
+
+        return view('comisiones.ajustes', compact('ajustes', 'vendedores', 'isAdmin'));
+    }
+
     // ─────────────────────────────────────────────────────────────────────────
     // POR VENDEDOR — Historial completo, suma general y desglose por vendedor
     // ─────────────────────────────────────────────────────────────────────────
@@ -87,9 +122,21 @@ class ComisionVendedorController extends Controller
         $user    = Auth::user();
         $isAdmin = $user->rol === 'admin';
 
+        $periodo  = $request->input('periodo', 'mes'); // 'mes' o 'historico'
+        $mes      = (int) $request->input('mes', now()->month);
+        $anio     = (int) $request->input('anio', now()->year);
         $desde    = $request->input('fecha_desde');
         $hasta    = $request->input('fecha_hasta');
         $busqueda = trim($request->input('q', ''));
+
+        if ($periodo === 'mes') {
+            if ($mes < 1 || $mes > 12) {
+                $mes = (int) now()->month;
+            }
+            if ($anio < 2020 || $anio > 2050) {
+                $anio = (int) now()->year;
+            }
+        }
 
         $vendedoresQuery = User::query()->orderBy('nombre_real');
 
@@ -106,34 +153,50 @@ class ComisionVendedorController extends Controller
 
         $usuarios = $vendedoresQuery->get();
 
-        $reporte = $usuarios->map(function ($vendedor) use ($desde, $hasta) {
+        $reporte = $usuarios->map(function ($vendedor) use ($periodo, $mes, $anio, $desde, $hasta) {
             $comisionesQuery = ComisionVendedor::with(['salida.variante.producto', 'liquidadoPor'])
                 ->where('id_vendedor', $vendedor->id)
                 ->orderBy('fecha_registro', 'desc');
 
-            if ($desde) {
-                $comisionesQuery->whereDate('fecha_registro', '>=', $desde);
-            }
-            if ($hasta) {
-                $comisionesQuery->whereDate('fecha_registro', '<=', $hasta);
+            if ($periodo === 'mes') {
+                $comisionesQuery->whereYear('fecha_registro', $anio)
+                                ->whereMonth('fecha_registro', $mes);
+            } else {
+                if ($desde) {
+                    $comisionesQuery->whereDate('fecha_registro', '>=', $desde);
+                }
+                if ($hasta) {
+                    $comisionesQuery->whereDate('fecha_registro', '<=', $hasta);
+                }
             }
 
             $comisiones = $comisionesQuery->get();
 
-            $pendiente = (float) $comisiones->where('estado', 'Pendiente')->sum('monto');
+            $pendiente = max(0, (float) $comisiones->where('estado', 'Pendiente')->where('monto', '>=', 0)->sum('monto')
+                + $comisiones->whereIn('estado', ['Cancelada', 'Pendiente'])->where('monto', '<', 0)->sum('monto'));
             $pagada    = (float) $comisiones->where('estado', 'Pagada')->sum('monto');
             $cancelada = (float) $comisiones->where('estado', 'Cancelada')->sum('monto');
             $total     = (float) $comisiones->sum('monto');
 
+            // Saldo total pendiente de todos los tiempos para este vendedor
+            $saldoPendienteTotal = max(0, (float) ComisionVendedor::where('id_vendedor', $vendedor->id)
+                ->where('estado', 'Pendiente')
+                ->where('monto', '>=', 0)
+                ->sum('monto') + ComisionVendedor::where('id_vendedor', $vendedor->id)
+                ->whereIn('estado', ['Cancelada', 'Pendiente'])
+                ->where('monto', '<', 0)
+                ->sum('monto'));
+
             return [
-                'vendedor'         => $vendedor,
-                'comisiones'       => $comisiones,
-                'total_comisiones' => $total,
-                'total_pendiente'  => $pendiente,
-                'total_pagada'     => $pagada,
-                'total_cancelada'  => $cancelada,
-                'total_ventas'     => $comisiones->count(),
-                'total_pendientes' => $comisiones->where('estado', 'Pendiente')->count(),
+                'vendedor'              => $vendedor,
+                'comisiones'            => $comisiones,
+                'total_comisiones'      => $total,
+                'total_pendiente'       => $pendiente,
+                'total_pagada'          => $pagada,
+                'total_cancelada'       => $cancelada,
+                'total_ventas'          => $comisiones->count(),
+                'total_pendientes'      => $comisiones->where('estado', 'Pendiente')->count(),
+                'saldo_pendiente_total' => $saldoPendienteTotal,
             ];
         });
 
@@ -146,9 +209,122 @@ class ComisionVendedorController extends Controller
             'vendedores' => $reporte->where('total_comisiones', '>', 0)->count(),
         ];
 
+        $nombresMeses = [
+            1 => 'Enero', 2 => 'Febrero', 3 => 'Marzo', 4 => 'Abril',
+            5 => 'Mayo', 6 => 'Junio', 7 => 'Julio', 8 => 'Agosto',
+            9 => 'Septiembre', 10 => 'Octubre', 11 => 'Noviembre', 12 => 'Diciembre'
+        ];
+
+        $mesNombre   = $nombresMeses[$mes] ?? 'Mes Actual';
+        $esMesActual = ($periodo === 'mes' && $mes === (int) now()->month && $anio === (int) now()->year);
+
+        $fechaReferencia = \Illuminate\Support\Carbon::createFromDate($anio, $mes, 1);
+        $mesAnterior  = $fechaReferencia->copy()->subMonth();
+        $mesSiguiente = $fechaReferencia->copy()->addMonth();
+
         $vendedores = $isAdmin ? User::orderBy('nombre_real')->get() : collect();
 
-        return view('comisiones.por_vendedor', compact('reporte', 'kpis', 'vendedores', 'isAdmin', 'desde', 'hasta', 'busqueda'));
+        return view('comisiones.por_vendedor', compact(
+            'reporte', 'kpis', 'vendedores', 'isAdmin', 'desde', 'hasta', 'busqueda',
+            'periodo', 'mes', 'anio', 'mesNombre', 'esMesActual', 'nombresMeses', 'mesAnterior', 'mesSiguiente'
+        ));
+    }
+
+    // ─────────────────────────────────────────────────────────────────────────
+    // POR SEMANA — Cortes semanales (Lunes a Domingo), acumulados y desglose
+    // ─────────────────────────────────────────────────────────────────────────
+
+    public function porSemana(Request $request)
+    {
+        $user    = Auth::user();
+        $isAdmin = $user->rol === 'admin';
+
+        $anio       = (int) ($request->input('anio', now()->year));
+        $vendedorId = $request->input('vendedor_id');
+
+        $query = ComisionVendedor::with(['vendedor', 'salida.variante.producto', 'liquidadoPor'])
+            ->whereYear('fecha_registro', $anio)
+            ->orderBy('fecha_registro', 'desc');
+
+        if (!$isAdmin) {
+            $query->where('id_vendedor', $user->id);
+        } elseif ($vendedorId) {
+            $query->where('id_vendedor', $vendedorId);
+        }
+
+        $comisiones = $query->get();
+
+        // Agrupar por semana (ISO 8601 lunes a domingo)
+        $semanasAgrupadas = $comisiones->groupBy(function ($c) {
+            return $c->fecha_registro ? $c->fecha_registro->format('o-W') : now()->format('o-W');
+        });
+
+        // Aseguramos que la semana actual siempre esté presente en el reporte
+        $semanaActualKey = now()->format('o-W');
+        if (!$semanasAgrupadas->has($semanaActualKey) && $anio === (int) now()->year) {
+            $semanasAgrupadas->put($semanaActualKey, collect());
+        }
+
+        $reporteSemanas = $semanasAgrupadas->map(function ($items, $key) use ($semanaActualKey) {
+            $parts = explode('-', $key);
+            $year = (int) ($parts[0] ?? now()->year);
+            $week = (int) ($parts[1] ?? now()->weekOfYear);
+
+            $inicioSemana = \Illuminate\Support\Carbon::now()->setISODate($year, $week)->startOfWeek();
+            $finSemana    = \Illuminate\Support\Carbon::now()->setISODate($year, $week)->endOfWeek();
+
+            $pendiente = max(0, (float) $items->where('estado', 'Pendiente')->where('monto', '>=', 0)->sum('monto')
+                + $items->whereIn('estado', ['Cancelada', 'Pendiente'])->where('monto', '<', 0)->sum('monto'));
+            $pagada    = (float) $items->where('estado', 'Pagada')->sum('monto');
+            $cancelada = (float) $items->where('estado', 'Cancelada')->sum('monto');
+            $semanaCerrada = now()->greaterThan($finSemana);
+
+            // Resumen de vendedores en esta semana
+            $vendedoresSemana = $items->groupBy('id_vendedor')->map(function ($vItems) use ($semanaCerrada) {
+                $vendedor = $vItems->first()->vendedor ?? null;
+                $totalVendedor = (float) $vItems->sum('monto');
+                if ($semanaCerrada && $totalVendedor < 0) {
+                    $totalVendedor = 0.0;
+                }
+
+                return [
+                    'vendedor'  => $vendedor,
+                    'total'     => $totalVendedor,
+                    'pendiente' => max(0, (float) $vItems->where('estado', 'Pendiente')->where('monto', '>=', 0)->sum('monto')
+                        + $vItems->whereIn('estado', ['Cancelada', 'Pendiente'])->where('monto', '<', 0)->sum('monto')),
+                    'pagada'    => (float) $vItems->where('estado', 'Pagada')->sum('monto'),
+                    'cantidad'  => $vItems->count(),
+                ];
+            });
+            $total = (float) $vendedoresSemana->sum('total');
+
+            return [
+                'key'              => $key,
+                'semana_numero'    => $week,
+                'year'             => $year,
+                'inicio_semana'    => $inicioSemana,
+                'fin_semana'       => $finSemana,
+                'es_semana_actual' => ($key === $semanaActualKey),
+                'total_comisiones' => $total,
+                'total_pendiente'  => $pendiente,
+                'total_pagada'     => $pagada,
+                'total_cancelada'  => $cancelada,
+                'total_ventas'     => $items->count(),
+                'comisiones'       => $items,
+                'vendedores'       => $vendedoresSemana,
+            ];
+        })->sortByDesc('key')->values();
+
+        $kpis = [
+            'total'     => (float) $reporteSemanas->sum('total_comisiones'),
+            'pendiente' => (float) $reporteSemanas->sum('total_pendiente'),
+            'pagada'    => (float) $comisiones->where('estado', 'Pagada')->sum('monto'),
+            'semanas'   => $reporteSemanas->where('total_comisiones', '>', 0)->count(),
+        ];
+
+        $vendedores = $isAdmin ? User::orderBy('nombre_real')->get() : collect();
+
+        return view('comisiones.por_semana', compact('reporteSemanas', 'kpis', 'vendedores', 'isAdmin', 'anio', 'vendedorId'));
     }
 
     // ─────────────────────────────────────────────────────────────────────────
@@ -165,6 +341,8 @@ class ComisionVendedorController extends Controller
                 'id'             => $c->id,
                 'concepto'       => $c->concepto ?? ($c->salida ? "Venta #{$c->salida->id} ({$c->salida->cantidad} uds)" : "Comisión #{$c->id}"),
                 'monto'          => (float) $c->monto,
+                'notas'          => $c->notas,
+                'es_ajuste_negativo' => (float) $c->monto < 0,
                 'fecha_registro' => $c->fecha_registro ? $c->fecha_registro->format('d/m/Y H:i') : 'N/A',
                 'id_salida'      => $c->id_salida,
             ];
@@ -173,7 +351,7 @@ class ComisionVendedorController extends Controller
         return response()->json([
             'success'    => true,
             'vendedor'   => $vendedor->nombre_real,
-            'total'      => (float) $pendientes->sum('monto'),
+            'total'      => max(0, (float) $pendientes->sum('monto')),
             'cantidad'   => $pendientes->count(),
             'comisiones' => $data,
         ]);
@@ -200,9 +378,10 @@ class ComisionVendedorController extends Controller
 
         ComisionVendedor::create([
             'id_vendedor'    => $validated['id_vendedor'],
+            'id_salida'      => null,
             'concepto'       => $validated['concepto'],
             'monto'          => $validated['monto'],
-            'porcentaje'     => null,
+            'porcentaje'     => 0.00,
             'notas'          => $validated['notas'] ?? null,
             'estado'         => 'Pendiente',
             'fecha_registro' => now(),
@@ -211,11 +390,11 @@ class ComisionVendedorController extends Controller
         if ($request->ajax()) {
             return response()->json([
                 'success' => true,
-                'message' => 'Comisión/Bono registrado exitosamente.',
+                'message' => 'Bono registrado exitosamente.',
             ]);
         }
 
-        return redirect()->route('comisiones.index')->with('success', 'Comisión/Bono registrado exitosamente.');
+        return redirect()->route('comisiones.porVendedor')->with('success', 'Bono registrado exitosamente.');
     }
 
     // ─────────────────────────────────────────────────────────────────────────
@@ -256,21 +435,32 @@ class ComisionVendedorController extends Controller
 
     public function liquidar(Request $request)
     {
+        $isTransferencia = $request->input('metodo_pago') === 'Transferencia Bancaria';
+
         $validated = $request->validate([
             'id_vendedor'      => ['required', 'integer', 'exists:usuario,id'],
-            'metodo_pago'      => ['required', 'string', 'in:Efectivo,Transferencia Bancaria,Cheque,Billetera Digital,Otro'],
+            'metodo_pago'      => ['required', 'string', 'in:Efectivo,Transferencia Bancaria'],
             'referencia_pago'  => ['nullable', 'string', 'max:100'],
             'comisiones_ids'   => ['nullable', 'array'],
             'comisiones_ids.*' => ['integer', 'exists:comision_vendedor,id'],
-            'comprobante_pago' => ['nullable', 'file', 'mimes:jpeg,png,jpg,webp,pdf', 'max:5120'],
+            'comprobante_pago' => [
+                $isTransferencia ? 'required' : 'nullable',
+                'file',
+                'mimes:jpeg,png,jpg,webp,pdf',
+                'max:5120'
+            ],
             'notas'            => ['nullable', 'string', 'max:500'],
         ], [
-            'id_vendedor.required' => 'Debes seleccionar un vendedor.',
-            'metodo_pago.required' => 'Debes seleccionar el método de pago.',
+            'id_vendedor.required'      => 'Debes seleccionar un vendedor.',
+            'metodo_pago.required'      => 'Debes seleccionar el método de pago.',
+            'metodo_pago.in'            => 'El método de pago debe ser Efectivo o Transferencia Bancaria.',
+            'comprobante_pago.required' => 'El comprobante o recibo es obligatorio para pagos por Transferencia Bancaria.',
+            'comprobante_pago.mimes'    => 'El comprobante debe ser una imagen (JPG, PNG, WEBP) o un documento PDF.',
+            'comprobante_pago.max'      => 'El comprobante no debe superar los 5MB.',
         ]);
 
         $comprobantePath = null;
-        if ($request->hasFile('comprobante_pago')) {
+        if ($isTransferencia && $request->hasFile('comprobante_pago')) {
             $archivo = $request->file('comprobante_pago');
             $nombreArchivo = 'liquidacion_vendedor_' . $validated['id_vendedor'] . '_' . now()->format('Ymd_His') . '.' . $archivo->getClientOriginalExtension();
             $comprobantePath = $archivo->storeAs('comprobantes_liquidaciones', $nombreArchivo, 'public');
@@ -288,7 +478,7 @@ class ComisionVendedorController extends Controller
         if ($cantidad === 0) {
             return response()->json([
                 'success' => false,
-                'message' => 'No se encontraron comisiones pendientes para liquidar con los criterios seleccionados.',
+                'message' => 'El saldo neto es $0.00 o negativo; no se realizará ningún pago.',
             ], 422);
         }
 

@@ -5,8 +5,6 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
-use Illuminate\Support\Facades\Storage;
-
 class ComisionVendedor extends Model
 {
     use HasFactory;
@@ -57,7 +55,7 @@ class ComisionVendedor extends Model
         if (!$this->comprobante_pago) {
             return null;
         }
-        return Storage::disk('public')->url($this->comprobante_pago);
+        return asset('storage/' . $this->comprobante_pago);
     }
 
     public function scopePendientes($query) { return $query->where('estado', 'Pendiente'); }

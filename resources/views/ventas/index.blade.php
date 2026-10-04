@@ -333,7 +333,7 @@
 
             <!-- TABLA -->
             <div class="overflow-x-auto">
-                <table class="w-full text-left text-xs min-w-[1050px]">
+                <table class="w-full text-left text-xs min-w-[1120px]">
                     <thead class="bg-slate-50/80 text-[10px] uppercase font-bold tracking-wider text-slate-400 border-b border-slate-200">
                         <tr>
                             <th class="px-5 py-3.5 w-24 whitespace-nowrap">Folio</th>
@@ -343,6 +343,7 @@
                             <th class="px-4 py-3.5 whitespace-nowrap">Método de Pago</th>
                             <th class="px-4 py-3.5 text-center whitespace-nowrap">Estado Actual</th>
                             <th class="px-4 py-3.5 text-right whitespace-nowrap w-24">Total</th>
+                            <th class="px-4 py-3.5 text-right whitespace-nowrap w-28">Comisión</th>
                             <th class="px-5 py-3.5 text-right whitespace-nowrap">Acciones</th>
                         </tr>
                     </thead>
@@ -511,6 +512,17 @@
                                     ${{ number_format($venta->total, 2) }}
                                 </td>
 
+                                <!-- COMISIÓN -->
+                                <td class="px-4 py-3.5 text-right whitespace-nowrap">
+                                    @if((float) ($venta->total_comision ?? 0) > 0)
+                                        <span class="font-black text-emerald-700">
+                                            ${{ number_format($venta->total_comision, 2) }}
+                                        </span>
+                                    @else
+                                        <span class="text-slate-400">—</span>
+                                    @endif
+                                </td>
+
                                 <!-- ACCIONES -->
                                 <td class="px-5 py-3.5 text-right whitespace-nowrap">
                                     <div class="flex items-center justify-end gap-1.5 flex-nowrap">
@@ -579,7 +591,7 @@
                             </tr>
                         @empty
                             <tr>
-                                <td colspan="8" class="py-16 text-center text-slate-400">
+                                <td colspan="9" class="py-16 text-center text-slate-400">
                                     <div class="w-14 h-14 rounded-full bg-slate-50 text-slate-300 flex items-center justify-center mx-auto mb-3 border border-slate-100">
                                         <i class="fas fa-folder-open text-2xl"></i>
                                     </div>

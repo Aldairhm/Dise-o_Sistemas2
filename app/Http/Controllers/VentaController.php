@@ -24,7 +24,7 @@ class VentaController extends Controller
     {
         // 1. Filtros recibidos
         $tieneFiltroFecha = $request->filled('desde') || $request->filled('hasta');
-        
+
         $hasta = $request->filled('hasta')
             ? $request->input('hasta')
             : now()->toDateString();
@@ -70,27 +70,27 @@ class VentaController extends Controller
                     $q->orWhere('id', (int) $cleanId);
                 }
                 $q->orWhere('nombre_cliente', 'like', "%{$busqueda}%")
-                  ->orWhere('departamento', 'like', "%{$busqueda}%")
-                  ->orWhere('municipio', 'like', "%{$busqueda}%")
-                  ->orWhere('telefono', 'like', "%{$busqueda}%")
-                  ->orWhere('observaciones', 'like', "%{$busqueda}%")
-                  ->orWhereHas('usuario', function ($u) use ($busqueda) {
-                      $u->where('nombre_real', 'like', "%{$busqueda}%")
-                        ->orWhere('username', 'like', "%{$busqueda}%");
-                  });
+                    ->orWhere('departamento', 'like', "%{$busqueda}%")
+                    ->orWhere('municipio', 'like', "%{$busqueda}%")
+                    ->orWhere('telefono', 'like', "%{$busqueda}%")
+                    ->orWhere('observaciones', 'like', "%{$busqueda}%")
+                    ->orWhereHas('usuario', function ($u) use ($busqueda) {
+                        $u->where('nombre_real', 'like', "%{$busqueda}%")
+                            ->orWhere('username', 'like', "%{$busqueda}%");
+                    });
 
                 $salidasVentasIds = Salida::where(function ($sq) use ($busqueda) {
                     $sq->where('nombre_cliente', 'like', "%{$busqueda}%")
-                       ->orWhere('direccion', 'like', "%{$busqueda}%")
-                       ->orWhere('telefono', 'like', "%{$busqueda}%");
+                        ->orWhere('direccion', 'like', "%{$busqueda}%")
+                        ->orWhere('telefono', 'like', "%{$busqueda}%");
                 })->where('observaciones', 'like', 'Venta #%')
-                  ->pluck('observaciones')
-                  ->map(function ($obs) {
-                      if (preg_match('/Venta #(\d+)/', $obs, $m)) {
-                          return (int) $m[1];
-                      }
-                      return null;
-                  })->filter()->toArray();
+                    ->pluck('observaciones')
+                    ->map(function ($obs) {
+                        if (preg_match('/Venta #(\d+)/', $obs, $m)) {
+                            return (int) $m[1];
+                        }
+                        return null;
+                    })->filter()->toArray();
 
                 if (!empty($salidasVentasIds)) {
                     $q->orWhereIn('id', $salidasVentasIds);
@@ -225,6 +225,7 @@ class VentaController extends Controller
                 $v->direccion_entrega = $primeraSalida?->direccion;
                 $v->telefono_entrega = $v->telefono ?? $primeraSalida?->telefono ?? $v->usuario?->telefono;
                 $v->precio_envio = (float) ($v->precio_envio ?? $primeraSalida?->precio_envio ?? 0);
+                $v->total_comision = (float) $salidasDeVenta->sum('comision_aplicada');
             }
         }
 
@@ -276,14 +277,14 @@ class VentaController extends Controller
                     $q->orWhere('id', (int) $cleanId);
                 }
                 $q->orWhere('nombre_cliente', 'like', "%{$busqueda}%")
-                  ->orWhere('departamento', 'like', "%{$busqueda}%")
-                  ->orWhere('municipio', 'like', "%{$busqueda}%")
-                  ->orWhere('telefono', 'like', "%{$busqueda}%")
-                  ->orWhere('observaciones', 'like', "%{$busqueda}%")
-                  ->orWhereHas('usuario', function ($u) use ($busqueda) {
-                      $u->where('nombre_real', 'like', "%{$busqueda}%")
-                        ->orWhere('username', 'like', "%{$busqueda}%");
-                  });
+                    ->orWhere('departamento', 'like', "%{$busqueda}%")
+                    ->orWhere('municipio', 'like', "%{$busqueda}%")
+                    ->orWhere('telefono', 'like', "%{$busqueda}%")
+                    ->orWhere('observaciones', 'like', "%{$busqueda}%")
+                    ->orWhereHas('usuario', function ($u) use ($busqueda) {
+                        $u->where('nombre_real', 'like', "%{$busqueda}%")
+                            ->orWhere('username', 'like', "%{$busqueda}%");
+                    });
             });
         }
 
@@ -370,11 +371,11 @@ class VentaController extends Controller
                     $q->orWhere('id', (int) $cleanId);
                 }
                 $q->orWhere('nombre_cliente', 'like', "%{$busqueda}%")
-                  ->orWhere('departamento', 'like', "%{$busqueda}%")
-                  ->orWhere('municipio', 'like', "%{$busqueda}%")
-                  ->orWhere('telefono', 'like', "%{$busqueda}%")
-                  ->orWhere('observaciones', 'like', "%{$busqueda}%")
-                  ->orWhere('metodo_pago', 'like', "%{$busqueda}%");
+                    ->orWhere('departamento', 'like', "%{$busqueda}%")
+                    ->orWhere('municipio', 'like', "%{$busqueda}%")
+                    ->orWhere('telefono', 'like', "%{$busqueda}%")
+                    ->orWhere('observaciones', 'like', "%{$busqueda}%")
+                    ->orWhere('metodo_pago', 'like', "%{$busqueda}%");
             });
         }
 
@@ -431,8 +432,8 @@ class VentaController extends Controller
             $extraVenta = (float) $salidasDeVenta->sum('costo_extra');
             if ($extraVenta <= 0) {
                 foreach ($v->detalles as $det) {
-                    $subBase = (int)$det->cantidad * (float)$det->precio_unitario;
-                    $diff = (float)$det->subtotal - $subBase;
+                    $subBase = (int) $det->cantidad * (float) $det->precio_unitario;
+                    $diff = (float) $det->subtotal - $subBase;
                     if ($diff > 0) {
                         $extraVenta += $diff;
                     }
@@ -505,7 +506,7 @@ class VentaController extends Controller
         $user = Auth::user();
 
         // Verificar pertenencia si no es admin
-        if ($user->rol !== 'admin' && (int)$venta->id_usuario !== (int)$user->id) {
+        if ($user->rol !== 'admin' && (int) $venta->id_usuario !== (int) $user->id) {
             return response()->json([
                 'success' => false,
                 'message' => 'No tienes permiso para gestionar esta venta.',
@@ -541,11 +542,10 @@ class VentaController extends Controller
                 }
             }
 
-            // Anular comisiones
+            // Anular comisiones con lógica de descuento y deducción de envío
             $salidasIds = Salida::where('observaciones', 'like', "Venta #{$venta->id}%")->pluck('id');
             if ($salidasIds->isNotEmpty()) {
-                ComisionVendedor::whereIn('id_salida', $salidasIds)
-                    ->update(['estado' => 'Cancelada']);
+                $this->cancelarComisionesVenta($venta, $salidasIds, 'Cancelada');
             }
 
             // Actualizar salidas asociadas
@@ -580,7 +580,7 @@ class VentaController extends Controller
             ->where('estado', 1)
             ->orderBy('id', 'desc')
             ->get(['id', 'id_producto', 'sku', 'nombre_variante', 'precio_venta', 'stock', 'imagen'])
-            ->map(fn (Variante $variante) => [
+            ->map(fn(Variante $variante) => [
                 'id' => $variante->id,
                 'producto' => $variante->producto?->nombre ?? 'Producto sin nombre',
                 'variante' => $variante->nombre_variante,
@@ -698,7 +698,7 @@ class VentaController extends Controller
 
                 // Cálculo financiero de la venta incorporando posibles costos extras por producto y costo de envío
                 $subtotalGeneral = $lineas->sum(
-                    fn ($l) => ((float) $l['cantidad'] * (float) $l['precio_unitario']) + max(0, (float) ($l['costo_extra'] ?? 0))
+                    fn($l) => ((float) $l['cantidad'] * (float) $l['precio_unitario']) + max(0, (float) ($l['costo_extra'] ?? 0))
                 );
                 $costoEnvio = max(0, (float) ($validated['precio_envio'] ?? 0));
                 $descuentoGeneral = min($subtotalGeneral + $costoEnvio, max(0, (float) ($validated['descuento'] ?? 0)));
@@ -793,9 +793,15 @@ class VentaController extends Controller
 
                 // C. Iterar sobre el carrito e insertar en `detalleventa` y `salida`
                 $comisionService = app(\App\Services\ComisionService::class);
-                $usuarioVendedor = User::find($userId);
+                $comisionesBrutas = $lineas->map(function ($linea) use ($variantes, $comisionService) {
+                    $variante = $variantes->get($linea['id_variante']);
+                    $comisionUnitaria = $comisionService->resolverComisionUnitaria($variante);
 
-                foreach ($lineas as $linea) {
+                    return $comisionService->calcularMonto($comisionUnitaria, (int) $linea['cantidad']);
+                })->values();
+                $comisionBrutaTotal = (float) $comisionesBrutas->sum();
+
+                foreach ($lineas as $indiceLinea => $linea) {
                     $variante = $variantes->get($linea['id_variante']);
                     $cantidad = (int) $linea['cantidad'];
                     $precioUnitario = (float) $linea['precio_unitario'];
@@ -818,7 +824,11 @@ class VentaController extends Controller
 
                     // Resolver comisión fija por unidad del producto/variante ($)
                     $comisionUnitaria = $comisionService->resolverComisionUnitaria($variante);
-                    $comisionTotal = $comisionService->calcularMonto($comisionUnitaria, $cantidad);
+                    $comisionBruta = (float) $comisionesBrutas[$indiceLinea];
+                    $descuentoComision = $comisionBrutaTotal > 0
+                        ? round($descuentoGeneral * ($comisionBruta / $comisionBrutaTotal), 2)
+                        : 0.0;
+                    $comisionTotal = round($comisionBruta - $descuentoComision, 2);
 
                     // 2. Generar el registro de salida asociado para control de inventario con costo_extra, precio_envio y datos de entrega
                     $salida = Salida::create([
@@ -851,10 +861,14 @@ class VentaController extends Controller
                     $variante->decrement('stock', $cantidad);
 
                     // 4. Si la variante tiene comisión asignada, registrar en `comision_vendedor` para el vendedor asignado
-                    if ($comisionTotal > 0) {
+                    if ($comisionBruta > 0) {
                         $nombreProd = $variante->producto->nombre ?? 'Producto';
                         $nombreVar = $variante->nombre_variante ?? '';
                         $descConcepto = "Venta #{$venta->id} ({$cantidad}x {$nombreProd} - {$nombreVar})";
+                        $notasComision = $descuentoComision > 0
+                            ? 'Descuento de venta aplicado a comisión: $' . number_format($descuentoComision, 2)
+                                . '; comisión bruta: $' . number_format($comisionBruta, 2) . '.'
+                            : null;
 
                         ComisionVendedor::create([
                             'id_vendedor' => $vendedorVentaId,
@@ -862,7 +876,8 @@ class VentaController extends Controller
                             'concepto' => $descConcepto,
                             'monto' => $comisionTotal,
                             'porcentaje' => $comisionUnitaria,
-                            'estado' => 'Pendiente',
+                            'estado' => $comisionTotal > 0 ? 'Pendiente' : 'Cancelada',
+                            'notas' => $notasComision,
                             'fecha_registro' => now(),
                         ]);
                     }
@@ -1028,11 +1043,10 @@ class VentaController extends Controller
                     }
                 }
 
-                // Anular comisiones de vendedores asociadas a las salidas de esta venta
+                // Anular comisiones con lógica de descuento y deducción de envío
                 $salidasIds = Salida::where('observaciones', 'like', "Venta #{$venta->id}%")->pluck('id');
                 if ($salidasIds->isNotEmpty()) {
-                    ComisionVendedor::whereIn('id_salida', $salidasIds)
-                        ->update(['estado' => 'Cancelada']);
+                    $this->cancelarComisionesVenta($venta, $salidasIds, $nuevoEstado);
                 }
             }
 
@@ -1085,7 +1099,7 @@ class VentaController extends Controller
             ->findOrFail($id);
 
         $user = Auth::user();
-        if ($user && $user->rol !== 'admin' && (int)$venta->id_usuario !== (int)$user->id) {
+        if ($user && $user->rol !== 'admin' && (int) $venta->id_usuario !== (int) $user->id) {
             if (request()->wantsJson() || request()->ajax()) {
                 return response()->json([
                     'success' => false,
@@ -1116,7 +1130,7 @@ class VentaController extends Controller
             $varComision = (float) ($detalle->variante?->comision ?? 0);
             $comisionUnitaria = $prodComision > 0 ? $prodComision : $varComision;
             $detalle->comision_unitaria = $comisionUnitaria;
-            $detalle->comision_total = $comisionUnitaria * (int)$detalle->cantidad;
+            $detalle->comision_total = $comisionUnitaria * (int) $detalle->cantidad;
         }
 
         $venta->total_costo_extra = $totalCostoExtra;
@@ -1155,7 +1169,7 @@ class VentaController extends Controller
             ->findOrFail($id);
 
         $user = Auth::user();
-        if ($user && $user->rol !== 'admin' && (int)$venta->id_usuario !== (int)$user->id) {
+        if ($user && $user->rol !== 'admin' && (int) $venta->id_usuario !== (int) $user->id) {
             abort(403, 'No tienes permiso para imprimir los comprobantes de esta venta.');
         }
 
@@ -1327,11 +1341,15 @@ class VentaController extends Controller
         $veintis = ['', 'VEINTIÚN', 'VEINTIDÓS', 'VEINTITRÉS', 'VEINTICUATRO', 'VEINTICINCO', 'VEINTISÉIS', 'VEINTISIETE', 'VEINTIOCHO', 'VEINTINUEVE'];
         $centenas = ['', 'CIENTO', 'DOSCIENTOS', 'TRESCIENTOS', 'CUATROCIENTOS', 'QUINIENTOS', 'SEISCIENTOS', 'SETECIENTOS', 'OCHOCIENTOS', 'NOVECIENTOS'];
 
-        if ($numero == 100) return 'CIEN';
-        if ($numero < 10) return $unidades[$numero];
-        if ($numero < 20) return $decenas1[$numero - 10];
+        if ($numero == 100)
+            return 'CIEN';
+        if ($numero < 10)
+            return $unidades[$numero];
+        if ($numero < 20)
+            return $decenas1[$numero - 10];
         if ($numero < 30) {
-            if ($numero == 20) return 'VEINTE';
+            if ($numero == 20)
+                return 'VEINTE';
             return $veintis[$numero - 20];
         }
         if ($numero < 100) {
@@ -1358,5 +1376,93 @@ class VentaController extends Controller
         }
 
         return (string) $numero;
+    }
+
+    // ─────────────────────────────────────────────────────────────────────────
+    // HELPER — Cancela comisiones aplicando reglas de envío y descuento
+    // ─────────────────────────────────────────────────────────────────────────
+
+    /**
+     * Cancela las comisiones pendientes de una venta según las reglas de negocio:
+     *
+    *  - Devolución en tienda : reduce la comisión a $0.
+    *  - Otras cancelaciones : aplica el descuento proporcional si corresponde.
+     *  - Envío  : además crea un registro "Cancelada" adicional por el 50 % del precio de envío.
+     *  - Descuento : se resta del monto a cancelar de forma proporcional entre todas las comisiones.
+     *
+     * @param  \App\Models\Venta                       $venta
+     * @param  \Illuminate\Support\Collection          $salidasIds   IDs de salidas ligadas a la venta
+     * @param  string                                  $motivo       Estado que originó la cancelación
+     */
+    private function cancelarComisionesVenta(Venta $venta, $salidasIds, string $motivo = 'Cancelada'): void
+    {
+        $devolucionPuntoVenta = $motivo === 'Devolución' && $venta->tipo_venta === 'Tienda';
+        $comisionesQuery = ComisionVendedor::whereIn('id_salida', $salidasIds);
+
+        if ($devolucionPuntoVenta) {
+            $comisionesQuery->whereIn('estado', ['Pendiente', 'Pagada', 'Cancelada']);
+        } else {
+            $comisionesQuery->where('estado', 'Pendiente');
+        }
+
+        $comisiones = $comisionesQuery->get();
+
+        // Calcular el descuento real aplicado en la venta
+        // descuento = (suma de subtotales de líneas + envío) - total cobrado
+        $subtotalLineas = $venta->detalles->sum('subtotal');
+        $descuentoVenta = max(0.0, (float) $subtotalLineas + (float) $venta->precio_envio - (float) $venta->total);
+        $totalComision = (float) $comisiones->sum('monto');
+
+        foreach ($comisiones as $comision) {
+            $montoOriginal = (float) $comision->monto;
+            $montoFinal = $montoOriginal;
+            $notaExtra = '';
+
+            if ($devolucionPuntoVenta) {
+                $montoFinal = 0.0;
+                $montoAnterior = $montoOriginal < 0
+                    ? '-$' . number_format(abs($montoOriginal), 2)
+                    : '$' . number_format($montoOriginal, 2);
+                $notaExtra = ' Ajuste POS por devolución: saldo anterior '
+                    . $montoAnterior . ' -> $0.00.';
+            } elseif (
+                !str_contains((string) $comision->notas, 'Descuento de venta aplicado a comisión:')
+                && $descuentoVenta > 0
+                && $totalComision > 0
+            ) {
+                $proporcion = $montoFinal / $totalComision;
+                $deducDesc = round($descuentoVenta * $proporcion, 2);
+                $montoFinal -= $deducDesc;
+                $notaExtra = " Descuento descontado: $" . number_format($deducDesc, 2) . '.';
+            }
+
+            $comision->update([
+                'monto' => $montoFinal,
+                'estado' => 'Cancelada',
+                'notas' => ($comision->notas ? $comision->notas . ' | ' : '')
+                    . "Cancelada por {$motivo}.{$notaExtra}",
+            ]);
+        }
+
+        // ── Devolución de envío: aplicar el 50 % del costo como ajuste negativo ──
+        if ($motivo === 'Devolución' && $venta->tipo_venta === 'Envio' && (float) $venta->precio_envio > 0) {
+            $montoDeduccion = -round((float) $venta->precio_envio * 0.50, 2);
+            $folioVenta = 'VNT-' . str_pad($venta->id, 5, '0', STR_PAD_LEFT);
+
+            ComisionVendedor::create([
+                'id_vendedor' => $venta->id_usuario,
+                'id_salida' => $salidasIds->first(),
+                'concepto' => "Deducción envío - Devolución {$folioVenta}",
+                'monto' => $montoDeduccion,
+                'porcentaje' => 0.00,
+                'estado' => 'Cancelada',
+                'notas' => "Deducción por devolución de envío: -$"
+                    . number_format(abs($montoDeduccion), 2)
+                    . " (50 % del costo de envío: $"
+                    . number_format((float) $venta->precio_envio, 2)
+                    . ').',
+                'fecha_registro' => now(),
+            ]);
+        }
     }
 }

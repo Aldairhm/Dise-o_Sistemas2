@@ -134,5 +134,7 @@ Route::middleware('auth')->group(function () {
 
     // ── Comisiones: vendedor ve las suyas / admin ve todo ─────────────────
     Route::get('/comisiones',              [ComisionVendedorController::class, 'index'])->name('comisiones.index');
+    Route::get('/comisiones/ajustes',      [ComisionVendedorController::class, 'ajustes'])->name('comisiones.ajustes');
     Route::get('/comisiones/por-vendedor', [ComisionVendedorController::class, 'porVendedor'])->name('comisiones.porVendedor');
+    Route::get('/comisiones/por-semana',   [ComisionVendedorController::class, 'porSemana'])->name('comisiones.porSemana');
 });

@@ -43,29 +43,23 @@
             @endif
         </div>
 
-        <!-- SUB-NAV / PESTAÑAS -->
-        <nav class="flex flex-wrap items-center gap-2 rounded-2xl border border-slate-200 bg-white p-1.5 shadow-sm" aria-label="Secciones">
-            <a href="{{ route('comisiones.index') }}" class="rounded-xl bg-blue-600 px-4 py-2 text-sm font-bold text-white shadow-sm flex items-center gap-2 transition-all">
-                <i class="fas fa-coins"></i>
-                <span>Comisiones</span>
-            </a>
+        <!-- SUB-NAV / PESTAÑAS (SOLO COMISIONES) -->
+        <nav class="flex flex-wrap items-center gap-2 rounded-2xl border border-slate-200 bg-white p-1.5 shadow-sm" aria-label="Secciones de comisiones">
             <a href="{{ route('comisiones.porVendedor') }}" class="rounded-xl px-4 py-2 text-sm font-bold text-slate-600 hover:bg-slate-50 hover:text-blue-600 transition-all flex items-center gap-2">
                 <i class="fas fa-users-gear text-slate-400"></i>
                 <span>Comisiones por Vendedor</span>
             </a>
-            @if($isAdmin)
-            <a href="{{ route('ventas.index') }}" class="rounded-xl px-4 py-2 text-sm font-bold text-slate-600 hover:bg-slate-50 hover:text-blue-600 transition-all flex items-center gap-2">
-                <i class="fas fa-chart-line text-slate-400"></i>
-                <span>Dashboard de Ventas</span>
+            <a href="{{ route('comisiones.index') }}" class="rounded-xl bg-blue-600 px-4 py-2 text-sm font-bold text-white shadow-sm flex items-center gap-2 transition-all">
+                <i class="fas fa-coins"></i>
+                <span>Comisiones</span>
             </a>
-            <a href="{{ route('ventas.pedidos') }}" class="rounded-xl px-4 py-2 text-sm font-bold text-slate-600 hover:bg-slate-50 hover:text-blue-600 transition-all flex items-center gap-2">
-                <i class="fas fa-boxes-packing text-slate-400"></i>
-                <span>Control de Envíos</span>
+            <a href="{{ route('comisiones.ajustes') }}" class="rounded-xl px-4 py-2 text-sm font-bold text-slate-600 hover:bg-slate-50 hover:text-blue-600 transition-all flex items-center gap-2">
+                <i class="fas fa-arrows-rotate text-slate-400"></i>
+                <span>Ajustes</span>
             </a>
-            @endif
-            <a href="{{ route('ventas.create') }}" class="rounded-xl px-4 py-2 text-sm font-bold text-slate-600 hover:bg-slate-50 hover:text-blue-600 transition-all flex items-center gap-2">
-                <i class="fas fa-cash-register text-slate-400"></i>
-                <span>Terminal de Ventas</span>
+            <a href="{{ route('comisiones.porSemana') }}" class="rounded-xl px-4 py-2 text-sm font-bold text-slate-600 hover:bg-slate-50 hover:text-blue-600 transition-all flex items-center gap-2">
+                <i class="fas fa-calendar-week text-slate-400"></i>
+                <span>Comisiones por Semana</span>
             </a>
         </nav>
 
@@ -115,8 +109,6 @@
                         <option value="todos">Todos los métodos</option>
                         <option value="Efectivo" {{ request('metodo_pago') === 'Efectivo' ? 'selected' : '' }}>Efectivo</option>
                         <option value="Transferencia Bancaria" {{ request('metodo_pago') === 'Transferencia Bancaria' ? 'selected' : '' }}>Transferencia Bancaria</option>
-                        <option value="Cheque" {{ request('metodo_pago') === 'Cheque' ? 'selected' : '' }}>Cheque</option>
-                        <option value="Billetera Digital" {{ request('metodo_pago') === 'Billetera Digital' ? 'selected' : '' }}>Billetera Digital</option>
                     </select>
                 </div>
 
@@ -335,24 +327,28 @@
             loadingBox.classList.add('hidden');
 
             if (data.success && data.cantidad > 0) {
-                document.getElementById('liquidarTotalMonto').textContent = '$' + formatNum(data.total);
+                document.getElementById('liquidarTotalMonto').textContent = '$' + formatNum(Math.max(0, Number(data.total)));
                 document.getElementById('liquidarCountBadge').textContent = `${data.cantidad} comisiones pendientes`;
+                if (btnSubmit) btnSubmit.disabled = Number(data.total) <= 0;
 
                 let html = '';
                 data.comisiones.forEach(c => {
+                    const monto = Number(c.monto);
+                    const esNegativo = monto < 0;
+                    const montoTexto = esNegativo ? '-$' + formatNum(Math.abs(monto)) : '$' + formatNum(monto);
                     html += `
-                        <label class="flex items-center justify-between p-2 bg-white rounded-lg border border-emerald-100 text-xs hover:bg-emerald-50/50 cursor-pointer">
+                        <label class="flex items-center justify-between p-2 bg-white rounded-lg border ${esNegativo ? 'border-rose-200 bg-rose-50/40 cursor-not-allowed' : 'border-emerald-100 hover:bg-emerald-50/50 cursor-pointer'} text-xs">
                             <div class="flex items-center gap-2 overflow-hidden">
-                                <input type="checkbox" name="comisiones_ids[]" value="${c.id}" checked onchange="recalcularTotalSeleccionado()" class="rounded border-emerald-300 text-emerald-600 focus:ring-emerald-500">
-                                <span class="truncate font-medium text-slate-800">${c.concepto}</span>
+                                <input type="checkbox" name="comisiones_ids[]" value="${c.id}" checked ${esNegativo ? 'disabled' : ''} onchange="recalcularTotalSeleccionado()" class="rounded border-emerald-300 text-emerald-600 focus:ring-emerald-500">
+                                <span class="truncate font-medium text-slate-800">${c.concepto}${esNegativo ? ' · Ajuste obligatorio' : ''}</span>
                             </div>
-                            <span class="font-extrabold text-emerald-700 ml-2 flex-shrink-0" data-monto="${c.monto}">$${formatNum(c.monto)}</span>
+                            <span class="font-extrabold ${esNegativo ? 'text-rose-700' : 'text-emerald-700'} ml-2 flex-shrink-0" data-monto="${monto}">${montoTexto}</span>
                         </label>
                     `;
                 });
                 lista.innerHTML = html;
                 resumenBox.classList.remove('hidden');
-                if (btnSubmit) btnSubmit.disabled = false;
+                if (btnSubmit) btnSubmit.disabled = Number(data.total) <= 0;
             } else {
                 emptyBox.classList.remove('hidden');
                 if (btnSubmit) btnSubmit.disabled = true;
@@ -377,7 +373,10 @@
                 total += parseFloat(montoEl.dataset.monto || 0);
             }
         });
+        total = Math.max(0, total);
         document.getElementById('liquidarTotalMonto').textContent = '$' + formatNum(total);
+        const btnSubmit = document.getElementById('btnConfirmLiquidar');
+        if (btnSubmit) btnSubmit.disabled = total <= 0;
         document.getElementById('liquidarCountBadge').textContent = `${checkboxes.length} seleccionadas`;
     }
 
@@ -462,8 +461,12 @@
     function openLiquidarModal() {
         document.getElementById('modalLiquidar').classList.remove('hidden');
         document.getElementById('formLiquidar').reset();
-        document.getElementById('liquidarResumenBox').classList.add('hidden');
-        document.getElementById('liquidarEmptyBox').classList.add('hidden');
+        if (typeof deseleccionarVendedorLiquidar === 'function') {
+            deseleccionarVendedorLiquidar();
+        }
+        if (typeof handleMetodoPagoLiquidar === 'function') {
+            handleMetodoPagoLiquidar('Efectivo');
+        }
     }
 
     function closeLiquidarModal() {
@@ -472,27 +475,70 @@
 
     document.getElementById('formLiquidar')?.addEventListener('submit', async function(e) {
         e.preventDefault();
+        if (typeof clearAllFieldErrors === 'function') clearAllFieldErrors('formLiquidar');
+
         const vendedorId = document.getElementById('liquidarVendedor').value;
+        let valid = true;
 
         if (!vendedorId) {
-            Swal.fire({ icon: 'warning', title: 'Selecciona un vendedor', showConfirmButton: false, timer: 1800 });
+            if (typeof showFieldError === 'function') showFieldError('liquidarVendedor', 'Debes seleccionar un vendedor para continuar.');
+            document.getElementById('liquidarVendedor-error')?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            valid = false;
+        }
+
+        const metodoPago = document.getElementById('liquidarMetodoPago').value;
+        const comprobante = document.getElementById('liquidarComprobante').files[0];
+        if (metodoPago === 'Transferencia Bancaria') {
+            if (!comprobante) {
+                if (typeof showFieldError === 'function') showFieldError('liquidarComprobante', 'El comprobante es obligatorio para transferencias bancarias.');
+                document.getElementById('liquidarComprobante-error')?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                valid = false;
+            } else {
+                const allowedExtensions = ['jpg', 'jpeg', 'png', 'webp', 'pdf'];
+                const fileExt = comprobante.name.split('.').pop().toLowerCase();
+                if (!allowedExtensions.includes(fileExt)) {
+                    if (typeof showFieldError === 'function') showFieldError('liquidarComprobante', 'El comprobante debe ser una imagen (JPG, PNG, WEBP) o un documento PDF.');
+                    valid = false;
+                } else if (comprobante.size > 5 * 1024 * 1024) {
+                    if (typeof showFieldError === 'function') showFieldError('liquidarComprobante', 'El comprobante no debe superar el límite de 5MB.');
+                    valid = false;
+                }
+            }
+        }
+
+        if (!valid) return;
+
+        const checkboxes = document.querySelectorAll('input[name="comisiones_ids[]"]:checked');
+        if (checkboxes.length === 0) {
+            Swal.fire({
+                icon: 'warning',
+                title: 'Sin comisiones seleccionadas',
+                text: 'Debes seleccionar al menos una comisión pendiente para proceder con el pago.',
+                confirmButtonColor: '#059669',
+            });
             return;
         }
 
         const formData = new FormData();
         formData.append('id_vendedor', vendedorId);
-        formData.append('metodo_pago', document.getElementById('liquidarMetodoPago').value);
+        formData.append('metodo_pago', metodoPago);
         formData.append('referencia_pago', document.getElementById('liquidarReferencia').value || '');
         formData.append('notas', document.getElementById('liquidarNotas').value || '');
 
-        const comprobante = document.getElementById('liquidarComprobante').files[0];
-        if (comprobante) {
+        if (metodoPago === 'Transferencia Bancaria' && comprobante) {
             formData.append('comprobante_pago', comprobante);
         }
 
-        const checkboxes = document.querySelectorAll('input[name="comisiones_ids[]"]:checked');
         checkboxes.forEach(cb => {
             formData.append('comisiones_ids[]', cb.value);
+        });
+
+        Swal.fire({
+            title: 'Procesando pago...',
+            text: 'Por favor espera un momento',
+            allowOutsideClick: false,
+            allowEscapeKey: false,
+            didOpen: () => Swal.showLoading()
         });
 
         try {
@@ -507,7 +553,7 @@
                 Swal.fire({ icon: 'success', title: '¡Liquidación Completada!', text: data.message, timer: 2500, showConfirmButton: false });
                 aplicarFiltros();
             } else {
-                Swal.fire({ icon: 'warning', title: 'Sin cambios', text: data.message });
+                Swal.fire({ icon: 'error', title: 'Error', text: data.message || 'No se pudo procesar la liquidación.' });
             }
         } catch(e) {
             Swal.fire({ icon: 'error', title: 'Error', text: 'No se pudo procesar la liquidación.' });
@@ -518,11 +564,18 @@
 
     function openCreateModal() {
         document.getElementById('modalCreate').classList.remove('hidden');
+        document.getElementById('formCreate').reset();
+        if (typeof deseleccionarVendedorCreate === 'function') {
+            deseleccionarVendedorCreate();
+        }
     }
 
     function closeCreateModal() {
         document.getElementById('modalCreate').classList.add('hidden');
         document.getElementById('formCreate').reset();
+        if (typeof deseleccionarVendedorCreate === 'function') {
+            deseleccionarVendedorCreate();
+        }
     }
 
     function setConcepto(texto) {
@@ -531,10 +584,31 @@
 
     document.getElementById('formCreate')?.addEventListener('submit', async function(e) {
         e.preventDefault();
+        if (typeof clearAllFieldErrors === 'function') clearAllFieldErrors('formCreate');
+
+        const idVendedor = document.getElementById('createVendedor').value;
+        const concepto   = document.getElementById('createConcepto').value.trim();
+        const monto      = parseFloat(document.getElementById('createMonto').value);
+
+        let valid = true;
+        if (!idVendedor) {
+            if (typeof showFieldError === 'function') showFieldError('createVendedor', 'Debes seleccionar un vendedor para asignar el bono.');
+            valid = false;
+        }
+        if (!concepto) {
+            if (typeof showFieldError === 'function') showFieldError('createConcepto', 'El concepto del bono es obligatorio.');
+            valid = false;
+        }
+        if (isNaN(monto) || monto <= 0) {
+            if (typeof showFieldError === 'function') showFieldError('createMonto', 'El monto del bono es obligatorio y debe ser mayor a $0.');
+            valid = false;
+        }
+        if (!valid) return;
+
         const body = {
-            id_vendedor: document.getElementById('createVendedor').value,
-            concepto:    document.getElementById('createConcepto').value,
-            monto:       document.getElementById('createMonto').value,
+            id_vendedor: idVendedor,
+            concepto:    concepto,
+            monto:       monto,
             notas:       document.getElementById('createNotas').value || null,
         };
 

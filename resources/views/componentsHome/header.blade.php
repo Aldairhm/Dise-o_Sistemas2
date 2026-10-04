@@ -20,7 +20,7 @@
                     <a href="{{ Auth::check() && Auth::user()->rol === 'vendedor' ? route('ventas.create') : route('ventas.index') }}" class="text-sm font-medium text-gray-600 hover:text-blue-600 transition-colors flex items-center gap-2 {{ request()->routeIs('ventas.*') ? 'text-blue-600 font-bold' : '' }}"><i class="fas fa-cash-register"></i> Ventas</a>
                     <a href="{{ route('categorias.index') }}" class="text-sm font-medium text-gray-600 hover:text-blue-600 transition-colors flex items-center gap-2"><i class="fas fa-folder-open"></i> Categorías</a>              
                     <a href="{{ route('usuarios.index') }}" class="text-sm font-medium text-gray-600 hover:text-blue-600 transition-colors flex items-center gap-2"><i class="fas fa-users-gear"></i> Usuarios</a>
-                    <a href="{{ route('comisiones.index') }}" class="text-sm font-medium text-gray-600 hover:text-indigo-600 transition-colors flex items-center gap-2"><i class="fas fa-hand-holding-dollar"></i> Comisiones</a>
+                    <a href="{{ route('comisiones.porVendedor') }}" class="text-sm font-medium text-gray-600 hover:text-indigo-600 transition-colors flex items-center gap-2 {{ request()->routeIs('comisiones.*') ? 'text-indigo-600 font-bold' : '' }}"><i class="fas fa-hand-holding-dollar"></i> Comisiones</a>
                 </nav>
 
                  <!-- Icons -->
