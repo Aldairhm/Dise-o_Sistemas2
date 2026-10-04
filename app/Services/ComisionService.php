@@ -5,6 +5,7 @@ namespace App\Services;
 use App\Mail\ComisionPagadaMail;
 use App\Models\ComisionVendedor;
 use App\Models\User;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
@@ -56,17 +57,29 @@ class ComisionService
      * @param  int $idVendedor
      * @return \Illuminate\Database\Eloquent\Collection
      */
-    public function getPendientesVendedor(int $idVendedor)
+    public function getPendientesVendedor(int $idVendedor, ?string $fechaDesde = null, ?string $fechaHasta = null)
     {
         $pendientes = ComisionVendedor::with(['salida.variante.producto'])
             ->where('id_vendedor', $idVendedor)
             ->where('estado', 'Pendiente')
+            ->when($fechaDesde && $fechaHasta, function ($query) use ($fechaDesde, $fechaHasta) {
+                $query->whereBetween('fecha_registro', [
+                    Carbon::parse($fechaDesde)->startOfDay(),
+                    Carbon::parse($fechaHasta)->endOfDay(),
+                ]);
+            })
             ->get();
 
         $ajustesNegativos = ComisionVendedor::with(['salida.variante.producto'])
             ->where('id_vendedor', $idVendedor)
             ->whereIn('estado', ['Cancelada', 'Pendiente'])
             ->where('monto', '<', 0)
+            ->when($fechaDesde && $fechaHasta, function ($query) use ($fechaDesde, $fechaHasta) {
+                $query->whereBetween('fecha_registro', [
+                    Carbon::parse($fechaDesde)->startOfDay(),
+                    Carbon::parse($fechaHasta)->endOfDay(),
+                ]);
+            })
             ->get();
 
         return $pendientes->merge($ajustesNegativos)
@@ -92,7 +105,9 @@ class ComisionService
         string $metodoPago = 'Efectivo',
         ?string $referenciaPago = null,
         ?string $comprobantePath = null,
-        ?string $notas = null
+        ?string $notas = null,
+        ?string $fechaDesde = null,
+        ?string $fechaHasta = null
     ): int {
         $notasFin = $notas ?? 'Liquidación procesada.';
         $comisiones = DB::transaction(function () use (
@@ -101,11 +116,19 @@ class ComisionService
             $metodoPago,
             $referenciaPago,
             $comprobantePath,
-            $notasFin
+            $notasFin,
+            $fechaDesde,
+            $fechaHasta
         ) {
             $pendientesQuery = ComisionVendedor::where('id_vendedor', $idVendedor)
                 ->where('estado', 'Pendiente')
-                ->where('monto', '>=', 0);
+                ->where('monto', '>=', 0)
+                ->when($fechaDesde && $fechaHasta, function ($query) use ($fechaDesde, $fechaHasta) {
+                    $query->whereBetween('fecha_registro', [
+                        Carbon::parse($fechaDesde)->startOfDay(),
+                        Carbon::parse($fechaHasta)->endOfDay(),
+                    ]);
+                });
 
             if (!empty($comisionesIds)) {
                 $pendientesQuery->whereIn('id', $comisionesIds);
@@ -115,6 +138,12 @@ class ComisionService
             $ajustesNegativos = ComisionVendedor::where('id_vendedor', $idVendedor)
                 ->whereIn('estado', ['Cancelada', 'Pendiente'])
                 ->where('monto', '<', 0)
+                ->when($fechaDesde && $fechaHasta, function ($query) use ($fechaDesde, $fechaHasta) {
+                    $query->whereBetween('fecha_registro', [
+                        Carbon::parse($fechaDesde)->startOfDay(),
+                        Carbon::parse($fechaHasta)->endOfDay(),
+                    ]);
+                })
                 ->lockForUpdate()
                 ->get();
             $comisiones = $pendientes->merge($ajustesNegativos)->unique('id')->values();

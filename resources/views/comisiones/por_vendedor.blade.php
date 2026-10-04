@@ -45,6 +45,11 @@
         <!-- SUB-NAV / PESTAÑAS (SOLO COMISIONES) -->
         <nav class="flex flex-wrap items-center gap-2 rounded-2xl border border-slate-200 bg-white p-1.5 shadow-sm"
             aria-label="Secciones de comisiones">
+            <a href="{{ route('comisiones.porSemana') }}"
+                class="rounded-xl px-4 py-2 text-sm font-bold text-slate-600 hover:bg-slate-50 hover:text-blue-600 transition-all flex items-center gap-2">
+                <i class="fas fa-calendar-week text-slate-400"></i>
+                <span>Comisiones por Semana</span>
+            </a>
             <a href="{{ route('comisiones.porVendedor') }}"
                 class="rounded-xl bg-blue-600 px-4 py-2 text-sm font-bold text-white shadow-sm flex items-center gap-2 transition-all">
                 <i class="fas fa-users-gear"></i>
@@ -59,11 +64,6 @@
                 class="rounded-xl px-4 py-2 text-sm font-bold text-slate-600 hover:bg-slate-50 hover:text-blue-600 transition-all flex items-center gap-2">
                 <i class="fas fa-arrows-rotate text-slate-400"></i>
                 <span>Ajustes</span>
-            </a>
-            <a href="{{ route('comisiones.porSemana') }}"
-                class="rounded-xl px-4 py-2 text-sm font-bold text-slate-600 hover:bg-slate-50 hover:text-blue-600 transition-all flex items-center gap-2">
-                <i class="fas fa-calendar-week text-slate-400"></i>
-                <span>Comisiones por Semana</span>
             </a>
         </nav>
 

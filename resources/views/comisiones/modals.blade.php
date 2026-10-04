@@ -90,6 +90,7 @@
                 <div>
                     <h2 class="text-base font-bold text-slate-800">Liquidar y Pagar Comisiones</h2>
                     <p class="text-xs text-slate-500">Selecciona el vendedor y método de pago utilizado</p>
+                    <p id="liquidarAlcance" class="hidden mt-1 text-[11px] font-semibold text-emerald-700"></p>
                 </div>
             </div>
             <button type="button" onclick="closeLiquidarModal()"
@@ -114,6 +115,8 @@
         </div>
 
         <form id="formLiquidar" novalidate class="px-6 py-5 space-y-4 overflow-y-auto flex-1" enctype="multipart/form-data">
+            <input type="hidden" id="liquidarFechaDesde" name="fecha_desde" value="">
+            <input type="hidden" id="liquidarFechaHasta" name="fecha_hasta" value="">
 
             {{-- 1. Buscador y Selección de Vendedor --}}
             <div>
