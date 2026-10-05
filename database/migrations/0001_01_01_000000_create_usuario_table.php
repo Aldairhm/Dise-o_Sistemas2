@@ -13,6 +13,7 @@ return new class extends Migration {
             $table->string('username')->unique();
             $table->string('password');
             $table->string('rol');
+            $table->decimal('porcentaje_comision', 5, 2)->nullable()->default(null);
             $table->integer('estado')->default(1);
             $table->string('token')->nullable();
             $table->rememberToken();

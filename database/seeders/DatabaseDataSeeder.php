@@ -1711,6 +1711,8 @@ ENVIOS TODO EL PAIS',
             'salida',
             'detalleventa',
             'comision_vendedor',
+            'devoluciones',
+            'devolucion_detalles',
         ];
 
         foreach ($tables as $table) {

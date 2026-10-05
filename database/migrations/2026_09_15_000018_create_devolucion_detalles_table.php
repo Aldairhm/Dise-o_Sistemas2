@@ -14,11 +14,9 @@ return new class extends Migration
         Schema::create('devolucion_detalles', function (Blueprint $table) {
             $table->id();
             $table->foreignId('devolucion_id')->constrained('devoluciones')->cascadeOnDelete();
-            $table->unsignedBigInteger('id_variante');
+            $table->foreignId('id_variante')->constrained('variante')->cascadeOnDelete();
             $table->integer('cantidad');
             $table->timestamps();
-            
-            $table->foreign('id_variante')->references('id')->on('variante')->cascadeOnDelete();
         });
     }
 
