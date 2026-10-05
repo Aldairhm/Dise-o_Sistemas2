@@ -173,11 +173,7 @@ class Venta extends Model
      */
     public function getEstadoBloqueadoAttribute(): bool
     {
-        if (in_array($this->estado, ['Cancelada', 'Devolución', 'Cambio'])) {
-            return true;
-        }
-
-        if ($this->estado === 'Entregada' && !$this->puede_devolver) {
+        if (in_array($this->estado, ['Cancelada', 'Devolución', 'Cambio', 'Entregada'])) {
             return true;
         }
 
@@ -193,17 +189,17 @@ class Venta extends Model
             return [];
         }
 
-        // Si está Entregada y dentro del plazo de garantía, puede pasar a Devolución o Cambio
-        if ($this->estado === 'Entregada') {
-            return $this->puede_devolver ? ['Cambio', 'Devolución'] : [];
+        // Si ya está en ruta, únicamente puede avanzar a Entregada (estrictamente no se puede cancelar)
+        if ($this->estado === 'En ruta') {
+            return ['Entregada'];
         }
 
         // Flujo para envíos:
-        if ($this->tipo_venta === 'Envio') {
+        if (in_array($this->tipo_venta, ['Envio', 'Envío'])) {
             return match ($this->estado) {
                 'Pendiente' => ['Confirmada', 'Cancelada'],
                 'Confirmada' => ['En ruta', 'Cancelada'],
-                'En ruta' => ['Entregada', 'Cancelada', 'Devolución', 'Cambio'],
+                'En ruta' => ['Entregada'],
                 default => [],
             };
         }

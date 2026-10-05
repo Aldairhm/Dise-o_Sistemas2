@@ -4,7 +4,11 @@ namespace App\Services;
 
 use App\Mail\ComisionPagadaMail;
 use App\Models\ComisionVendedor;
+use App\Models\Devolucion;
+use App\Models\Salida;
 use App\Models\User;
+use App\Models\Venta;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
@@ -56,17 +60,29 @@ class ComisionService
      * @param  int $idVendedor
      * @return \Illuminate\Database\Eloquent\Collection
      */
-    public function getPendientesVendedor(int $idVendedor)
+    public function getPendientesVendedor(int $idVendedor, ?string $fechaDesde = null, ?string $fechaHasta = null)
     {
         $pendientes = ComisionVendedor::with(['salida.variante.producto'])
             ->where('id_vendedor', $idVendedor)
             ->where('estado', 'Pendiente')
+            ->when($fechaDesde && $fechaHasta, function ($query) use ($fechaDesde, $fechaHasta) {
+                $query->whereBetween('fecha_registro', [
+                    Carbon::parse($fechaDesde)->startOfDay(),
+                    Carbon::parse($fechaHasta)->endOfDay(),
+                ]);
+            })
             ->get();
 
         $ajustesNegativos = ComisionVendedor::with(['salida.variante.producto'])
             ->where('id_vendedor', $idVendedor)
             ->whereIn('estado', ['Cancelada', 'Pendiente'])
             ->where('monto', '<', 0)
+            ->when($fechaDesde && $fechaHasta, function ($query) use ($fechaDesde, $fechaHasta) {
+                $query->whereBetween('fecha_registro', [
+                    Carbon::parse($fechaDesde)->startOfDay(),
+                    Carbon::parse($fechaHasta)->endOfDay(),
+                ]);
+            })
             ->get();
 
         return $pendientes->merge($ajustesNegativos)
@@ -92,7 +108,9 @@ class ComisionService
         string $metodoPago = 'Efectivo',
         ?string $referenciaPago = null,
         ?string $comprobantePath = null,
-        ?string $notas = null
+        ?string $notas = null,
+        ?string $fechaDesde = null,
+        ?string $fechaHasta = null
     ): int {
         $notasFin = $notas ?? 'Liquidación procesada.';
         $comisiones = DB::transaction(function () use (
@@ -101,11 +119,19 @@ class ComisionService
             $metodoPago,
             $referenciaPago,
             $comprobantePath,
-            $notasFin
+            $notasFin,
+            $fechaDesde,
+            $fechaHasta
         ) {
             $pendientesQuery = ComisionVendedor::where('id_vendedor', $idVendedor)
                 ->where('estado', 'Pendiente')
-                ->where('monto', '>=', 0);
+                ->where('monto', '>=', 0)
+                ->when($fechaDesde && $fechaHasta, function ($query) use ($fechaDesde, $fechaHasta) {
+                    $query->whereBetween('fecha_registro', [
+                        Carbon::parse($fechaDesde)->startOfDay(),
+                        Carbon::parse($fechaHasta)->endOfDay(),
+                    ]);
+                });
 
             if (!empty($comisionesIds)) {
                 $pendientesQuery->whereIn('id', $comisionesIds);
@@ -115,6 +141,12 @@ class ComisionService
             $ajustesNegativos = ComisionVendedor::where('id_vendedor', $idVendedor)
                 ->whereIn('estado', ['Cancelada', 'Pendiente'])
                 ->where('monto', '<', 0)
+                ->when($fechaDesde && $fechaHasta, function ($query) use ($fechaDesde, $fechaHasta) {
+                    $query->whereBetween('fecha_registro', [
+                        Carbon::parse($fechaDesde)->startOfDay(),
+                        Carbon::parse($fechaHasta)->endOfDay(),
+                    ]);
+                })
                 ->lockForUpdate()
                 ->get();
             $comisiones = $pendientes->merge($ajustesNegativos)->unique('id')->values();
@@ -210,5 +242,122 @@ class ComisionService
             'cancelada' => (float) ($rows['Cancelada'] ?? 0),
             'total'     => (float) $rows->sum(),
         ];
+    }
+
+    /**
+     * Procesa el impacto financiero y de comisiones según la resolución tomada en la devolución:
+     * - reembolso_tienda: Reembolso de dinero (Producto intacto / Paquete no recibido).
+     *                     Anula o reduce comisiones de los artículos devueltos y, si es envío, deduce el 50% del costo de envío.
+     * - reembolso_cuarentena: Reembolso de dinero (Producto dañado de fábrica).
+     *                         Anula o reduce comisiones de los artículos devueltos (sin deducción de envío al vendedor).
+     * - cambio_tienda: Cambio físico (Talla/Color equivocado).
+     *                  Mantiene la comisión del vendedor e inserta nota de auditoría.
+     * - cambio_cuarentena: Cambio físico (Viene defectuoso).
+     *                      Mantiene la comisión del vendedor e inserta nota de auditoría.
+     *
+     * @param  \App\Models\Devolucion  $devolucion
+     * @param  \App\Models\Venta       $venta
+     * @param  string                  $tipoResolucion
+     * @param  array                   $productosDevueltos Array con ['id_variante' => int, 'cantidad' => int]
+     * @return void
+     */
+    public function procesarResolucionDevolucion(Devolucion $devolucion, Venta $venta, string $tipoResolucion, array $productosDevueltos): void
+    {
+        $folioVenta = 'VNT-' . str_pad($venta->id, 5, '0', STR_PAD_LEFT);
+        $folioDev = 'DEV-' . str_pad($devolucion->id, 5, '0', STR_PAD_LEFT);
+        $esReembolso = str_contains($tipoResolucion, 'reembolso');
+        $esCambio = str_contains($tipoResolucion, 'cambio');
+
+        $labelResolucion = match ($tipoResolucion) {
+            'reembolso_tienda' => 'Reembolso (Producto intacto / Paquete no recibido)',
+            'reembolso_cuarentena' => 'Reembolso (Producto dañado de fábrica)',
+            'cambio_tienda' => 'Cambio físico (Talla/Color equivocado)',
+            'cambio_cuarentena' => 'Cambio físico (Viene defectuoso)',
+            default => str_replace('_', ' ', $tipoResolucion),
+        };
+
+        // Salidas asociadas a la venta
+        $salidas = Salida::where('observaciones', 'like', "Venta #{$venta->id}%")->get()->keyBy('id_variante');
+
+        foreach ($productosDevueltos as $item) {
+            $idVariante = (int) $item['id_variante'];
+            $cantDevuelta = (int) $item['cantidad'];
+
+            $salida = $salidas->get($idVariante);
+            if (!$salida) {
+                continue;
+            }
+
+            $comision = ComisionVendedor::where('id_salida', $salida->id)->first();
+            if (!$comision) {
+                continue;
+            }
+
+            $cantOriginal = (int) $salida->cantidad;
+            $montoOriginal = (float) $comision->monto;
+
+            if ($esReembolso) {
+                if ($cantDevuelta >= $cantOriginal) {
+                    // Devolución total de la línea
+                    $montoAnteriorStr = '$' . number_format($montoOriginal, 2);
+                    $notaAjuste = "Ajuste POS por devolución: saldo anterior {$montoAnteriorStr} -> $0.00. Cancelada por Devolución ({$labelResolucion}) [{$folioDev}].";
+                    $comision->update([
+                        'monto' => 0.00,
+                        'estado' => 'Cancelada',
+                        'notas' => trim(($comision->notas ? $comision->notas . ' | ' : '') . $notaAjuste),
+                    ]);
+                } else {
+                    // Devolución parcial de la línea: calcular comisión unitaria efectiva (incluye base + extra)
+                    $comisionUnitaria = $cantOriginal > 0
+                        ? round($montoOriginal / $cantOriginal, 2)
+                        : (float) ($comision->porcentaje ?: 0);
+                    $deduccion = round($comisionUnitaria * $cantDevuelta, 2);
+                    $nuevoMonto = max(0.00, $montoOriginal - $deduccion);
+
+                    $notaAjuste = "Descuento por devolución parcial ({$cantDevuelta}/{$cantOriginal} unds) ({$labelResolucion}): saldo anterior $"
+                        . number_format($montoOriginal, 2) . " -> $" . number_format($nuevoMonto, 2) . " [{$folioDev}].";
+
+                    $comision->update([
+                        'monto' => $nuevoMonto,
+                        'notas' => trim(($comision->notas ? $comision->notas . ' | ' : '') . $notaAjuste),
+                    ]);
+                }
+            } elseif ($esCambio) {
+                // En cambios físicos NO hay reembolso de dinero; el cliente retiene la compra por un artículo de reemplazo.
+                // La comisión del vendedor se mantiene íntegra con nota de auditoría.
+                $notaCambio = "Cambio físico registrado ({$cantDevuelta} unds) ({$labelResolucion}) [{$folioDev}]. Comisión se mantiene.";
+                $comision->update([
+                    'notas' => trim(($comision->notas ? $comision->notas . ' | ' : '') . $notaCambio),
+                ]);
+            }
+        }
+
+        // ── Deducción del 50% de envío si es 'reembolso_tienda' (Paquete no recibido en envíos) ──
+        if ($tipoResolucion === 'reembolso_tienda' && in_array($venta->tipo_venta, ['Envio', 'Envío']) && (float) $venta->precio_envio > 0) {
+            $deduccionExiste = ComisionVendedor::where('id_vendedor', $venta->id_usuario)
+                ->where('concepto', 'like', "%Deducción envío%{$folioVenta}%")
+                ->where('monto', '<', 0)
+                ->exists();
+
+            if (!$deduccionExiste) {
+                $costoEnvio = (float) $venta->precio_envio;
+                $montoDeduccion = -round($costoEnvio * 0.50, 2);
+                $primeraSalidaId = $salidas->first()?->id;
+
+                ComisionVendedor::create([
+                    'id_vendedor' => $venta->id_usuario,
+                    'id_salida' => $primeraSalidaId,
+                    'concepto' => "Deducción envío - Devolución {$folioVenta}",
+                    'monto' => $montoDeduccion,
+                    'porcentaje' => 0.00,
+                    'estado' => 'Cancelada',
+                    'notas' => "Deducción por devolución de envío: -$"
+                        . number_format(abs($montoDeduccion), 2)
+                        . " (50 % del costo de envío: $"
+                        . number_format($costoEnvio, 2) . ") | Venta {$folioVenta} ({$folioDev} - Paquete no recibido)",
+                    'fecha_registro' => now(),
+                ]);
+            }
+        }
     }
 }

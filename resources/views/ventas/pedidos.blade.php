@@ -742,6 +742,19 @@
                             </template>
                         </div>
 
+                        <!-- ALERTA INFORMATIVA: EN RUTA NO PUEDE CANCELARSE -->
+                        <template x-if="estadoModalData.estadoActual === 'En ruta'">
+                            <div class="p-3.5 bg-amber-50 border border-amber-200 rounded-xl text-xs text-amber-900 flex items-start gap-2.5 shadow-2xs">
+                                <i class="fas fa-truck-fast text-amber-600 mt-0.5 text-base shrink-0"></i>
+                                <div>
+                                    <p class="font-bold text-amber-950 leading-snug">Envío actualmente en camino</p>
+                                    <p class="text-[11px] text-amber-800 mt-0.5 leading-relaxed">
+                                        Este paquete ya fue entregado a la paquetería y se encuentra en ruta hacia el cliente. Por políticas de despacho y logística, <strong>este pedido ya no puede ser cancelado</strong>; únicamente puede avanzar a <strong>Entregada</strong> una vez completada la entrega al cliente.
+                                    </p>
+                                </div>
+                            </div>
+                        </template>
+
                         <!-- SELECCIÓN DEL NUEVO ESTADO -->
                         <div id="seccion-seleccion-nuevo-estado">
                             <div class="flex items-center justify-between mb-2">
@@ -982,7 +995,7 @@
                                 x-model="observacionesEstado"
                                 @input="errorObservacionesEstado = false"
                                 rows="3" 
-                                placeholder="Ingresa notas operativas, motivo de cancelación, justificación de devolución o cambio..."
+                                placeholder="Ingresa notas operativas o motivo de cancelación..."
                                 :class="errorObservacionesEstado ? 'border-rose-500 bg-rose-50/40 text-rose-900 focus:border-rose-500 focus:ring-rose-500/20 ring-1 ring-rose-400' : 'border-slate-300 text-slate-700 focus:border-blue-500 focus:ring-blue-500/10'"
                                 class="w-full rounded-xl border p-3 text-xs font-semibold focus:outline-none focus:ring-4 transition-all resize-none"
                             ></textarea>
@@ -998,7 +1011,7 @@
                             <div class="text-[11px]">
                                 <span class="font-bold block">Acción con impacto en inventario y comisiones:</span>
                                 <span class="text-amber-800">
-                                    Si cancelas la venta, procesas devolución o cambio, el stock de las variantes se devolverá automáticamente a la bodega y se anularán las comisiones asociadas.
+                                    Si cancelas la venta, el stock de las variantes se devolverá automáticamente a la bodega y se anularán las comisiones asociadas.
                                 </span>
                             </div>
                         </div>
@@ -1045,14 +1058,14 @@
                 x-show="modalDetalleAbierto"
                 x-transition.opacity
                 class="fixed inset-0 bg-slate-900/40 backdrop-blur-sm transition-opacity"
-                @click="if (!modalImprimirAbierto && !comprobanteZoomUrl) cerrarDetalle()"
+                @click="if (!modalImprimirAbierto && !comprobanteZoomUrl && !openDevolucionModal) cerrarDetalle()"
             ></div>
 
             <div class="flex min-h-screen items-center justify-center p-3 sm:p-5 text-center">
                 <div 
                     x-show="modalDetalleAbierto"
                     x-transition
-                    @click.away="if (!modalImprimirAbierto && !comprobanteZoomUrl) cerrarDetalle()"
+                    @click.away="if (!modalImprimirAbierto && !comprobanteZoomUrl && !openDevolucionModal) cerrarDetalle()"
                     class="relative z-10 w-full max-w-3xl transform overflow-hidden rounded-2xl bg-white text-left shadow-2xl transition-all border border-gray-100 flex flex-col my-8 max-h-[92vh]"
                 >
                     <!-- CABECERA AZUL UNIFICADA -->
@@ -1398,17 +1411,203 @@
                             Cerrar
                         </button>
 
-                        <button 
-                            type="button" 
-                            x-show="ventaSeleccionada"
-                            @click="abrirModalImpresionDesdeDetalle()"
-                            class="inline-flex items-center gap-2 px-6 py-2.5 rounded-xl font-black text-xs uppercase tracking-wider text-white shadow-lg transition-all duration-300 hover:scale-[1.02] cursor-pointer bg-slate-900 hover:bg-slate-800 shadow-slate-900/20"
-                        >
-                            <i class="fas fa-print text-xs"></i>
-                            <span>Imprimir Comprobante (Ticket / Factura)</span>
-                        </button>
+                        <div class="flex items-center gap-3">
+                            <template x-if="ventaSeleccionada && ventaSeleccionada.estado === 'Entregada' && ventaSeleccionada.puede_devolver">
+                                <button
+                                    type="button"
+                                    @click="openDevolucionModal = true"
+                                    class="rounded-xl bg-red-600 hover:bg-red-700 text-white font-bold px-3.5 py-2 text-xs transition-all shadow-md shadow-red-600/20 flex items-center gap-2 cursor-pointer">
+                                    <i class="fas fa-rotate-left"></i>
+                                    <span>Registrar Devolución</span>
+                                </button>
+                            </template>
+
+                            <button 
+                                type="button" 
+                                x-show="ventaSeleccionada"
+                                @click="abrirModalImpresionDesdeDetalle()"
+                                class="inline-flex items-center gap-2 px-6 py-2.5 rounded-xl font-black text-xs uppercase tracking-wider text-white shadow-lg transition-all duration-300 hover:scale-[1.02] cursor-pointer bg-slate-900 hover:bg-slate-800 shadow-slate-900/20"
+                            >
+                                <i class="fas fa-print text-xs"></i>
+                                <span>Imprimir Comprobante (Ticket / Factura)</span>
+                            </button>
+                        </div>
                     </div>
 
+                </div>
+            </div>
+        </div>
+
+        <!-- ========================================================================= -->
+        <!-- MODAL: REGISTRAR DEVOLUCIÓN / GARANTÍA (UNIFICADO CON COMISIONES)         -->
+        <!-- ========================================================================= -->
+        <div 
+            x-show="openDevolucionModal" 
+            x-cloak
+            class="fixed inset-0 z-[80] overflow-y-auto"
+            style="display: none;"
+            role="dialog"
+            aria-modal="true"
+        >
+            <div 
+                x-show="openDevolucionModal"
+                x-transition.opacity
+                class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm transition-opacity"
+                @click="openDevolucionModal = false"
+            ></div>
+
+            <div class="flex min-h-screen items-center justify-center p-4 text-center sm:p-0">
+                <div 
+                    x-show="openDevolucionModal"
+                    x-transition
+                    class="relative z-10 w-full max-w-2xl bg-white rounded-2xl shadow-2xl overflow-hidden text-left border border-slate-200"
+                    @click.away="openDevolucionModal = false"
+                >
+                    <div class="bg-red-600 px-6 py-4 flex items-center justify-between text-white shadow-md">
+                        <div class="flex items-center gap-2.5">
+                            <i class="fas fa-rotate-left text-white text-base"></i>
+                            <span class="text-sm font-black uppercase tracking-wider text-white">Registrar Devolución / Garantía</span>
+                        </div>
+                        <button type="button" @click="openDevolucionModal = false" class="w-8 h-8 rounded-lg bg-white/10 hover:bg-white/20 flex items-center justify-center text-white transition-colors cursor-pointer">
+                            <i class="fas fa-times text-sm"></i>
+                        </button>
+                    </div>
+                    
+                    <form action="/devoluciones/venta" method="POST" enctype="multipart/form-data" novalidate class="p-6 space-y-6" @click.stop onsubmit="event.preventDefault(); if (!this.checkValidity()) { let errorMsg = 'Por favor, completa todos los campos requeridos.'; this.querySelectorAll('input[type=number]').forEach(i => { if(i.validity.rangeOverflow) errorMsg = 'No puedes devolver más unidades de las que vendiste.'; }); Swal.fire({ toast: true, position: 'top-end', showConfirmButton: false, timer: 5000, timerProgressBar: true, icon: 'error', title: 'Datos inválidos', text: errorMsg }); return; } Swal.fire({ title: '¿Estás seguro?', text: 'Verifica que las cantidades sean correctas antes de procesar.', icon: 'warning', showCancelButton: true, confirmButtonColor: '#3085d6', cancelButtonColor: '#d33', confirmButtonText: 'Sí, procesar', cancelButtonText: 'Cancelar' }).then((result) => { if (result.isConfirmed) { this.submit(); } });">
+                        @csrf
+                        <input type="hidden" name="venta_id" :value="ventaSeleccionada?.id">
+
+                        <div>
+                            <h3 class="text-sm font-bold text-slate-900 mb-3 uppercase tracking-wider">Productos a Devolver</h3>
+                            <div class="overflow-x-auto border border-slate-200 rounded-xl max-h-60 overflow-y-auto custom-scrollbar">
+                                <table class="w-full text-left text-xs">
+                                    <thead class="bg-slate-50 border-b border-slate-200 text-slate-500 uppercase font-bold sticky top-0">
+                                        <tr>
+                                            <th class="px-4 py-3 w-10 text-center">Sel.</th>
+                                            <th class="px-4 py-3">Producto / Variante</th>
+                                            <th class="px-4 py-3 text-center w-24">Cantidad</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody class="divide-y divide-slate-100">
+                                        <template x-for="(det, index) in ventaSeleccionada?.detalles" :key="det.id">
+                                            <tr class="hover:bg-slate-50/60 transition-colors">
+                                                <td class="px-4 py-3 text-center">
+                                                    <input type="hidden" :name="'productos['+index+'][id_variante]'" :value="det.id_variante">
+                                                    <input type="checkbox" :name="'productos['+index+'][seleccionado]'" value="1" class="rounded text-red-600 focus:ring-red-500 bg-slate-100 border-slate-300 w-4 h-4 cursor-pointer">
+                                                </td>
+                                                <td class="px-4 py-3">
+                                                    <p class="font-bold text-slate-900 text-xs" x-text="det.variante?.producto?.nombre || 'Producto'"></p>
+                                                    <p class="text-[11px] text-slate-500" x-text="det.variante?.nombre_variante || 'Variante'"></p>
+                                                </td>
+                                                <td class="px-4 py-3">
+                                                    <input type="number" :name="'productos['+index+'][cantidad]'" value="1" min="1" :max="det.cantidad" class="w-full text-xs rounded-lg border-slate-300 focus:border-red-500 focus:ring focus:ring-red-200 py-1.5 px-2 text-center">
+                                                </td>
+                                            </tr>
+                                        </template>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+
+                        <div class="space-y-4 bg-slate-50 p-4 rounded-xl border border-slate-200" x-data="{ tipo_resolucion: '' }">
+                            <h3 class="text-sm font-bold text-slate-900 uppercase tracking-wider">Detalles de la Resolución</h3>
+                            
+                            <div class="space-y-2">
+                                <label class="text-xs font-bold text-slate-700">Resolución al Cliente <span class="text-red-500">*</span></label>
+                                <select name="tipo_resolucion" x-model="tipo_resolucion" required class="w-full text-xs bg-white border border-slate-300 rounded-lg shadow-sm text-slate-700 px-3 py-2.5 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-colors appearance-none cursor-pointer">
+                                    <option value="" disabled selected>¿Qué acción se tomará?</option>
+                                    <option value="reembolso_tienda">Reembolso de dinero (Producto intacto / Paquete no recibido)</option>
+                                    <option value="reembolso_cuarentena">Reembolso de dinero (Producto dañado de fábrica)</option>
+                                    <option value="cambio_tienda">Cambio físico (Talla/Color equivocado)</option>
+                                    <option value="cambio_cuarentena">Cambio físico (Viene defectuoso)</option>
+                                </select>
+
+                                <!-- INFO BOX DINÁMICO UNIFICADO CON COMISIONES -->
+                                <template x-if="tipo_resolucion">
+                                    <div x-transition.opacity.duration.300ms class="mt-2.5 p-3.5 rounded-xl border text-xs leading-relaxed space-y-2 shadow-2xs"
+                                         :class="{
+                                             'bg-blue-50/80 border-blue-200 text-blue-950': tipo_resolucion === 'reembolso_tienda',
+                                             'bg-amber-50/80 border-amber-200 text-amber-950': tipo_resolucion === 'reembolso_cuarentena',
+                                             'bg-teal-50/80 border-teal-200 text-teal-950': tipo_resolucion === 'cambio_tienda',
+                                             'bg-purple-50/80 border-purple-200 text-purple-950': tipo_resolucion === 'cambio_cuarentena'
+                                         }">
+                                        <div class="flex items-center gap-2 font-bold text-[11px] uppercase tracking-wider pb-1 border-b"
+                                             :class="{
+                                                 'border-blue-200/80 text-blue-900': tipo_resolucion === 'reembolso_tienda',
+                                                 'border-amber-200/80 text-amber-900': tipo_resolucion === 'reembolso_cuarentena',
+                                                 'border-teal-200/80 text-teal-900': tipo_resolucion === 'cambio_tienda',
+                                                 'border-purple-200/80 text-purple-900': tipo_resolucion === 'cambio_cuarentena'
+                                             }">
+                                            <i class="fas" :class="{
+                                                'fa-money-bill-wave text-blue-600': tipo_resolucion === 'reembolso_tienda',
+                                                'fa-triangle-exclamation text-amber-600': tipo_resolucion === 'reembolso_cuarentena',
+                                                'fa-arrow-right-arrow-left text-teal-600': tipo_resolucion === 'cambio_tienda',
+                                                'fa-box-archive text-purple-600': tipo_resolucion === 'cambio_cuarentena'
+                                            }"></i>
+                                            <span>Impacto Operativo y en Comisiones</span>
+                                        </div>
+
+                                        <template x-if="tipo_resolucion === 'reembolso_tienda'">
+                                            <div class="space-y-1 text-[11px]">
+                                                <p><strong class="text-blue-900">• Inventario:</strong> Los artículos devueltos retornan al stock activo de bodega.</p>
+                                                <p><strong class="text-blue-900">• Caja / Dinero:</strong> Se registra egreso por el importe reembolsado al cliente.</p>
+                                                <p><strong class="text-blue-900">• Comisiones:</strong> Se anula la comisión del vendedor por los productos devueltos. <template x-if="ventaSeleccionada?.tipo_venta === 'Envio'"><span class="font-bold text-rose-700">Al ser envío no recibido, se aplica deducción del 50% del costo de envío como ajuste negativo al vendedor.</span></template></p>
+                                            </div>
+                                        </template>
+
+                                        <template x-if="tipo_resolucion === 'reembolso_cuarentena'">
+                                            <div class="space-y-1 text-[11px]">
+                                                <p><strong class="text-amber-900">• Inventario:</strong> La mercancía defectuosa ingresa a <strong>stock en cuarentena</strong>.</p>
+                                                <p><strong class="text-amber-900">• Caja / Dinero:</strong> Se devuelve el dinero al cliente por falla de fábrica.</p>
+                                                <p><strong class="text-amber-900">• Comisiones:</strong> Se anula la comisión de los productos devueltos (sin deducción de envío al vendedor por ser falla atribuible a fábrica).</p>
+                                            </div>
+                                        </template>
+
+                                        <template x-if="tipo_resolucion === 'cambio_tienda'">
+                                            <div class="space-y-1 text-[11px]">
+                                                <p><strong class="text-teal-900">• Inventario:</strong> Entra la talla/color anterior a bodega y sale la nueva variante de reemplazo.</p>
+                                                <p><strong class="text-teal-900">• Caja / Dinero:</strong> <strong>NO</strong> hay movimiento de efectivo (cambio 1 a 1 de igual valor).</p>
+                                                <p><strong class="text-teal-900">• Comisiones:</strong> <span class="font-bold text-teal-800">La comisión del vendedor se mantiene activa</span> porque la venta y el ingreso permanecen vigentes.</p>
+                                            </div>
+                                        </template>
+
+                                        <template x-if="tipo_resolucion === 'cambio_cuarentena'">
+                                            <div class="space-y-1 text-[11px]">
+                                                <p><strong class="text-purple-900">• Inventario:</strong> La unidad defectuosa va a <strong>cuarentena</strong> y sale una unidad nueva de reposición.</p>
+                                                <p><strong class="text-purple-900">• Caja / Dinero:</strong> <strong>NO</strong> hay movimiento de efectivo (reposición por garantía).</p>
+                                                <p><strong class="text-purple-900">• Comisiones:</strong> <span class="font-bold text-purple-800">La comisión del vendedor se mantiene activa</span>.</p>
+                                            </div>
+                                        </template>
+                                    </div>
+                                </template>
+                            </div>
+
+                            <div class="space-y-1">
+                                <label class="text-xs font-bold text-slate-700">Motivo de la Devolución <span class="text-red-500">*</span></label>
+                                <textarea name="motivo" required rows="3" class="w-full text-xs bg-white border border-slate-300 rounded-lg shadow-sm text-slate-700 px-3 py-2.5 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-colors placeholder-slate-400 resize-none" placeholder="Escriba el motivo detallado por el cual el cliente devuelve la mercancía..."></textarea>
+                            </div>
+
+                            <div class="space-y-1 pt-1">
+                                <label class="text-xs font-bold text-slate-700">Comprobante (Opcional)</label>
+                                <div class="relative">
+                                    <input type="file" name="comprobante" accept="image/*" class="w-full text-xs text-slate-500 bg-white border border-slate-300 rounded-lg shadow-sm px-3 py-2 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-colors file:mr-4 file:py-1.5 file:px-4 file:rounded-md file:border-0 file:text-[11px] file:font-bold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100 cursor-pointer">
+                                </div>
+                                <p class="text-[10px] text-slate-500 mt-1.5 flex items-center gap-1">
+                                    <i class="fas fa-camera text-slate-400"></i> Sube una fotografía de evidencia si el artículo llegó defectuoso.
+                                </p>
+                            </div>
+                        </div>
+
+                        <div class="flex items-center justify-end gap-3 pt-4 border-t border-slate-200">
+                            <button type="button" @click="openDevolucionModal = false" class="px-5 py-2 bg-white border border-slate-300 text-slate-700 rounded-xl text-xs font-bold hover:bg-slate-50 transition-colors cursor-pointer">
+                                Cancelar
+                            </button>
+                            <button type="submit" class="px-5 py-2 bg-red-600 hover:bg-red-700 text-white rounded-xl text-xs font-bold transition-colors shadow-md shadow-red-600/20 cursor-pointer flex items-center gap-2">
+                                <i class="fas fa-check"></i>
+                                Procesar Devolución
+                            </button>
+                        </div>
+                    </form>
                 </div>
             </div>
         </div>
@@ -1913,6 +2112,7 @@
 
                 // Modales
                 modalDetalleAbierto: false,
+                openDevolucionModal: false,
                 cargandoDetalle: false,
                 ventaSeleccionada: null,
                 comprobanteZoomUrl: null,
@@ -2033,13 +2233,22 @@
                 },
 
                 abrirModalCambiarEstado(id, estadoActual, tipoVenta, puedeDevolver, estadosPermitidos, diasRestantes, textoGarantia, fechaLimite) {
+                    let permitidosFiltrados = Array.isArray(estadosPermitidos) 
+                        ? estadosPermitidos.filter(s => s !== 'Devolución' && s !== 'Cambio') 
+                        : [];
+
+                    // Regla de despacho: un envío en ruta nunca puede cancelarse
+                    if (estadoActual === 'En ruta') {
+                        permitidosFiltrados = permitidosFiltrados.filter(s => s !== 'Cancelada');
+                    }
+
                     this.estadoModalData = {
                         id: id,
                         folio: '#VNT-' + String(id).padStart(5, '0'),
                         estadoActual: estadoActual,
                         tipoVenta: tipoVenta,
                         puedeDevolver: puedeDevolver,
-                        estadosPermitidos: Array.isArray(estadosPermitidos) ? estadosPermitidos : [],
+                        estadosPermitidos: permitidosFiltrados,
                         diasRestantes: diasRestantes || 0,
                         textoGarantia: textoGarantia || '',
                         fechaLimite: fechaLimite || ''
@@ -2091,7 +2300,7 @@
                         case 'En ruta':
                             return 'Entregado a paquetería / encomienda. Requiere foto del paquete.';
                         case 'Entregada':
-                            return 'Entregado al cliente. Inicia garantía de devolución / cambio.';
+                            return 'Entregado al cliente exitosamente.';
                         case 'Cancelada':
                             return 'Cancela la venta. Reintegra stock a bodega y anula comisiones.';
                         case 'Devolución':
@@ -2191,6 +2400,12 @@
                         this.$nextTick(() => {
                             document.getElementById('seccion-seleccion-nuevo-estado')?.scrollIntoView({ behavior: 'smooth', block: 'center' });
                         });
+                        return;
+                    }
+
+                    // Regla de despacho: validación estricta de que En ruta no puede ser cancelado
+                    if (this.estadoModalData.estadoActual === 'En ruta' && this.nuevoEstadoSeleccionado === 'Cancelada') {
+                        this.errorEstadoModal = 'No es posible cancelar un pedido que ya se encuentra en ruta hacia el cliente.';
                         return;
                     }
 

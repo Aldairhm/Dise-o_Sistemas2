@@ -413,22 +413,7 @@ class VentaController extends Controller
             $v->telefono_entrega = $v->telefono ?? $primeraSalida?->telefono ?? $v->usuario?->telefono;
             $v->precio_envio = (float) ($v->precio_envio ?? $primeraSalida?->precio_envio ?? 0);
 
-            // 1. Comisión que da el producto por la cantidad vendida
-            $comisionVenta = 0.0;
-            foreach ($v->detalles as $det) {
-                // Se toma la comisión configurada en el producto (o en la variante si aplica)
-                $prodComision = (float) ($det->variante?->producto?->comision ?? 0);
-                $varComision = (float) ($det->variante?->comision ?? 0);
-                $comisionUnitaria = $prodComision > 0 ? $prodComision : $varComision;
-                $comisionVenta += $comisionUnitaria * (int) $det->cantidad;
-            }
-
-            // Si por alguna razón no vino del producto, fallback a comision_aplicada en salidas si existiera
-            if ($comisionVenta <= 0 && (float) $salidasDeVenta->sum('comision_aplicada') > 0) {
-                $comisionVenta = (float) $salidasDeVenta->sum('comision_aplicada');
-            }
-
-            // 2. Extra que le ponen a veces a las ventas (costo_extra de salidas o diferencia en subtotal)
+            // 1. Extra que le ponen a veces a las ventas (costo_extra de salidas o diferencia en subtotal)
             $extraVenta = (float) $salidasDeVenta->sum('costo_extra');
             if ($extraVenta <= 0) {
                 foreach ($v->detalles as $det) {
@@ -440,9 +425,29 @@ class VentaController extends Controller
                 }
             }
 
+            // 2. Comisión base que da el producto por la cantidad vendida
+            $comisionBaseVenta = 0.0;
+            foreach ($v->detalles as $det) {
+                // Se toma la comisión configurada en el producto (o en la variante si aplica)
+                $prodComision = (float) ($det->variante?->producto?->comision ?? 0);
+                $varComision = (float) ($det->variante?->comision ?? 0);
+                $comisionUnitaria = $prodComision > 0 ? $prodComision : $varComision;
+                $comisionBaseVenta += $comisionUnitaria * (int) $det->cantidad;
+            }
+
+            // Si hay comision_aplicada en salidas, esa es la ganancia total registrada (base + extra)
+            $comisionAplicadaTotal = (float) $salidasDeVenta->sum('comision_aplicada');
+            if ($comisionAplicadaTotal > 0) {
+                $gananciaTotal = $comisionAplicadaTotal;
+                $comisionVenta = max(0.0, $gananciaTotal - $extraVenta);
+            } else {
+                $comisionVenta = $comisionBaseVenta;
+                $gananciaTotal = $comisionVenta + $extraVenta;
+            }
+
             $v->comision_total = $comisionVenta;
             $v->extra_total = $extraVenta;
-            $v->ganancia_vendedor = $comisionVenta + $extraVenta;
+            $v->ganancia_vendedor = $gananciaTotal;
         }
 
         // Conteos por estado para los filtros/apartados
@@ -796,8 +801,11 @@ class VentaController extends Controller
                 $comisionesBrutas = $lineas->map(function ($linea) use ($variantes, $comisionService) {
                     $variante = $variantes->get($linea['id_variante']);
                     $comisionUnitaria = $comisionService->resolverComisionUnitaria($variante);
+                    $comisionBase = $comisionService->calcularMonto($comisionUnitaria, (int) $linea['cantidad']);
+                    $costoExtra = max(0, (float) ($linea['costo_extra'] ?? 0));
 
-                    return $comisionService->calcularMonto($comisionUnitaria, (int) $linea['cantidad']);
+                    // El costo extra se suma a la comisión del vendedor de la línea
+                    return round($comisionBase + $costoExtra, 2);
                 })->values();
                 $comisionBrutaTotal = (float) $comisionesBrutas->sum();
 
@@ -822,13 +830,13 @@ class VentaController extends Controller
                     $costoUnitario = (float) ($variante->costo_promedio ?? 0);
                     $costoTotal = $costoUnitario * $cantidad;
 
-                    // Resolver comisión fija por unidad del producto/variante ($)
+                    // Resolver comisión fija por unidad del producto/variante ($) y sumar costo_extra
                     $comisionUnitaria = $comisionService->resolverComisionUnitaria($variante);
                     $comisionBruta = (float) $comisionesBrutas[$indiceLinea];
                     $descuentoComision = $comisionBrutaTotal > 0
                         ? round($descuentoGeneral * ($comisionBruta / $comisionBrutaTotal), 2)
                         : 0.0;
-                    $comisionTotal = round($comisionBruta - $descuentoComision, 2);
+                    $comisionTotal = max(0.0, round($comisionBruta - $descuentoComision, 2));
 
                     // 2. Generar el registro de salida asociado para control de inventario con costo_extra, precio_envio y datos de entrega
                     $salida = Salida::create([
@@ -860,22 +868,30 @@ class VentaController extends Controller
                     // 3. Descontar el stock físico de la variante
                     $variante->decrement('stock', $cantidad);
 
-                    // 4. Si la variante tiene comisión asignada, registrar en `comision_vendedor` para el vendedor asignado
+                    // 4. Si la variante tiene comisión asignada o se incluyó costo extra, registrar en `comision_vendedor` para el vendedor asignado
                     if ($comisionBruta > 0) {
                         $nombreProd = $variante->producto->nombre ?? 'Producto';
                         $nombreVar = $variante->nombre_variante ?? '';
-                        $descConcepto = "Venta #{$venta->id} ({$cantidad}x {$nombreProd} - {$nombreVar})";
-                        $notasComision = $descuentoComision > 0
-                            ? 'Descuento de venta aplicado a comisión: $' . number_format($descuentoComision, 2)
-                                . '; comisión bruta: $' . number_format($comisionBruta, 2) . '.'
-                            : null;
+                        $descConcepto = "Venta #{$venta->id} ({$cantidad}x {$nombreProd}" . ($nombreVar ? " - {$nombreVar}" : '') . ")";
+
+                        $partesNotas = [];
+                        if ($costoExtra > 0) {
+                            $partesNotas[] = 'Incluye costo extra: +$' . number_format($costoExtra, 2);
+                        }
+                        if ($descuentoComision > 0) {
+                            $partesNotas[] = 'Descuento de venta aplicado a comisión: -$' . number_format($descuentoComision, 2)
+                                . ' (comisión bruta: $' . number_format($comisionBruta, 2) . ')';
+                        }
+                        $notasComision = !empty($partesNotas) ? implode(' | ', $partesNotas) : null;
+
+                        $comisionPorUnidad = $cantidad > 0 ? round($comisionBruta / $cantidad, 2) : $comisionUnitaria;
 
                         ComisionVendedor::create([
                             'id_vendedor' => $vendedorVentaId,
                             'id_salida' => $salida->id,
                             'concepto' => $descConcepto,
                             'monto' => $comisionTotal,
-                            'porcentaje' => $comisionUnitaria,
+                            'porcentaje' => $comisionPorUnidad,
                             'estado' => $comisionTotal > 0 ? 'Pendiente' : 'Cancelada',
                             'notas' => $notasComision,
                             'fecha_registro' => now(),
@@ -929,23 +945,19 @@ class VentaController extends Controller
             ], 422);
         }
 
-        // 2. Verificar regla de garantía en días para Devolución o Cambio
+        // 2. Validaciones de transición restringida
         if ($venta->estado === 'Entregada') {
-            if (!in_array($nuevoEstado, ['Devolución', 'Cambio'])) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Una venta ya entregada únicamente puede cambiar a "Devolución" o "Cambio" dentro del plazo de garantía.',
-                ], 422);
-            }
+            return response()->json([
+                'success' => false,
+                'message' => 'Una venta ya entregada no puede cambiar de estado desde este apartado.',
+            ], 422);
+        }
 
-            if (!$venta->puede_devolver) {
-                $dias = $venta->dias_garantia;
-                $limiteStr = $venta->fecha_limite_devolucion ? $venta->fecha_limite_devolucion->format('d/m/Y') : '';
-                return response()->json([
-                    'success' => false,
-                    'message' => "El plazo de garantía de devolución ({$dias} días, vencido el {$limiteStr}) ha expirado.",
-                ], 422);
-            }
+        if ($venta->estado === 'En ruta' && $nuevoEstado === 'Cancelada') {
+            return response()->json([
+                'success' => false,
+                'message' => 'No es posible cancelar un pedido que ya se encuentra en ruta.',
+            ], 422);
         }
 
         // 3. Verificar si el estado solicitado está en los estados permitidos
@@ -1035,8 +1047,8 @@ class VentaController extends Controller
             $venta->estado = $nuevoEstado;
             $venta->save();
 
-            // E. Si es Cancelada, Devolución o Cambio, restaurar stock de inventario y anular comisiones
-            if (in_array($nuevoEstado, ['Cancelada', 'Devolución', 'Cambio'])) {
+            // E. Si es Cancelada o Devolución, restaurar stock de inventario y anular comisiones
+            if (in_array($nuevoEstado, ['Cancelada', 'Devolución'])) {
                 foreach ($venta->detalles as $detalle) {
                     if ($detalle->variante) {
                         $detalle->variante->increment('stock', (int) $detalle->cantidad);
@@ -1047,6 +1059,16 @@ class VentaController extends Controller
                 $salidasIds = Salida::where('observaciones', 'like', "Venta #{$venta->id}%")->pluck('id');
                 if ($salidasIds->isNotEmpty()) {
                     $this->cancelarComisionesVenta($venta, $salidasIds, $nuevoEstado);
+                }
+            } elseif ($nuevoEstado === 'Cambio') {
+                // En un cambio físico la venta sigue vigente: se conserva la comisión del vendedor
+                $salidasIds = Salida::where('observaciones', 'like', "Venta #{$venta->id}%")->pluck('id');
+                if ($salidasIds->isNotEmpty()) {
+                    ComisionVendedor::whereIn('id_salida', $salidasIds)->each(function ($comision) {
+                        $comision->update([
+                            'notas' => trim(($comision->notas ? $comision->notas . ' | ' : '') . 'Cambio físico registrado. Comisión se mantiene activa.'),
+                        ]);
+                    });
                 }
             }
 
@@ -1095,6 +1117,10 @@ class VentaController extends Controller
      */
     public function show(string|int $id)
     {
+        if (!is_numeric($id)) {
+            abort(404, 'Venta no encontrada');
+        }
+
         $venta = Venta::with(['usuario', 'detalles.variante.producto'])
             ->findOrFail($id);
 

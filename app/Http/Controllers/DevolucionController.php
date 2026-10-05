@@ -81,9 +81,10 @@ class DevolucionController extends Controller
                 }
 
                 $fechaReferencia = $venta->fecha_entrega ?? $venta->fecha;
-                $limiteGarantia = Carbon::parse($fechaReferencia)->startOfDay()->addDays(3)->endOfDay();
+                $diasGarantia = $venta->dias_garantia ?? 4;
+                $limiteGarantia = Carbon::parse($fechaReferencia)->startOfDay()->addDays($diasGarantia)->endOfDay();
                 if (now()->greaterThan($limiteGarantia)) {
-                    throw ValidationException::withMessages(['venta_id' => 'La garantía de devolución de 3 días ha expirado.']);
+                    throw ValidationException::withMessages(['venta_id' => "La garantía de devolución ({$diasGarantia} días) ha expirado."]);
                 }
 
                 $detallesVenta = $venta->detalles->keyBy('id_variante');
@@ -188,6 +189,21 @@ class DevolucionController extends Controller
                     'estado' => $nuevoEstado,
                     'observaciones' => trim(($venta->observaciones ? $venta->observaciones . PHP_EOL : '') . $nuevoEstado . ': ' . $validated['motivo']),
                 ]);
+
+                // Unificar con el flujo de comisiones según la resolución tomada
+                app(\App\Services\ComisionService::class)->procesarResolucionDevolucion(
+                    $devolucion,
+                    $venta,
+                    $validated['tipo_resolucion'],
+                    $productos->toArray()
+                );
+
+                if ($request->wantsJson() || $request->ajax()) {
+                    return response()->json([
+                        'success' => true,
+                        'message' => "{$nuevoEstado} procesado correctamente. Impacto financiero: $" . number_format($montoReembolsado, 2),
+                    ]);
+                }
 
                 return back()->with('success', "{$nuevoEstado} procesado correctamente. El reembolso registrado es de $" . number_format($montoReembolsado, 2));
             });

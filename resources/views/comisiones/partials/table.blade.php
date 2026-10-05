@@ -11,9 +11,7 @@
                 <th class="px-5 py-3 text-center text-xs font-bold text-slate-500 uppercase tracking-wider">Estado</th>
                 <th class="px-5 py-3 text-left text-xs font-bold text-slate-500 uppercase tracking-wider">Método de Pago</th>
                 <th class="px-5 py-3 text-left text-xs font-bold text-slate-500 uppercase tracking-wider">Notas</th>
-                @if($isAdmin)
                 <th class="px-5 py-3 text-center text-xs font-bold text-slate-500 uppercase tracking-wider">Acciones</th>
-                @endif
             </tr>
         </thead>
         <tbody class="divide-y divide-slate-100">
@@ -132,10 +130,16 @@
                     {{ $c->notas ?? '—' }}
                 </td>
 
-                @if($isAdmin)
                 <td class="px-5 py-4">
                     <div class="flex items-center justify-center gap-1.5">
-                        @if($c->estado === 'Pendiente')
+                        {{-- Ver Detalle --}}
+                        <button type="button"
+                                onclick="verDetalleComision({{ $c->id }})"
+                                class="w-8 h-8 rounded-lg flex items-center justify-center text-indigo-600 hover:text-indigo-800 hover:bg-indigo-50 transition-colors cursor-pointer"
+                                title="Ver detalle completo de la comisión">
+                            <i class="fas fa-eye text-xs"></i>
+                        </button>
+                        @if($isAdmin && $c->estado === 'Pendiente')
                             {{-- Editar --}}
                             <button type="button"
                                     onclick="openEditModal({{ $c->id }}, '{{ $c->monto }}', '{{ addslashes($c->concepto ?? '') }}', '{{ addslashes($c->notas ?? '') }}')"
@@ -150,16 +154,13 @@
                                     title="Cancelar comisión">
                                 <i class="fas fa-ban text-xs"></i>
                             </button>
-                        @else
-                            <span class="text-slate-300 text-xs">—</span>
                         @endif
                     </div>
                 </td>
-                @endif
             </tr>
             @empty
             <tr>
-                <td colspan="{{ $isAdmin ? 8 : 6 }}" class="px-5 py-14 text-center">
+                <td colspan="{{ $isAdmin ? 8 : 7 }}" class="px-5 py-14 text-center">
                     <div class="flex flex-col items-center gap-3 text-slate-400">
                         <div class="w-14 h-14 rounded-2xl bg-slate-100 flex items-center justify-center text-2xl">
                             <i class="fas fa-coins"></i>
