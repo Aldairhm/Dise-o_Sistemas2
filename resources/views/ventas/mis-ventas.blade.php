@@ -396,9 +396,15 @@
                                             @endif
                                         @else
                                             <div class="flex items-center gap-1.5 flex-wrap">
-                                                <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
-                                                    <i class="fas fa-store text-[9px]"></i> Venta en Tienda
-                                                </span>
+                                                @if($venta->metodo_pago === 'Cambio Físico')
+                                                    <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-bold bg-teal-50 text-teal-800 border border-teal-200" title="Venta de reposición por cambio físico">
+                                                        <i class="fas fa-arrow-right-arrow-left text-[9px] text-teal-600"></i> Cambio en Tienda
+                                                    </span>
+                                                @else
+                                                    <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
+                                                        <i class="fas fa-store text-[9px]"></i> Venta en Tienda
+                                                    </span>
+                                                @endif
                                                 @if(!empty($venta->nombre_cliente))
                                                     <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-bold bg-slate-100 text-slate-700 border border-slate-200" title="Cliente">
                                                         <i class="fas fa-user text-[8px]"></i> {{ $venta->nombre_cliente }}
@@ -411,8 +417,8 @@
 
                                 <!-- MÉTODO DE PAGO -->
                                 <td class="px-4 py-3.5 whitespace-nowrap">
-                                    <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[11px] font-bold border {{ $venta->metodo_pago === 'Efectivo' ? 'bg-emerald-50 text-emerald-700 border-emerald-200' : ($venta->metodo_pago === 'Transferencia Bancaria' ? 'bg-purple-50 text-purple-700 border-purple-200' : 'bg-blue-50 text-blue-700 border-blue-200') }}">
-                                        <i class="fas {{ $venta->metodo_pago === 'Efectivo' ? 'fa-money-bill-wave' : ($venta->metodo_pago === 'Transferencia Bancaria' ? 'fa-building-columns' : 'fa-credit-card') }} text-[10px]"></i>
+                                    <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[11px] font-bold border {{ $venta->metodo_pago === 'Cambio Físico' ? 'bg-teal-50 text-teal-800 border-teal-200' : ($venta->metodo_pago === 'Efectivo' ? 'bg-emerald-50 text-emerald-700 border-emerald-200' : ($venta->metodo_pago === 'Transferencia Bancaria' ? 'bg-purple-50 text-purple-700 border-purple-200' : 'bg-blue-50 text-blue-700 border-blue-200')) }}">
+                                        <i class="fas {{ $venta->metodo_pago === 'Cambio Físico' ? 'fa-arrow-right-arrow-left text-teal-600' : ($venta->metodo_pago === 'Efectivo' ? 'fa-money-bill-wave' : ($venta->metodo_pago === 'Transferencia Bancaria' ? 'fa-building-columns' : 'fa-credit-card')) }} text-[10px]"></i>
                                         <span>{{ $venta->metodo_pago }}</span>
                                     </span>
                                 </td>

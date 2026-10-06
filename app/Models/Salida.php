@@ -84,4 +84,26 @@ class Salida extends Model
     {
         return $this->hasMany(ComisionVendedor::class, 'id_salida');
     }
+
+    public function getVentaIdAttribute(): ?int
+    {
+        if (preg_match('/Venta\s*#(\d+)/i', $this->observaciones ?? '', $m)) {
+            return (int) $m[1];
+        }
+        return null;
+    }
+
+    public function getVentaAttribute(): ?Venta
+    {
+        if ($this->relationLoaded('ventaModel')) {
+            return $this->getRelation('ventaModel');
+        }
+        $ventaId = $this->venta_id;
+        if ($ventaId) {
+            $venta = Venta::find($ventaId);
+            $this->setRelation('ventaModel', $venta);
+            return $venta;
+        }
+        return null;
+    }
 }

@@ -28,7 +28,25 @@
                             <tr class="transition-colors hover:bg-slate-50/70">
                                 <td class="whitespace-nowrap px-5 py-4"><p class="font-mono text-xs font-black text-slate-800">DEV-{{ str_pad($devolucion->id, 5, '0', STR_PAD_LEFT) }}</p><p class="mt-1 text-xs text-slate-500">{{ optional($devolucion->created_at)->format('d/m/Y H:i') }}</p></td>
                                 <td class="px-5 py-4"><span class="inline-flex rounded-lg border border-blue-200 bg-blue-50 px-2.5 py-1.5 text-xs font-bold text-blue-700"><i class="fas fa-receipt mr-1.5"></i>Venta #{{ $devolucion->origen_id }}</span></td>
-                                <td class="px-5 py-4"><span class="rounded-lg border border-slate-200 bg-slate-50 px-2.5 py-1.5 text-xs font-bold capitalize text-slate-700">{{ $resolucion }}</span></td>
+                                <td class="px-5 py-4">
+                                    <div class="flex flex-col gap-1 items-start">
+                                        <span class="rounded-lg border border-slate-200 bg-slate-50 px-2.5 py-1.5 text-xs font-bold capitalize text-slate-700">{{ $resolucion }}</span>
+                                        @if(($devolucion->detalles_json['modalidad_entrega_cambio'] ?? null) === 'envio')
+                                            <span class="inline-flex items-center gap-1 rounded-md border border-teal-200 bg-teal-50 px-2 py-0.5 text-[10px] font-bold text-teal-800" title="Despacho programado por envío">
+                                                <i class="fas fa-truck-fast text-[9px]"></i> Reenvío a domicilio
+                                            </span>
+                                        @elseif(($devolucion->detalles_json['modalidad_entrega_cambio'] ?? null) === 'tienda' && str_contains($devolucion->tipo_resolucion ?? '', 'cambio'))
+                                            <span class="inline-flex items-center gap-1 rounded-md border border-slate-200 bg-slate-100 px-2 py-0.5 text-[10px] font-bold text-slate-700" title="Entregado en tienda física">
+                                                <i class="fas fa-store text-[9px]"></i> Cambio en tienda
+                                            </span>
+                                            @if(!empty($devolucion->detalles_json['nueva_venta_id']))
+                                                <a href="{{ route('ventas.show', $devolucion->detalles_json['nueva_venta_id']) }}" class="inline-flex items-center gap-1 rounded-md border border-emerald-200 bg-emerald-50 px-2 py-0.5 text-[10px] font-bold text-emerald-800 hover:bg-emerald-100 transition-colors" title="Ver nueva venta de reemplazo">
+                                                    <i class="fas fa-arrow-up-right-from-square text-[8px]"></i> Nueva Venta #{{ $devolucion->detalles_json['nueva_venta_id'] }}
+                                                </a>
+                                            @endif
+                                        @endif
+                                    </div>
+                                </td>
                                 <td class="whitespace-nowrap px-5 py-4 text-right font-black {{ (float) $devolucion->monto_reembolsado > 0 ? 'text-red-600' : 'text-slate-500' }}">${{ number_format((float) $devolucion->monto_reembolsado, 2) }}</td>
                                 <td class="max-w-[300px] px-5 py-4"><span class="block truncate text-xs text-slate-600" title="{{ $devolucion->motivo }}">{{ \Illuminate\Support\Str::limit($devolucion->motivo, 60) }}</span></td>
                                 <td class="px-5 py-4 text-right">@if($devolucion->comprobante)<a href="{{ asset('storage/' . $devolucion->comprobante) }}" target="_blank" rel="noopener" class="inline-flex items-center gap-1.5 rounded-lg border border-blue-200 bg-blue-50 px-3 py-1.5 text-xs font-bold text-blue-700 hover:bg-blue-600 hover:text-white"><i class="fas fa-paperclip"></i> Ver evidencia</a>@else<span class="text-xs text-slate-400">Sin evidencia</span>@endif</td>

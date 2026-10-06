@@ -441,9 +441,15 @@
                                         @endif
                                     @else
                                         <div class="flex items-center gap-1.5 flex-wrap">
-                                            <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
-                                                <i class="fas fa-store text-[9px]"></i> Venta en Tienda
-                                            </span>
+                                            @if($venta->metodo_pago === 'Cambio Físico')
+                                                <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-bold bg-teal-50 text-teal-800 border border-teal-200" title="Venta de reposición por cambio físico">
+                                                    <i class="fas fa-arrow-right-arrow-left text-[9px] text-teal-600"></i> Cambio en Tienda
+                                                </span>
+                                            @else
+                                                <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
+                                                    <i class="fas fa-store text-[9px]"></i> Venta en Tienda
+                                                </span>
+                                            @endif
                                             @if(!empty($venta->nombre_cliente))
                                                 <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-bold bg-slate-100 text-slate-700 border border-slate-200" title="Cliente">
                                                     <i class="fas fa-user text-[8px]"></i> {{ $venta->nombre_cliente }}
@@ -456,8 +462,8 @@
 
                             <!-- MÉTODO DE PAGO -->
                             <td class="px-4 py-3.5">
-                                <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[11px] font-bold border {{ $venta->metodo_pago === 'Efectivo' ? 'bg-emerald-50 text-emerald-700 border-emerald-200' : ($venta->metodo_pago === 'Transferencia Bancaria' ? 'bg-purple-50 text-purple-700 border-purple-200' : 'bg-blue-50 text-blue-700 border-blue-200') }}">
-                                    <i class="fas {{ $venta->metodo_pago === 'Efectivo' ? 'fa-money-bill-wave' : ($venta->metodo_pago === 'Transferencia Bancaria' ? 'fa-building-columns' : 'fa-credit-card') }} text-[10px]"></i>
+                                <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[11px] font-bold border {{ $venta->metodo_pago === 'Cambio Físico' ? 'bg-teal-50 text-teal-800 border-teal-200' : ($venta->metodo_pago === 'Efectivo' ? 'bg-emerald-50 text-emerald-700 border-emerald-200' : ($venta->metodo_pago === 'Transferencia Bancaria' ? 'bg-purple-50 text-purple-700 border-purple-200' : 'bg-blue-50 text-blue-700 border-blue-200')) }}">
+                                    <i class="fas {{ $venta->metodo_pago === 'Cambio Físico' ? 'fa-arrow-right-arrow-left text-teal-600' : ($venta->metodo_pago === 'Efectivo' ? 'fa-money-bill-wave' : ($venta->metodo_pago === 'Transferencia Bancaria' ? 'fa-building-columns' : 'fa-credit-card')) }} text-[10px]"></i>
                                     <span>{{ $venta->metodo_pago }}</span>
                                 </span>
                             </td>
@@ -1954,7 +1960,75 @@
                             </div>
                         </div>
 
-                        <div class="space-y-4 bg-slate-50 p-4 rounded-xl border border-slate-200" x-data="{ tipo_resolucion: '' }">
+                        <div class="space-y-4 bg-slate-50 p-4 rounded-xl border border-slate-200" 
+                             x-data="{ 
+                                 tipo_resolucion: '',
+                                 modalidad_cambio: 'tienda',
+                                 envio_nombre: '',
+                                 envio_telefono: '',
+                                 envio_departamento: '',
+                                 envio_municipio: '',
+                                 envio_direccion: '',
+                                 envio_precio: 0,
+                                 envio_cargado: false,
+
+                                 listaDepartamentos: [
+                                     'Ahuachapán', 'Cabañas', 'Chalatenango', 'Cuscatlán', 'La Libertad',
+                                     'La Paz', 'La Unión', 'Morazán', 'San Miguel', 'San Salvador',
+                                     'San Vicente', 'Santa Ana', 'Sonsonate', 'Usulután'
+                                 ],
+
+                                 municipiosPorDepartamento: {
+                                     'Ahuachapán': ['Ahuachapán', 'Apaneca', 'Atiquizaya', 'Concepción de Ataco', 'El Refugio', 'Guaymango', 'Jujutla', 'San Francisco Menéndez', 'San Lorenzo', 'San Pedro Puxtla', 'Tacuba', 'Turín'],
+                                     'Cabañas': ['Sensuntepeque', 'Cinquera', 'Dolores', 'Guacotecti', 'Ilobasco', 'Jutiapa', 'San Isidro', 'Tejutepeque', 'Victoria'],
+                                     'Chalatenango': ['Chalatenango', 'Agua Caliente', 'Arcatao', 'Azacualpa', 'Cancasque', 'Citalá', 'Comalapa', 'Concepción Quezaltepeque', 'Dulce Nombre de María', 'El Carrizal', 'El Paraíso', 'La Laguna', 'La Palma', 'La Reina', 'Las Vueltas', 'Nombre de Jesús', 'Nueva Concepción', 'Nueva Trinidad', 'Ojos de Agua', 'Potonico', 'San Antonio de la Cruz', 'San Antonio Los Ranchos', 'San Fernando', 'San Francisco Lempa', 'San Francisco Morazán', 'San Ignacio', 'San Isidro Labrador', 'San José Cancasque', 'San José Las Flores', 'San Luis del Carmen', 'San Miguel de Mercedes', 'San Rafael', 'Santa Rita', 'Tejutla'],
+                                     'Cuscatlán': ['Cojutepeque', 'Candelaria', 'El Carmen', 'El Rosario', 'Monte San Juan', 'Oratorio de Concepción', 'San Bartolomé Perulapía', 'San Cristóbal', 'San José Guayabal', 'San Pedro Perulapán', 'San Rafael Cedros', 'San Ramón', 'Santa Cruz Analquito', 'Santa Cruz Michapa', 'Suchitoto', 'Tenancingo'],
+                                     'La Libertad': ['Santa Tecla', 'Antiguo Cuscatlán', 'Chiltiupán', 'Ciudad Arce', 'Colón', 'Comasagua', 'Huizúcar', 'Jayaque', 'Jicalapa', 'La Libertad', 'Nuevo Cuscatlán', 'Quezaltepeque', 'Sacacoyo', 'San José Villanueva', 'San Juan Opico', 'San Matías', 'San Pablo Tacachico', 'Talnique', 'Tamanique', 'Teotepeque', 'Tepecoyo', 'Zaragoza'],
+                                     'La Paz': ['Zacatecoluca', 'Cuyultitán', 'El Rosario', 'Jerusalén', 'Mercedes La Ceiba', 'Olocuilta', 'Paraíso de Osorio', 'San Antonio Masahuat', 'San Emigdio', 'San Francisco Chinameca', 'San Juan Nonualco', 'San Juan Talpa', 'San Juan Tepezontes', 'San Luis La Herradura', 'San Luis Talpa', 'San Miguel Tepezontes', 'San Pedro Masahuat', 'San Pedro Nonualco', 'San Rafael Obrajuelo', 'Santa María Ostuma', 'Santiago Nonualco', 'Tapalhuaca'],
+                                     'La Unión': ['La Unión', 'Anamorós', 'Bolívar', 'Concepción de Oriente', 'Conchagua', 'El Carmen', 'El Sauce', 'Intipucá', 'Lislique', 'Meanguera del Golfo', 'Nueva Esparta', 'Pasaquina', 'Polorós', 'San Alejo', 'San José', 'Santa Rosa de Lima', 'Yayantique', 'Yucuaiquín'],
+                                     'Morazán': ['San Francisco Gotera', 'Arambala', 'Cacaopera', 'Chilanga', 'Corinto', 'Delicias de Concepción', 'El Divisadero', 'El Rosario', 'Gualococti', 'Guatajiagua', 'Joateca', 'Jocoaitique', 'Jocoro', 'Lolotiquillo', 'Meanguera', 'Osicala', 'Perquín', 'San Carlos', 'San Fernando', 'San Isidro', 'San Simón', 'Sensembra', 'Sociedad', 'Torola', 'Yamabal', 'Yoloaiquín'],
+                                     'San Miguel': ['San Miguel', 'Carolina', 'Chapeltique', 'Chinameca', 'Chirilagua', 'Ciudad Barrios', 'Comacarán', 'El Tránsito', 'Lolotique', 'Moncagua', 'Nueva Guadalupe', 'Nuevo Edén de San Juan', 'Quelepa', 'San Antonio del Mosco', 'San Gerardo', 'San Jorge', 'San Luis de la Reina', 'San Rafael Oriente', 'Sesori', 'Uluazapa'],
+                                     'San Salvador': ['San Salvador', 'Aguilares', 'Apopa', 'Ayutuxtepeque', 'Cuscatancingo', 'Delgado', 'El Paisnal', 'Guazapa', 'Ilopango', 'Mejicanos', 'Nejapa', 'Panchimalco', 'Rosario de Mora', 'San Marcos', 'San Martín', 'Santiago Texacuangos', 'Santo Tomás', 'Soyapango', 'Tonacatepeque'],
+                                     'San Vicente': ['San Vicente', 'Apastepeque', 'Guadalupe', 'San Cayetano Istepeque', 'San Esteban Catarina', 'San Ildefonso', 'San Lorenzo', 'San Sebastián', 'Santa Clara', 'Santo Domingo', 'Tecoluca', 'Tepetitán', 'Verapaz'],
+                                     'Santa Ana': ['Santa Ana', 'Candelaria de la Frontera', 'Chalchuapa', 'Coatepeque', 'El Congo', 'El Porvenir', 'Masahuat', 'Metapán', 'San Antonio Pajonal', 'San Sebastián Salitrillo', 'Santa Rosa Guachipilín', 'Santiago de la Frontera', 'Texistepeque'],
+                                     'Sonsonate': ['Sonsonate', 'Acajutla', 'Armenia', 'Caluco', 'Cuisnahuat', 'Izalco', 'Juayúa', 'Nahuizalco', 'Nahulingo', 'Salcoatitán', 'San Antonio del Monte', 'San Julián', 'Santa Catarina Masahuat', 'Santa Isabel Ishuatán', 'Santo Domingo de Guzmán', 'Sonzacate'],
+                                     'Usulután': ['Usulután', 'Alegría', 'Berlín', 'California', 'Concepción Batres', 'El Triunfo', 'Ereguayquín', 'Estanzuelas', 'Jiquilisco', 'Jucuapa', 'Jucuarán', 'Mercedes Umaña', 'Nueva Granada', 'Ozatlán', 'Puerto El Triunfo', 'San Agustín', 'San Buenaventura', 'San Dionisio', 'San Francisco Javier', 'Santa Elena', 'Santa María', 'Santiago de María', 'Tecapán']
+                                 },
+
+                                 get municipiosDisponibles() {
+                                     if (!this.envio_departamento || !this.municipiosPorDepartamento[this.envio_departamento]) {
+                                         return [];
+                                     }
+                                     return this.municipiosPorDepartamento[this.envio_departamento];
+                                 },
+
+                                 cargarDatosEnvioOriginal() {
+                                     if (!this.ventaSeleccionada) return;
+                                     this.envio_nombre = this.ventaSeleccionada.nombre_cliente || '';
+                                     this.envio_telefono = this.ventaSeleccionada.telefono || '';
+                                     this.envio_departamento = this.ventaSeleccionada.departamento || '';
+                                     this.envio_municipio = this.ventaSeleccionada.municipio || '';
+                                     this.envio_direccion = this.ventaSeleccionada.direccion_entrega || '';
+                                     this.envio_precio = parseFloat(this.ventaSeleccionada.precio_envio || 0);
+                                     this.envio_cargado = true;
+                                 },
+
+                                 onDeptoChange() {
+                                     this.envio_municipio = '';
+                                 }
+                             }"
+                             x-init="$watch('openDevolucionModal', isOpen => {
+                                 if (isOpen) {
+                                     tipo_resolucion = '';
+                                     modalidad_cambio = 'tienda';
+                                     envio_cargado = false;
+                                 }
+                             }); $watch('modalidad_cambio', val => {
+                                 if (val === 'envio' && !envio_cargado) {
+                                     cargarDatosEnvioOriginal();
+                                 }
+                             })"
+                        >
                             <h3 class="text-sm font-bold text-slate-900 uppercase tracking-wider">Detalles de la Resolución</h3>
                             
                             <div class="space-y-2">
@@ -2021,6 +2095,130 @@
                                                 <p><strong class="text-purple-900">• Inventario:</strong> La unidad defectuosa va a <strong>cuarentena</strong> y sale una unidad nueva de reposición.</p>
                                                 <p><strong class="text-purple-900">• Caja / Dinero:</strong> <strong>NO</strong> hay movimiento de efectivo (reposición por garantía).</p>
                                                 <p><strong class="text-purple-900">• Comisiones:</strong> <span class="font-bold text-purple-800">La comisión del vendedor se mantiene activa</span>.</p>
+                                            </div>
+                                        </template>
+                                    </div>
+                                </template>
+
+                                <!-- PREGUNTA: MODALIDAD DE ENTREGA SI LA VENTA ORIGINAL FUE POR ENVÍO Y ES CAMBIO -->
+                                <template x-if="(tipo_resolucion === 'cambio_tienda' || tipo_resolucion === 'cambio_cuarentena') && (ventaSeleccionada?.tipo_venta === 'Envio' || ventaSeleccionada?.tipo_venta === 'Envío')">
+                                    <div x-transition.opacity.duration.300ms class="mt-3 p-4 bg-white rounded-xl border border-teal-200 shadow-sm space-y-3.5">
+                                        <div class="flex items-center justify-between border-b border-slate-100 pb-2.5">
+                                            <div class="flex items-center gap-2">
+                                                <span class="w-2.5 h-2.5 rounded-full bg-teal-500 animate-pulse"></span>
+                                                <h4 class="text-xs font-bold text-slate-800">
+                                                    ¿Cómo se efectuará la entrega del cambio? <span class="text-red-500">*</span>
+                                                </h4>
+                                            </div>
+                                            <span class="text-[10px] font-bold text-teal-700 bg-teal-50 px-2.5 py-0.5 rounded-full border border-teal-200">
+                                                <i class="fas fa-truck-fast mr-1"></i> Venta original por Envío
+                                            </span>
+                                        </div>
+
+                                        <!-- OPCIONES: EN TIENDA VS NUEVO ENVÍO -->
+                                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                                            <label class="relative flex items-start gap-3 p-3 rounded-xl border cursor-pointer transition-all"
+                                                   :class="modalidad_cambio === 'tienda' ? 'border-teal-500 bg-teal-50/60 shadow-xs ring-1 ring-teal-500' : 'border-slate-200 bg-white hover:border-slate-300 hover:bg-slate-50/50'">
+                                                <input type="radio" name="modalidad_entrega_cambio" value="tienda" x-model="modalidad_cambio" class="mt-0.5 text-teal-600 focus:ring-teal-500">
+                                                <div class="text-left">
+                                                    <span class="block text-xs font-bold text-slate-800 flex items-center gap-1.5">
+                                                        <i class="fas fa-store text-teal-600"></i> En tienda física
+                                                    </span>
+                                                    <span class="block text-[11px] text-slate-500 mt-0.5 leading-snug">El cliente acude a la sucursal para entregar y retirar el producto.</span>
+                                                </div>
+                                            </label>
+
+                                            <label class="relative flex items-start gap-3 p-3 rounded-xl border cursor-pointer transition-all"
+                                                   :class="modalidad_cambio === 'envio' ? 'border-teal-500 bg-teal-50/60 shadow-xs ring-1 ring-teal-500' : 'border-slate-200 bg-white hover:border-slate-300 hover:bg-slate-50/50'"
+                                                   @click="if(!envio_cargado) cargarDatosEnvioOriginal()">
+                                                <input type="radio" name="modalidad_entrega_cambio" value="envio" x-model="modalidad_cambio" class="mt-0.5 text-teal-600 focus:ring-teal-500">
+                                                <div class="text-left">
+                                                    <span class="block text-xs font-bold text-slate-800 flex items-center gap-1.5">
+                                                        <i class="fas fa-truck-fast text-teal-600"></i> Volver a hacer el envío
+                                                    </span>
+                                                    <span class="block text-[11px] text-slate-500 mt-0.5 leading-snug">Se despacha un nuevo paquete a domicilio o agencia.</span>
+                                                </div>
+                                            </label>
+                                        </div>
+
+                                        <!-- FORMULARIO DE REENVÍO (CUANDO MODALIDAD ES ENVIO) -->
+                                        <template x-if="modalidad_cambio === 'envio'">
+                                            <div x-transition class="pt-3 border-t border-slate-100 space-y-3">
+                                                <div class="flex items-center justify-between">
+                                                    <div class="flex items-center gap-1.5 text-xs font-bold text-slate-700 uppercase tracking-wide">
+                                                        <i class="fas fa-location-dot text-teal-600"></i>
+                                                        <span>Datos del nuevo envío (cargados del original)</span>
+                                                    </div>
+                                                    <button type="button" 
+                                                            @click="cargarDatosEnvioOriginal()"
+                                                            class="text-[10px] font-bold text-teal-700 hover:text-teal-900 bg-teal-50 hover:bg-teal-100 px-2.5 py-1 rounded-lg border border-teal-200 transition-colors flex items-center gap-1 cursor-pointer"
+                                                            title="Restablecer datos originales del pedido">
+                                                        <i class="fas fa-rotate text-[9px]"></i> Cargar datos originales
+                                                    </button>
+                                                </div>
+
+                                                <div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                                                    <div>
+                                                        <label class="block text-[11px] font-bold text-slate-600 mb-1">Destinatario / Cliente <span class="text-red-500">*</span></label>
+                                                        <input type="text" name="envio_nombre_cliente" x-model="envio_nombre" required
+                                                               class="w-full text-xs bg-slate-50 border border-slate-300 rounded-lg px-2.5 py-2 text-slate-800 focus:bg-white focus:border-teal-500 focus:ring-1 focus:ring-teal-500 transition-colors placeholder-slate-400"
+                                                               placeholder="Nombre completo del destinatario">
+                                                    </div>
+
+                                                    <div>
+                                                        <label class="block text-[11px] font-bold text-slate-600 mb-1">Teléfono de Contacto <span class="text-red-500">*</span></label>
+                                                        <input type="text" name="envio_telefono" x-model="envio_telefono" required
+                                                               class="w-full text-xs bg-slate-50 border border-slate-300 rounded-lg px-2.5 py-2 text-slate-800 focus:bg-white focus:border-teal-500 focus:ring-1 focus:ring-teal-500 transition-colors placeholder-slate-400"
+                                                               placeholder="Ej. 7000-0000">
+                                                    </div>
+                                                </div>
+
+                                                <div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                                                    <div>
+                                                        <label class="block text-[11px] font-bold text-slate-600 mb-1">Departamento <span class="text-red-500">*</span></label>
+                                                        <select name="envio_departamento" x-model="envio_departamento" @change="onDeptoChange()" required
+                                                                class="w-full text-xs bg-slate-50 border border-slate-300 rounded-lg px-2.5 py-2 text-slate-800 focus:bg-white focus:border-teal-500 focus:ring-1 focus:ring-teal-500 transition-colors cursor-pointer">
+                                                            <option value="">Selecciona departamento</option>
+                                                            <template x-for="dep in listaDepartamentos" :key="dep">
+                                                                <option :value="dep" x-text="dep" :selected="dep === envio_departamento"></option>
+                                                            </template>
+                                                        </select>
+                                                    </div>
+
+                                                    <div>
+                                                        <label class="block text-[11px] font-bold text-slate-600 mb-1">Municipio <span class="text-red-500">*</span></label>
+                                                        <select name="envio_municipio" x-model="envio_municipio" required
+                                                                class="w-full text-xs bg-slate-50 border border-slate-300 rounded-lg px-2.5 py-2 text-slate-800 focus:bg-white focus:border-teal-500 focus:ring-1 focus:ring-teal-500 transition-colors cursor-pointer"
+                                                                :disabled="!envio_departamento">
+                                                            <option value="" x-text="envio_departamento ? 'Selecciona municipio' : 'Primero elige departamento'"></option>
+                                                            <template x-for="mun in municipiosDisponibles" :key="mun">
+                                                                <option :value="mun" x-text="mun" :selected="mun === envio_municipio"></option>
+                                                            </template>
+                                                        </select>
+                                                    </div>
+                                                </div>
+
+                                                <div>
+                                                    <label class="block text-[11px] font-bold text-slate-600 mb-1">Dirección Exacta de Entrega <span class="text-red-500">*</span></label>
+                                                    <textarea name="envio_direccion" x-model="envio_direccion" rows="2" required
+                                                              class="w-full text-xs bg-slate-50 border border-slate-300 rounded-lg px-2.5 py-2 text-slate-800 focus:bg-white focus:border-teal-500 focus:ring-1 focus:ring-teal-500 transition-colors placeholder-slate-400 resize-none"
+                                                              placeholder="Colonia, calle, pasaje, # casa, punto de referencia..."></textarea>
+                                                </div>
+
+                                                <div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5 items-center">
+                                                    <div>
+                                                        <label class="block text-[11px] font-bold text-slate-600 mb-1">Costo de Reenvío ($)</label>
+                                                        <div class="relative">
+                                                            <span class="absolute left-2.5 top-2 text-slate-400 text-xs font-bold">$</span>
+                                                            <input type="number" step="0.01" min="0" name="envio_precio" x-model="envio_precio"
+                                                                   class="w-full text-xs bg-slate-50 border border-slate-300 rounded-lg pl-6 pr-2.5 py-2 text-slate-800 focus:bg-white focus:border-teal-500 focus:ring-1 focus:ring-teal-500 transition-colors"
+                                                                   placeholder="0.00">
+                                                        </div>
+                                                    </div>
+                                                    <div class="text-[10px] text-slate-500 leading-tight pt-3">
+                                                        <i class="fas fa-circle-info text-teal-600 mr-0.5"></i> Ingresa <strong>$0.00</strong> si la tienda asume el reenvío por garantía, o el importe a cobrar si el cliente lo cubre.
+                                                    </div>
+                                                </div>
                                             </div>
                                         </template>
                                     </div>

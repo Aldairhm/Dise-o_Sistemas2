@@ -72,10 +72,18 @@
 
                 <td class="px-5 py-4 text-center">
                     @if($c->estado === 'Pendiente')
-                        <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-bold bg-amber-50 text-amber-700 border border-amber-200">
-                            <span class="w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse"></span>
-                            Pendiente
-                        </span>
+                        @if($c->es_liquidacion_bloqueada)
+                            <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-bold bg-amber-100 text-amber-800 border border-amber-300 shadow-2xs"
+                                  title="{{ $c->motivo_bloqueo_liquidacion }}">
+                                <i class="fas fa-shield-halved text-amber-600 text-[10px]"></i>
+                                En garantía
+                            </span>
+                        @else
+                            <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-bold bg-amber-50 text-amber-700 border border-amber-200">
+                                <span class="w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse"></span>
+                                Pendiente
+                            </span>
+                        @endif
                     @elseif($c->estado === 'Pagada')
                         <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
                             <i class="fas fa-check text-[10px]"></i>

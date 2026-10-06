@@ -62,7 +62,7 @@ class ComisionService
      */
     public function getPendientesVendedor(int $idVendedor, ?string $fechaDesde = null, ?string $fechaHasta = null)
     {
-        $pendientes = ComisionVendedor::with(['salida.variante.producto'])
+        return ComisionVendedor::with(['salida.variante.producto'])
             ->where('id_vendedor', $idVendedor)
             ->where('estado', 'Pendiente')
             ->when($fechaDesde && $fechaHasta, function ($query) use ($fechaDesde, $fechaHasta) {
@@ -71,24 +71,8 @@ class ComisionService
                     Carbon::parse($fechaHasta)->endOfDay(),
                 ]);
             })
+            ->orderBy('fecha_registro')
             ->get();
-
-        $ajustesNegativos = ComisionVendedor::with(['salida.variante.producto'])
-            ->where('id_vendedor', $idVendedor)
-            ->whereIn('estado', ['Cancelada', 'Pendiente'])
-            ->where('monto', '<', 0)
-            ->when($fechaDesde && $fechaHasta, function ($query) use ($fechaDesde, $fechaHasta) {
-                $query->whereBetween('fecha_registro', [
-                    Carbon::parse($fechaDesde)->startOfDay(),
-                    Carbon::parse($fechaHasta)->endOfDay(),
-                ]);
-            })
-            ->get();
-
-        return $pendientes->merge($ajustesNegativos)
-            ->unique('id')
-            ->sortBy('fecha_registro')
-            ->values();
     }
 
     /**
@@ -125,7 +109,6 @@ class ComisionService
         ) {
             $pendientesQuery = ComisionVendedor::where('id_vendedor', $idVendedor)
                 ->where('estado', 'Pendiente')
-                ->where('monto', '>=', 0)
                 ->when($fechaDesde && $fechaHasta, function ($query) use ($fechaDesde, $fechaHasta) {
                     $query->whereBetween('fecha_registro', [
                         Carbon::parse($fechaDesde)->startOfDay(),
@@ -137,35 +120,35 @@ class ComisionService
                 $pendientesQuery->whereIn('id', $comisionesIds);
             }
 
-            $pendientes = $pendientesQuery->lockForUpdate()->get();
-            $ajustesNegativos = ComisionVendedor::where('id_vendedor', $idVendedor)
-                ->whereIn('estado', ['Cancelada', 'Pendiente'])
-                ->where('monto', '<', 0)
-                ->when($fechaDesde && $fechaHasta, function ($query) use ($fechaDesde, $fechaHasta) {
-                    $query->whereBetween('fecha_registro', [
-                        Carbon::parse($fechaDesde)->startOfDay(),
-                        Carbon::parse($fechaHasta)->endOfDay(),
-                    ]);
-                })
-                ->lockForUpdate()
-                ->get();
-            $comisiones = $pendientes->merge($ajustesNegativos)->unique('id')->values();
+            $pendientes = $pendientesQuery->with(['salida'])->lockForUpdate()->get();
+            ComisionVendedor::cargarVentas($pendientes);
 
-            if ($comisiones->isEmpty() || (float) $comisiones->sum('monto') <= 0) {
+            // Filtrar comisiones cuya venta asociada aún esté dentro del período de garantía de devolución o no entregada
+            $comisiones = $pendientes->filter(function ($c) {
+                return !$c->es_liquidacion_bloqueada;
+            })->values();
+
+            $sumaTotal = round((float) $comisiones->sum('monto'), 2);
+
+            if ($comisiones->isEmpty() || $sumaTotal < 0) {
                 return collect();
             }
 
             $adminId = Auth::id();
             $ahora = now();
+            $esCompensacion = ($sumaTotal == 0.0);
+            $metodoFinal = $esCompensacion ? 'Compensación de Saldo' : $metodoPago;
 
             foreach ($comisiones as $comision) {
                 $notasComision = (float) $comision->monto < 0
                     ? trim(($comision->notas ? $comision->notas . ' | ' : '') . 'Ajuste negativo aplicado en liquidación.')
-                    : $notasFin;
+                    : ($esCompensacion
+                        ? trim(($comision->notas ? $comision->notas . ' | ' : '') . 'Liquidada por compensación mutua de saldo ($0.00).')
+                        : $notasFin);
 
                 $comision->update([
                     'estado'             => 'Pagada',
-                    'metodo_pago'        => $metodoPago,
+                    'metodo_pago'        => $metodoFinal,
                     'referencia_pago'    => $referenciaPago,
                     'comprobante_pago'   => $comprobantePath ?? $comision->comprobante_pago,
                     'liquidado_por'      => $adminId,
@@ -187,9 +170,10 @@ class ComisionService
         // Enviar correo de notificación al vendedor con el resumen de pago
         try {
             $vendedor = User::find($idVendedor);
-            if ($vendedor && filter_var($vendedor->username, FILTER_VALIDATE_EMAIL)) {
+            if ($vendedor) {
+                $metodoMail = $comisiones->first()?->metodo_pago ?? $metodoPago;
                 Mail::to($vendedor->username)->send(
-                    new ComisionPagadaMail($vendedor, $comisiones, $metodoPago, $referenciaPago, $notas, $comprobantePath)
+                    new ComisionPagadaMail($vendedor, $comisiones, $metodoMail, $referenciaPago, $notas, $comprobantePath)
                 );
             }
         } catch (\Throwable $e) {
@@ -350,7 +334,7 @@ class ComisionService
                     'concepto' => "Deducción envío - Devolución {$folioVenta}",
                     'monto' => $montoDeduccion,
                     'porcentaje' => 0.00,
-                    'estado' => 'Cancelada',
+                    'estado' => 'Pendiente',
                     'notas' => "Deducción por devolución de envío: -$"
                         . number_format(abs($montoDeduccion), 2)
                         . " (50 % del costo de envío: $"

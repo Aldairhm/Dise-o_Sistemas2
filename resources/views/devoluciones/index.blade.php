@@ -81,9 +81,25 @@
                                     @endif
                                 </td>
                                 <td class="px-5 py-4">
-                                    <span class="inline-flex rounded-lg border border-slate-200 bg-slate-50 px-2.5 py-1.5 text-xs font-bold capitalize text-slate-700">
-                                        {{ $resolucion }}
-                                    </span>
+                                    <div class="flex flex-col gap-1 items-start">
+                                        <span class="inline-flex rounded-lg border border-slate-200 bg-slate-50 px-2.5 py-1.5 text-xs font-bold capitalize text-slate-700">
+                                            {{ $resolucion }}
+                                        </span>
+                                        @if($esVenta && ($devolucion->detalles_json['modalidad_entrega_cambio'] ?? null) === 'envio')
+                                            <span class="inline-flex items-center gap-1 rounded-md border border-teal-200 bg-teal-50 px-2 py-0.5 text-[10px] font-bold text-teal-800" title="Despacho programado por envío">
+                                                <i class="fas fa-truck-fast text-[9px]"></i> Reenvío a domicilio
+                                            </span>
+                                        @elseif($esVenta && ($devolucion->detalles_json['modalidad_entrega_cambio'] ?? null) === 'tienda' && str_contains($devolucion->tipo_resolucion ?? '', 'cambio'))
+                                            <span class="inline-flex items-center gap-1 rounded-md border border-slate-200 bg-slate-100 px-2 py-0.5 text-[10px] font-bold text-slate-700" title="Entregado en tienda física">
+                                                <i class="fas fa-store text-[9px]"></i> Cambio en tienda
+                                            </span>
+                                            @if(!empty($devolucion->detalles_json['nueva_venta_id']))
+                                                <a href="{{ route('ventas.show', $devolucion->detalles_json['nueva_venta_id']) }}" class="inline-flex items-center gap-1 rounded-md border border-emerald-200 bg-emerald-50 px-2 py-0.5 text-[10px] font-bold text-emerald-800 hover:bg-emerald-100 transition-colors" title="Ver nueva venta de reemplazo">
+                                                    <i class="fas fa-arrow-up-right-from-square text-[8px]"></i> Nueva Venta #{{ $devolucion->detalles_json['nueva_venta_id'] }}
+                                                </a>
+                                            @endif
+                                        @endif
+                                    </div>
                                 </td>
                                 <td class="whitespace-nowrap px-5 py-4 text-right">
                                     <span class="font-black {{ (float) $devolucion->monto_reembolsado > 0 ? 'text-red-600' : 'text-slate-500' }}">

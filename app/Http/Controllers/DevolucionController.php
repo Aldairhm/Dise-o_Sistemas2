@@ -11,6 +11,7 @@ use App\Models\Devolucion;
 use App\Models\DevolucionDetalle;
 use App\Models\Variante;
 use App\Models\MovimientoBodega;
+use App\Models\Salida;
 use App\Models\DetalleVenta;
 use Carbon\Carbon;
 use Illuminate\Validation\ValidationException;
@@ -61,6 +62,14 @@ class DevolucionController extends Controller
             'productos.*.id_variante' => ['required', 'integer', 'distinct', 'exists:variante,id'],
             'productos.*.cantidad' => ['required', 'integer', 'min:1'],
             'productos.*.seleccionado' => ['nullable', 'boolean'],
+            // Modalidad de entrega cuando la venta fue por envío y se solicita cambio
+            'modalidad_entrega_cambio' => ['nullable', 'string', 'in:tienda,envio'],
+            'envio_nombre_cliente' => ['nullable', 'string', 'max:255'],
+            'envio_telefono' => ['nullable', 'string', 'max:50'],
+            'envio_departamento' => ['nullable', 'string', 'max:100'],
+            'envio_municipio' => ['nullable', 'string', 'max:100'],
+            'envio_direccion' => ['nullable', 'string', 'max:500'],
+            'envio_precio' => ['nullable', 'numeric', 'min:0'],
         ]);
 
             $productos = collect($validated['productos'])
@@ -125,6 +134,31 @@ class DevolucionController extends Controller
                     }
                 }
 
+                $esCambio = str_contains($validated['tipo_resolucion'], 'cambio');
+                $esVentaEnvio = in_array($venta->tipo_venta, ['Envio', 'Envío']);
+                $modalidadCambio = ($esCambio && $esVentaEnvio) ? ($request->input('modalidad_entrega_cambio') ?: 'tienda') : 'tienda';
+
+                $detallesJson = null;
+                if ($esCambio && $esVentaEnvio) {
+                    if ($modalidadCambio === 'envio') {
+                        $detallesJson = [
+                            'modalidad_entrega_cambio' => 'envio',
+                            'datos_envio' => [
+                                'nombre_cliente' => $request->input('envio_nombre_cliente') ?: $venta->nombre_cliente,
+                                'telefono' => $request->input('envio_telefono') ?: $venta->telefono,
+                                'departamento' => $request->input('envio_departamento') ?: $venta->departamento,
+                                'municipio' => $request->input('envio_municipio') ?: $venta->municipio,
+                                'direccion' => $request->input('envio_direccion'),
+                                'precio_envio' => $request->filled('envio_precio') ? (float) $request->input('envio_precio') : (float) $venta->precio_envio,
+                            ],
+                        ];
+                    } else {
+                        $detallesJson = [
+                            'modalidad_entrega_cambio' => 'tienda',
+                        ];
+                    }
+                }
+
                 $devolucion = Devolucion::create([
                     'origen_tipo' => 'venta',
                     'origen_id' => $venta->id,
@@ -132,6 +166,7 @@ class DevolucionController extends Controller
                     'monto_reembolsado' => $montoReembolsado,
                     'motivo' => $validated['motivo'],
                     'comprobante' => $rutaComprobante,
+                    'detalles_json' => $detallesJson,
                 ]);
 
                 foreach ($productos as $producto) {
@@ -184,11 +219,136 @@ class DevolucionController extends Controller
                     }
                 }
 
-                $nuevoEstado = str_contains($validated['tipo_resolucion'], 'cambio') ? 'Cambio' : 'Devolución';
-                $venta->update([
+                $nuevoEstado = $esCambio ? 'Cambio' : 'Devolución';
+
+                $datosActualizacionVenta = [
                     'estado' => $nuevoEstado,
-                    'observaciones' => trim(($venta->observaciones ? $venta->observaciones . PHP_EOL : '') . $nuevoEstado . ': ' . $validated['motivo']),
-                ]);
+                ];
+
+                $nuevaVentaGenerada = null;
+
+                if ($esCambio && $esVentaEnvio && $modalidadCambio === 'envio') {
+                    $nombreClienteEnvio = $request->input('envio_nombre_cliente') ?: $venta->nombre_cliente;
+                    $telefonoEnvio = $request->input('envio_telefono') ?: $venta->telefono;
+                    $deptoEnvio = $request->input('envio_departamento') ?: $venta->departamento;
+                    $municipioEnvio = $request->input('envio_municipio') ?: $venta->municipio;
+                    $direccionEnvio = $request->input('envio_direccion');
+                    $precioEnvioNuevo = $request->filled('envio_precio') ? (float) $request->input('envio_precio') : (float) $venta->precio_envio;
+
+                    $datosActualizacionVenta['nombre_cliente'] = $nombreClienteEnvio;
+                    $datosActualizacionVenta['telefono'] = $telefonoEnvio;
+                    $datosActualizacionVenta['departamento'] = $deptoEnvio;
+                    $datosActualizacionVenta['municipio'] = $municipioEnvio;
+                    $datosActualizacionVenta['precio_envio'] = $precioEnvioNuevo;
+                    $datosActualizacionVenta['fecha_entrega'] = null; // Reiniciar fecha de entrega para nuevo despacho
+
+                    $notaCambio = "Cambio por Reenvío: {$validated['motivo']}";
+                    if ($direccionEnvio) {
+                        $notaCambio .= " | Dirección reenvío: {$direccionEnvio} ({$deptoEnvio}, {$municipioEnvio})";
+                    }
+                    $datosActualizacionVenta['observaciones'] = trim(($venta->observaciones ? $venta->observaciones . PHP_EOL : '') . $notaCambio);
+
+                    // Actualizar las salidas asociadas con la nueva información de entrega y estado Cambio
+                    Salida::where('observaciones', 'like', "Venta #{$venta->id}%")->update([
+                        'nombre_cliente' => $nombreClienteEnvio,
+                        'telefono' => $telefonoEnvio,
+                        'departamento' => $deptoEnvio,
+                        'municipio' => $municipioEnvio,
+                        'direccion' => $direccionEnvio,
+                        'precio_envio' => $precioEnvioNuevo,
+                        'fecha_entrega' => null,
+                        'estado' => 'Cambio',
+                    ]);
+                } elseif ($esCambio && $modalidadCambio === 'tienda') {
+                    $folioOriginal = 'VNT-' . str_pad($venta->id, 5, '0', STR_PAD_LEFT);
+                    $folioDev = 'DEV-' . str_pad($devolucion->id, 5, '0', STR_PAD_LEFT);
+                    $notaCambio = "Cambio presencial en tienda: {$validated['motivo']} [{$folioDev}]";
+                    $datosActualizacionVenta['observaciones'] = trim(($venta->observaciones ? $venta->observaciones . PHP_EOL : '') . $notaCambio);
+
+                    // 1. Actualizar las salidas de la venta original a estado 'Cambio'
+                    Salida::where('observaciones', 'like', "Venta #{$venta->id}%")->update([
+                        'estado' => 'Cambio',
+                    ]);
+
+                    // 2. Crear automáticamente un nuevo registro de Venta para el reemplazo entregado en tienda
+                    $nuevaVentaGenerada = Venta::create([
+                        'id_usuario'       => $venta->id_usuario,
+                        'fecha'            => now(),
+                        'total'            => 0.00,
+                        'metodo_pago'      => 'Cambio Físico',
+                        'comprobante_pago' => $rutaComprobante,
+                        'nombre_cliente'   => $venta->nombre_cliente,
+                        'departamento'     => $venta->departamento,
+                        'municipio'        => $venta->municipio,
+                        'telefono'         => $venta->telefono,
+                        'precio_envio'     => 0.00,
+                        'tipo_venta'       => 'Tienda',
+                        'estado'           => 'Entregada',
+                        'fecha_entrega'    => now(),
+                        'observaciones'    => "Venta generada por reposición de cambio físico en tienda de Venta #{$folioOriginal} ({$folioDev}). Motivo: {$validated['motivo']}",
+                    ]);
+
+                    // 3. Crear DetalleVenta y Salida para cada producto del cambio físico
+                    foreach ($productos as $producto) {
+                        $variante = $variantes->get((int) $producto['id_variante']);
+                        $detalleVenta = $detallesVenta->get($variante->id);
+                        $cantidad = (int) $producto['cantidad'];
+                        $precioUnitario = $detalleVenta ? (float) $detalleVenta->precio_unitario : (float) $variante->precio_venta;
+                        $subtotalItem = round($cantidad * $precioUnitario, 2);
+                        $nombreProd = $variante?->producto?->nombre ?? 'Producto';
+                        $nombreVar = $variante?->nombre_variante ?? '';
+
+                        DetalleVenta::create([
+                            'id_venta'        => $nuevaVentaGenerada->id,
+                            'id_variante'     => $variante->id,
+                            'cantidad'        => $cantidad,
+                            'precio_unitario' => $precioUnitario,
+                            'subtotal'        => $subtotalItem,
+                        ]);
+
+                        Salida::create([
+                            'id_variante'          => $variante->id,
+                            'id_usuario'           => $venta->id_usuario,
+                            'cantidad'             => $cantidad,
+                            'fecha_salida'         => now()->toDateString(),
+                            'hora_salida'          => now()->toTimeString(),
+                            'fecha_entrega'        => now()->toDateString(),
+                            'nombre_cliente'       => $venta->nombre_cliente,
+                            'departamento'         => $venta->departamento,
+                            'municipio'            => $venta->municipio,
+                            'direccion'            => 'Venta en mostrador / POS - Cambio físico',
+                            'telefono'             => $venta->telefono,
+                            'precio_envio'         => 0.00,
+                            'costo_extra'          => 0.00,
+                            'precio_unitario'      => $precioUnitario,
+                            'subtotal'             => $subtotalItem,
+                            'descuento'            => $subtotalItem,
+                            'total'                => 0.00,
+                            'costo_total_aplicado' => round(((float) ($variante->costo_promedio ?? 0)) * $cantidad, 2),
+                            'comision_aplicada'    => 0.00,
+                            'observaciones'        => "Venta #{$nuevaVentaGenerada->id} (Reemplazo por cambio de Venta #{$venta->id}) - {$nombreProd}" . ($nombreVar ? " ({$nombreVar})" : ''),
+                            'estado'               => 'Entregada',
+                            'created_at'           => now(),
+                        ]);
+                    }
+
+                    // Asociar la nueva venta generada en detalles_json de la devolución
+                    $detallesDev = $devolucion->detalles_json ?? [];
+                    if (!is_array($detallesDev)) {
+                        $detallesDev = [];
+                    }
+                    $detallesDev['modalidad_entrega_cambio'] = 'tienda';
+                    $detallesDev['nueva_venta_id'] = $nuevaVentaGenerada->id;
+                    $detallesDev['folio_nueva_venta'] = 'VNT-' . str_pad($nuevaVentaGenerada->id, 5, '0', STR_PAD_LEFT);
+                    $devolucion->update(['detalles_json' => $detallesDev]);
+                } else {
+                    $datosActualizacionVenta['observaciones'] = trim(($venta->observaciones ? $venta->observaciones . PHP_EOL : '') . $nuevoEstado . ': ' . $validated['motivo']);
+                    Salida::where('observaciones', 'like', "Venta #{$venta->id}%")->update([
+                        'estado' => $nuevoEstado,
+                    ]);
+                }
+
+                $venta->update($datosActualizacionVenta);
 
                 // Unificar con el flujo de comisiones según la resolución tomada
                 app(\App\Services\ComisionService::class)->procesarResolucionDevolucion(
@@ -198,14 +358,26 @@ class DevolucionController extends Controller
                     $productos->toArray()
                 );
 
+                $mensajeExito = "{$nuevoEstado} procesado correctamente.";
+                if ($nuevaVentaGenerada) {
+                    $mensajeExito .= " Se generó la nueva Venta #VNT-" . str_pad($nuevaVentaGenerada->id, 5, '0', STR_PAD_LEFT) . " y el movimiento de salida entregado en tienda.";
+                } elseif ($esCambio && $esVentaEnvio) {
+                    $mensajeExito .= $modalidadCambio === 'envio' 
+                        ? " Se ha registrado la orden para nuevo despacho de paquetería." 
+                        : " Se ha registrado la entrega presencial en tienda física.";
+                } elseif ($montoReembolsado > 0) {
+                    $mensajeExito .= " El reembolso registrado es de $" . number_format($montoReembolsado, 2);
+                }
+
                 if ($request->wantsJson() || $request->ajax()) {
                     return response()->json([
                         'success' => true,
-                        'message' => "{$nuevoEstado} procesado correctamente. Impacto financiero: $" . number_format($montoReembolsado, 2),
+                        'message' => $mensajeExito,
+                        'nueva_venta_id' => $nuevaVentaGenerada?->id,
                     ]);
                 }
 
-                return back()->with('success', "{$nuevoEstado} procesado correctamente. El reembolso registrado es de $" . number_format($montoReembolsado, 2));
+                return back()->with('success', $mensajeExito);
             });
     }
 

@@ -99,7 +99,12 @@ class Venta extends Model
      */
     public function getPuedeDevolverAttribute(): bool
     {
-        if ($this->estado !== 'Entregada') {
+        if (!in_array($this->estado, ['Entregada', 'Cambio'])) {
+            return false;
+        }
+
+        // Si es cambio de envío y aún no se entrega el nuevo despacho, no está disponible para devolución
+        if ($this->estado === 'Cambio' && in_array($this->tipo_venta, ['Envio', 'Envío']) && !$this->fecha_entrega) {
             return false;
         }
 
@@ -173,8 +178,15 @@ class Venta extends Model
      */
     public function getEstadoBloqueadoAttribute(): bool
     {
-        if (in_array($this->estado, ['Cancelada', 'Devolución', 'Cambio', 'Entregada'])) {
+        if (in_array($this->estado, ['Cancelada', 'Devolución', 'Entregada'])) {
             return true;
+        }
+
+        // Si es Cambio pero la venta fue realizada en tienda física o resuelta presencialmente (fecha_entrega != null), ya está finalizada
+        if ($this->estado === 'Cambio') {
+            if (!in_array($this->tipo_venta, ['Envio', 'Envío']) || $this->fecha_entrega !== null) {
+                return true;
+            }
         }
 
         return false;
@@ -200,6 +212,7 @@ class Venta extends Model
                 'Pendiente' => ['Confirmada', 'Cancelada'],
                 'Confirmada' => ['En ruta', 'Cancelada'],
                 'En ruta' => ['Entregada'],
+                'Cambio' => ['En ruta'],
                 default => [],
             };
         }

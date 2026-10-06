@@ -345,7 +345,7 @@
                                       </thead>
                                       <tbody class="divide-y divide-slate-100">
                                         @foreach($vItem['comisiones'] as $c)
-                                          <tr data-comision-estado="{{ strtolower($c->estado) }}" data-comision-pendiente="{{ ($c->estado === 'Pendiente' || ($c->estado === 'Cancelada' && $c->monto < 0)) ? '1' : '0' }}" class="hover:bg-slate-50/60 transition-colors">
+                                          <tr data-comision-estado="{{ strtolower($c->estado) }}" data-comision-pendiente="{{ $c->estado === 'Pendiente' ? '1' : '0' }}" class="hover:bg-slate-50/60 transition-colors">
                                             <td class="px-4 py-3 whitespace-nowrap text-slate-600">
                                               <span class="font-bold text-slate-800 block">{{ $c->fecha_registro ? $c->fecha_registro->format('d/m/Y') : '—' }}</span>
                                               <span class="text-[10px] text-slate-400">{{ $c->fecha_registro ? $c->fecha_registro->format('h:i A') : '' }}</span>
@@ -456,7 +456,7 @@
     function abrirLiquidacionSemanal(vendedorId, nombreVendedor, usernameVendedor = '', fechaDesde = '', fechaHasta = '') {
         if (!vendedorId) return;
         if (typeof openLiquidarModal === 'function') {
-            openLiquidarModal(vendedorId, nombreVendedor, usernameVendedor, fechaDesde, fechaHasta);
+            openLiquidarModal(vendedorId, nombreVendedor, usernameVendedor, fechaDesde, fechaHasta, true);
         }
     }
 
@@ -643,29 +643,76 @@
 
             loadingBox.classList.add('hidden');
 
-            if (data.success && data.cantidad > 0) {
-                document.getElementById('liquidarTotalMonto').textContent = '$' + formatNum(Math.max(0, Number(data.total)));
-                document.getElementById('liquidarCountBadge').textContent = `${data.cantidad} comisiones pendientes`;
-                if (btnSubmit) btnSubmit.disabled = Number(data.total) <= 0;
+            if (data.success && (data.cantidad > 0 || (data.comisiones && data.comisiones.length > 0))) {
+                const totalLiquidable = Number(data.total || 0);
+                const totalEl = document.getElementById('liquidarTotalMonto');
+                if (totalLiquidable < 0) {
+                    totalEl.textContent = '-$' + formatNum(Math.abs(totalLiquidable));
+                    totalEl.className = 'text-2xl font-black text-rose-600 mt-0.5';
+                } else if (totalLiquidable === 0 && data.cantidad > 0) {
+                    totalEl.textContent = '$0.00';
+                    totalEl.className = 'text-2xl font-black text-indigo-600 mt-0.5';
+                } else {
+                    totalEl.textContent = '$' + formatNum(totalLiquidable);
+                    totalEl.className = 'text-2xl font-black text-emerald-700 mt-0.5';
+                }
+
+                const countTexto = data.cantidad_bloqueada > 0
+                    ? `${data.cantidad} liquidable(s) · ${data.cantidad_bloqueada} en garantía`
+                    : `${data.cantidad} comisiones pendientes`;
+                document.getElementById('liquidarCountBadge').textContent = countTexto;
 
                 let html = '';
+                if (data.cantidad_bloqueada > 0) {
+                    html += `
+                    <div class="p-2 mb-2 rounded-lg bg-amber-50 border border-amber-200 text-amber-900 text-[11px] flex items-center gap-1.5">
+                        <i class="fas fa-shield-halved text-amber-600 flex-shrink-0"></i>
+                        <span><strong>${data.cantidad_bloqueada} comisión(es)</strong> ($${formatNum(data.total_bloqueado)}) están en garantía de devolución y no pueden ser liquidadas aún.</span>
+                    </div>
+                    `;
+                }
+
                 data.comisiones.forEach(c => {
                     const monto = Number(c.monto);
                     const esNegativo = monto < 0;
+                    const esBloqueada = Boolean(c.bloqueada_garantia);
                     const montoTexto = esNegativo ? '-$' + formatNum(Math.abs(monto)) : '$' + formatNum(monto);
-                    html += `
-                        <label class="flex items-center justify-between p-2 bg-white rounded-lg border ${esNegativo ? 'border-rose-200 bg-rose-50/40 cursor-not-allowed' : 'border-emerald-100 hover:bg-emerald-50/50 cursor-pointer'} text-xs">
+
+                    if (esBloqueada) {
+                        html += `
+                        <div class="flex items-center justify-between p-2.5 bg-amber-50/70 rounded-xl border border-amber-200/90 text-xs">
                             <div class="flex items-center gap-2 overflow-hidden">
-                                <input type="checkbox" name="comisiones_ids[]" value="${c.id}" checked ${esNegativo ? 'disabled' : ''} onchange="recalcularTotalSeleccionado()" class="rounded border-emerald-300 text-emerald-600 focus:ring-emerald-500">
-                                <span class="truncate font-medium text-slate-800">${c.concepto}${esNegativo ? ' · Ajuste obligatorio' : ''}</span>
+                                <span class="w-5 h-5 rounded-full bg-amber-100 text-amber-800 flex items-center justify-center flex-shrink-0 text-[10px]" title="En período de garantía de devolución">
+                                    <i class="fas fa-shield-halved"></i>
+                                </span>
+                                <div class="truncate">
+                                    <span class="truncate font-semibold text-slate-800 block">${c.concepto}</span>
+                                    <span class="text-[10px] font-bold text-amber-800 flex items-center gap-1">
+                                        ${c.motivo_bloqueo || 'Período de garantía activo'} · No liquidable
+                                    </span>
+                                </div>
+                            </div>
+                            <span class="font-extrabold text-amber-800 ml-2 flex-shrink-0" title="En garantía">${montoTexto}</span>
+                        </div>
+                        `;
+                    } else {
+                        html += `
+                        <label class="flex items-center justify-between p-2 bg-white rounded-lg border ${esNegativo ? 'border-rose-200 bg-rose-50/40 hover:bg-rose-50/70' : 'border-emerald-100 hover:bg-emerald-50/50'} cursor-pointer text-xs transition-colors">
+                            <div class="flex items-center gap-2 overflow-hidden">
+                                <input type="checkbox" name="comisiones_ids[]" value="${c.id}" checked onchange="recalcularTotalSeleccionado()" class="rounded ${esNegativo ? 'border-rose-300 text-rose-600 focus:ring-rose-500' : 'border-emerald-300 text-emerald-600 focus:ring-emerald-500'} cursor-pointer">
+                                <span class="truncate font-medium text-slate-800">${c.concepto}${esNegativo ? ' · Deducción' : ''}</span>
                             </div>
                             <span class="font-extrabold ${esNegativo ? 'text-rose-700' : 'text-emerald-700'} ml-2 flex-shrink-0" data-monto="${monto}">${montoTexto}</span>
                         </label>
-                    `;
+                        `;
+                    }
                 });
                 lista.innerHTML = html;
                 resumenBox.classList.remove('hidden');
-                if (btnSubmit) btnSubmit.disabled = Number(data.total) <= 0;
+
+                if (typeof recalcularTotalSeleccionado === 'function') {
+                    recalcularTotalSeleccionado();
+                }
             } else {
                 emptyBox.classList.remove('hidden');
                 if (btnSubmit) btnSubmit.disabled = true;
@@ -690,11 +737,58 @@
                 total += parseFloat(montoEl.dataset.monto || 0);
             }
         });
-            total = Math.max(0, total);
-            document.getElementById('liquidarTotalMonto').textContent = '$' + formatNum(total);
-            const btnSubmit = document.getElementById('btnConfirmLiquidar');
-            if (btnSubmit) btnSubmit.disabled = total <= 0;
-        document.getElementById('liquidarCountBadge').textContent = `${checkboxes.length} seleccionadas`;
+
+        total = Math.round(total * 100) / 100;
+        const totalEl = document.getElementById('liquidarTotalMonto');
+        const btnSubmit = document.getElementById('btnConfirmLiquidar');
+        const metodoSelect = document.getElementById('liquidarMetodoPago');
+        const optCompensacion = document.getElementById('optCompensacionSaldo');
+
+        if (total < 0) {
+            totalEl.textContent = '-$' + formatNum(Math.abs(total));
+            totalEl.className = 'text-2xl font-black text-rose-600 mt-0.5';
+            if (btnSubmit) {
+                btnSubmit.disabled = true;
+                btnSubmit.title = 'El saldo neto no puede ser negativo.';
+            }
+            if (optCompensacion) optCompensacion.classList.add('hidden');
+        } else if (total === 0) {
+            totalEl.textContent = '$0.00';
+            totalEl.className = 'text-2xl font-black text-indigo-600 mt-0.5';
+            if (checkboxes.length > 0) {
+                if (btnSubmit) {
+                    btnSubmit.disabled = false;
+                    btnSubmit.title = 'Liquidación por compensación mutua de saldos ($0.00)';
+                }
+                if (optCompensacion) {
+                    optCompensacion.classList.remove('hidden');
+                    optCompensacion.selected = true;
+                    if (typeof handleMetodoPagoLiquidar === 'function') {
+                        handleMetodoPagoLiquidar('Compensación de Saldo');
+                    }
+                }
+            } else {
+                if (btnSubmit) btnSubmit.disabled = true;
+            }
+        } else {
+            totalEl.textContent = '$' + formatNum(total);
+            totalEl.className = 'text-2xl font-black text-emerald-700 mt-0.5';
+            if (btnSubmit) {
+                btnSubmit.disabled = false;
+                btnSubmit.title = '';
+            }
+            if (optCompensacion) {
+                optCompensacion.classList.add('hidden');
+                if (metodoSelect && metodoSelect.value === 'Compensación de Saldo') {
+                    metodoSelect.value = 'Efectivo';
+                    if (typeof handleMetodoPagoLiquidar === 'function') {
+                        handleMetodoPagoLiquidar('Efectivo');
+                    }
+                }
+            }
+        }
+
+        document.getElementById('liquidarCountBadge').textContent = `${checkboxes.length} seleccionada${checkboxes.length !== 1 ? 's' : ''}`;
     }
 
     // ── Editar comisión (admin) ───────────────────────────────────────────
@@ -775,13 +869,14 @@
 
     // ── Liquidar con Método de Pago (admin) ────────────────────────────────
 
-    function openLiquidarModal(vendedorId = null, nombreVendedor = '', usernameVendedor = '', fechaDesde = '', fechaHasta = '') {
+    function openLiquidarModal(vendedorId = null, nombreVendedor = '', usernameVendedor = '', fechaDesde = '', fechaHasta = '', bloquear = false) {
         const modal = document.getElementById('modalLiquidar');
         const form = document.getElementById('formLiquidar');
         if (!modal || !form) return;
 
         modal.classList.remove('hidden');
         form.reset();
+        window._vendedorLiquidarBloqueado = false;
         document.getElementById('liquidarFechaDesde').value = fechaDesde;
         document.getElementById('liquidarFechaHasta').value = fechaHasta;
         const alcance = document.getElementById('liquidarAlcance');
@@ -804,17 +899,25 @@
 
         if (vendedorId && typeof seleccionarVendedorLiquidar === 'function') {
             const initials = (nombreVendedor || usernameVendedor || 'VN').substring(0, 2).toUpperCase();
-            seleccionarVendedorLiquidar(vendedorId, nombreVendedor || usernameVendedor, usernameVendedor, initials);
+            seleccionarVendedorLiquidar(vendedorId, nombreVendedor || usernameVendedor, usernameVendedor, initials, Boolean(bloquear));
         }
     }
 
     function closeLiquidarModal() {
+        window._vendedorLiquidarBloqueado = false;
         document.getElementById('modalLiquidar').classList.add('hidden');
+        if (document.getElementById('liquidarFechaDesde')) document.getElementById('liquidarFechaDesde').value = '';
+        if (document.getElementById('liquidarFechaHasta')) document.getElementById('liquidarFechaHasta').value = '';
+        const alcance = document.getElementById('liquidarAlcance');
+        if (alcance) {
+            alcance.textContent = '';
+            alcance.classList.add('hidden');
+        }
         // Reset step wizard
-        document.getElementById('liquidarStep2').classList.add('hidden');
-        document.getElementById('formLiquidar').classList.remove('hidden');
-        document.getElementById('stepProgressLine').style.width = '0%';
-        document.getElementById('stepIndicator2').classList.add('opacity-35');
+        document.getElementById('liquidarStep2')?.classList.add('hidden');
+        document.getElementById('formLiquidar')?.classList.remove('hidden');
+        if (document.getElementById('stepProgressLine')) document.getElementById('stepProgressLine').style.width = '0%';
+        if (document.getElementById('stepIndicator2')) document.getElementById('stepIndicator2').classList.add('opacity-35');
         const s2 = document.getElementById('step2Circle');
         if (s2) { s2.classList.replace('bg-emerald-600', 'bg-slate-300'); }
     }
@@ -878,7 +981,12 @@
         document.getElementById('reviewCantidad').textContent = `${checkboxes.length} comisión${checkboxes.length !== 1 ? 'es' : ''}`;
 
         // Método
-        const metodoBadge = metodoPago === 'Efectivo' ? 'Efectivo' : 'Transferencia Bancaria';
+        let metodoBadge = 'Efectivo';
+        if (metodoPago === 'Transferencia Bancaria') {
+            metodoBadge = 'Transferencia Bancaria';
+        } else if (metodoPago === 'Compensación de Saldo') {
+            metodoBadge = 'Compensación de Saldo (Neto $0.00)';
+        }
         document.getElementById('reviewMetodo').textContent = metodoBadge;
 
         // Referencia
@@ -909,10 +1017,13 @@
             const label = cb.closest('label');
             const concepto = label?.querySelector('.truncate')?.textContent?.trim() || `Comisión #${cb.value}`;
             const montoEl  = label?.querySelector('[data-monto]');
-            const monto    = montoEl ? '$' + formatNum(parseFloat(montoEl.dataset.monto)) : '';
+            const val      = montoEl ? parseFloat(montoEl.dataset.monto) : 0;
+            const isNeg    = val < 0;
+            const monto    = (isNeg ? '-$' : '$') + formatNum(Math.abs(val));
+            const colorClass = isNeg ? 'text-rose-600' : 'text-emerald-700';
             html += `<div class="flex items-center justify-between px-3 py-2 bg-white rounded-xl border border-slate-100 text-xs">
                 <span class="text-slate-700 font-medium truncate flex-1 pr-2">${concepto}</span>
-                <span class="font-extrabold text-emerald-700 flex-shrink-0">${monto}</span>
+                <span class="font-extrabold ${colorClass} flex-shrink-0">${monto}</span>
             </div>`;
         });
         listaReview.innerHTML = html;

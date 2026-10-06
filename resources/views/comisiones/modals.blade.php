@@ -137,10 +137,13 @@
                             <p class="text-[11px] text-slate-500 truncate" id="selectedVendedorUsername">correo</p>
                         </div>
                     </div>
-                    <button type="button" onclick="deseleccionarVendedorLiquidar()"
+                    <button type="button" id="btnCambiarVendedorLiquidar" onclick="deseleccionarVendedorLiquidar()"
                             class="px-3 py-1.5 rounded-lg bg-white hover:bg-emerald-100/80 border border-emerald-200 text-emerald-800 text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 shadow-2xs flex-shrink-0">
                         <i class="fas fa-arrows-rotate text-[10px]"></i> Cambiar
                     </button>
+                    <span id="badgeVendedorFijo" class="hidden px-2.5 py-1 rounded-lg bg-emerald-100/90 border border-emerald-300 text-emerald-800 text-xs font-bold flex items-center gap-1.5 shadow-2xs flex-shrink-0" title="Vendedor fijado para esta liquidación">
+                        <i class="fas fa-lock text-[10px] text-emerald-600"></i> Vendedor fijo
+                    </span>
                 </div>
 
                 {{-- Buscador y Lista Desplegable de Vendedores --}}
@@ -231,6 +234,7 @@
                         class="w-full py-2.5 px-3.5 bg-slate-50 border border-slate-200 focus:border-emerald-500 rounded-xl text-sm font-semibold text-slate-700 focus:ring-2 focus:ring-emerald-500/20 focus:outline-none transition-all">
                     <option value="Efectivo">Efectivo</option>
                     <option value="Transferencia Bancaria">Transferencia Bancaria</option>
+                    <option value="Compensación de Saldo" id="optCompensacionSaldo" class="hidden">Compensación de Saldo (Neto $0.00)</option>
                 </select>
             </div>
 
@@ -799,17 +803,29 @@ function clearAllFieldErrors(formId) {
     });
 }
 
-function seleccionarVendedorLiquidar(id, nombre, username, initials) {
-
+function seleccionarVendedorLiquidar(id, nombre, username, initials, bloquear = false) {
     const inputHidden = document.getElementById('liquidarVendedor');
     const nombreEl    = document.getElementById('selectedVendedorNombre');
     const userEl      = document.getElementById('selectedVendedorUsername');
     const avatarEl    = document.getElementById('selectedVendedorAvatar');
+    const btnCambiar  = document.getElementById('btnCambiarVendedorLiquidar');
+    const badgeFijo   = document.getElementById('badgeVendedorFijo');
 
     if (inputHidden) inputHidden.value = id;
     if (nombreEl) nombreEl.textContent = nombre;
     if (userEl) userEl.textContent = username;
     if (avatarEl) avatarEl.textContent = initials || nombre.substring(0, 2).toUpperCase();
+
+    // Bloquear o desbloquear posibilidad de cambiar de vendedor
+    if (bloquear) {
+        window._vendedorLiquidarBloqueado = true;
+        if (btnCambiar) btnCambiar.classList.add('hidden');
+        if (badgeFijo) badgeFijo.classList.remove('hidden');
+    } else {
+        window._vendedorLiquidarBloqueado = false;
+        if (btnCambiar) btnCambiar.classList.remove('hidden');
+        if (badgeFijo) badgeFijo.classList.add('hidden');
+    }
 
     document.getElementById('vendedorBuscadorBox')?.classList.add('hidden');
     document.getElementById('vendedorSeleccionadoBox')?.classList.remove('hidden');
@@ -820,6 +836,10 @@ function seleccionarVendedorLiquidar(id, nombre, username, initials) {
 }
 
 function deseleccionarVendedorLiquidar() {
+    if (window._vendedorLiquidarBloqueado) {
+        return; // REGLA: No se permite cambiar de vendedor si la liquidación se abrió desde el botón de ese vendedor
+    }
+
     const inputHidden = document.getElementById('liquidarVendedor');
     if (inputHidden) inputHidden.value = '';
 
@@ -951,6 +971,11 @@ function handleMetodoPagoLiquidar(metodo) {
         container.classList.remove('hidden');
         if (labelRef) labelRef.innerHTML = 'N° de Referencia Bancaria <span class="text-slate-400 font-normal normal-case">(opcional)</span>';
         if (inputRef) inputRef.placeholder = 'Ej: Transferencia #984213, Cuenta origen/destino...';
+    } else if (metodo === 'Compensación de Saldo') {
+        container.classList.add('hidden');
+        input.value = '';
+        if (labelRef) labelRef.innerHTML = 'N° de Referencia / Comprobante de Cruce <span class="text-slate-400 font-normal normal-case">(opcional)</span>';
+        if (inputRef) inputRef.placeholder = 'Ej: Compensación mutua de saldos #001';
     } else {
         container.classList.add('hidden');
         input.value = '';
@@ -1004,10 +1029,14 @@ async function verDetalleComision(id) {
 
         // Badge Estado
         const estadoBadge = document.getElementById('detEstadoBadge');
-        if (estadoBadge) {
             if (c.estado === 'Pendiente') {
-                estadoBadge.className = 'inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-amber-50 text-amber-700 border border-amber-200';
-                estadoBadge.innerHTML = '<span class="w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse"></span> Pendiente';
+                if (c.es_liquidacion_bloqueada) {
+                    estadoBadge.className = 'inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-amber-100 text-amber-800 border border-amber-300';
+                    estadoBadge.innerHTML = `<i class="fas fa-shield-halved text-amber-600 text-[10px]"></i> En garantía (${c.motivo_bloqueo || 'Garantía activa'})`;
+                } else {
+                    estadoBadge.className = 'inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-amber-50 text-amber-700 border border-amber-200';
+                    estadoBadge.innerHTML = '<span class="w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse"></span> Liquidación pendiente';
+                }
             } else if (c.estado === 'Pagada') {
                 estadoBadge.className = 'inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-emerald-50 text-emerald-700 border border-emerald-200';
                 estadoBadge.innerHTML = '<i class="fas fa-check text-[10px]"></i> Pagada';
@@ -1015,7 +1044,6 @@ async function verDetalleComision(id) {
                 estadoBadge.className = 'inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-slate-100 text-slate-600 border border-slate-200';
                 estadoBadge.innerHTML = '<i class="fas fa-ban text-[10px]"></i> Cancelada';
             }
-        }
 
         // 2. Hero Financiero
         const montoSign = c.monto < 0 ? `-$${formatNum(Math.abs(c.monto))}` : `$${formatNum(c.monto)}`;
@@ -1137,7 +1165,7 @@ async function verDetalleComision(id) {
         if (c.estado === 'Pagada') {
             pagoCard?.classList.remove('hidden');
             const mPago = document.getElementById('detMetodoPago');
-            if (mPago) mPago.innerHTML = `<i class="fas ${c.metodo_pago === 'Transferencia Bancaria' ? 'fa-university text-blue-600' : (c.metodo_pago === 'Efectivo' ? 'fa-money-bill-wave text-emerald-600' : 'fa-wallet text-indigo-600')} mr-1"></i> ${c.metodo_pago || 'Efectivo'}`;
+            if (mPago) mPago.innerHTML = `<i class="fas ${c.metodo_pago === 'Transferencia Bancaria' ? 'fa-university text-blue-600' : (c.metodo_pago === 'Compensación de Saldo' ? 'fa-scale-balanced text-indigo-600' : (c.metodo_pago === 'Efectivo' ? 'fa-money-bill-wave text-emerald-600' : 'fa-wallet text-indigo-600'))} mr-1"></i> ${c.metodo_pago || 'Efectivo'}`;
             const rPago = document.getElementById('detReferenciaPago');
             if (rPago) rPago.textContent = c.referencia_pago ? `Ref: ${c.referencia_pago}` : 'Sin referencia bancaria';
             const fLiq = document.getElementById('detFechaLiquidacion');

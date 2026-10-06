@@ -867,36 +867,12 @@ class VentaController extends Controller
 
                     // 3. Descontar el stock físico de la variante
                     $variante->decrement('stock', $cantidad);
+                }
 
-                    // 4. Si la variante tiene comisión asignada o se incluyó costo extra, registrar en `comision_vendedor` para el vendedor asignado
-                    if ($comisionBruta > 0) {
-                        $nombreProd = $variante->producto->nombre ?? 'Producto';
-                        $nombreVar = $variante->nombre_variante ?? '';
-                        $descConcepto = "Venta #{$venta->id} ({$cantidad}x {$nombreProd}" . ($nombreVar ? " - {$nombreVar}" : '') . ")";
-
-                        $partesNotas = [];
-                        if ($costoExtra > 0) {
-                            $partesNotas[] = 'Incluye costo extra: +$' . number_format($costoExtra, 2);
-                        }
-                        if ($descuentoComision > 0) {
-                            $partesNotas[] = 'Descuento de venta aplicado a comisión: -$' . number_format($descuentoComision, 2)
-                                . ' (comisión bruta: $' . number_format($comisionBruta, 2) . ')';
-                        }
-                        $notasComision = !empty($partesNotas) ? implode(' | ', $partesNotas) : null;
-
-                        $comisionPorUnidad = $cantidad > 0 ? round($comisionBruta / $cantidad, 2) : $comisionUnitaria;
-
-                        ComisionVendedor::create([
-                            'id_vendedor' => $vendedorVentaId,
-                            'id_salida' => $salida->id,
-                            'concepto' => $descConcepto,
-                            'monto' => $comisionTotal,
-                            'porcentaje' => $comisionPorUnidad,
-                            'estado' => $comisionTotal > 0 ? 'Pendiente' : 'Cancelada',
-                            'notas' => $notasComision,
-                            'fecha_registro' => now(),
-                        ]);
-                    }
+                // 4. Registrar comisiones únicamente si la venta ya está entregada (ej. mostrador/tienda física).
+                // REGLA: Para ventas hechas por envío, la comisión NO se registra hasta que el estado sea 'Entregada'.
+                if ($estadoInicial === 'Entregada') {
+                    $this->registrarComisionesVenta($venta);
                 }
 
                 return $venta;
@@ -1094,6 +1070,12 @@ class VentaController extends Controller
             }
 
             Salida::where('observaciones', 'like', "Venta #{$venta->id}%")->update($salidasUpdates);
+
+            // REGLA: Si la venta ha sido entregada (ej. envíos finalizados),
+            // registrar las comisiones de los productos para el vendedor asignado si aún no están registradas.
+            if ($nuevoEstado === 'Entregada') {
+                $this->registrarComisionesVenta($venta);
+            }
 
             DB::commit();
 
@@ -1481,12 +1463,86 @@ class VentaController extends Controller
                 'concepto' => "Deducción envío - Devolución {$folioVenta}",
                 'monto' => $montoDeduccion,
                 'porcentaje' => 0.00,
-                'estado' => 'Cancelada',
+                'estado' => 'Pendiente',
                 'notas' => "Deducción por devolución de envío: -$"
                     . number_format(abs($montoDeduccion), 2)
                     . " (50 % del costo de envío: $"
                     . number_format((float) $venta->precio_envio, 2)
                     . ').',
+                'fecha_registro' => now(),
+            ]);
+        }
+    }
+
+    /**
+     * Registra las comisiones en `comision_vendedor` para las salidas de una venta cuando ésta ha sido entregada.
+     * Es idempotente: solo genera comisiones para aquellas salidas que aún no tengan comisión registrada.
+     */
+    public function registrarComisionesVenta(Venta $venta): void
+    {
+        $comisionService = app(\App\Services\ComisionService::class);
+        $salidas = Salida::with(['variante.producto'])
+            ->where('observaciones', 'like', "Venta #{$venta->id}%")
+            ->get();
+
+        if ($salidas->isEmpty()) {
+            return;
+        }
+
+        $vendedorVentaId = (int) $venta->id_usuario;
+
+        foreach ($salidas as $salida) {
+            // Verificar si ya existe registro de comisión para esta salida
+            $yaTieneComision = ComisionVendedor::where('id_salida', $salida->id)->exists();
+            if ($yaTieneComision) {
+                continue;
+            }
+
+            $variante = $salida->variante;
+            $cantidad = (int) $salida->cantidad;
+            $costoExtra = (float) ($salida->costo_extra ?? 0);
+
+            // Calcular comisión unitaria y comisión bruta de la línea
+            $comisionUnitaria = $comisionService->resolverComisionUnitaria($variante);
+            $comisionBase = $comisionService->calcularMonto($comisionUnitaria, $cantidad);
+            $comisionBruta = round($comisionBase + $costoExtra, 2);
+
+            // Si la comisión bruta total es 0, no corresponde generar comisión
+            if ($comisionBruta <= 0) {
+                continue;
+            }
+
+            // El monto final a pagar se obtiene de `comision_aplicada` (guardada en salida con descuentos distribuidos)
+            $comisionTotal = (float) ($salida->comision_aplicada ?? $comisionBruta);
+
+            $nombreProd = $variante?->producto?->nombre ?? 'Producto';
+            $nombreVar = $variante?->nombre_variante ?? '';
+            $descConcepto = "Venta #{$venta->id} ({$cantidad}x {$nombreProd}" . ($nombreVar ? " - {$nombreVar}" : '') . ")";
+
+            $partesNotas = [];
+            if ($costoExtra > 0) {
+                $partesNotas[] = 'Incluye costo extra: +$' . number_format($costoExtra, 2);
+            }
+            $descuentoComision = max(0.0, round($comisionBruta - $comisionTotal, 2));
+            if ($descuentoComision > 0) {
+                $partesNotas[] = 'Descuento de venta aplicado a comisión: -$' . number_format($descuentoComision, 2)
+                    . ' (comisión bruta: $' . number_format($comisionBruta, 2) . ')';
+            }
+            if (in_array($venta->tipo_venta, ['Envio', 'Envío'])) {
+                $partesNotas[] = 'Comisión registrada tras entrega exitosa del envío.';
+            }
+            $notasComision = !empty($partesNotas) ? implode(' | ', $partesNotas) : null;
+
+            $comisionPorUnidad = $cantidad > 0 ? round($comisionBruta / $cantidad, 2) : $comisionUnitaria;
+
+            ComisionVendedor::create([
+                'id_vendedor'    => $vendedorVentaId,
+                'id_salida'      => $salida->id,
+                'concepto'       => $descConcepto,
+                'monto'          => $comisionTotal,
+                'porcentaje'     => $comisionPorUnidad,
+                'estado'         => $comisionTotal > 0 ? 'Pendiente' : 'Cancelada',
+                'notas'          => $notasComision,
                 'fecha_registro' => now(),
             ]);
         }

@@ -53,6 +53,7 @@ class ComisionVendedorController extends Controller
         }
 
         $comisiones = $query->paginate(15)->withQueryString();
+        ComisionVendedor::cargarVentas(collect($comisiones->items()));
 
         // KPIs
         $baseStats = ComisionVendedor::query();
@@ -174,32 +175,43 @@ class ComisionVendedorController extends Controller
             }
 
             $comisiones = $comisionesQuery->get();
+            ComisionVendedor::cargarVentas($comisiones);
 
-            $pendiente = max(0, (float) $comisiones->where('estado', 'Pendiente')->where('monto', '>=', 0)->sum('monto')
-                + $comisiones->whereIn('estado', ['Cancelada', 'Pendiente'])->where('monto', '<', 0)->sum('monto'));
+            $comisionesLiquidables = $comisiones->filter(fn($c) => !$c->es_liquidacion_bloqueada);
+            $comisionesEnGarantia  = $comisiones->filter(fn($c) => $c->es_liquidacion_bloqueada);
+
+            $pendiente = max(0, (float) $comisiones->where('estado', 'Pendiente')->sum('monto'));
+            $saldoEnGarantia = (float) $comisionesEnGarantia->where('estado', 'Pendiente')->sum('monto');
+            $saldoLiquidable = max(0, (float) $comisionesLiquidables->where('estado', 'Pendiente')->sum('monto'));
+
             $pagada    = (float) $comisiones->where('estado', 'Pagada')->sum('monto');
             $cancelada = (float) $comisiones->where('estado', 'Cancelada')->sum('monto');
             $total     = (float) $comisiones->where('estado', '!=', 'Cancelada')->sum('monto');
 
-            // Saldo total pendiente de todos los tiempos para este vendedor
-            $saldoPendienteTotal = max(0, (float) ComisionVendedor::where('id_vendedor', $vendedor->id)
+            // Saldo total pendiente de todos los tiempos para este vendedor (desglosado en liquidable y en garantía)
+            $todasPendientes = ComisionVendedor::with(['salida'])->where('id_vendedor', $vendedor->id)
                 ->where('estado', 'Pendiente')
-                ->where('monto', '>=', 0)
-                ->sum('monto') + ComisionVendedor::where('id_vendedor', $vendedor->id)
-                ->whereIn('estado', ['Cancelada', 'Pendiente'])
-                ->where('monto', '<', 0)
-                ->sum('monto'));
+                ->get();
+            ComisionVendedor::cargarVentas($todasPendientes);
+
+            $saldoPendienteTotal = max(0, (float) $todasPendientes->sum('monto'));
+            $saldoLiquidableTotal = max(0, (float) $todasPendientes->filter(fn($c) => !$c->es_liquidacion_bloqueada)->sum('monto'));
+            $saldoGarantiaTotal = (float) $todasPendientes->filter(fn($c) => $c->es_liquidacion_bloqueada)->sum('monto');
 
             return [
-                'vendedor'              => $vendedor,
-                'comisiones'            => $comisiones,
-                'total_comisiones'      => $total,
-                'total_pendiente'       => $pendiente,
-                'total_pagada'          => $pagada,
-                'total_cancelada'       => $cancelada,
-                'total_ventas'          => $comisiones->where('estado', '!=', 'Cancelada')->count(),
-                'total_pendientes'      => $comisiones->where('estado', 'Pendiente')->count(),
-                'saldo_pendiente_total' => $saldoPendienteTotal,
+                'vendedor'               => $vendedor,
+                'comisiones'             => $comisiones,
+                'total_comisiones'       => $total,
+                'total_pendiente'        => $pendiente,
+                'saldo_en_garantia'      => $saldoEnGarantia,
+                'saldo_liquidable'       => $saldoLiquidable,
+                'total_pagada'           => $pagada,
+                'total_cancelada'        => $cancelada,
+                'total_ventas'           => $comisiones->where('estado', '!=', 'Cancelada')->count(),
+                'total_pendientes'       => $comisiones->where('estado', 'Pendiente')->count(),
+                'saldo_pendiente_total'  => $saldoPendienteTotal,
+                'saldo_liquidable_total' => $saldoLiquidableTotal,
+                'saldo_garantia_total'   => $saldoGarantiaTotal,
             ];
         });
 
@@ -256,6 +268,7 @@ class ComisionVendedorController extends Controller
         }
 
         $comisiones = $query->get();
+        ComisionVendedor::cargarVentas($comisiones);
 
         // Agrupar de lunes a domingo por semana ISO 8601.
         $semanasAgrupadas = $comisiones->groupBy(function ($c) {
@@ -276,8 +289,7 @@ class ComisionVendedorController extends Controller
             $inicioSemana = \Illuminate\Support\Carbon::now()->setISODate($year, $week)->startOfWeek();
             $finSemana    = \Illuminate\Support\Carbon::now()->setISODate($year, $week)->endOfWeek();
 
-            $pendiente = max(0, (float) $items->where('estado', 'Pendiente')->where('monto', '>=', 0)->sum('monto')
-                + $items->whereIn('estado', ['Cancelada', 'Pendiente'])->where('monto', '<', 0)->sum('monto'));
+            $pendiente = max(0, (float) $items->where('estado', 'Pendiente')->sum('monto'));
             $pagada    = (float) $items->where('estado', 'Pagada')->sum('monto');
             $cancelada = (float) $items->where('estado', 'Cancelada')->sum('monto');
             $semanaCerrada = now()->greaterThan($finSemana->copy()->endOfDay());
@@ -294,8 +306,7 @@ class ComisionVendedorController extends Controller
                     'vendedor'  => $vendedor,
                     'comisiones' => $vItems,
                     'total'     => $totalVendedor,
-                    'pendiente' => max(0, (float) $vItems->where('estado', 'Pendiente')->where('monto', '>=', 0)->sum('monto')
-                        + $vItems->whereIn('estado', ['Cancelada', 'Pendiente'])->where('monto', '<', 0)->sum('monto')),
+                    'pendiente' => max(0, (float) $vItems->where('estado', 'Pendiente')->sum('monto')),
                     'pagada'    => (float) $vItems->where('estado', 'Pagada')->sum('monto'),
                     'cantidad'  => $vItems->count(),
                     'ventas'    => $vItems->where('estado', '!=', 'Cancelada')->whereNotNull('id_salida')->count(),
@@ -350,24 +361,35 @@ class ComisionVendedorController extends Controller
             $validated['fecha_hasta'] ?? null
         );
 
+        ComisionVendedor::cargarVentas($pendientes);
+
+        $comisionesLiquidables = $pendientes->filter(fn($c) => !$c->es_liquidacion_bloqueada);
+        $comisionesBloqueadas  = $pendientes->filter(fn($c) => $c->es_liquidacion_bloqueada);
+
         $data = $pendientes->map(function ($c) {
             return [
-                'id'             => $c->id,
-                'concepto'       => $c->concepto ?? ($c->salida ? "Venta #{$c->salida->id} ({$c->salida->cantidad} uds)" : "Comisión #{$c->id}"),
-                'monto'          => (float) $c->monto,
-                'notas'          => $c->notas,
+                'id'                 => $c->id,
+                'concepto'           => $c->concepto ?? ($c->salida ? "Venta #{$c->salida->id} ({$c->salida->cantidad} uds)" : "Comisión #{$c->id}"),
+                'monto'              => (float) $c->monto,
+                'notas'              => $c->notas,
                 'es_ajuste_negativo' => (float) $c->monto < 0,
-                'fecha_registro' => $c->fecha_registro ? $c->fecha_registro->format('d/m/Y H:i') : 'N/A',
-                'id_salida'      => $c->id_salida,
+                'bloqueada_garantia' => (bool) $c->es_liquidacion_bloqueada,
+                'motivo_bloqueo'     => $c->motivo_bloqueo_liquidacion,
+                'fecha_registro'     => $c->fecha_registro ? $c->fecha_registro->format('d/m/Y H:i') : 'N/A',
+                'id_salida'          => $c->id_salida,
             ];
         });
 
+        $saldoNetoLiquidables = round((float) $comisionesLiquidables->sum('monto'), 2);
+
         return response()->json([
-            'success'    => true,
-            'vendedor'   => $vendedor->nombre_real,
-            'total'      => max(0, (float) $pendientes->sum('monto')),
-            'cantidad'   => $pendientes->count(),
-            'comisiones' => $data,
+            'success'            => true,
+            'vendedor'           => $vendedor->nombre_real,
+            'total'              => $saldoNetoLiquidables,
+            'cantidad'           => $comisionesLiquidables->count(),
+            'total_bloqueado'    => (float) $comisionesBloqueadas->sum('monto'),
+            'cantidad_bloqueada' => $comisionesBloqueadas->count(),
+            'comisiones'         => $data,
         ]);
     }
 
@@ -453,7 +475,7 @@ class ComisionVendedorController extends Controller
 
         $validated = $request->validate([
             'id_vendedor'      => ['required', 'integer', 'exists:usuario,id'],
-            'metodo_pago'      => ['required', 'string', 'in:Efectivo,Transferencia Bancaria'],
+            'metodo_pago'      => ['required', 'string', 'in:Efectivo,Transferencia Bancaria,Compensación de Saldo'],
             'referencia_pago'  => ['nullable', 'string', 'max:100'],
             'comisiones_ids'   => ['nullable', 'array'],
             'comisiones_ids.*' => ['integer', 'exists:comision_vendedor,id'],
@@ -469,7 +491,7 @@ class ComisionVendedorController extends Controller
         ], [
             'id_vendedor.required'      => 'Debes seleccionar un vendedor.',
             'metodo_pago.required'      => 'Debes seleccionar el método de pago.',
-            'metodo_pago.in'            => 'El método de pago debe ser Efectivo o Transferencia Bancaria.',
+            'metodo_pago.in'            => 'El método de pago debe ser Efectivo, Transferencia Bancaria o Compensación de Saldo.',
             'comprobante_pago.required' => 'El comprobante o recibo es obligatorio para pagos por Transferencia Bancaria.',
             'comprobante_pago.mimes'    => 'El comprobante debe ser una imagen (JPG, PNG, WEBP) o un documento PDF.',
             'comprobante_pago.max'      => 'El comprobante no debe superar los 5MB.',
@@ -496,13 +518,14 @@ class ComisionVendedorController extends Controller
         if ($cantidad === 0) {
             return response()->json([
                 'success' => false,
-                'message' => 'El saldo neto es $0.00 o negativo; no se realizará ningún pago.',
+                'message' => 'No se pudieron liquidar las comisiones seleccionadas (el saldo neto seleccionado es negativo o las comisiones aún están dentro del período de garantía de devolución).',
             ], 422);
         }
 
+        $metodoDesc = $validated['metodo_pago'];
         return response()->json([
             'success'  => true,
-            'message'  => "Se liquidaron exitosamente {$cantidad} comisiones mediante {$validated['metodo_pago']}.",
+            'message'  => "Se liquidaron exitosamente {$cantidad} comisiones mediante {$metodoDesc}.",
             'cantidad' => $cantidad,
         ]);
     }
@@ -597,6 +620,11 @@ class ComisionVendedorController extends Controller
                 'monto_formateado' => number_format((float) $comision->monto, 2),
                 'porcentaje' => (float) $comision->porcentaje,
                 'estado' => $comision->estado,
+                'es_liquidacion_bloqueada' => (bool) $comision->es_liquidacion_bloqueada,
+                'motivo_bloqueo' => $comision->motivo_bloqueo_liquidacion,
+                'puede_devolver' => (bool) ($venta?->puede_devolver ?? false),
+                'dias_restantes_garantia' => (int) ($venta?->dias_restantes_devolucion ?? 0),
+                'fecha_limite_garantia' => $venta?->fecha_limite_devolucion ? $venta->fecha_limite_devolucion->format('d/m/Y') : null,
                 'metodo_pago' => $comision->metodo_pago,
                 'referencia_pago' => $comision->referencia_pago,
                 'comprobante_url' => $comision->comprobante_url,
