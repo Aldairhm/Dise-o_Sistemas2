@@ -45,6 +45,10 @@
 
         <!-- SUB-NAV / PESTAÑAS (SOLO COMISIONES) -->
         <nav class="flex flex-wrap items-center gap-2 rounded-2xl border border-slate-200 bg-white p-1.5 shadow-sm" aria-label="Secciones de comisiones">
+            <a href="{{ route('comisiones.porSemana') }}" class="rounded-xl px-4 py-2 text-sm font-bold text-slate-600 hover:bg-slate-50 hover:text-blue-600 transition-all flex items-center gap-2">
+                <i class="fas fa-calendar-week text-slate-400"></i>
+                <span>Comisiones por Semana</span>
+            </a>
             <a href="{{ route('comisiones.porVendedor') }}" class="rounded-xl px-4 py-2 text-sm font-bold text-slate-600 hover:bg-slate-50 hover:text-blue-600 transition-all flex items-center gap-2">
                 <i class="fas fa-users-gear text-slate-400"></i>
                 <span>Comisiones por Vendedor</span>
@@ -56,10 +60,6 @@
             <a href="{{ route('comisiones.ajustes') }}" class="rounded-xl px-4 py-2 text-sm font-bold text-slate-600 hover:bg-slate-50 hover:text-blue-600 transition-all flex items-center gap-2">
                 <i class="fas fa-arrows-rotate text-slate-400"></i>
                 <span>Ajustes</span>
-            </a>
-            <a href="{{ route('comisiones.porSemana') }}" class="rounded-xl px-4 py-2 text-sm font-bold text-slate-600 hover:bg-slate-50 hover:text-blue-600 transition-all flex items-center gap-2">
-                <i class="fas fa-calendar-week text-slate-400"></i>
-                <span>Comisiones por Semana</span>
             </a>
         </nav>
 
@@ -73,7 +73,7 @@
                     <label for="filtroVendedor" class="block text-[11px] font-bold uppercase tracking-wider text-slate-600 mb-1.5">
                         <i class="fas fa-user-tie text-slate-400 mr-1"></i> Vendedor
                     </label>
-                    <select id="filtroVendedor" name="vendedor_id"
+                    <select id="filtroVendedor" name="vendedor_id" data-searchable-vendedor
                             class="w-full rounded-xl border border-slate-300 bg-slate-50 px-3 py-2 text-xs font-semibold text-slate-700 focus:border-blue-500 focus:bg-white focus:outline-none focus:ring-4 focus:ring-blue-500/10 transition-all">
                         <option value="">Todos los vendedores</option>
                         @foreach($vendedores as $v)
@@ -247,6 +247,13 @@
     // ── Filtros AJAX ──────────────────────────────────────────────────────
 
     async function aplicarFiltros() {
+        const vendedorFiltro = document.getElementById('filtroVendedor');
+        if (vendedorFiltro?._searchPending) {
+            vendedorFiltro._searchHelp?.classList.remove('hidden');
+            vendedorFiltro._searchInput?.focus();
+            return;
+        }
+
         const loading = document.getElementById('tableLoading');
         loading.classList.remove('hidden');
 
@@ -287,7 +294,10 @@
 
     function limpiarFiltros() {
         @if($isAdmin)
-        if (document.getElementById('filtroVendedor')) document.getElementById('filtroVendedor').value = '';
+        if (document.getElementById('filtroVendedor')) {
+            document.getElementById('filtroVendedor').value = '';
+            document.getElementById('filtroVendedor').dispatchEvent(new Event('change', { bubbles: true }));
+        }
         @endif
         document.getElementById('filtroEstado').value     = 'todos';
         document.getElementById('filtroMetodoPago').value = 'todos';
@@ -640,4 +650,7 @@
         }
     });
     </script>
+    @if($isAdmin)
+        @include('comisiones.partials.searchable-vendedor-select')
+    @endif
 </x-app>
