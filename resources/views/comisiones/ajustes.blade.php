@@ -131,6 +131,7 @@
                             <th class="px-4 py-3">Motivo registrado</th>
                             <th class="px-4 py-3 text-right">Monto</th>
                             <th class="px-4 py-3 text-center">Estado</th>
+                            <th class="px-4 py-3 text-center">Acciones</th>
                         </tr>
                     </thead>
                     <tbody class="divide-y divide-slate-100">
@@ -158,8 +159,10 @@
                                     $montoAjuste = -$montoDescuento;
                                     $motivoLegible = 'Al cancelar la comisión, se descontaron $' . number_format($montoDescuento, 2) . ' por el descuento aplicado a la venta.';
                                 } elseif (preg_match('/Ajuste POS por devolución: saldo anterior (.+?) -> \$0\.00\./iu', $notasAjuste, $ajustePos)) {
-                                    $motivoLegible = 'La comisión se anuló por la devolución en tienda. Saldo anterior: '
+                                    $motivoLegible = 'La comisión se anuló por la devolución. Saldo anterior: '
                                         . trim($ajustePos[1]) . '; saldo final: $0.00.';
+                                } elseif (preg_match('/Descuento por devolución parcial\s*\(([\d\/]+)\s*unds\)\s*\((.+?)\):\s*saldo anterior\s*\$([\d,.]+)\s*->\s*\$([\d,.]+)/iu', $notasAjuste, $parcialDev)) {
+                                    $motivoLegible = "Se ajustó la comisión por devolución parcial ({$parcialDev[1]} unidades) [{$parcialDev[2]}]. Saldo anterior: \${$parcialDev[3]} -> Saldo ajustado: \${$parcialDev[4]}.";
                                 }
 
                                 if (preg_match('/Cancelada por (Devolución|Cambio|Cancelada|anulación de salida|el administrador)\.?/iu', $notasAjuste, $cancelacion)) {
@@ -236,10 +239,18 @@
                                 <td class="px-4 py-3 text-center">
                                     <span class="inline-flex rounded-full border px-2 py-0.5 text-[10px] font-bold {{ $colorEstado }}">{{ $ajuste->estado }}</span>
                                 </td>
+                                <td class="px-4 py-3 text-center whitespace-nowrap">
+                                    <button type="button"
+                                            onclick="verDetalleComision({{ $ajuste->id }})"
+                                            class="w-7 h-7 rounded-lg inline-flex items-center justify-center text-indigo-600 hover:text-indigo-800 hover:bg-indigo-50 transition-colors cursor-pointer"
+                                            title="Ver Detalle Completo">
+                                        <i class="fas fa-eye text-xs"></i>
+                                    </button>
+                                </td>
                             </tr>
                         @empty
                             <tr>
-                                <td colspan="{{ $isAdmin ? 6 : 5 }}" class="px-5 py-12 text-center text-slate-500">
+                                <td colspan="{{ $isAdmin ? 7 : 6 }}" class="px-5 py-12 text-center text-slate-500">
                                     <i class="fas fa-clipboard-check mb-2 block text-2xl text-slate-300"></i>
                                     <span class="font-semibold">No hay ajustes de comisión en el periodo seleccionado.</span>
                                 </td>
@@ -257,4 +268,5 @@
     @if($isAdmin)
         @include('comisiones.partials.searchable-vendedor-select')
     @endif
+    @include('comisiones.modals')
 </x-app>

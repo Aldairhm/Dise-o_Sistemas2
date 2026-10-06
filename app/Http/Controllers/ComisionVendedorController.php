@@ -3,7 +3,9 @@
 namespace App\Http\Controllers;
 
 use App\Models\ComisionVendedor;
+use App\Models\Salida;
 use App\Models\User;
+use App\Models\Venta;
 use App\Services\ComisionService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -528,6 +530,130 @@ class ComisionVendedorController extends Controller
         return response()->json([
             'success' => true,
             'message' => 'Comisión cancelada correctamente.',
+        ]);
+    }
+
+    /**
+     * Muestra el detalle completo de una comisión específica (para modal de auditoría y detalle).
+     */
+    public function show(int|string $id)
+    {
+        $user = Auth::user();
+        $comision = ComisionVendedor::with([
+            'vendedor',
+            'salida.variante.producto',
+            'liquidadoPor',
+        ])->findOrFail($id);
+
+        if ($user->rol !== 'admin' && (int) $comision->id_vendedor !== (int) $user->id) {
+            return response()->json([
+                'success' => false,
+                'message' => 'No tienes permiso para consultar esta comisión.',
+            ], 403);
+        }
+
+        // Buscar datos de la venta relacionada si existe a través de salida o concepto
+        $venta = null;
+        $ventaId = null;
+        if ($comision->salida && preg_match('/Venta #(\d+)/i', (string) $comision->salida->observaciones, $m)) {
+            $ventaId = (int) $m[1];
+        } elseif (preg_match('/VNT-(\d+)/i', (string) $comision->concepto, $m)) {
+            $ventaId = (int) $m[1];
+        } elseif (preg_match('/Venta #(\d+)/i', (string) $comision->concepto, $m)) {
+            $ventaId = (int) $m[1];
+        }
+
+        if ($ventaId) {
+            $venta = Venta::with(['detalles.variante.producto', 'usuario'])->find($ventaId);
+        }
+
+        // Desglose del costo extra
+        $costoExtra = 0.0;
+        if ($comision->salida && (float) $comision->salida->costo_extra > 0) {
+            $costoExtra = (float) $comision->salida->costo_extra;
+        } elseif (preg_match('/costo extra:\s*\+\$([0-9,.]+)/i', (string) $comision->notas, $mExtra)) {
+            $costoExtra = (float) str_replace(',', '', $mExtra[1]);
+        }
+
+        $descuentoAplicado = 0.0;
+        if (preg_match('/Descuento.*?:\s*-\$([0-9,.]+)/i', (string) $comision->notas, $mDesc)) {
+            $descuentoAplicado = (float) str_replace(',', '', $mDesc[1]);
+        }
+
+        // Comisión base unitaria
+        $cantidadSalida = (int) ($comision->salida?->cantidad ?? 1);
+        $prodComision = (float) ($comision->salida?->variante?->producto?->comision ?? 0);
+        $varComision = (float) ($comision->salida?->variante?->comision ?? 0);
+        $comisionUnitariaBase = $prodComision > 0 ? $prodComision : $varComision;
+        $comisionBaseTotal = round($comisionUnitariaBase * max(1, $cantidadSalida), 2);
+
+        return response()->json([
+            'success' => true,
+            'comision' => [
+                'id' => $comision->id,
+                'id_salida' => $comision->id_salida,
+                'concepto' => $comision->concepto,
+                'monto' => (float) $comision->monto,
+                'monto_formateado' => number_format((float) $comision->monto, 2),
+                'porcentaje' => (float) $comision->porcentaje,
+                'estado' => $comision->estado,
+                'metodo_pago' => $comision->metodo_pago,
+                'referencia_pago' => $comision->referencia_pago,
+                'comprobante_url' => $comision->comprobante_url,
+                'notas' => $comision->notas,
+                'fecha_registro' => $comision->fecha_registro ? $comision->fecha_registro->format('d/m/Y h:i A') : '—',
+                'fecha_registro_raw' => $comision->fecha_registro?->toIso8601String(),
+                'fecha_liquidacion' => $comision->fecha_liquidacion ? $comision->fecha_liquidacion->format('d/m/Y h:i A') : null,
+                'liquidado_por' => $comision->liquidadoPor?->nombre_real ?: $comision->liquidadoPor?->username,
+                'vendedor' => [
+                    'id' => $comision->vendedor?->id,
+                    'nombre' => $comision->vendedor?->nombre_real ?: $comision->vendedor?->username,
+                    'username' => $comision->vendedor?->username,
+                    'telefono' => $comision->vendedor?->telefono,
+                    'iniciales' => strtoupper(substr($comision->vendedor?->nombre_real ?: $comision->vendedor?->username ?: 'VE', 0, 2)),
+                ],
+                'desglose' => [
+                    'comision_unitaria_base' => $comisionUnitariaBase,
+                    'cantidad' => $cantidadSalida,
+                    'comision_base_total' => $comisionBaseTotal,
+                    'costo_extra' => $costoExtra,
+                    'descuento_aplicado' => $descuentoAplicado,
+                ],
+                'salida' => $comision->salida ? [
+                    'id' => $comision->salida->id,
+                    'producto_nombre' => $comision->salida->variante?->producto?->nombre ?? 'Producto',
+                    'variante_nombre' => $comision->salida->variante?->nombre_variante ?? '',
+                    'sku' => $comision->salida->variante?->sku,
+                    'imagen' => $comision->salida->variante?->imagen ?: $comision->salida->variante?->producto?->imagen_principal,
+                    'cantidad' => (int) $comision->salida->cantidad,
+                    'precio_unitario' => (float) $comision->salida->precio_unitario,
+                    'costo_extra' => (float) $comision->salida->costo_extra,
+                    'precio_envio' => (float) $comision->salida->precio_envio,
+                    'subtotal' => (float) $comision->salida->subtotal,
+                    'total' => (float) $comision->salida->total,
+                    'estado' => $comision->salida->estado,
+                    'nombre_cliente' => $comision->salida->nombre_cliente,
+                    'telefono' => $comision->salida->telefono,
+                    'departamento' => $comision->salida->departamento,
+                    'municipio' => $comision->salida->municipio,
+                    'direccion' => $comision->salida->direccion,
+                    'fecha_salida' => $comision->salida->fecha_salida?->format('d/m/Y'),
+                    'hora_salida' => $comision->salida->hora_salida,
+                    'fecha_entrega' => $comision->salida->fecha_entrega?->format('d/m/Y'),
+                    'observaciones' => $comision->salida->observaciones,
+                ] : null,
+                'venta' => $venta ? [
+                    'id' => $venta->id,
+                    'folio' => 'VNT-' . str_pad($venta->id, 5, '0', STR_PAD_LEFT),
+                    'fecha' => $venta->fecha ? \Carbon\Carbon::parse($venta->fecha)->format('d/m/Y h:i A') : '—',
+                    'total' => (float) $venta->total,
+                    'estado' => $venta->estado,
+                    'tipo_venta' => $venta->tipo_venta,
+                    'metodo_pago' => $venta->metodo_pago,
+                    'cliente' => $venta->nombre_cliente,
+                    'url_show' => route('ventas.show', $venta->id),
+                ] : null,
+            ],
         ]);
     }
 }

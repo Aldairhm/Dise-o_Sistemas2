@@ -55,9 +55,9 @@ Route::middleware('auth')->group(function () {
 
     // ── Módulo de Ventas, Carrito y Mis Ventas (Vendedores y Administradores) ──
     Route::get('/ventas/mis-ventas', [VentaController::class, 'misVentas'])->name('ventas.mis-ventas');
-    Route::post('/ventas/{id}/cancelar-vendedor', [VentaController::class, 'cancelarPorVendedor'])->name('ventas.cancelar-vendedor')->whereNumber('id');
     Route::get('/ventas/nueva', [VentaController::class, 'create'])->name('ventas.create');
     Route::post('/ventas', [VentaController::class, 'store'])->name('ventas.store');
+    Route::post('/ventas/{id}/cancelar-vendedor', [VentaController::class, 'cancelarPorVendedor'])->name('ventas.cancelar-vendedor')->whereNumber('id');
     Route::get('/ventas/{id}', [VentaController::class, 'show'])->name('ventas.show')->whereNumber('id');
     Route::get('/ventas/{id}/imprimir', [VentaController::class, 'imprimir'])->name('ventas.imprimir')->whereNumber('id');
 
@@ -86,15 +86,10 @@ Route::middleware('auth')->group(function () {
         Route::post('/movimientos-bodega/transferencia-tienda', [MovimientoBodegaController::class, 'transferirATienda'])->name('movimientos-bodega.transferencia-tienda');
 
         // ── Módulo de Ventas (Solo Administradores: Dashboard general, Pedidos y Despacho) ──
-        Route::get('/ventas/pedidos', [VentaController::class, 'pedidos'])->name('ventas.pedidos');
         Route::get('/ventas', [VentaController::class, 'index'])->name('ventas.index');
-        Route::patch('/ventas/{id}/estado', [VentaController::class, 'actualizarEstado'])->name('ventas.actualizar-estado')->whereNumber('id');
-
-        Route::post('/ventas', [VentaController::class, 'store'])->name('ventas.store');
+        Route::get('/ventas/pedidos', [VentaController::class, 'pedidos'])->name('ventas.pedidos');
         Route::get('/ventas/devoluciones', [DevolucionController::class, 'devolucionesCliente'])->name('ventas.devoluciones');
-        Route::patch('/ventas/{id}/estado', [VentaController::class, 'actualizarEstado'])->name('ventas.actualizar-estado');
-        Route::get('/ventas/{id}', [VentaController::class, 'show'])->name('ventas.show');
-        Route::get('/ventas/{id}/imprimir', [VentaController::class, 'imprimir'])->name('ventas.imprimir');
+        Route::patch('/ventas/{id}/estado', [VentaController::class, 'actualizarEstado'])->name('ventas.actualizar-estado')->whereNumber('id');
 
 
 
@@ -103,7 +98,7 @@ Route::middleware('auth')->group(function () {
         Route::get('/compras/devoluciones', [DevolucionController::class, 'devolucionesProveedor'])->name('compras.devoluciones');
         Route::post('/devoluciones/venta', [DevolucionController::class, 'storeVenta'])->name('devoluciones.venta.store');
         Route::post('/devoluciones/compra', [DevolucionController::class, 'storeCompra'])->name('devoluciones.compra.store');
-        Route::patch('/devoluciones/compra/{id}/resolver', [DevolucionController::class, 'resolverCompra'])->name('devoluciones.compra.resolver');
+        Route::patch('/devoluciones/compra/{id}/resolver', [DevolucionController::class, 'resolverCompra'])->name('devoluciones.compra.resolver')->whereNumber('id');
         // ── Módulo de Atributos ──
         Route::resource('atributos', AtributoController::class)->except(['create', 'show', 'edit']);
 
@@ -111,15 +106,15 @@ Route::middleware('auth')->group(function () {
         
         // 1. Estáticas (Catálogos)
         Route::post('/proveedores/catalogos', [CatalogoController::class, 'store']);
-        Route::delete('/proveedores/catalogos/{id}', [CatalogoController::class, 'destroy']);
+        Route::delete('/proveedores/catalogos/{id}', [CatalogoController::class, 'destroy'])->whereNumber('id');
 
         // 2. Dinámicas (Proveedores)
         Route::get('/proveedores', [ProveedorController::class, 'index'])->name('proveedores.index');
         Route::post('/proveedores', [ProveedorController::class, 'store'])->name('proveedores.store');
         Route::post('/proveedores/{proveedor}', [ProveedorController::class, 'update'])->name('proveedores.update');
         Route::delete('/proveedores/{proveedor}', [ProveedorController::class, 'destroy'])->name('proveedores.destroy');
-        Route::post('/proveedores/{id}/restore', [ProveedorController::class, 'restore'])->name('proveedores.restore');
-        Route::get('/proveedor/{id}', [ProveedorController::class, 'show'])->name('proveedores.show');
+        Route::post('/proveedores/{id}/restore', [ProveedorController::class, 'restore'])->name('proveedores.restore')->whereNumber('id');
+        Route::get('/proveedor/{id}', [ProveedorController::class, 'show'])->name('proveedores.show')->whereNumber('id');
 
         // ── Productos: CRUD solo Admin ──
         Route::get('/productos/create', [ProductoController::class, 'create'])->name('productos.create');
@@ -131,13 +126,13 @@ Route::middleware('auth')->group(function () {
 
         // ── Variantes AJAX: solo Admin ──
         Route::post('/productos/{producto}/variantes', [VarianteController::class, 'store'])->name('variantes.store');
-        Route::get('/variantes/{id}', [VarianteController::class, 'show'])->name('variantes.show');
-        Route::put('/variantes/{id}', [VarianteController::class, 'update'])->name('variantes.update');
-        Route::delete('/variantes/{id}', [VarianteController::class, 'destroy'])->name('variantes.destroy');
-        Route::patch('/variantes/{id}/toggle-status', [VarianteController::class, 'toggleStatus'])->name('variantes.toggleStatus');
+        Route::get('/variantes/{id}', [VarianteController::class, 'show'])->name('variantes.show')->whereNumber('id');
+        Route::put('/variantes/{id}', [VarianteController::class, 'update'])->name('variantes.update')->whereNumber('id');
+        Route::delete('/variantes/{id}', [VarianteController::class, 'destroy'])->name('variantes.destroy')->whereNumber('id');
+        Route::patch('/variantes/{id}/toggle-status', [VarianteController::class, 'toggleStatus'])->name('variantes.toggleStatus')->whereNumber('id');
 
         // ── Comisiones: gestión admin ──────────────────────────────────────
-        Route::get('/comisiones/pendientes/{vendedorId}',  [ComisionVendedorController::class, 'pendientesVendedor'])->name('comisiones.pendientes');
+        Route::get('/comisiones/pendientes/{vendedorId}',  [ComisionVendedorController::class, 'pendientesVendedor'])->name('comisiones.pendientes')->whereNumber('vendedorId');
         Route::post('/comisiones',                         [ComisionVendedorController::class, 'store'])->name('comisiones.store');
         Route::put('/comisiones/{comision}',               [ComisionVendedorController::class, 'update'])->name('comisiones.update');
         Route::post('/comisiones/liquidar',                [ComisionVendedorController::class, 'liquidar'])->name('comisiones.liquidar');
@@ -152,4 +147,5 @@ Route::middleware('auth')->group(function () {
     Route::get('/comisiones/ajustes',      [ComisionVendedorController::class, 'ajustes'])->name('comisiones.ajustes');
     Route::get('/comisiones/por-vendedor', [ComisionVendedorController::class, 'porVendedor'])->name('comisiones.porVendedor');
     Route::get('/comisiones/por-semana',   [ComisionVendedorController::class, 'porSemana'])->name('comisiones.porSemana');
+    Route::get('/comisiones/{comision}',   [ComisionVendedorController::class, 'show'])->name('comisiones.show')->whereNumber('comision');
 });

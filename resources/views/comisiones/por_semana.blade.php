@@ -384,15 +384,14 @@
                                             <td class="px-4 py-3 text-slate-500 text-[11px] max-w-[150px] truncate" title="{{ $c->notas }}">{{ $c->notas ?? '—' }}</td>
                                             @if($isAdmin)
                                               <td class="px-4 py-3 text-center whitespace-nowrap">
-                                                @if($c->estado === 'Pendiente')
-                                                  <div class="flex items-center justify-center gap-1">
+                                                <div class="flex items-center justify-center gap-1">
+                                                  <button type="button" onclick="verDetalleComision({{ $c->id }})" class="w-7 h-7 rounded-lg flex items-center justify-center text-indigo-600 hover:text-indigo-800 hover:bg-indigo-50 cursor-pointer" title="Ver Detalle Completo"><i class="fas fa-eye text-[10px]"></i></button>
+                                                  @if($c->estado === 'Pendiente')
                                                     <button type="button" onclick="abrirLiquidacionSemanal({{ $vId }}, '{{ addslashes($vNombre) }}', '{{ addslashes($vUsername) }}', '{{ $fechaDesdeSemana }}', '{{ $fechaHastaSemana }}')" class="w-7 h-7 rounded-lg flex items-center justify-center text-emerald-600 hover:bg-emerald-50 cursor-pointer" title="Liquidar"><i class="fas fa-hand-holding-dollar text-[10px]"></i></button>
                                                     <button type="button" onclick="openEditModal({{ $c->id }}, '{{ $c->monto }}', '{{ addslashes($c->concepto ?? '') }}', '{{ addslashes($c->notas ?? '') }}')" class="w-7 h-7 rounded-lg flex items-center justify-center text-blue-600 hover:bg-blue-50 cursor-pointer" title="Editar"><i class="fas fa-pen text-[10px]"></i></button>
                                                     <button type="button" onclick="cancelarComision({{ $c->id }})" class="w-7 h-7 rounded-lg flex items-center justify-center text-red-500 hover:bg-red-50 cursor-pointer" title="Cancelar"><i class="fas fa-ban text-[10px]"></i></button>
-                                                  </div>
-                                                @else
-                                                  <span class="text-slate-300">—</span>
-                                                @endif
+                                                  @endif
+                                                </div>
                                               </td>
                                             @endif
                                           </tr>

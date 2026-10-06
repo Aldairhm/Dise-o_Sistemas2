@@ -511,6 +511,252 @@
     </div>
 </div>
 
+{{-- ═══════════════════════════════════════════════════════════════════════════
+     MODAL: DETALLE COMPLETO DE COMISIÓN (Auditoría, Desglose y Venta)
+═══════════════════════════════════════════════════════════════════════════ --}}
+<div id="modalDetalleComision" style="display: none;" class="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4">
+    {{-- Backdrop con blur --}}
+    <div class="absolute inset-0 bg-slate-900/60 backdrop-blur-sm transition-opacity" onclick="closeDetalleModal()"></div>
+
+    <div class="relative bg-white rounded-3xl shadow-2xl w-full max-w-2xl mx-auto overflow-hidden flex flex-col max-h-[92vh] border border-slate-100 animate-in fade-in zoom-in-95 duration-200">
+        
+        {{-- Header --}}
+        <div class="flex items-center justify-between px-6 pt-5 pb-4 border-b border-slate-100 flex-shrink-0 bg-slate-50/50">
+            <div class="flex items-center gap-3">
+                <div class="w-10 h-10 rounded-2xl bg-indigo-100 text-indigo-600 flex items-center justify-center text-base shadow-xs">
+                    <i class="fas fa-file-invoice-dollar"></i>
+                </div>
+                <div>
+                    <div class="flex items-center gap-2">
+                        <h2 class="text-base font-black text-slate-800 tracking-tight">Detalle de Comisión</h2>
+                        <span id="detIdBadge" class="font-mono text-[11px] font-bold px-2 py-0.5 rounded-md bg-indigo-50 text-indigo-700 border border-indigo-200">#COM-00000</span>
+                    </div>
+                    <p class="text-xs text-slate-500" id="detFechaHeader">Registrada el —</p>
+                </div>
+            </div>
+            <div class="flex items-center gap-2">
+                <span id="detEstadoBadge" class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-slate-100 text-slate-600 border border-slate-200">
+                    --
+                </span>
+                <button type="button" onclick="closeDetalleModal()"
+                        class="w-8 h-8 rounded-xl flex items-center justify-center text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition-colors cursor-pointer">
+                    <i class="fas fa-times text-sm"></i>
+                </button>
+            </div>
+        </div>
+
+        {{-- Loading Skeleton --}}
+        <div id="detLoadingSkeleton" class="p-8 space-y-4 animate-pulse">
+            <div class="h-24 bg-slate-100 rounded-2xl"></div>
+            <div class="h-36 bg-slate-100 rounded-2xl"></div>
+            <div class="h-28 bg-slate-100 rounded-2xl"></div>
+        </div>
+
+        {{-- Content Container (scrollable) --}}
+        <div id="detContentContainer" class="hidden overflow-y-auto flex-1 p-6 space-y-5">
+            
+            {{-- 1. HERO FINANCIERO Y VENDEDOR --}}
+            <div class="grid grid-cols-1 sm:grid-cols-12 gap-3.5 items-stretch">
+                {{-- Monto neto ganado --}}
+                <div class="sm:col-span-6 rounded-2xl p-4 bg-gradient-to-br from-emerald-500/10 via-emerald-500/5 to-teal-500/10 border border-emerald-200/80 flex flex-col justify-between">
+                    <div class="flex items-center justify-between">
+                        <span class="text-[11px] font-black uppercase tracking-wider text-emerald-800">Monto Comisión Neta</span>
+                        <div class="w-7 h-7 rounded-lg bg-emerald-100 text-emerald-700 flex items-center justify-center text-xs">
+                            <i class="fas fa-coins"></i>
+                        </div>
+                    </div>
+                    <div class="my-2">
+                        <div class="flex items-baseline gap-1">
+                            <span class="text-3xl font-black text-emerald-600 tracking-tight" id="detMontoTotal">$0.00</span>
+                        </div>
+                        <span class="text-[11px] font-medium text-emerald-700/80" id="detPorcentajeRef">Ref: $0.00/ud</span>
+                    </div>
+                    <div id="detExtraBadgeHero" class="hidden inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-amber-100/90 text-amber-800 border border-amber-300 text-[11px] font-bold w-fit">
+                        <i class="fas fa-sparkles text-amber-600"></i>
+                        <span id="detExtraTextoHero">+ Extra incluido</span>
+                    </div>
+                </div>
+
+                {{-- Vendedor Asignado --}}
+                <div class="sm:col-span-6 rounded-2xl p-4 bg-slate-50 border border-slate-200/80 flex flex-col justify-between">
+                    <div class="flex items-center justify-between">
+                        <span class="text-[11px] font-black uppercase tracking-wider text-slate-500">Vendedor Asignado</span>
+                        <div class="w-7 h-7 rounded-lg bg-slate-200/70 text-slate-600 flex items-center justify-center text-xs">
+                            <i class="fas fa-user-tag"></i>
+                        </div>
+                    </div>
+                    <div class="flex items-center gap-3 my-2 overflow-hidden">
+                        <div class="w-11 h-11 rounded-2xl bg-indigo-600 text-white font-black text-sm flex items-center justify-center flex-shrink-0 shadow-xs" id="detVendedorAvatar">
+                            --
+                        </div>
+                        <div class="truncate">
+                            <p class="font-bold text-sm text-slate-900 truncate" id="detVendedorNombre">Nombre</p>
+                            <p class="text-xs text-slate-500 truncate" id="detVendedorUser">correo@ejemplo.com</p>
+                            <p class="text-[11px] text-slate-400 truncate" id="detVendedorTel"><i class="fas fa-phone mr-1 text-[10px]"></i>—</p>
+                        </div>
+                    </div>
+                    <div class="text-[10px] text-slate-400 font-medium">
+                        Beneficiario del pago de esta comisión
+                    </div>
+                </div>
+            </div>
+
+            {{-- 2. DESGLOSE MATEMÁTICO (Base + Extra - Descuentos) --}}
+            <div class="rounded-2xl border border-slate-200 bg-white p-4.5 shadow-2xs space-y-3">
+                <div class="flex items-center justify-between border-b border-slate-100 pb-2.5">
+                    <div class="flex items-center gap-2">
+                        <i class="fas fa-calculator text-indigo-600 text-xs"></i>
+                        <h3 class="text-xs font-black uppercase tracking-wider text-slate-700">Desglose de Cálculo de Comisión</h3>
+                    </div>
+                    <span class="text-[11px] font-bold text-slate-400" id="detUnidadesTexto">1 unidad</span>
+                </div>
+
+                <div class="space-y-2 text-xs">
+                    {{-- Línea Comisión Base --}}
+                    <div class="flex items-center justify-between text-slate-600">
+                        <div class="flex items-center gap-1.5">
+                            <span class="w-2 h-2 rounded-full bg-blue-500"></span>
+                            <span>Comisión base del producto (<span id="detBaseFormula">0 uds x $0.00</span>):</span>
+                        </div>
+                        <span class="font-bold text-slate-800" id="detComisionBase">$0.00</span>
+                    </div>
+
+                    {{-- Línea Costo Extra --}}
+                    <div id="detRowCostoExtra" class="flex items-center justify-between text-amber-800 bg-amber-50/70 px-2.5 py-1.5 rounded-xl border border-amber-200/60">
+                        <div class="flex items-center gap-1.5">
+                            <i class="fas fa-plus text-amber-600 text-[10px]"></i>
+                            <span class="font-bold">Costo Extra (Terminal POS / Envío sumado a comisión):</span>
+                        </div>
+                        <span class="font-black text-amber-700" id="detCostoExtraVal">+$0.00</span>
+                    </div>
+
+                    {{-- Línea Descuento aplicado --}}
+                    <div id="detRowDescuento" class="hidden flex items-center justify-between text-rose-700 bg-rose-50/60 px-2.5 py-1.5 rounded-xl border border-rose-200/60">
+                        <div class="flex items-center gap-1.5">
+                            <i class="fas fa-minus text-rose-500 text-[10px]"></i>
+                            <span>Descuento de venta deducido de comisión:</span>
+                        </div>
+                        <span class="font-black text-rose-700" id="detDescuentoVal">-$0.00</span>
+                    </div>
+
+                    {{-- Total Sumatoria --}}
+                    <div class="flex items-center justify-between pt-2 border-t border-slate-100 font-black text-slate-900 text-sm">
+                        <span>Total Comisión Reconocida:</span>
+                        <span class="text-base text-emerald-600" id="detComisionTotalResumen">$0.00</span>
+                    </div>
+                </div>
+            </div>
+
+            {{-- 3. DETALLE DE SALIDA / VENTA ASOCIADA --}}
+            <div id="detSalidaCard" class="rounded-2xl border border-slate-200 bg-white p-4.5 shadow-2xs space-y-3.5">
+                <div class="flex items-center justify-between border-b border-slate-100 pb-2.5">
+                    <div class="flex items-center gap-2">
+                        <i class="fas fa-box-open text-blue-600 text-xs"></i>
+                        <h3 class="text-xs font-black uppercase tracking-wider text-slate-700">Producto y Venta Asociada</h3>
+                    </div>
+                    <div class="flex items-center gap-2">
+                        <span id="detSalidaBadge" class="text-[10px] font-bold px-2 py-0.5 rounded bg-blue-50 text-blue-700 border border-blue-200">Salida #—</span>
+                        <a id="detVentaLink" href="#" target="_blank" class="hidden inline-flex items-center gap-1 text-[11px] font-bold text-indigo-600 hover:text-indigo-800 hover:underline">
+                            <span id="detVentaFolio">VNT-00000</span>
+                            <i class="fas fa-external-link-alt text-[9px]"></i>
+                        </a>
+                    </div>
+                </div>
+
+                {{-- Datos del Producto --}}
+                <div class="flex items-start gap-3.5 bg-slate-50 p-3.5 rounded-2xl border border-slate-200/70">
+                    <div class="w-12 h-12 rounded-xl bg-white border border-slate-200 overflow-hidden flex items-center justify-center flex-shrink-0 shadow-2xs" id="detProductoImgBox">
+                        <i class="fas fa-box text-slate-300 text-xl"></i>
+                    </div>
+                    <div class="min-w-0 flex-1">
+                        <h4 class="font-bold text-sm text-slate-900 leading-snug truncate" id="detProductoNombre">Nombre del Producto</h4>
+                        <p class="text-xs text-slate-500 mt-0.5 truncate" id="detVarianteNombre">Variante</p>
+                        <div class="flex items-center gap-2 mt-1.5 flex-wrap text-[11px]">
+                            <span class="font-mono text-slate-500 font-bold bg-white px-2 py-0.5 rounded border border-slate-200" id="detProductoSKU">SKU: —</span>
+                            <span class="font-bold text-slate-700" id="detProductoCant">Cantidad: 1 ud</span>
+                            <span class="text-slate-400">|</span>
+                            <span class="text-slate-600 font-medium" id="detProductoPrecioUnit">P. Unit: $0.00</span>
+                        </div>
+                    </div>
+                </div>
+
+                {{-- Datos de Entrega y Cliente (si existen) --}}
+                <div id="detClienteBox" class="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs bg-slate-50/70 p-3 rounded-xl border border-slate-200/60">
+                    <div>
+                        <span class="text-[10px] font-bold uppercase text-slate-400 block mb-0.5">Cliente Receptor</span>
+                        <p class="font-bold text-slate-800 truncate" id="detClienteNombre">—</p>
+                        <p class="text-slate-500 text-[11px]" id="detClienteTel"><i class="fas fa-phone mr-1 text-[9px]"></i>—</p>
+                    </div>
+                    <div>
+                        <span class="text-[10px] font-bold uppercase text-slate-400 block mb-0.5">Ubicación / Dirección</span>
+                        <p class="font-semibold text-slate-700 text-[11px] leading-snug" id="detClienteDireccion">—</p>
+                    </div>
+                </div>
+            </div>
+
+            {{-- 4. INFORMACIÓN DE PAGO Y LIQUIDACIÓN (Si está Pagada) --}}
+            <div id="detPagoCard" class="hidden rounded-2xl border border-emerald-200 bg-emerald-50/30 p-4.5 space-y-3">
+                <div class="flex items-center justify-between border-b border-emerald-100 pb-2.5">
+                    <div class="flex items-center gap-2">
+                        <i class="fas fa-check-circle text-emerald-600 text-xs"></i>
+                        <h3 class="text-xs font-black uppercase tracking-wider text-emerald-900">Liquidación y Pago</h3>
+                    </div>
+                    <span class="text-[11px] font-bold text-emerald-700 bg-emerald-100 px-2 py-0.5 rounded-full">Liquidada con éxito</span>
+                </div>
+
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
+                    <div>
+                        <span class="text-[10px] font-bold uppercase text-slate-400 block mb-0.5">Método de Pago Utilizado</span>
+                        <p class="font-bold text-slate-800 flex items-center gap-1.5" id="detMetodoPago">
+                            <i class="fas fa-money-bill-wave text-emerald-600"></i> Efectivo
+                        </p>
+                        <p class="text-[11px] font-mono text-slate-500 mt-0.5" id="detReferenciaPago">Ref: —</p>
+                    </div>
+                    <div>
+                        <span class="text-[10px] font-bold uppercase text-slate-400 block mb-0.5">Fecha y Liquidado Por</span>
+                        <p class="font-bold text-slate-800" id="detFechaLiquidacion">—</p>
+                        <p class="text-[11px] text-slate-500 mt-0.5" id="detLiquidadoPor">Por: Administrador</p>
+                    </div>
+                </div>
+
+                {{-- Botón comprobante si hay --}}
+                <div id="detComprobanteBox" class="hidden pt-2 border-t border-emerald-100/70">
+                    <a id="detComprobanteLink" href="#" target="_blank"
+                       class="inline-flex items-center gap-2 px-3.5 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs shadow-md shadow-indigo-500/20 transition-all cursor-pointer">
+                        <i class="fas fa-file-invoice-dollar"></i>
+                        <span>Ver Comprobante de Pago Adjunto</span>
+                        <i class="fas fa-arrow-up-right-from-square text-[10px]"></i>
+                    </a>
+                </div>
+            </div>
+
+            {{-- 5. NOTAS Y AUDITORÍA COMPLETA --}}
+            <div class="rounded-2xl border border-slate-200 bg-white p-4.5 shadow-2xs space-y-2">
+                <div class="flex items-center gap-2 border-b border-slate-100 pb-2">
+                    <i class="fas fa-clipboard-list text-slate-400 text-xs"></i>
+                    <h3 class="text-xs font-black uppercase tracking-wider text-slate-700">Notas de Auditoría y Observaciones</h3>
+                </div>
+                <div class="p-3 bg-slate-50 rounded-xl border border-slate-200/70 text-xs text-slate-700 leading-relaxed font-mono whitespace-pre-line" id="detNotasCompletas">
+                    Sin observaciones adicionales registradas.
+                </div>
+            </div>
+
+        </div>
+
+        {{-- Footer --}}
+        <div class="flex items-center justify-between px-6 py-4 border-t border-slate-100 bg-slate-50/80 flex-shrink-0">
+            <div class="flex items-center gap-2" id="detAdminActions">
+                {{-- Botones directos si está pendiente --}}
+            </div>
+            <button type="button" onclick="closeDetalleModal()"
+                    class="px-5 py-2.5 rounded-xl bg-slate-200 hover:bg-slate-300 text-slate-700 font-bold text-xs transition-colors cursor-pointer ml-auto">
+                <i class="fas fa-times mr-1.5"></i>Cerrar
+            </button>
+        </div>
+
+    </div>
+</div>
+
 <script>
 /**
  * ─── VALIDACIÓN INLINE DE CAMPOS ─────────────────────────────────────────────
@@ -712,4 +958,264 @@ function handleMetodoPagoLiquidar(metodo) {
         if (inputRef) inputRef.placeholder = 'Ej: Recibo manual #402';
     }
 }
+
+function formatNum(n) {
+    return parseFloat(n || 0).toLocaleString('es-SV', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+}
+
+async function verDetalleComision(id) {
+    const modal = document.getElementById('modalDetalleComision');
+    const skeleton = document.getElementById('detLoadingSkeleton');
+    const content = document.getElementById('detContentContainer');
+    if (!modal) {
+        console.error('Modal modalDetalleComision no encontrado en el DOM');
+        return;
+    }
+
+    modal.classList.remove('hidden');
+    modal.style.display = 'flex';
+    skeleton?.classList.remove('hidden');
+    content?.classList.add('hidden');
+
+    try {
+        const baseEndpoint = (typeof ROUTES !== 'undefined' && ROUTES.update && ROUTES.update !== 'null')
+            ? ROUTES.update
+            : "{{ url('comisiones') }}";
+        const response = await fetch(`${baseEndpoint}/${id}`, {
+            headers: {
+                'Accept': 'application/json',
+                'X-Requested-With': 'XMLHttpRequest'
+            }
+        });
+        if (!response.ok) throw new Error('No se pudo cargar la información de la comisión.');
+        const res = await response.json();
+        if (!res.success || !res.comision) throw new Error(res.message || 'Error al obtener datos.');
+
+        const c = res.comision;
+        const salida = c.salida;
+        const venta = c.venta;
+        const desglose = c.desglose || {};
+
+        // 1. Header
+        const badgeEl = document.getElementById('detIdBadge');
+        if (badgeEl) badgeEl.textContent = `#COM-${String(c.id).padStart(5, '0')}`;
+        const fechaHeader = document.getElementById('detFechaHeader');
+        if (fechaHeader) fechaHeader.textContent = `Registrada el ${c.fecha_registro}`;
+
+        // Badge Estado
+        const estadoBadge = document.getElementById('detEstadoBadge');
+        if (estadoBadge) {
+            if (c.estado === 'Pendiente') {
+                estadoBadge.className = 'inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-amber-50 text-amber-700 border border-amber-200';
+                estadoBadge.innerHTML = '<span class="w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse"></span> Pendiente';
+            } else if (c.estado === 'Pagada') {
+                estadoBadge.className = 'inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-emerald-50 text-emerald-700 border border-emerald-200';
+                estadoBadge.innerHTML = '<i class="fas fa-check text-[10px]"></i> Pagada';
+            } else {
+                estadoBadge.className = 'inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-slate-100 text-slate-600 border border-slate-200';
+                estadoBadge.innerHTML = '<i class="fas fa-ban text-[10px]"></i> Cancelada';
+            }
+        }
+
+        // 2. Hero Financiero
+        const montoSign = c.monto < 0 ? `-$${formatNum(Math.abs(c.monto))}` : `$${formatNum(c.monto)}`;
+        const montoEl = document.getElementById('detMontoTotal');
+        if (montoEl) {
+            montoEl.textContent = montoSign;
+            montoEl.className = c.monto < 0 ? 'text-3xl font-black text-rose-600 tracking-tight' : 'text-3xl font-black text-emerald-600 tracking-tight';
+        }
+        const refEl = document.getElementById('detPorcentajeRef');
+        if (refEl) refEl.textContent = c.porcentaje > 0 ? `Ref: $${formatNum(c.porcentaje)}/unidad` : 'Monto asignado';
+
+        const extraBadgeHero = document.getElementById('detExtraBadgeHero');
+        const extraTextoHero = document.getElementById('detExtraTextoHero');
+        if (desglose.costo_extra > 0) {
+            extraBadgeHero?.classList.remove('hidden');
+            if (extraTextoHero) extraTextoHero.textContent = `+$${formatNum(desglose.costo_extra)} costo extra incluido`;
+        } else {
+            extraBadgeHero?.classList.add('hidden');
+        }
+
+        // Vendedor
+        const vAvatar = document.getElementById('detVendedorAvatar');
+        if (vAvatar) vAvatar.textContent = c.vendedor?.iniciales || 'VE';
+        const vNombre = document.getElementById('detVendedorNombre');
+        if (vNombre) vNombre.textContent = c.vendedor?.nombre || 'Vendedor no asignado';
+        const vUser = document.getElementById('detVendedorUser');
+        if (vUser) vUser.textContent = c.vendedor?.username || '';
+        const vTel = document.getElementById('detVendedorTel');
+        if (vTel) vTel.innerHTML = c.vendedor?.telefono ? `<i class="fas fa-phone mr-1 text-[10px]"></i>${c.vendedor.telefono}` : '<i class="fas fa-phone-slash mr-1 text-[10px]"></i>Sin teléfono';
+
+        // 3. Desglose Matemático
+        const cant = desglose.cantidad || 1;
+        const uTexto = document.getElementById('detUnidadesTexto');
+        if (uTexto) uTexto.textContent = `${cant} ${cant === 1 ? 'unidad' : 'unidades'}`;
+        const bFormula = document.getElementById('detBaseFormula');
+        if (bFormula) bFormula.textContent = `${cant} uds x $${formatNum(desglose.comision_unitaria_base || 0)}`;
+        const cBase = document.getElementById('detComisionBase');
+        if (cBase) cBase.textContent = `$${formatNum(desglose.comision_base_total || 0)}`;
+
+        const rowExtra = document.getElementById('detRowCostoExtra');
+        const extraVal = document.getElementById('detCostoExtraVal');
+        if (desglose.costo_extra > 0) {
+            rowExtra?.classList.remove('hidden');
+            if (extraVal) extraVal.textContent = `+$${formatNum(desglose.costo_extra)}`;
+        } else {
+            rowExtra?.classList.add('hidden');
+        }
+
+        const rowDesc = document.getElementById('detRowDescuento');
+        const descVal = document.getElementById('detDescuentoVal');
+        if (desglose.descuento_aplicado > 0) {
+            rowDesc?.classList.remove('hidden');
+            if (descVal) descVal.textContent = `-$${formatNum(desglose.descuento_aplicado)}`;
+        } else {
+            rowDesc?.classList.add('hidden');
+        }
+        const cTotalResumen = document.getElementById('detComisionTotalResumen');
+        if (cTotalResumen) cTotalResumen.textContent = montoSign;
+
+        // 4. Salida / Venta
+        const salidaCard = document.getElementById('detSalidaCard');
+        if (salida) {
+            salidaCard?.classList.remove('hidden');
+            const sBadge = document.getElementById('detSalidaBadge');
+            if (sBadge) sBadge.textContent = `Salida #${salida.id}`;
+            const pNombre = document.getElementById('detProductoNombre');
+            if (pNombre) pNombre.textContent = salida.producto_nombre;
+            const vNombreVar = document.getElementById('detVarianteNombre');
+            if (vNombreVar) vNombreVar.textContent = salida.variante_nombre ? `Variante: ${salida.variante_nombre}` : 'Variante estándar';
+            const pSku = document.getElementById('detProductoSKU');
+            if (pSku) pSku.textContent = salida.sku ? `SKU: ${salida.sku}` : 'Sin SKU';
+            const pCant = document.getElementById('detProductoCant');
+            if (pCant) pCant.textContent = `Cantidad: ${salida.cantidad} uds`;
+            const pPrecioUnit = document.getElementById('detProductoPrecioUnit');
+            if (pPrecioUnit) pPrecioUnit.textContent = `P. Unit: $${formatNum(salida.precio_unitario)} (Total salida: $${formatNum(salida.total)})`;
+
+            // Imagen producto
+            const imgBox = document.getElementById('detProductoImgBox');
+            if (imgBox) {
+                if (salida.imagen) {
+                    const src = salida.imagen.startsWith('http') || salida.imagen.startsWith('/') ? salida.imagen : '/storage/' + salida.imagen;
+                    imgBox.innerHTML = `<img src="${src}" class="w-full h-full object-cover">`;
+                } else {
+                    imgBox.innerHTML = `<i class="fas fa-box text-slate-300 text-xl"></i>`;
+                }
+            }
+
+            // Cliente
+            const clienteBox = document.getElementById('detClienteBox');
+            if (salida.nombre_cliente || salida.telefono || salida.direccion) {
+                clienteBox?.classList.remove('hidden');
+                const cNom = document.getElementById('detClienteNombre');
+                if (cNom) cNom.textContent = salida.nombre_cliente || 'Consumidor Final';
+                const cTel = document.getElementById('detClienteTel');
+                if (cTel) cTel.innerHTML = salida.telefono ? `<i class="fas fa-phone mr-1 text-[9px]"></i>${salida.telefono}` : '<i class="fas fa-phone-slash mr-1 text-[9px]"></i>Sin teléfono';
+                const partesDir = [salida.direccion, salida.municipio, salida.departamento].filter(Boolean);
+                const cDir = document.getElementById('detClienteDireccion');
+                if (cDir) cDir.textContent = partesDir.join(' - ') || 'En mostrador / Tienda';
+            } else {
+                clienteBox?.classList.add('hidden');
+            }
+
+            // Venta Link
+            const ventaLink = document.getElementById('detVentaLink');
+            const ventaFolio = document.getElementById('detVentaFolio');
+            if (venta) {
+                ventaLink?.classList.remove('hidden');
+                ventaLink.href = venta.url_show;
+                if (ventaFolio) ventaFolio.textContent = venta.folio;
+            } else {
+                ventaLink?.classList.add('hidden');
+            }
+        } else {
+            salidaCard?.classList.add('hidden');
+        }
+
+        // 5. Liquidación / Pago
+        const pagoCard = document.getElementById('detPagoCard');
+        if (c.estado === 'Pagada') {
+            pagoCard?.classList.remove('hidden');
+            const mPago = document.getElementById('detMetodoPago');
+            if (mPago) mPago.innerHTML = `<i class="fas ${c.metodo_pago === 'Transferencia Bancaria' ? 'fa-university text-blue-600' : (c.metodo_pago === 'Efectivo' ? 'fa-money-bill-wave text-emerald-600' : 'fa-wallet text-indigo-600')} mr-1"></i> ${c.metodo_pago || 'Efectivo'}`;
+            const rPago = document.getElementById('detReferenciaPago');
+            if (rPago) rPago.textContent = c.referencia_pago ? `Ref: ${c.referencia_pago}` : 'Sin referencia bancaria';
+            const fLiq = document.getElementById('detFechaLiquidacion');
+            if (fLiq) fLiq.textContent = c.fecha_liquidacion || '—';
+            const lPor = document.getElementById('detLiquidadoPor');
+            if (lPor) lPor.textContent = `Liquidado por: ${c.liquidado_por || 'Administrador'}`;
+
+            const compBox = document.getElementById('detComprobanteBox');
+            const compLink = document.getElementById('detComprobanteLink');
+            if (c.comprobante_url) {
+                compBox?.classList.remove('hidden');
+                compLink.href = c.comprobante_url;
+            } else {
+                compBox?.classList.add('hidden');
+            }
+        } else {
+            pagoCard?.classList.add('hidden');
+        }
+
+        // 6. Notas completas
+        const notasEl = document.getElementById('detNotasCompletas');
+        if (notasEl) notasEl.textContent = c.notas || 'Sin observaciones adicionales registradas.';
+
+        // 7. Botones Admin
+        const adminActions = document.getElementById('detAdminActions');
+        if (adminActions) {
+            if (c.estado === 'Pendiente' && typeof openEditModal === 'function') {
+                adminActions.innerHTML = `
+                    <button type="button" onclick="closeDetalleModal(); openEditModal(${c.id}, '${c.monto}', '${(c.concepto || '').replace(/'/g, "\\'")}', '${(c.notas || '').replace(/'/g, "\\'")}')"
+                            class="px-4 py-2 rounded-xl bg-blue-50 hover:bg-blue-100 text-blue-700 font-bold text-xs transition-colors cursor-pointer flex items-center gap-1.5">
+                        <i class="fas fa-pen text-[10px]"></i>
+                        <span>Editar</span>
+                    </button>
+                    <button type="button" onclick="closeDetalleModal(); cancelarComision(${c.id})"
+                            class="px-4 py-2 rounded-xl bg-red-50 hover:bg-red-100 text-red-600 font-bold text-xs transition-colors cursor-pointer flex items-center gap-1.5">
+                        <i class="fas fa-ban text-[10px]"></i>
+                        <span>Cancelar</span>
+                    </button>
+                `;
+            } else {
+                adminActions.innerHTML = '';
+            }
+        }
+
+        skeleton?.classList.add('hidden');
+        content?.classList.remove('hidden');
+
+    } catch (err) {
+        if (skeleton) skeleton.classList.add('hidden');
+        if (content) {
+            content.classList.remove('hidden');
+            content.innerHTML = `
+                <div class="py-12 text-center text-slate-500">
+                    <i class="fas fa-exclamation-triangle text-amber-500 text-3xl mb-2"></i>
+                    <p class="font-bold text-sm text-slate-800">${err.message || 'Error al cargar detalle de comisión'}</p>
+                    <button type="button" onclick="closeDetalleModal()" class="mt-4 px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs rounded-xl transition-all">
+                        Cerrar
+                    </button>
+                </div>
+            `;
+        }
+    }
+}
+
+function closeDetalleModal() {
+    const modal = document.getElementById('modalDetalleComision');
+    if (modal) {
+        modal.classList.add('hidden');
+        modal.style.display = 'none';
+    }
+}
+
+window.verDetalleComision = verDetalleComision;
+window.closeDetalleModal = closeDetalleModal;
+
+document.addEventListener('keydown', e => {
+    if (e.key === 'Escape') {
+        closeDetalleModal();
+    }
+});
 </script>

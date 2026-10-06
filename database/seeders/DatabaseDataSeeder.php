@@ -13,7 +13,23 @@ class DatabaseDataSeeder extends Seeder
      */
     public function run(): void
     {
-        $this->seedUsuario(); // 2 rows
+       $this->seedUsuario(); // 2 rows
+        $this->seedProveedors(); // 2 rows
+        $this->seedCategoria(); // 5 rows
+        $this->seedAtributo(); // 6 rows
+        $this->seedProducto(); // 5 rows
+        $this->seedCatalogos(); // 1 rows
+        $this->seedProductoatributo(); // 8 rows
+        $this->seedVariante(); // 10 rows
+        $this->seedVarianteImagen(); // 27 rows
+        $this->seedVariantevalor(); // 18 rows
+        $this->seedCompra(); // 9 rows
+        $this->seedCompraDetalle(); // 9 rows
+        $this->seedMovimientoBodega(); // 12 rows
+        $this->seedVenta(); // 6 rows
+        $this->seedSalida(); // 6 rows
+        $this->seedDetalleventa(); // 6 rows
+        $this->seedComisionVendedor(); // 0 rows
         $this->resetPostgresSequences();
     }
 
@@ -1711,6 +1727,8 @@ ENVIOS TODO EL PAIS',
             'salida',
             'detalleventa',
             'comision_vendedor',
+            'devoluciones',
+            'devolucion_detalles',
         ];
 
         foreach ($tables as $table) {

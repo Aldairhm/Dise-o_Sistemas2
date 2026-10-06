@@ -421,9 +421,7 @@
                                         <th class="px-4 py-3 text-center">Estado</th>
                                         <th class="px-4 py-3 text-left">Detalle de Pago</th>
                                         <th class="px-4 py-3 text-left">Notas</th>
-                                        @if($isAdmin)
-                                            <th class="px-4 py-3 text-center">Acciones</th>
-                                        @endif
+                                        <th class="px-4 py-3 text-center">Acciones</th>
                                     </tr>
                                 </thead>
                                 <tbody class="divide-y divide-slate-100">
@@ -537,31 +535,35 @@
                                             </td>
 
                                             {{-- Acciones --}}
-                                            @if($isAdmin)
-                                                <td class="px-4 py-3 text-center whitespace-nowrap">
-                                                    @if($c->estado === 'Pendiente')
-                                                        <div class="flex items-center justify-center gap-1">
-                                                            <button type="button"
-                                                                onclick="openEditModal({{ $c->id }}, '{{ $c->monto }}', '{{ addslashes($c->concepto ?? '') }}', '{{ addslashes($c->notas ?? '') }}')"
-                                                                class="w-7 h-7 rounded-lg flex items-center justify-center text-blue-600 hover:bg-blue-50 transition-colors cursor-pointer"
-                                                                title="Editar">
-                                                                <i class="fas fa-pen text-[10px]"></i>
-                                                            </button>
-                                                            <button type="button" onclick="cancelarComision({{ $c->id }})"
-                                                                class="w-7 h-7 rounded-lg flex items-center justify-center text-red-500 hover:bg-red-50 transition-colors cursor-pointer"
-                                                                title="Cancelar">
-                                                                <i class="fas fa-ban text-[10px]"></i>
-                                                            </button>
-                                                        </div>
-                                                    @else
-                                                        <span class="text-slate-300 text-[11px]">—</span>
+                                            <td class="px-4 py-3 text-center whitespace-nowrap">
+                                                <div class="flex items-center justify-center gap-1">
+                                                    {{-- Ver Detalle Completo --}}
+                                                    <button type="button"
+                                                        onclick="verDetalleComision({{ $c->id }})"
+                                                        class="w-7 h-7 rounded-lg flex items-center justify-center text-indigo-600 hover:text-indigo-800 hover:bg-indigo-50 transition-colors cursor-pointer"
+                                                        title="Ver Detalle Completo">
+                                                        <i class="fas fa-eye text-[11px]"></i>
+                                                    </button>
+
+                                                    @if($isAdmin && $c->estado === 'Pendiente')
+                                                        <button type="button"
+                                                            onclick="openEditModal({{ $c->id }}, '{{ $c->monto }}', '{{ addslashes($c->concepto ?? '') }}', '{{ addslashes($c->notas ?? '') }}')"
+                                                            class="w-7 h-7 rounded-lg flex items-center justify-center text-blue-600 hover:bg-blue-50 transition-colors cursor-pointer"
+                                                            title="Editar">
+                                                            <i class="fas fa-pen text-[10px]"></i>
+                                                        </button>
+                                                        <button type="button" onclick="cancelarComision({{ $c->id }})"
+                                                            class="w-7 h-7 rounded-lg flex items-center justify-center text-red-500 hover:bg-red-50 transition-colors cursor-pointer"
+                                                            title="Cancelar">
+                                                            <i class="fas fa-ban text-[10px]"></i>
+                                                        </button>
                                                     @endif
-                                                </td>
-                                            @endif
+                                                </div>
+                                            </td>
                                         </tr>
                                     @empty
                                         <tr>
-                                            <td colspan="{{ $isAdmin ? 7 : 6 }}" class="px-4 py-6 text-center text-slate-400">
+                                            <td colspan="7" class="px-4 py-6 text-center text-slate-400">
                                                 No hay registros de comisiones para este vendedor en el rango seleccionado.
                                             </td>
                                         </tr>
@@ -1049,6 +1051,7 @@
                 closeEditModal();
                 closeLiquidarModal();
                 closeCreateModal();
+                if (typeof closeDetalleModal === 'function') closeDetalleModal();
             }
         });
     </script>

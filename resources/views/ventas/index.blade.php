@@ -359,10 +359,10 @@
                         $limiteFechaFormatted = $fechaLimite ? $fechaLimite->format('d/m/Y') : '';
 
                         $badgeClasses = match($estado) {
-                        'Pendiente' => 'bg-amber-50 text-amber-700 border-amber-200 hover:bg-amber-100/80',
-                        'Confirmada' => 'bg-blue-50 text-blue-700 border-blue-200 hover:bg-blue-100/80',
-                        'En ruta' => 'bg-indigo-50 text-indigo-700 border-indigo-200 hover:bg-indigo-100/80',
-                        'Entregada' => 'bg-emerald-50 text-emerald-700 border-emerald-200 hover:bg-emerald-100/80',
+                        'Pendiente' => 'bg-amber-50 text-amber-700 border-amber-200',
+                        'Confirmada' => 'bg-blue-50 text-blue-700 border-blue-200',
+                        'En ruta' => 'bg-indigo-50 text-indigo-700 border-indigo-200',
+                        'Entregada' => 'bg-emerald-50 text-emerald-700 border-emerald-200',
                         'Cancelada' => 'bg-rose-50 text-rose-700 border-rose-200',
                         'Devolución' => 'bg-purple-50 text-purple-700 border-purple-200',
                         'Cambio' => 'bg-teal-50 text-teal-700 border-teal-200',
@@ -462,28 +462,14 @@
                                 </span>
                             </td>
 
-                            <!-- ESTADO ACTUAL INTERACTIVO -->
+                            <!-- ESTADO ACTUAL (SOLO INFORMATIVO) -->
                             <td class="px-4 py-3.5 text-center">
                                 <div class="inline-flex flex-col items-center">
-                                    @if(!$bloqueado && count($permitidos) > 0)
-                                    <button
-                                        type="button"
-                                        @click="abrirModalCambiarEstado({{ $venta->id }}, '{{ $estado }}', '{{ $tipo }}', {{ $puedeDevolver ? 'true' : 'false' }}, {{ json_encode($permitidos) }}, {{ $diasRestantes }}, '{{ addslashes($textoGarantia) }}', '{{ $limiteFechaFormatted }}')"
-                                        class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[11px] font-bold border transition-all duration-200 shadow-2xs hover:shadow-xs hover:scale-105 cursor-pointer {{ $badgeClasses }}"
-                                        title="Haz clic para cambiar el estado de la venta">
-                                        <i class="fas {{ $badgeIcon }} text-[10px]"></i>
-                                        <span>{{ $estado }}</span>
-                                        <i class="fas fa-chevron-down text-[8px] opacity-60 ml-0.5"></i>
-                                    </button>
-                                    @else
                                     <span
-                                        class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[11px] font-bold border shadow-2xs {{ $badgeClasses }}"
-                                        title="{{ $estado === 'Entregada' ? 'Garantía de devolución expirada (' . $diasGarantia . ' días). Estado definitivo.' : 'Estado definitivo bloqueado.' }}">
+                                        class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[11px] font-bold border shadow-2xs {{ $badgeClasses }}">
                                         <i class="fas {{ $badgeIcon }} text-[10px]"></i>
                                         <span>{{ $estado }}</span>
-                                        <i class="fas fa-lock text-[8px] opacity-40 ml-0.5"></i>
                                     </span>
-                                    @endif
 
                                     @if($estado === 'Entregada' && $puedeDevolver)
                                     <span class="text-[9px] font-bold text-amber-600 mt-1 flex items-center gap-0.5" title="Garantía de devolución activa hasta el {{ $limiteFechaFormatted }} a las 23:59 ({{ $diasGarantia }} días en {{ $tipo === 'Envio' ? 'envío' : 'tienda' }})">
@@ -1855,7 +1841,7 @@
                                 x-model="observacionesEstado"
                                 @input="errorObservacionesEstado = false"
                                 rows="3"
-                                placeholder="Ingresa notas operativas, motivo de cancelación o justificación de devolución..."
+                                placeholder="Ingresa notas operativas o motivo de cancelación..."
                                 :class="errorObservacionesEstado ? 'border-rose-500 bg-rose-50/40 text-rose-900 focus:border-rose-500 focus:ring-rose-500/20 ring-1 ring-rose-400' : 'border-slate-300 text-slate-700 focus:border-blue-500 focus:ring-blue-500/10'"
                                 class="w-full rounded-xl border p-3 text-xs font-semibold focus:outline-none focus:ring-4 transition-all resize-none"></textarea>
                             <span x-show="errorObservacionesEstado" class="text-[11px] font-bold text-rose-600 flex items-center gap-1 mt-1 pl-1">
@@ -1870,7 +1856,7 @@
                             <div class="text-[11px]">
                                 <span class="font-bold block">Acción con impacto en inventario y comisiones:</span>
                                 <span class="text-amber-800">
-                                    Si cancelas la venta o procesas devolución, el stock de las variantes se devolverá automáticamente a la bodega y se anularán las comisiones asociadas.
+                                    Si cancelas la venta, el stock de las variantes se devolverá automáticamente a la bodega y se anularán las comisiones asociadas.
                                 </span>
                             </div>
                         </div>
@@ -1981,23 +1967,62 @@
                                     <option value="cambio_cuarentena">Cambio físico (Viene defectuoso)</option>
                                 </select>
 
-                                <!-- INFO BOX DINÁMICO -->
+                                <!-- INFO BOX DINÁMICO UNIFICADO CON COMISIONES -->
                                 <template x-if="tipo_resolucion">
-                                    <div x-transition.opacity.duration.300ms class="mt-2.5 bg-blue-50 border border-blue-200 text-blue-800 p-3 rounded-lg text-xs flex items-start gap-2.5 shadow-sm">
-                                        <template x-if="tipo_resolucion.includes('reembolso')">
-                                            <i class="fas fa-money-bill-wave mt-0.5 shrink-0 text-blue-600"></i>
-                                        </template>
-                                        <template x-if="tipo_resolucion.includes('cambio')">
-                                            <i class="fas fa-boxes-stacked mt-0.5 shrink-0 text-blue-600"></i>
-                                        </template>
-                                        <div class="leading-relaxed font-medium">
-                                            <template x-if="tipo_resolucion.includes('reembolso')">
-                                                <p><strong class="font-bold text-blue-900">Impacto:</strong> Se retornará el artículo a bodega y se registrará un EGRESO de dinero en caja.</p>
-                                            </template>
-                                            <template x-if="tipo_resolucion.includes('cambio')">
-                                                <p><strong class="font-bold text-blue-900">Impacto:</strong> Entra el artículo devuelto y sale automáticamente uno nuevo del inventario. NO hay movimiento de efectivo.</p>
-                                            </template>
+                                    <div x-transition.opacity.duration.300ms class="mt-2.5 p-3.5 rounded-xl border text-xs leading-relaxed space-y-2 shadow-2xs"
+                                         :class="{
+                                             'bg-blue-50/80 border-blue-200 text-blue-950': tipo_resolucion === 'reembolso_tienda',
+                                             'bg-amber-50/80 border-amber-200 text-amber-950': tipo_resolucion === 'reembolso_cuarentena',
+                                             'bg-teal-50/80 border-teal-200 text-teal-950': tipo_resolucion === 'cambio_tienda',
+                                             'bg-purple-50/80 border-purple-200 text-purple-950': tipo_resolucion === 'cambio_cuarentena'
+                                         }">
+                                        <div class="flex items-center gap-2 font-bold text-[11px] uppercase tracking-wider pb-1 border-b"
+                                             :class="{
+                                                 'border-blue-200/80 text-blue-900': tipo_resolucion === 'reembolso_tienda',
+                                                 'border-amber-200/80 text-amber-900': tipo_resolucion === 'reembolso_cuarentena',
+                                                 'border-teal-200/80 text-teal-900': tipo_resolucion === 'cambio_tienda',
+                                                 'border-purple-200/80 text-purple-900': tipo_resolucion === 'cambio_cuarentena'
+                                             }">
+                                            <i class="fas" :class="{
+                                                'fa-money-bill-wave text-blue-600': tipo_resolucion === 'reembolso_tienda',
+                                                'fa-triangle-exclamation text-amber-600': tipo_resolucion === 'reembolso_cuarentena',
+                                                'fa-arrow-right-arrow-left text-teal-600': tipo_resolucion === 'cambio_tienda',
+                                                'fa-box-archive text-purple-600': tipo_resolucion === 'cambio_cuarentena'
+                                            }"></i>
+                                            <span>Impacto Operativo y en Comisiones</span>
                                         </div>
+
+                                        <template x-if="tipo_resolucion === 'reembolso_tienda'">
+                                            <div class="space-y-1 text-[11px]">
+                                                <p><strong class="text-blue-900">• Inventario:</strong> Los artículos devueltos retornan al stock activo de bodega.</p>
+                                                <p><strong class="text-blue-900">• Caja / Dinero:</strong> Se registra egreso por el importe reembolsado al cliente.</p>
+                                                <p><strong class="text-blue-900">• Comisiones:</strong> Se anula la comisión del vendedor por los productos devueltos. <template x-if="ventaSeleccionada?.tipo_venta === 'Envio'"><span class="font-bold text-rose-700">Al ser envío no recibido, se aplica deducción del 50% del costo de envío como ajuste negativo al vendedor.</span></template></p>
+                                            </div>
+                                        </template>
+
+                                        <template x-if="tipo_resolucion === 'reembolso_cuarentena'">
+                                            <div class="space-y-1 text-[11px]">
+                                                <p><strong class="text-amber-900">• Inventario:</strong> La mercancía defectuosa ingresa a <strong>stock en cuarentena</strong>.</p>
+                                                <p><strong class="text-amber-900">• Caja / Dinero:</strong> Se devuelve el dinero al cliente por falla de fábrica.</p>
+                                                <p><strong class="text-amber-900">• Comisiones:</strong> Se anula la comisión de los productos devueltos (sin deducción de envío al vendedor por ser falla atribuible a fábrica).</p>
+                                            </div>
+                                        </template>
+
+                                        <template x-if="tipo_resolucion === 'cambio_tienda'">
+                                            <div class="space-y-1 text-[11px]">
+                                                <p><strong class="text-teal-900">• Inventario:</strong> Entra la talla/color anterior a bodega y sale la nueva variante de reemplazo.</p>
+                                                <p><strong class="text-teal-900">• Caja / Dinero:</strong> <strong>NO</strong> hay movimiento de efectivo (cambio 1 a 1 de igual valor).</p>
+                                                <p><strong class="text-teal-900">• Comisiones:</strong> <span class="font-bold text-teal-800">La comisión del vendedor se mantiene activa</span> porque la venta y el ingreso permanecen vigentes.</p>
+                                            </div>
+                                        </template>
+
+                                        <template x-if="tipo_resolucion === 'cambio_cuarentena'">
+                                            <div class="space-y-1 text-[11px]">
+                                                <p><strong class="text-purple-900">• Inventario:</strong> La unidad defectuosa va a <strong>cuarentena</strong> y sale una unidad nueva de reposición.</p>
+                                                <p><strong class="text-purple-900">• Caja / Dinero:</strong> <strong>NO</strong> hay movimiento de efectivo (reposición por garantía).</p>
+                                                <p><strong class="text-purple-900">• Comisiones:</strong> <span class="font-bold text-purple-800">La comisión del vendedor se mantiene activa</span>.</p>
+                                            </div>
+                                        </template>
                                     </div>
                                 </template>
                             </div>
@@ -2084,7 +2109,7 @@
                         estadoActual: estadoActual,
                         tipoVenta: tipoVenta,
                         puedeDevolver: puedeDevolver,
-                        estadosPermitidos: Array.isArray(estadosPermitidos) ? estadosPermitidos : [],
+                        estadosPermitidos: Array.isArray(estadosPermitidos) ? estadosPermitidos.filter(s => s !== 'Devolución' && s !== 'Cambio') : [],
                         diasRestantes: diasRestantes || 0,
                         textoGarantia: textoGarantia || '',
                         fechaLimite: fechaLimite || ''
@@ -2143,7 +2168,7 @@
                         case 'En ruta':
                             return 'Entregado a paquetería / encomienda. Requiere foto del paquete.';
                         case 'Entregada':
-                            return 'Entregado al cliente. Inicia garantía de devolución / cambio.';
+                            return 'Entregado al cliente exitosamente.';
                         case 'Cancelada':
                             return 'Cancela la venta. Reintegra stock a bodega y anula comisiones.';
                         case 'Devolución':
