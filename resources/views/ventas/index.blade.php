@@ -2034,11 +2034,17 @@
                             <div class="space-y-2">
                                 <label class="text-xs font-bold text-slate-700">Resolución al Cliente <span class="text-red-500">*</span></label>
                                 <select name="tipo_resolucion" x-model="tipo_resolucion" required class="w-full text-xs bg-white border border-slate-300 rounded-lg shadow-sm text-slate-700 px-3 py-2.5 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-colors appearance-none cursor-pointer">
-                                    <option value="" disabled selected>¿Qué acción se tomará?</option>
-                                    <option value="reembolso_tienda">Reembolso de dinero (Producto intacto / Paquete no recibido)</option>
-                                    <option value="reembolso_cuarentena">Reembolso de dinero (Producto dañado de fábrica)</option>
-                                    <option value="cambio_tienda">Cambio físico (Talla/Color equivocado)</option>
-                                    <option value="cambio_cuarentena">Cambio físico (Viene defectuoso)</option>
+                                    <option value="" disabled selected>¿Qué resolución daremos a este caso?</option>
+                                    
+                                    <optgroup label="💰 DEVOLVER EL DINERO AL CLIENTE">
+                                        <option value="reembolso_tienda">➡️ Se arrepintió o canceló (El producto vuelve a bodega normal)</option>
+                                        <option value="reembolso_cuarentena">➡️ Garantía / Defecto (El producto devuelto va a cuarentena)</option>
+                                    </optgroup>
+
+                                    <optgroup label="📦 CAMBIAR POR OTRO PRODUCTO">
+                                        <option value="cambio_tienda">➡️ Cambio de talla, color o gusto (El producto devuelto está bueno)</option>
+                                        <option value="cambio_cuarentena">➡️ Cambio por garantía (El producto devuelto viene dañado)</option>
+                                    </optgroup>
                                 </select>
 
                                 <!-- INFO BOX DINÁMICO UNIFICADO CON COMISIONES -->
