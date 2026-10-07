@@ -14,7 +14,7 @@
                  <!-- Desktop Menu -->
                   <nav class="hidden lg:flex items-center gap-8">
                     <a href="/home" class="text-sm font-semibold text-blue-600 flex items-center gap-2"><i class="fas fa-home"></i> Inicio</a>
-                    <a href="{{ route('ventas.create') }}" class="text-sm font-medium text-gray-600 hover:text-blue-600 transition-colors flex items-center gap-2 {{ request()->routeIs('ventas.*') ? 'text-blue-600 font-bold' : '' }}"><i class="fas fa-cash-register"></i> Ventas / Carrito</a>
+                    <a href="{{ route('ventas.mis-ventas') }}" class="text-sm font-medium text-gray-600 hover:text-blue-600 transition-colors flex items-center gap-2 {{ request()->routeIs('ventas.mis-ventas') ? 'text-blue-600 font-bold' : '' }}"><i class="fas fa-boxes-packing"></i> Mis Ventas</a>
                     <a href="{{ route('comisiones.index') }}" class="text-sm font-medium text-gray-600 hover:text-indigo-600 transition-colors flex items-center gap-2 {{ request()->routeIs('comisiones.*') ? 'text-indigo-600 font-bold' : '' }}"><i class="fas fa-hand-holding-dollar"></i> Mis Comisiones</a>
                   </nav>
 
@@ -107,10 +107,6 @@
                                 </div>
                             </div>
                             <div class="p-1.5 space-y-1">
-                                <a href="{{ route('ventas.mis-ventas') }}" class="w-full text-left px-3 py-2 text-xs font-bold text-gray-700 hover:bg-blue-50 hover:text-blue-600 rounded-lg flex items-center gap-2 transition-colors">
-                                    <i class="fas fa-boxes-packing text-blue-500"></i>
-                                    <span>Mis Ventas</span>
-                                </a>
                                 <a href="{{ route('perfil.show') }}" class="w-full text-left px-3 py-2 text-xs font-bold text-gray-700 hover:bg-blue-50 hover:text-blue-600 rounded-lg flex items-center gap-2 transition-colors">
                                     <i class="fas fa-user-gear text-blue-500"></i>
                                     <span>Configurar Perfil</span>

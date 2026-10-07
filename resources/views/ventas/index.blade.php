@@ -54,6 +54,7 @@
         <!-- 1. SECCIÓN SUPERIOR: FILTROS GLOBALES -->
         <section class="bg-white border border-slate-200 rounded-2xl p-4 sm:p-5 shadow-sm">
             <form method="GET" action="{{ route('ventas.index') }}" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-12 gap-3.5 items-end">
+                <input type="hidden" name="tab" value="{{ $estadoTab }}">
 
                 <!-- BÚSQUEDA RÁPIDA -->
                 <div class="sm:col-span-2 md:col-span-3 lg:col-span-3">
@@ -145,7 +146,7 @@
                     </button>
                     @if(request()->hasAny(['desde', 'hasta', 'vendedor_id', 'producto_id', 'q']))
                     <a
-                        href="{{ route('ventas.index') }}"
+                        href="{{ route('ventas.index', $estadoTab !== 'todos' ? ['tab' => $estadoTab] : []) }}"
                         class="rounded-xl border border-slate-200 bg-slate-50 hover:bg-slate-100 text-slate-600 font-bold py-2 px-2.5 text-xs transition-colors flex items-center justify-center shrink-0"
                         title="Limpiar filtros">
                         <i class="fas fa-rotate-left text-[11px]"></i>
@@ -159,22 +160,46 @@
         <!-- 2. SECCIÓN MEDIA: KPIS Y TARJETAS DE MÉTRICAS -->
         <section class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
 
-            <!-- KPI 1: TOTAL DE VENTAS -->
+            <!-- KPI 1: TOTAL DE VENTAS Y DESGLOSE POR ESTADOS -->
             <div class="bg-white border border-slate-200 rounded-2xl p-5 shadow-sm flex flex-col justify-between">
-                <div class="flex items-center justify-between mb-3">
-                    <span class="text-xs font-bold uppercase tracking-wider text-slate-500">Total Ventas</span>
-                    <div class="w-9 h-9 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center text-sm font-bold">
-                        <i class="fas fa-receipt"></i>
+                <div>
+                    <div class="flex items-center justify-between mb-3">
+                        <span class="text-xs font-bold uppercase tracking-wider text-slate-500">Total Transacciones</span>
+                        <div class="w-9 h-9 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center text-sm font-bold">
+                            <i class="fas fa-receipt"></i>
+                        </div>
+                    </div>
+                    <div>
+                        <h3 class="text-2xl font-black text-slate-900 leading-none">
+                            ${{ number_format($totalVentasMonto, 2) }}
+                        </h3>
+                        <p class="text-xs font-bold text-slate-400 mt-2 flex items-center gap-1.5">
+                            <span class="inline-block w-2 h-2 rounded-full bg-blue-500"></span>
+                            <span>{{ number_format($totalVentasCount) }} transacciones en total</span>
+                        </p>
                     </div>
                 </div>
-                <div>
-                    <h3 class="text-2xl font-black text-slate-900 leading-none">
-                        ${{ number_format($totalVentasMonto, 2) }}
-                    </h3>
-                    <p class="text-xs font-bold text-slate-400 mt-2 flex items-center gap-1.5">
-                        <span class="inline-block w-2 h-2 rounded-full bg-blue-500"></span>
-                        <span>{{ number_format($totalVentasCount) }} transacciones</span>
-                    </p>
+
+                <!-- Mini desglose de estados -->
+                <div class="mt-3 pt-2.5 border-t border-slate-100 flex items-center gap-1.5 flex-wrap">
+                    <a href="{{ route('ventas.index', array_merge(request()->except('page'), ['tab' => 'Entregada'])) }}"
+                       class="text-[10px] font-bold px-2 py-0.5 rounded-md transition-all flex items-center gap-1 {{ $estadoTab === 'Entregada' ? 'bg-emerald-600 text-white shadow-2xs' : 'bg-emerald-50 text-emerald-700 hover:bg-emerald-100 border border-emerald-100' }}"
+                       title="Filtrar por ventas entregadas">
+                        <i class="fas fa-box-open text-[8px]"></i>
+                        <span>{{ $conteoEstados['Entregada'] ?? 0 }} Entregadas</span>
+                    </a>
+                    <a href="{{ route('ventas.index', array_merge(request()->except('page'), ['tab' => 'Devolución'])) }}"
+                       class="text-[10px] font-bold px-2 py-0.5 rounded-md transition-all flex items-center gap-1 {{ $estadoTab === 'Devolución' ? 'bg-purple-600 text-white shadow-2xs' : 'bg-purple-50 text-purple-700 hover:bg-purple-100 border border-purple-100' }}"
+                       title="Filtrar por devoluciones">
+                        <i class="fas fa-rotate-left text-[8px]"></i>
+                        <span>{{ $conteoEstados['Devolución'] ?? 0 }} Devoluciones</span>
+                    </a>
+                    <a href="{{ route('ventas.index', array_merge(request()->except('page'), ['tab' => 'Cambio'])) }}"
+                       class="text-[10px] font-bold px-2 py-0.5 rounded-md transition-all flex items-center gap-1 {{ $estadoTab === 'Cambio' ? 'bg-teal-600 text-white shadow-2xs' : 'bg-teal-50 text-teal-700 hover:bg-teal-100 border border-teal-100' }}"
+                       title="Filtrar por cambios">
+                        <i class="fas fa-arrow-right-arrow-left text-[8px]"></i>
+                        <span>{{ $conteoEstados['Cambio'] ?? 0 }} Cambios</span>
+                    </a>
                 </div>
             </div>
 
@@ -305,32 +330,131 @@
         </section>
         @endif
 
-        <!-- 3. SECCIÓN INFERIOR: TABLA DE HISTORIAL DE VENTAS -->
-        <section class="bg-white border border-slate-200 rounded-2xl shadow-sm overflow-hidden">
-            <div class="flex items-center justify-between p-5 border-b border-slate-100 bg-slate-50/60">
-                <div class="flex items-center gap-3">
-                    <div class="w-8 h-8 rounded-lg bg-blue-100 text-blue-700 flex items-center justify-center font-bold text-sm">
-                        <i class="fas fa-list-check"></i>
-                    </div>
-                    <div>
-                        <h2 class="text-base font-black text-slate-900">Historial de Transacciones (Entregadas)</h2>
-                        <p class="text-xs text-slate-500">Listado cronológico de ventas entregadas y liquidadas en el periodo seleccionado</p>
-                    </div>
+        <!-- 3. SECCIÓN INFERIOR: SEPARACIÓN POR ESTADOS Y TABLA DE HISTORIAL -->
+        <div class="space-y-4">
+            <!-- PESTAÑAS DE APARTADOS POR ESTADO -->
+            <div class="flex flex-wrap items-center justify-between gap-3">
+                <div class="flex flex-wrap items-center gap-1.5 rounded-2xl border border-slate-200 bg-white p-1.5 shadow-sm" aria-label="Apartados de estado del historial">
+                    <!-- 1. TODAS LAS TRANSACCIONES -->
+                    <a 
+                        href="{{ route('ventas.index', array_merge(request()->except('page'), ['tab' => 'todos'])) }}"
+                        class="rounded-xl px-3.5 py-2 text-xs font-bold transition-all flex items-center gap-2 cursor-pointer {{ $estadoTab === 'todos' ? 'bg-blue-600 text-white shadow-xs' : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900' }}"
+                    >
+                        <i class="fas fa-layer-group text-[11px] {{ $estadoTab === 'todos' ? 'text-white' : 'text-slate-400' }}"></i>
+                        <span>Todas</span>
+                        <span class="px-1.5 py-0.5 rounded-md text-[10px] font-black {{ $estadoTab === 'todos' ? 'bg-white/20 text-white' : 'bg-slate-100 text-slate-600' }}">
+                            {{ $conteoEstados['todos'] ?? 0 }}
+                        </span>
+                    </a>
+
+                    <!-- 2. VENTAS ENTREGADAS -->
+                    <a 
+                        href="{{ route('ventas.index', array_merge(request()->except('page'), ['tab' => 'Entregada'])) }}"
+                        class="rounded-xl px-3.5 py-2 text-xs font-bold transition-all flex items-center gap-2 cursor-pointer {{ $estadoTab === 'Entregada' ? 'bg-emerald-600 text-white shadow-xs' : 'text-slate-600 hover:bg-emerald-50 hover:text-emerald-700' }}"
+                    >
+                        <i class="fas fa-box-open text-[11px] {{ $estadoTab === 'Entregada' ? 'text-white' : 'text-emerald-500' }}"></i>
+                        <span>Entregadas</span>
+                        <span class="px-1.5 py-0.5 rounded-md text-[10px] font-black {{ $estadoTab === 'Entregada' ? 'bg-white/20 text-white' : 'bg-emerald-100 text-emerald-800' }}">
+                            {{ $conteoEstados['Entregada'] ?? 0 }}
+                        </span>
+                    </a>
+
+                    <!-- 3. DEVOLUCIONES -->
+                    <a 
+                        href="{{ route('ventas.index', array_merge(request()->except('page'), ['tab' => 'Devolución'])) }}"
+                        class="rounded-xl px-3.5 py-2 text-xs font-bold transition-all flex items-center gap-2 cursor-pointer {{ $estadoTab === 'Devolución' ? 'bg-purple-600 text-white shadow-xs' : 'text-slate-600 hover:bg-purple-50 hover:text-purple-700' }}"
+                    >
+                        <i class="fas fa-rotate-left text-[11px] {{ $estadoTab === 'Devolución' ? 'text-white' : 'text-purple-500' }}"></i>
+                        <span>Devoluciones</span>
+                        <span class="px-1.5 py-0.5 rounded-md text-[10px] font-black {{ $estadoTab === 'Devolución' ? 'bg-white/20 text-white' : 'bg-purple-100 text-purple-800' }}">
+                            {{ $conteoEstados['Devolución'] ?? 0 }}
+                        </span>
+                    </a>
+
+                    <!-- 4. CAMBIOS -->
+                    <a 
+                        href="{{ route('ventas.index', array_merge(request()->except('page'), ['tab' => 'Cambio'])) }}"
+                        class="rounded-xl px-3.5 py-2 text-xs font-bold transition-all flex items-center gap-2 cursor-pointer {{ $estadoTab === 'Cambio' ? 'bg-teal-600 text-white shadow-xs' : 'text-slate-600 hover:bg-teal-50 hover:text-teal-700' }}"
+                    >
+                        <i class="fas fa-arrow-right-arrow-left text-[11px] {{ $estadoTab === 'Cambio' ? 'text-white' : 'text-teal-500' }}"></i>
+                        <span>Cambios</span>
+                        <span class="px-1.5 py-0.5 rounded-md text-[10px] font-black {{ $estadoTab === 'Cambio' ? 'bg-white/20 text-white' : 'bg-teal-100 text-teal-800' }}">
+                            {{ $conteoEstados['Cambio'] ?? 0 }}
+                        </span>
+                    </a>
                 </div>
+
                 <div class="flex items-center gap-2">
-                    <a href="{{ route('ventas.pedidos') }}" class="text-xs font-bold text-blue-600 hover:text-blue-700 bg-blue-50 border border-blue-200 px-3 py-1 rounded-lg transition-colors flex items-center gap-1.5">
+                    <a href="{{ route('ventas.pedidos') }}" class="text-xs font-bold text-blue-600 hover:text-blue-700 bg-blue-50 border border-blue-200 px-3.5 py-2 rounded-xl transition-colors flex items-center gap-1.5 shadow-2xs">
                         <i class="fas fa-boxes-packing text-[11px]"></i>
                         <span>Gestionar Pedidos en Proceso</span>
                     </a>
-                    <span class="text-xs font-bold text-slate-600 bg-slate-100 border border-slate-200 px-3 py-1 rounded-lg">
-                        {{ $ventas->total() }} entregadas
-                    </span>
                 </div>
             </div>
 
+            <!-- TABLA DE HISTORIAL DE VENTAS -->
+            <section class="bg-white border border-slate-200 rounded-2xl shadow-sm overflow-hidden">
+                <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-5 border-b border-slate-100 bg-slate-50/60">
+                    <div class="flex items-center gap-3">
+                        <div class="w-9 h-9 rounded-xl flex items-center justify-center font-bold text-sm shadow-2xs {{ 
+                            $estadoTab === 'Entregada' ? 'bg-emerald-100 text-emerald-700' : 
+                            ($estadoTab === 'Devolución' ? 'bg-purple-100 text-purple-700' : 
+                            ($estadoTab === 'Cambio' ? 'bg-teal-100 text-teal-700' : 'bg-blue-100 text-blue-700')) 
+                        }}">
+                            <i class="fas {{ 
+                                $estadoTab === 'Entregada' ? 'fa-box-open' : 
+                                ($estadoTab === 'Devolución' ? 'fa-rotate-left' : 
+                                ($estadoTab === 'Cambio' ? 'fa-arrow-right-arrow-left' : 'fa-list-check')) 
+                            }}"></i>
+                        </div>
+                        <div>
+                            <h2 class="text-base font-black text-slate-900">
+                                @if($estadoTab === 'Entregada')
+                                    Historial de Ventas Entregadas
+                                @elseif($estadoTab === 'Devolución')
+                                    Historial de Devoluciones de Clientes
+                                @elseif($estadoTab === 'Cambio')
+                                    Historial de Cambios de Producto
+                                @else
+                                    Historial de Transacciones (General)
+                                @endif
+                            </h2>
+                            <p class="text-xs text-slate-500">
+                                @if($estadoTab === 'Entregada')
+                                    Listado cronológico de ventas entregadas y liquidadas exitosamente en el periodo
+                                @elseif($estadoTab === 'Devolución')
+                                    Listado de ventas que han registrado devolución de cliente en el periodo
+                                @elseif($estadoTab === 'Cambio')
+                                    Listado de ventas procesadas como cambio físico de mercancía en el periodo
+                                @else
+                                    Listado cronológico de ventas entregadas, devoluciones y cambios en el periodo seleccionado
+                                @endif
+                            </p>
+                        </div>
+                    </div>
+                    <div class="flex items-center gap-2">
+                        <span class="text-xs font-bold border px-3 py-1.5 rounded-xl shadow-2xs {{
+                            $estadoTab === 'Entregada' ? 'bg-emerald-50 text-emerald-800 border-emerald-200' : 
+                            ($estadoTab === 'Devolución' ? 'bg-purple-50 text-purple-800 border-purple-200' : 
+                            ($estadoTab === 'Cambio' ? 'bg-teal-50 text-teal-800 border-teal-200' : 'bg-slate-100 text-slate-700 border-slate-200'))
+                        }}">
+                            {{ $ventas->total() }} 
+                            @if($estadoTab === 'Entregada')
+                                entregadas
+                            @elseif($estadoTab === 'Devolución')
+                                devoluciones
+                            @elseif($estadoTab === 'Cambio')
+                                cambios
+                            @else
+                                transacciones
+                            @endif
+                        </span>
+                    </div>
+                </div>
+
             <!-- TABLA -->
             <div class="overflow-x-auto">
-                <table class="w-full text-left text-xs min-w-[1120px]">
+                <table class="w-full text-left text-xs min-w-[1020px]">
                     <thead class="bg-slate-50/80 text-[10px] uppercase font-bold tracking-wider text-slate-400 border-b border-slate-200">
                         <tr>
                             <th class="px-5 py-3.5 w-24 whitespace-nowrap">Folio</th>
@@ -340,7 +464,6 @@
                             <th class="px-4 py-3.5 whitespace-nowrap">Método de Pago</th>
                             <th class="px-4 py-3.5 text-center whitespace-nowrap">Estado Actual</th>
                             <th class="px-4 py-3.5 text-right whitespace-nowrap w-24">Total</th>
-                            <th class="px-4 py-3.5 text-right whitespace-nowrap w-28">Comisión</th>
                             <th class="px-5 py-3.5 text-right whitespace-nowrap">Acciones</th>
                         </tr>
                     </thead>
@@ -499,17 +622,6 @@
                                 ${{ number_format($venta->total, 2) }}
                             </td>
 
-                            <!-- COMISIÓN -->
-                            <td class="px-4 py-3.5 text-right whitespace-nowrap">
-                                @if((float) ($venta->total_comision ?? 0) > 0)
-                                    <span class="font-black text-emerald-700">
-                                        ${{ number_format($venta->total_comision, 2) }}
-                                    </span>
-                                @else
-                                    <span class="text-slate-400">—</span>
-                                @endif
-                            </td>
-
                             <!-- ACCIONES -->
                             <td class="px-5 py-3.5 text-right whitespace-nowrap">
                                 <div class="flex items-center justify-end gap-1.5 flex-nowrap">
@@ -573,15 +685,38 @@
                         </tr>
                         @empty
                             <tr>
-                                <td colspan="9" class="py-16 text-center text-slate-400">
+                                <td colspan="8" class="py-16 text-center text-slate-400">
                                     <div class="w-14 h-14 rounded-full bg-slate-50 text-slate-300 flex items-center justify-center mx-auto mb-3 border border-slate-100">
-                                        <i class="fas fa-folder-open text-2xl"></i>
+                                        <i class="fas {{ $estadoTab === 'Devolución' ? 'fa-rotate-left' : ($estadoTab === 'Cambio' ? 'fa-arrow-right-arrow-left' : ($estadoTab === 'Entregada' ? 'fa-box-open' : 'fa-folder-open')) }} text-2xl"></i>
                                     </div>
-                                    <p class="text-sm font-bold text-slate-600">No se encontraron ventas entregadas en este periodo</p>
-                                    <p class="text-xs text-slate-400 mt-1 max-w-md mx-auto">
-                                        Este dashboard muestra exclusivamente ventas que han sido <b>entregadas y liquidadas</b>. Si tus ventas están en estado <i>Pendiente</i>, <i>Confirmada</i> o <i>En ruta</i>, consúltalas en el apartado logístico.
+                                    <p class="text-sm font-bold text-slate-600">
+                                        @if($estadoTab === 'Entregada')
+                                            No se encontraron ventas entregadas en este periodo
+                                        @elseif($estadoTab === 'Devolución')
+                                            No se encontraron devoluciones de clientes en este periodo
+                                        @elseif($estadoTab === 'Cambio')
+                                            No se encontraron cambios de producto en este periodo
+                                        @else
+                                            No se encontraron transacciones en este periodo
+                                        @endif
                                     </p>
-                                    <div class="mt-4 flex items-center justify-center gap-2">
+                                    <p class="text-xs text-slate-400 mt-1 max-w-md mx-auto">
+                                        @if($estadoTab === 'Devolución')
+                                            No existen ventas con estado <i>Devolución</i> para los filtros y fechas seleccionadas.
+                                        @elseif($estadoTab === 'Cambio')
+                                            No existen ventas con estado <i>Cambio</i> para los filtros y fechas seleccionadas.
+                                        @elseif($estadoTab === 'Entregada')
+                                            No existen ventas con estado <i>Entregada</i> para los filtros y fechas seleccionadas.
+                                        @else
+                                            Este dashboard muestra exclusivamente ventas entregadas, devoluciones y cambios liquidados. Si tus pedidos están en proceso, consúltalos en el apartado logístico.
+                                        @endif
+                                    </p>
+                                    <div class="mt-4 flex items-center justify-center gap-2 flex-wrap">
+                                        @if($estadoTab !== 'todos')
+                                            <a href="{{ route('ventas.index', array_merge(request()->except('page'), ['tab' => 'todos'])) }}" class="inline-flex items-center gap-2 rounded-xl bg-slate-700 hover:bg-slate-800 text-white px-4 py-2 text-xs font-bold transition-all shadow-sm">
+                                                <i class="fas fa-layer-group"></i> Ver Todas las Transacciones
+                                            </a>
+                                        @endif
                                         <a href="{{ route('ventas.pedidos') }}" class="inline-flex items-center gap-2 rounded-xl bg-amber-500 hover:bg-amber-600 text-white px-4 py-2 text-xs font-bold transition-all shadow-sm">
                                             <i class="fas fa-boxes-packing"></i> Ver Envíos y Pedidos en Proceso
                                         </a>
@@ -603,6 +738,7 @@
             </div>
             @endif
         </section>
+        </div>
 
         <!-- ========================================================================= -->
         <!-- MODAL 1: DETALLE COMPLETO DE LA VENTA                                     -->

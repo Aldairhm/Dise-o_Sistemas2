@@ -46,6 +46,10 @@ class VentaController extends Controller
         $vendedorId = $request->input('vendedor_id');
         $productoId = $request->input('producto_id');
         $busqueda = trim($request->input('q', ''));
+        $estadoTab = $request->input('tab', 'todos');
+        if (!in_array($estadoTab, ['todos', 'Entregada', 'Devolución', 'Cambio'])) {
+            $estadoTab = 'todos';
+        }
 
         // 2. Consulta base del histórico: ventas entregadas y ventas con devolución/cambio.
         $query = Venta::with(['usuario', 'detalles.variante.producto'])
@@ -97,6 +101,14 @@ class VentaController extends Controller
                 }
             });
         }
+
+        // Conteos por estado en el periodo y filtros seleccionados (para apartados y pestañas)
+        $conteoEstados = [
+            'todos' => (clone $query)->count(),
+            'Entregada' => (clone $query)->whereIn('estado', ['Entregada', 'Entregado'])->count(),
+            'Devolución' => (clone $query)->where('estado', 'Devolución')->count(),
+            'Cambio' => (clone $query)->where('estado', 'Cambio')->count(),
+        ];
 
         // 3. Métricas Generales en el periodo
         $totalVentasCount = (clone $query)->count();
@@ -195,8 +207,17 @@ class VentaController extends Controller
             ];
         }
 
-        // 5. Tabla paginada de ventas filtradas
-        $ventas = (clone $query)
+        // 5. Tabla paginada de ventas filtradas según el estado de la pestaña seleccionada
+        $tablaQuery = clone $query;
+        if ($estadoTab === 'Entregada') {
+            $tablaQuery->whereIn('estado', ['Entregada', 'Entregado']);
+        } elseif ($estadoTab === 'Devolución') {
+            $tablaQuery->where('estado', 'Devolución');
+        } elseif ($estadoTab === 'Cambio') {
+            $tablaQuery->where('estado', 'Cambio');
+        }
+
+        $ventas = $tablaQuery
             ->orderByDesc('fecha')
             ->orderByDesc('id')
             ->paginate(15)
@@ -240,6 +261,8 @@ class VentaController extends Controller
             'vendedorId',
             'productoId',
             'busqueda',
+            'estadoTab',
+            'conteoEstados',
             'totalVentasCount',
             'totalVentasMonto',
             'productoMasVendido',
@@ -481,17 +504,32 @@ class VentaController extends Controller
             'En ruta' => $fnMetricas($todasVentas->where('estado', 'En ruta')),
             'Entregada' => $fnMetricas($todasVentas->whereIn('estado', ['Entregada', 'Entregado'])),
             'Cancelada' => $fnMetricas($todasVentas->where('estado', 'Cancelada')),
+            'Devolución' => $fnMetricas($todasVentas->where('estado', 'Devolución')),
+            'Cambio' => $fnMetricas($todasVentas->where('estado', 'Cambio')),
         ];
 
-        // Métricas generales por defecto (de todas las ventas consultadas)
+        $totalMonto = $metricasPorTab['todos']['total_ventas'];
+        $totalOrdenes = $todasVentas->count();
+        $ticketPromedio = $totalOrdenes > 0 ? round($totalMonto / $totalOrdenes, 2) : 0.0;
+
+        $totalEntregadas = $todasVentas->whereIn('estado', ['Entregada', 'Entregado'])->count();
+        $tasaEfectividad = $totalOrdenes > 0 ? round(($totalEntregadas / $totalOrdenes) * 100) : 0;
+        $totalUnidades = $todasVentas->sum(function ($v) {
+            return $v->detalles ? $v->detalles->sum('cantidad') : 0;
+        });
+
+        // Métricas generales de ventas del vendedor (coherentes con el módulo)
         $metricas = [
-            'total_ganado' => $metricasPorTab['todos']['ganancia'],
-            'total_comisiones' => $metricasPorTab['todos']['comisiones'],
-            'total_extras' => $metricasPorTab['todos']['extras'],
-            'total_monto' => $metricasPorTab['todos']['total_ventas'],
+            'total_monto' => $totalMonto,
+            'total_ordenes' => $totalOrdenes,
+            'ticket_promedio' => $ticketPromedio,
             'total_en_curso' => $todasVentas->whereIn('estado', ['Pendiente', 'Confirmada', 'En ruta'])->count(),
-            'total_entregadas' => $todasVentas->whereIn('estado', ['Entregada', 'Entregado'])->count(),
+            'total_entregadas' => $totalEntregadas,
             'total_canceladas' => $todasVentas->where('estado', 'Cancelada')->count(),
+            'total_devoluciones' => $todasVentas->where('estado', 'Devolución')->count(),
+            'total_cambios' => $todasVentas->where('estado', 'Cambio')->count(),
+            'total_unidades' => $totalUnidades,
+            'tasa_efectividad' => $tasaEfectividad,
             'por_tab' => $metricasPorTab,
         ];
 

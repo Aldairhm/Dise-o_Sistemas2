@@ -660,10 +660,9 @@
                     </div>
                     <div class="flex items-center gap-2">
                         <span id="detSalidaBadge" class="text-[10px] font-bold px-2 py-0.5 rounded bg-blue-50 text-blue-700 border border-blue-200">Salida #—</span>
-                        <a id="detVentaLink" href="#" target="_blank" class="hidden inline-flex items-center gap-1 text-[11px] font-bold text-indigo-600 hover:text-indigo-800 hover:underline">
+                        <span id="detVentaBadge" class="hidden inline-flex items-center text-[10px] font-bold px-2 py-0.5 rounded bg-indigo-50 text-indigo-700 border border-indigo-200 font-mono">
                             <span id="detVentaFolio">VNT-00000</span>
-                            <i class="fas fa-external-link-alt text-[9px]"></i>
-                        </a>
+                        </span>
                     </div>
                 </div>
 
@@ -1146,15 +1145,14 @@ async function verDetalleComision(id) {
                 clienteBox?.classList.add('hidden');
             }
 
-            // Venta Link
-            const ventaLink = document.getElementById('detVentaLink');
+            // Folio de Venta (sin enlace)
+            const ventaBadge = document.getElementById('detVentaBadge') || document.getElementById('detVentaLink');
             const ventaFolio = document.getElementById('detVentaFolio');
-            if (venta) {
-                ventaLink?.classList.remove('hidden');
-                ventaLink.href = venta.url_show;
+            if (venta && venta.folio) {
+                ventaBadge?.classList.remove('hidden');
                 if (ventaFolio) ventaFolio.textContent = venta.folio;
             } else {
-                ventaLink?.classList.add('hidden');
+                ventaBadge?.classList.add('hidden');
             }
         } else {
             salidaCard?.classList.add('hidden');
