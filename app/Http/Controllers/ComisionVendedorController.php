@@ -281,7 +281,14 @@ class ComisionVendedorController extends Controller
             $semanasAgrupadas->put($semanaActualKey, collect());
         }
 
-        $reporteSemanas = $semanasAgrupadas->map(function ($items, $key) use ($semanaActualKey) {
+        // Cargar pendientes globales por vendedor para conocer saldos históricos disponibles
+        $todasPendientesPorVendedor = ComisionVendedor::with(['salida'])
+            ->where('estado', 'Pendiente')
+            ->get();
+        ComisionVendedor::cargarVentas($todasPendientesPorVendedor);
+        $pendientesGrouped = $todasPendientesPorVendedor->groupBy('id_vendedor');
+
+        $reporteSemanas = $semanasAgrupadas->map(function ($items, $key) use ($semanaActualKey, $pendientesGrouped) {
             $parts = explode('-', $key);
             $year = (int) ($parts[0] ?? now()->year);
             $week = (int) ($parts[1] ?? now()->weekOfYear);
@@ -290,52 +297,75 @@ class ComisionVendedorController extends Controller
             $finSemana    = \Illuminate\Support\Carbon::now()->setISODate($year, $week)->endOfWeek();
 
             $pendiente = max(0, (float) $items->where('estado', 'Pendiente')->sum('monto'));
+            $saldoLiquidableSemana = max(0, (float) $items->filter(fn($c) => !$c->es_liquidacion_bloqueada && $c->estado === 'Pendiente')->sum('monto'));
+            $saldoGarantiaSemana   = (float) $items->filter(fn($c) => $c->es_liquidacion_bloqueada && $c->estado === 'Pendiente')->sum('monto');
             $pagada    = (float) $items->where('estado', 'Pagada')->sum('monto');
             $cancelada = (float) $items->where('estado', 'Cancelada')->sum('monto');
             $semanaCerrada = now()->greaterThan($finSemana->copy()->endOfDay());
 
             // Resumen de vendedores en esta semana
-            $vendedoresSemana = $items->groupBy('id_vendedor')->map(function ($vItems) use ($semanaCerrada) {
+            $vendedoresSemana = $items->groupBy('id_vendedor')->map(function ($vItems) use ($semanaCerrada, $pendientesGrouped) {
                 $vendedor = $vItems->first()->vendedor ?? null;
+                $vId = $vendedor?->id;
                 $totalVendedor = (float) $vItems->where('estado', '!=', 'Cancelada')->sum('monto');
                 if ($semanaCerrada && $totalVendedor < 0) {
                     $totalVendedor = 0.0;
                 }
 
+                $comisionesLiquidables = $vItems->filter(fn($c) => !$c->es_liquidacion_bloqueada);
+                $comisionesEnGarantia  = $vItems->filter(fn($c) => $c->es_liquidacion_bloqueada);
+
+                $pendiente       = max(0, (float) $vItems->where('estado', 'Pendiente')->sum('monto'));
+                $saldoLiquidable = max(0, (float) $comisionesLiquidables->where('estado', 'Pendiente')->sum('monto'));
+                $saldoEnGarantia = (float) $comisionesEnGarantia->where('estado', 'Pendiente')->sum('monto');
+
+                // Saldo histórico pendiente de todos los tiempos para este vendedor
+                $vTodasPendientes = $vId ? ($pendientesGrouped->get($vId) ?? collect()) : collect();
+                $saldoLiquidableTotal = max(0, (float) $vTodasPendientes->filter(fn($c) => !$c->es_liquidacion_bloqueada)->sum('monto'));
+                $saldoGarantiaTotal   = (float) $vTodasPendientes->filter(fn($c) => $c->es_liquidacion_bloqueada)->sum('monto');
+
                 return [
-                    'vendedor'  => $vendedor,
-                    'comisiones' => $vItems,
-                    'total'     => $totalVendedor,
-                    'pendiente' => max(0, (float) $vItems->where('estado', 'Pendiente')->sum('monto')),
-                    'pagada'    => (float) $vItems->where('estado', 'Pagada')->sum('monto'),
-                    'cantidad'  => $vItems->count(),
-                    'ventas'    => $vItems->where('estado', '!=', 'Cancelada')->whereNotNull('id_salida')->count(),
+                    'vendedor'               => $vendedor,
+                    'comisiones'             => $vItems,
+                    'total'                  => $totalVendedor,
+                    'pendiente'              => $pendiente,
+                    'saldo_liquidable'       => $saldoLiquidable,
+                    'saldo_en_garantia'      => $saldoEnGarantia,
+                    'saldo_liquidable_total' => $saldoLiquidableTotal,
+                    'saldo_garantia_total'   => $saldoGarantiaTotal,
+                    'pagada'                 => (float) $vItems->where('estado', 'Pagada')->sum('monto'),
+                    'cantidad'               => $vItems->count(),
+                    'ventas'                 => $vItems->where('estado', '!=', 'Cancelada')->whereNotNull('id_salida')->count(),
                 ];
             });
             $total = (float) $vendedoresSemana->sum('total');
 
             return [
-                'key'              => $key,
-                'semana_numero'    => $week,
-                'year'             => $year,
-                'inicio_semana'    => $inicioSemana,
-                'fin_semana'       => $finSemana,
-                'es_semana_actual' => ($key === $semanaActualKey),
-                'total_comisiones' => $total,
-                'total_pendiente'  => $pendiente,
-                'total_pagada'     => $pagada,
-                'total_cancelada'  => $cancelada,
-                'total_ventas'     => $items->where('estado', '!=', 'Cancelada')->whereNotNull('id_salida')->count(),
-                'comisiones'       => $items,
-                'vendedores'       => $vendedoresSemana,
+                'key'                    => $key,
+                'semana_numero'          => $week,
+                'year'                   => $year,
+                'inicio_semana'          => $inicioSemana,
+                'fin_semana'             => $finSemana,
+                'es_semana_actual'       => ($key === $semanaActualKey),
+                'total_comisiones'       => $total,
+                'total_pendiente'        => $pendiente,
+                'saldo_liquidable'       => $saldoLiquidableSemana,
+                'saldo_en_garantia'      => $saldoGarantiaSemana,
+                'total_pagada'           => $pagada,
+                'total_cancelada'        => $cancelada,
+                'total_ventas'           => $items->where('estado', '!=', 'Cancelada')->whereNotNull('id_salida')->count(),
+                'comisiones'             => $items,
+                'vendedores'             => $vendedoresSemana,
             ];
         })->sortByDesc('key')->values();
 
         $kpis = [
-            'total'     => (float) $reporteSemanas->sum('total_comisiones'),
-            'pendiente' => (float) $reporteSemanas->sum('total_pendiente'),
-            'pagada'    => (float) $comisiones->where('estado', 'Pagada')->sum('monto'),
-            'semanas'   => $reporteSemanas->where('total_comisiones', '>', 0)->count(),
+            'total'             => (float) $reporteSemanas->sum('total_comisiones'),
+            'pendiente'         => (float) $reporteSemanas->sum('total_pendiente'),
+            'saldo_liquidable'  => (float) $reporteSemanas->sum('saldo_liquidable'),
+            'saldo_en_garantia' => (float) $reporteSemanas->sum('saldo_en_garantia'),
+            'pagada'            => (float) $comisiones->where('estado', 'Pagada')->sum('monto'),
+            'semanas'           => $reporteSemanas->where('total_comisiones', '>', 0)->count(),
         ];
 
         $vendedores = $isAdmin ? User::orderBy('nombre_real')->get() : collect();

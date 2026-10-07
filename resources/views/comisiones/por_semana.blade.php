@@ -141,7 +141,15 @@
                 </div>
                 <div>
                     <h3 class="text-3xl font-black text-amber-700 tracking-tight">${{ number_format($kpis['pendiente'], 2) }}</h3>
-                    <p class="text-xs font-semibold text-amber-600 mt-1">Saldo semanal pendiente</p>
+                    <p class="text-xs font-semibold text-amber-600 mt-1">
+                        @if(($kpis['saldo_en_garantia'] ?? 0) > 0)
+                            <span title="${{ number_format($kpis['saldo_en_garantia'], 2) }} en garantía de devolución">
+                                ${{ number_format($kpis['saldo_liquidable'], 2) }} liquidable · <i class="fas fa-shield-halved text-[10px]"></i> ${{ number_format($kpis['saldo_en_garantia'], 2) }} en garantía
+                            </span>
+                        @else
+                            <span>Saldo semanal pendiente</span>
+                        @endif
+                    </p>
                 </div>
             </div>
 
@@ -331,6 +339,11 @@
                         <div>
                             <span class="text-[9px] font-bold uppercase tracking-wider text-amber-600 block">Por Liquidar</span>
                             <span class="text-sm sm:text-base font-black text-amber-700">${{ number_format($sem['total_pendiente'], 2) }}</span>
+                            @if(($sem['saldo_en_garantia'] ?? 0) > 0)
+                                <span class="block text-[10px] font-semibold text-amber-600 truncate" title="${{ number_format($sem['saldo_en_garantia'], 2) }} en período de garantía de devolución">
+                                    <i class="fas fa-shield-halved text-[9px]"></i> ${{ number_format($sem['saldo_en_garantia'], 2) }} en garantía
+                                </span>
+                            @endif
                         </div>
                         <div>
                             <span class="text-[9px] font-bold uppercase tracking-wider text-emerald-600 block">Pagado</span>
@@ -387,8 +400,8 @@
                                     $vId = $vItem['vendedor']->id;
                                     $vNombre = $vItem['vendedor']->nombre_real ?: $vItem['vendedor']->username;
                                     $vUsername = $vItem['vendedor']->username ?? '';
+                                    $detalleId = 'desglose-' . $sem['key'] . '-' . $vId;
                                 @endphp
-                                @php($detalleId = 'desglose-' . $sem['key'] . '-' . $vId)
                                 <div data-vendedor-card="{{ $vId }}"
                                      data-vendedor-has-pending="{{ $vItem['pendiente'] > 0 ? '1' : '0' }}"
                                      data-vendedor-has-paid="{{ $vItem['comisiones']->where('estado', 'Pagada')->isNotEmpty() ? '1' : '0' }}"
@@ -413,6 +426,11 @@
                                         <div>
                                             <span class="block text-[9px] font-black uppercase tracking-wider text-amber-600">Por liquidar</span>
                                             <span class="text-sm font-black text-amber-700">${{ number_format($vItem['pendiente'], 2) }}</span>
+                                            @if(($vItem['saldo_en_garantia'] ?? 0) > 0)
+                                                <span class="block text-[10px] font-semibold text-amber-600" title="En período de garantía de devolución">
+                                                    <i class="fas fa-shield-halved text-[9px]"></i> ${{ number_format($vItem['saldo_en_garantia'], 2) }} en garantía
+                                                </span>
+                                            @endif
                                         </div>
                                         <div>
                                             <span class="block text-[9px] font-black uppercase tracking-wider text-emerald-600">Pagado</span>
@@ -424,15 +442,43 @@
                                         </div>
                                     </div>
 
-                                    <div class="flex items-center justify-end gap-2">
-                                        @if($isAdmin && $vItem['pendiente'] > 0)
-                                            <button type="button"
-                                                    onclick="abrirLiquidacionSemanal({{ $vId }}, '{{ addslashes($vNombre) }}', '{{ addslashes($vUsername) }}', '{{ $fechaDesdeSemana }}', '{{ $fechaHastaSemana }}')"
-                                                    class="inline-flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-[11px] font-extrabold transition-colors cursor-pointer whitespace-nowrap">
-                                                <i class="fas fa-circle-check"></i>
-                                                <span>Liquidar (${{ number_format($vItem['pendiente'], 2) }})</span>
-                                            </button>
+                                    <div class="flex items-center justify-end gap-2 flex-wrap">
+                                        @if($isAdmin)
+                                            @php
+                                                $montoLiquidable = $vItem['saldo_liquidable'] ?? 0;
+                                                $montoGarantia   = $vItem['saldo_en_garantia'] ?? 0;
+                                                $montoHistorico  = $vItem['saldo_liquidable_total'] ?? 0;
+                                            @endphp
+
+                                            @if($montoLiquidable > 0)
+                                                <button type="button"
+                                                        onclick="abrirLiquidacionSemanal({{ $vId }}, '{{ addslashes($vNombre) }}', '{{ addslashes($vUsername) }}', '{{ $fechaDesdeSemana }}', '{{ $fechaHastaSemana }}')"
+                                                        class="inline-flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-[11px] font-extrabold transition-colors cursor-pointer whitespace-nowrap shadow-xs"
+                                                        title="Liquidar comisiones elegibles para este vendedor en esta semana">
+                                                    <i class="fas fa-circle-check"></i>
+                                                    <span>Liquidar (${{ number_format($montoLiquidable, 2) }})</span>
+                                                </button>
+                                            @elseif($montoGarantia > 0)
+                                                <button type="button"
+                                                        onclick="abrirLiquidacionSemanal({{ $vId }}, '{{ addslashes($vNombre) }}', '{{ addslashes($vUsername) }}', '{{ $fechaDesdeSemana }}', '{{ $fechaHastaSemana }}')"
+                                                        class="inline-flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg bg-amber-50 hover:bg-amber-100 text-amber-800 border border-amber-300 text-[11px] font-extrabold transition-colors cursor-pointer whitespace-nowrap shadow-xs"
+                                                        title="Comisiones en período de garantía de devolución (aún no liquidables)">
+                                                    <i class="fas fa-shield-halved text-amber-600"></i>
+                                                    <span>En garantía (${{ number_format($montoGarantia, 2) }})</span>
+                                                </button>
+                                            @endif
+
+                                            @if($montoLiquidable <= 0 && $montoHistorico > 0)
+                                                <button type="button"
+                                                        onclick="abrirLiquidacionSemanal({{ $vId }}, '{{ addslashes($vNombre) }}', '{{ addslashes($vUsername) }}', '', '')"
+                                                        class="inline-flex items-center justify-center gap-1.5 px-2.5 py-2 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 text-[11px] font-bold transition-colors cursor-pointer whitespace-nowrap"
+                                                        title="Ver y liquidar comisiones pendientes disponibles de otros periodos">
+                                                    <i class="fas fa-clock-rotate-left text-slate-500"></i>
+                                                    <span>Histórico (${{ number_format($montoHistorico, 2) }})</span>
+                                                </button>
+                                            @endif
                                         @endif
+
                                         <button type="button"
                                                 onclick="toggleDesgloseVendedor('{{ $detalleId }}')"
                                                 class="inline-flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 text-[11px] font-bold transition-colors cursor-pointer whitespace-nowrap">
@@ -476,7 +522,11 @@
                                             <td class="px-4 py-3 text-right whitespace-nowrap"><span class="font-black text-sm text-slate-900">${{ number_format($c->monto, 2) }}</span></td>
                                             <td class="px-4 py-3 text-center whitespace-nowrap">
                                               @if($c->estado === 'Pendiente')
-                                                <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-bold bg-amber-50 text-amber-700 border border-amber-200"><span class="w-1.5 h-1.5 rounded-full bg-amber-500"></span>Pendiente</span>
+                                                @if($c->es_liquidacion_bloqueada)
+                                                  <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-bold bg-amber-50 text-amber-700 border border-amber-200" title="En período de garantía de devolución"><i class="fas fa-shield-halved text-[9px] text-amber-600"></i>Garantía</span>
+                                                @else
+                                                  <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200" title="Lista para liquidar"><span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>Por liquidar</span>
+                                                @endif
                                               @elseif($c->estado === 'Pagada')
                                                 <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200"><i class="fas fa-check text-[9px]"></i>Pagada</span>
                                               @else
@@ -491,7 +541,11 @@
                                                   @if($c->comprobante_url)<a href="{{ $c->comprobante_url }}" target="_blank" class="text-indigo-700 font-bold hover:underline">Ver comprobante</a>@endif
                                                 </div>
                                               @else
-                                                <span class="text-slate-400 italic">Por liquidar</span>
+                                                @if($c->es_liquidacion_bloqueada)
+                                                  <span class="text-amber-600 font-medium text-[10px]"><i class="fas fa-clock mr-0.5"></i> En garantía</span>
+                                                @else
+                                                  <span class="text-slate-400 italic">Por liquidar</span>
+                                                @endif
                                               @endif
                                             </td>
                                             <td class="px-4 py-3 text-slate-500 text-[11px] max-w-[150px] truncate" title="{{ $c->notas }}">{{ $c->notas ?? '—' }}</td>
@@ -500,7 +554,11 @@
                                                 <div class="flex items-center justify-center gap-1">
                                                   <button type="button" onclick="verDetalleComision({{ $c->id }})" class="w-7 h-7 rounded-lg flex items-center justify-center text-indigo-600 hover:text-indigo-800 hover:bg-indigo-50 cursor-pointer" title="Ver Detalle Completo"><i class="fas fa-eye text-[10px]"></i></button>
                                                   @if($c->estado === 'Pendiente')
-                                                    <button type="button" onclick="abrirLiquidacionSemanal({{ $vId }}, '{{ addslashes($vNombre) }}', '{{ addslashes($vUsername) }}', '{{ $fechaDesdeSemana }}', '{{ $fechaHastaSemana }}')" class="w-7 h-7 rounded-lg flex items-center justify-center text-emerald-600 hover:bg-emerald-50 cursor-pointer" title="Liquidar"><i class="fas fa-hand-holding-dollar text-[10px]"></i></button>
+                                                    @if($c->es_liquidacion_bloqueada)
+                                                      <span class="w-7 h-7 rounded-lg flex items-center justify-center text-amber-500 bg-amber-50" title="En período de garantía (no liquidable aún)"><i class="fas fa-shield-halved text-[10px]"></i></span>
+                                                    @else
+                                                      <button type="button" onclick="abrirLiquidacionSemanal({{ $vId }}, '{{ addslashes($vNombre) }}', '{{ addslashes($vUsername) }}', '{{ $fechaDesdeSemana }}', '{{ $fechaHastaSemana }}')" class="w-7 h-7 rounded-lg flex items-center justify-center text-emerald-600 hover:bg-emerald-50 cursor-pointer" title="Liquidar"><i class="fas fa-hand-holding-dollar text-[10px]"></i></button>
+                                                    @endif
                                                     <button type="button" onclick="openEditModal({{ $c->id }}, '{{ $c->monto }}', '{{ addslashes($c->concepto ?? '') }}', '{{ addslashes($c->notas ?? '') }}')" class="w-7 h-7 rounded-lg flex items-center justify-center text-blue-600 hover:bg-blue-50 cursor-pointer" title="Editar"><i class="fas fa-pen text-[10px]"></i></button>
                                                     <button type="button" onclick="cancelarComision({{ $c->id }})" class="w-7 h-7 rounded-lg flex items-center justify-center text-red-500 hover:bg-red-50 cursor-pointer" title="Cancelar"><i class="fas fa-ban text-[10px]"></i></button>
                                                   @endif
@@ -512,6 +570,7 @@
                                       </tbody>
                                     </table>
                                   </div>
+                                </div>
                                 @endif
                                 @endforeach
                             </div>
@@ -890,9 +949,19 @@
                 let html = '';
                 if (data.cantidad_bloqueada > 0) {
                     html += `
-                    <div class="p-2 mb-2 rounded-lg bg-amber-50 border border-amber-200 text-amber-900 text-[11px] flex items-center gap-1.5">
-                        <i class="fas fa-shield-halved text-amber-600 flex-shrink-0"></i>
-                        <span><strong>${data.cantidad_bloqueada} comisión(es)</strong> ($${formatNum(data.total_bloqueado)}) están en garantía de devolución y no pueden ser liquidadas aún.</span>
+                    <div class="p-2.5 mb-2 rounded-xl bg-amber-50 border border-amber-200 text-amber-900 text-[11px] space-y-1.5">
+                        <div class="flex items-center gap-1.5 font-bold">
+                            <i class="fas fa-shield-halved text-amber-600 flex-shrink-0"></i>
+                            <span>${data.cantidad_bloqueada} comisión(es) ($${formatNum(data.total_bloqueado)}) están en garantía de devolución y no pueden ser liquidadas aún.</span>
+                        </div>
+                        ${fechaDesde && fechaHasta ? `
+                        <div class="pt-1.5 border-t border-amber-200/60 flex items-center justify-between gap-2 flex-wrap">
+                            <span class="text-amber-800 text-[10px]">¿Deseas ver pendientes acumuladas de todos los periodos?</span>
+                            <button type="button" onclick="quitarFiltroFechasLiquidar()" class="px-2.5 py-1 rounded-lg bg-amber-200 hover:bg-amber-300 text-amber-950 font-black text-[10px] cursor-pointer transition-colors shadow-2xs">
+                                <i class="fas fa-filter-circle-xmark mr-1"></i> Quitar filtro de semana
+                            </button>
+                        </div>
+                        ` : ''}
                     </div>
                     `;
                 }
@@ -1127,6 +1196,27 @@
             seleccionarVendedorLiquidar(vendedorId, nombreVendedor || usernameVendedor, usernameVendedor, initials, Boolean(bloquear));
         }
     }
+
+    function quitarFiltroFechasLiquidar() {
+        const inputDesde = document.getElementById('liquidarFechaDesde');
+        const inputHasta = document.getElementById('liquidarFechaHasta');
+        if (inputDesde) inputDesde.value = '';
+        if (inputHasta) inputHasta.value = '';
+        const alcance = document.getElementById('liquidarAlcance');
+        if (alcance) {
+            alcance.textContent = '';
+            alcance.classList.add('hidden');
+        }
+        const vendedorId = document.getElementById('liquidarVendedor')?.value;
+        if (vendedorId) {
+            cargarPendientesVendedor(vendedorId);
+        }
+    }
+
+    window.openLiquidarModal = openLiquidarModal;
+    window.closeLiquidarModal = closeLiquidarModal;
+    window.abrirLiquidacionSemanal = abrirLiquidacionSemanal;
+    window.quitarFiltroFechasLiquidar = quitarFiltroFechasLiquidar;
 
     function closeLiquidarModal() {
         window._vendedorLiquidarBloqueado = false;
