@@ -22,53 +22,73 @@
 
         </div>
 
-        <!-- TARJETAS DE MÉTRICAS RÁPIDAS (DINÁMICAS SEGÚN EL FILTRO / APARTADO SELECCIONADO) -->
+        <!-- TARJETAS DE MÉTRICAS RÁPIDAS (COHERENTES CON EL MÓDULO DE VENTAS) -->
         <div class="grid grid-cols-2 lg:grid-cols-4 gap-3.5 sm:gap-4">
-            <!-- 1. TOTAL GANADO (COMISIÓN DEL PRODUCTO + EXTRA) -->
-            <div class="bg-white border border-slate-200/80 rounded-2xl p-4 sm:p-5 shadow-2xs relative overflow-hidden flex flex-col justify-between">
+            <!-- 1. TOTAL VENDIDO (ADMIN) / TOTAL PEDIDOS (VENDEDOR) -->
+            @if(Auth::check() && Auth::user()->rol === 'admin')
+            <div class="bg-white border border-slate-200/80 rounded-2xl p-4 sm:p-5 shadow-2xs relative overflow-hidden flex flex-col justify-between hover:border-blue-300 transition-colors">
                 <div class="flex items-center justify-between">
                     <span class="text-[11px] font-bold uppercase tracking-wider text-slate-500">
-                        Total Ganado
+                        Total Vendido
                     </span>
-                    <div class="w-8 h-8 rounded-xl bg-emerald-100 text-emerald-600 flex items-center justify-center text-xs">
-                        <i class="fas fa-sack-dollar"></i>
+                    <div class="w-8 h-8 rounded-xl bg-blue-100 text-blue-600 flex items-center justify-center text-xs">
+                        <i class="fas fa-receipt"></i>
                     </div>
                 </div>
                 <div class="mt-3">
-                    <span class="text-xl sm:text-2xl font-black text-emerald-600 tracking-tight" x-text="'$' + (metricasActuales.ganancia || 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })">
-                        ${{ number_format($metricas['total_ganado'] ?? 0, 2) }}
+                    <span class="text-xl sm:text-2xl font-black text-blue-600 tracking-tight" x-text="'$' + (metricasActuales.total_ventas || 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })">
+                        ${{ number_format($metricas['total_monto'] ?? 0, 2) }}
                     </span>
                     <span class="block text-[11px] text-slate-400 mt-0.5 font-medium">
-                        Comisión: <strong class="text-slate-600" x-text="'$' + (metricasActuales.comisiones || 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })">${{ number_format($metricas['total_comisiones'] ?? 0, 2) }}</strong> 
-                        + Extra: <strong class="text-slate-600" x-text="'$' + (metricasActuales.extras || 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })">${{ number_format($metricas['total_extras'] ?? 0, 2) }}</strong>
+                        Monto en <strong class="text-slate-600" x-text="(metricasActuales.cantidad || 0)">{{ $metricas['total_ordenes'] ?? 0 }}</strong> órdenes registradas
                     </span>
                 </div>
             </div>
-
-            <!-- 2. VENTAS EN CURSO -->
-            <div class="bg-white border border-slate-200/80 rounded-2xl p-4 sm:p-5 shadow-2xs relative overflow-hidden flex flex-col justify-between">
+            @else
+            <div class="bg-white border border-slate-200/80 rounded-2xl p-4 sm:p-5 shadow-2xs relative overflow-hidden flex flex-col justify-between hover:border-blue-300 transition-colors">
                 <div class="flex items-center justify-between">
-                    <span class="text-[11px] font-bold uppercase tracking-wider text-slate-500">En Proceso / Ruta</span>
+                    <span class="text-[11px] font-bold uppercase tracking-wider text-slate-500">
+                        Total Pedidos
+                    </span>
                     <div class="w-8 h-8 rounded-xl bg-blue-100 text-blue-600 flex items-center justify-center text-xs">
-                        <i class="fas fa-arrows-spin"></i>
+                        <i class="fas fa-boxes-packing"></i>
                     </div>
                 </div>
                 <div class="mt-3">
-                    <span class="text-xl sm:text-2xl font-black text-blue-600 tracking-tight">
+                    <span class="text-xl sm:text-2xl font-black text-blue-600 tracking-tight" x-text="(metricasActuales.cantidad || 0)">
+                        {{ $metricas['total_ordenes'] ?? 0 }}
+                    </span>
+                    <span class="block text-[11px] text-slate-400 mt-0.5 font-medium">
+                        Órdenes registradas en tu historial
+                    </span>
+                </div>
+            </div>
+            @endif
+
+            <!-- 2. VENTAS EN CURSO / EN RUTA -->
+            <div class="bg-white border border-slate-200/80 rounded-2xl p-4 sm:p-5 shadow-2xs relative overflow-hidden flex flex-col justify-between hover:border-amber-300 transition-colors">
+                <div class="flex items-center justify-between">
+                    <span class="text-[11px] font-bold uppercase tracking-wider text-slate-500">En Proceso / Ruta</span>
+                    <div class="w-8 h-8 rounded-xl bg-amber-100 text-amber-600 flex items-center justify-center text-xs">
+                        <i class="fas fa-truck-fast"></i>
+                    </div>
+                </div>
+                <div class="mt-3">
+                    <span class="text-xl sm:text-2xl font-black text-amber-600 tracking-tight">
                         {{ $metricas['total_en_curso'] ?? 0 }}
                     </span>
                     <span class="block text-[11px] text-slate-400 mt-0.5 font-medium">
-                        Pendientes, Confirmadas o En ruta
+                        Pendientes, Confirmadas o En camino
                     </span>
                 </div>
             </div>
 
             <!-- 3. VENTAS ENTREGADAS -->
-            <div class="bg-white border border-slate-200/80 rounded-2xl p-4 sm:p-5 shadow-2xs relative overflow-hidden flex flex-col justify-between">
+            <div class="bg-white border border-slate-200/80 rounded-2xl p-4 sm:p-5 shadow-2xs relative overflow-hidden flex flex-col justify-between hover:border-emerald-300 transition-colors">
                 <div class="flex items-center justify-between">
                     <span class="text-[11px] font-bold uppercase tracking-wider text-slate-500">Historial Entregadas</span>
                     <div class="w-8 h-8 rounded-xl bg-emerald-100 text-emerald-600 flex items-center justify-center text-xs">
-                        <i class="fas fa-box-open"></i>
+                        <i class="fas fa-circle-check"></i>
                     </div>
                 </div>
                 <div class="mt-3">
@@ -81,23 +101,42 @@
                 </div>
             </div>
 
-            <!-- 4. CANCELADAS -->
-            <div class="bg-white border border-slate-200/80 rounded-2xl p-4 sm:p-5 shadow-2xs relative overflow-hidden flex flex-col justify-between">
+            <!-- 4. TICKET PROMEDIO (ADMIN) / EFECTIVIDAD DE ENTREGA (VENDEDOR) -->
+            @if(Auth::check() && Auth::user()->rol === 'admin')
+            <div class="bg-white border border-slate-200/80 rounded-2xl p-4 sm:p-5 shadow-2xs relative overflow-hidden flex flex-col justify-between hover:border-purple-300 transition-colors">
                 <div class="flex items-center justify-between">
-                    <span class="text-[11px] font-bold uppercase tracking-wider text-slate-500">Canceladas</span>
-                    <div class="w-8 h-8 rounded-xl bg-rose-100 text-rose-600 flex items-center justify-center text-xs">
-                        <i class="fas fa-ban"></i>
+                    <span class="text-[11px] font-bold uppercase tracking-wider text-slate-500">Ticket Promedio</span>
+                    <div class="w-8 h-8 rounded-xl bg-purple-100 text-purple-600 flex items-center justify-center text-xs">
+                        <i class="fas fa-chart-line"></i>
                     </div>
                 </div>
                 <div class="mt-3">
-                    <span class="text-xl sm:text-2xl font-black text-rose-600 tracking-tight">
-                        {{ $metricas['total_canceladas'] ?? 0 }}
+                    <span class="text-xl sm:text-2xl font-black text-purple-600 tracking-tight" x-text="'$' + ((metricasActuales.cantidad || 0) > 0 ? (metricasActuales.total_ventas / metricasActuales.cantidad) : 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })">
+                        ${{ number_format($metricas['ticket_promedio'] ?? 0, 2) }}
                     </span>
                     <span class="block text-[11px] text-slate-400 mt-0.5 font-medium">
-                        Stock reintegrado a tienda
+                        Promedio facturado por cliente
                     </span>
                 </div>
             </div>
+            @else
+            <div class="bg-white border border-slate-200/80 rounded-2xl p-4 sm:p-5 shadow-2xs relative overflow-hidden flex flex-col justify-between hover:border-purple-300 transition-colors">
+                <div class="flex items-center justify-between">
+                    <span class="text-[11px] font-bold uppercase tracking-wider text-slate-500">Efectividad de Entrega</span>
+                    <div class="w-8 h-8 rounded-xl bg-purple-100 text-purple-600 flex items-center justify-center text-xs">
+                        <i class="fas fa-bullseye"></i>
+                    </div>
+                </div>
+                <div class="mt-3">
+                    <span class="text-xl sm:text-2xl font-black text-purple-600 tracking-tight">
+                        {{ $metricas['tasa_efectividad'] ?? 0 }}%
+                    </span>
+                    <span class="block text-[11px] text-slate-400 mt-0.5 font-medium">
+                        {{ $metricas['total_entregadas'] ?? 0 }} de {{ $metricas['total_ordenes'] ?? 0 }} entregadas con éxito
+                    </span>
+                </div>
+            </div>
+            @endif
         </div>
 
         <!-- 1. BARRA DE FILTROS Y BÚSQUEDA -->
@@ -261,7 +300,37 @@
                 <span>Canceladas</span>
                 <span class="px-1.5 py-0.5 rounded-md text-[10px] font-black"
                       :class="tabActiva === 'Cancelada' ? 'bg-white/20 text-white' : 'bg-rose-100 text-rose-800'">
-                    {{ $conteoEstados['Cancelada'] }}
+                    {{ $conteoEstados['Cancelada'] ?? 0 }}
+                </span>
+            </button>
+
+            <!-- 7. DEVOLUCIÓN -->
+            <button 
+                type="button" 
+                @click="cambiarTab('Devolución')"
+                class="rounded-xl px-3.5 py-2 text-xs font-bold transition-all flex items-center gap-2 cursor-pointer"
+                :class="tabActiva === 'Devolución' ? 'bg-purple-600 text-white shadow-xs' : 'text-slate-600 hover:bg-purple-50 hover:text-purple-700'"
+            >
+                <i class="fas fa-rotate-left text-[11px]" :class="tabActiva === 'Devolución' ? 'text-white' : 'text-purple-500'"></i>
+                <span>Devoluciones</span>
+                <span class="px-1.5 py-0.5 rounded-md text-[10px] font-black"
+                      :class="tabActiva === 'Devolución' ? 'bg-white/20 text-white' : 'bg-purple-100 text-purple-800'">
+                    {{ $conteoEstados['Devolución'] ?? 0 }}
+                </span>
+            </button>
+
+            <!-- 8. CAMBIO -->
+            <button 
+                type="button" 
+                @click="cambiarTab('Cambio')"
+                class="rounded-xl px-3.5 py-2 text-xs font-bold transition-all flex items-center gap-2 cursor-pointer"
+                :class="tabActiva === 'Cambio' ? 'bg-teal-600 text-white shadow-xs' : 'text-slate-600 hover:bg-teal-50 hover:text-teal-700'"
+            >
+                <i class="fas fa-arrow-right-arrow-left text-[11px]" :class="tabActiva === 'Cambio' ? 'text-white' : 'text-teal-500'"></i>
+                <span>Cambios</span>
+                <span class="px-1.5 py-0.5 rounded-md text-[10px] font-black"
+                      :class="tabActiva === 'Cambio' ? 'bg-white/20 text-white' : 'bg-teal-100 text-teal-800'">
+                    {{ $conteoEstados['Cambio'] ?? 0 }}
                 </span>
             </button>
         </div>
@@ -278,7 +347,9 @@
                              'bg-blue-100 text-blue-700': tabActiva === 'Confirmada',
                              'bg-indigo-100 text-indigo-700': tabActiva === 'En ruta',
                              'bg-emerald-100 text-emerald-700': tabActiva === 'Entregada',
-                             'bg-rose-100 text-rose-700': tabActiva === 'Cancelada'
+                             'bg-rose-100 text-rose-700': tabActiva === 'Cancelada',
+                             'bg-purple-100 text-purple-700': tabActiva === 'Devolución',
+                             'bg-teal-100 text-teal-700': tabActiva === 'Cambio'
                          }">
                         <i class="fas" :class="{
                             'fa-layer-group': tabActiva === 'todos',
@@ -286,7 +357,9 @@
                             'fa-circle-check': tabActiva === 'Confirmada',
                             'fa-truck-fast': tabActiva === 'En ruta',
                             'fa-box-open': tabActiva === 'Entregada',
-                            'fa-ban': tabActiva === 'Cancelada'
+                            'fa-ban': tabActiva === 'Cancelada',
+                            'fa-rotate-left': tabActiva === 'Devolución',
+                            'fa-arrow-right-arrow-left': tabActiva === 'Cambio'
                         }"></i>
                     </div>
                     <div>
@@ -967,7 +1040,9 @@
                         'Confirmada': 'Confirmadas (Preparación)',
                         'En ruta': 'En ruta (Paquetería)',
                         'Entregada': 'Historial de ventas entregadas',
-                        'Cancelada': 'Ventas canceladas'
+                        'Cancelada': 'Ventas canceladas',
+                        'Devolución': 'Ventas con devolución registrada',
+                        'Cambio': 'Ventas con cambio de producto'
                     };
                     return tabs[this.tabActiva] || this.tabActiva;
                 },
@@ -979,7 +1054,9 @@
                         'Confirmada': 'Ventas confirmadas en preparación para despacho.',
                         'En ruta': 'Pedidos enviados a paquetería o en camino al cliente (protegidos contra cambios).',
                         'Entregada': 'Historial de ventas completadas y entregadas exitosamente.',
-                        'Cancelada': 'Ventas que fueron anuladas y cuyo inventario fue devuelto.'
+                        'Cancelada': 'Ventas que fueron anuladas y cuyo inventario fue devuelto.',
+                        'Devolución': 'Pedidos que registraron devolución física o monetaria por garantía.',
+                        'Cambio': 'Órdenes procesadas como cambio físico de mercancía.'
                     };
                     return descripciones[this.tabActiva] || '';
                 },

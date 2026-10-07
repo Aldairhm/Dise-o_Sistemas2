@@ -179,9 +179,78 @@
             </div>
         </div>
 
+        <!-- BARRA DE BÚSQUEDA Y CONTROL DE SEMANAS (INDEPENDIENTES - TODAS VISIBLES) -->
+        <div class="bg-white border border-slate-200 rounded-2xl p-4 shadow-sm flex flex-col xl:flex-row xl:items-center justify-between gap-3.5">
+            <!-- BUSCADOR RÁPIDO Y SELECTOR DIRECTO -->
+            <div class="flex flex-col sm:flex-row items-center gap-2.5 flex-1 max-w-2xl">
+                <!-- SELECTOR DIRECTO DE SEMANA (DESPLAZA Y DESPLIEGA SIN OCULTAR NINGUNA) -->
+                <div class="relative w-full sm:w-64 flex-shrink-0">
+                    <select id="selectorDirectoSemana"
+                            onchange="irASemana(this.value)"
+                            aria-label="Seleccionar semana para ubicar y desplegar"
+                            class="w-full pl-3 pr-8 py-2.5 text-xs font-bold rounded-xl border border-slate-200 bg-slate-50 text-slate-700 hover:bg-slate-100/70 focus:bg-white focus:outline-none focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 transition-all cursor-pointer">
+                        <option value="">Ir a semana y desplegar...</option>
+                        @foreach($reporteSemanas as $semOpt)
+                            <option value="{{ $semOpt['key'] }}">
+                                Sem {{ $semOpt['semana_numero'] }} ({{ $semOpt['inicio_semana']->format('d/m') }} - {{ $semOpt['fin_semana']->format('d/m') }}) {{ $semOpt['es_semana_actual'] ? '★ En curso' : '' }}
+                            </option>
+                        @endforeach
+                    </select>
+                </div>
+
+                <!-- BUSCADOR EN VIVO (UBICA Y DESPLIEGA LA COINCIDENCIA SIN OCULTAR LAS DEMÁS) -->
+                <div class="relative w-full">
+                    <div class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
+                        <i class="fas fa-search text-xs"></i>
+                    </div>
+                    <input type="text"
+                           id="buscadorSemanasInput"
+                           oninput="buscarYDesplegarSemana(this.value)"
+                           placeholder="Buscar semana (ej: 40, Sep, Oct, Ana Plasma...)"
+                           class="w-full pl-9 pr-9 py-2.5 text-xs font-semibold rounded-xl border border-slate-200 bg-slate-50 placeholder-slate-400 focus:bg-white focus:outline-none focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 transition-all">
+                    <button type="button"
+                            id="btnLimpiarBusquedaSemanas"
+                            onclick="limpiarBuscadorSemanas()"
+                            class="hidden absolute inset-y-0 right-0 pr-3 flex items-center text-slate-400 hover:text-slate-600 transition-colors cursor-pointer"
+                            title="Limpiar búsqueda">
+                        <i class="fas fa-circle-xmark text-xs"></i>
+                    </button>
+                </div>
+            </div>
+
+            <!-- CONTROLES RÁPIDOS: CONTADOR DE DESPLEGADAS / EXPANDIR / COLAPSAR -->
+            <div class="flex items-center gap-2 flex-wrap justify-between xl:justify-end">
+                <span id="contadorSemanas" class="text-[11px] font-bold text-slate-500 mr-1" title="Semanas desplegadas de forma independiente">
+                    {{ $reporteSemanas->count() }} {{ $reporteSemanas->count() === 1 ? 'semana' : 'semanas' }}
+                </span>
+                <div class="inline-flex rounded-xl border border-slate-200 bg-slate-50 p-1 gap-1">
+                    <button type="button"
+                            onclick="expandirTodasSemanas()"
+                            class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-white hover:bg-slate-100 text-slate-700 text-xs font-bold shadow-2xs transition-all cursor-pointer"
+                            title="Desplegar todas las semanas">
+                        <i class="fas fa-angles-down text-[10px] text-blue-600"></i>
+                        <span>Desplegar todas</span>
+                    </button>
+                    <button type="button"
+                            onclick="colapsarTodasSemanas()"
+                            class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg hover:bg-slate-200/60 text-slate-600 text-xs font-bold transition-all cursor-pointer"
+                            title="Plegar todas las semanas">
+                        <i class="fas fa-angles-up text-[10px] text-slate-400"></i>
+                        <span>Plegar todas</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+
         <!-- LISTA DE SEMANAS CON CORTES Y DESGLOSE -->
         <div id="listaSemanas" class="space-y-4 scroll-mt-6" aria-live="polite">
-            <div id="filtroKpiAnuncio" class="hidden rounded-xl border border-blue-100 bg-blue-50 px-4 py-2.5 text-xs font-bold text-blue-700" role="status"></div>
+            <div id="filtroKpiAnuncio" class="hidden rounded-xl border border-blue-100 bg-blue-50 px-4 py-2.5 text-xs font-bold text-blue-700 flex items-center justify-between gap-3" role="status">
+                <span id="filtroKpiAnuncioTexto"></span>
+                <button type="button" onclick="aplicarFiltroKpiSemanal('all')" class="text-[11px] underline font-extrabold hover:text-blue-900 cursor-pointer">
+                    Quitar enfoque
+                </button>
+            </div>
+
             @forelse($reporteSemanas as $sem)
             @php
                 $comisiones = $sem['comisiones'];
@@ -189,62 +258,106 @@
                 $hasPendiente = $sem['total_pendiente'] > 0;
                 $fechaDesdeSemana = $sem['inicio_semana']->format('Y-m-d');
                 $fechaHastaSemana = $sem['fin_semana']->format('Y-m-d');
+
+                $nombresMeses = [
+                    1 => 'enero', 2 => 'febrero', 3 => 'marzo', 4 => 'abril',
+                    5 => 'mayo', 6 => 'junio', 7 => 'julio', 8 => 'agosto',
+                    9 => 'septiembre', 10 => 'octubre', 11 => 'noviembre', 12 => 'diciembre'
+                ];
+                $mesInicio = $nombresMeses[$sem['inicio_semana']->month] ?? '';
+                $mesFin = $nombresMeses[$sem['fin_semana']->month] ?? '';
+                $vendedoresTexto = strtolower($vendedoresSemana->map(fn($v) => ($v['vendedor']->nombre_real ?? '') . ' ' . ($v['vendedor']->username ?? ''))->implode(' '));
+                $searchableText = "semana {$sem['semana_numero']} sem {$sem['semana_numero']} {$sem['semana_numero']} {$sem['year']} {$sem['inicio_semana']->format('d/m/Y')} {$sem['fin_semana']->format('d/m/Y')} {$mesInicio} {$mesFin} {$vendedoresTexto}";
             @endphp
-            <div id="semana-{{ $sem['key'] }}" data-week-card data-week-current="{{ $sem['es_semana_actual'] ? '1' : '0' }}" data-week-has-pending="{{ $sem['total_pendiente'] > 0 ? '1' : '0' }}" data-week-has-paid="{{ $comisiones->where('estado', 'Pagada')->isNotEmpty() ? '1' : '0' }}" class="bg-white border {{ $sem['es_semana_actual'] ? 'border-blue-400 ring-2 ring-blue-500/10' : 'border-slate-200' }} rounded-2xl shadow-sm overflow-hidden transition-all duration-200 hover:border-slate-300">
+            <div id="semana-{{ $sem['key'] }}"
+                 data-week-card
+                 data-week-key="{{ $sem['key'] }}"
+                 data-week-number="{{ $sem['semana_numero'] }}"
+                 data-week-year="{{ $sem['year'] }}"
+                 data-week-searchable="{{ $searchableText }}"
+                 data-week-current="{{ $sem['es_semana_actual'] ? '1' : '0' }}"
+                 data-week-has-pending="{{ $sem['total_pendiente'] > 0 ? '1' : '0' }}"
+                 data-week-has-paid="{{ $comisiones->where('estado', 'Pagada')->isNotEmpty() ? '1' : '0' }}"
+                 class="bg-white border {{ $sem['es_semana_actual'] ? 'border-blue-400 ring-2 ring-blue-500/10' : 'border-slate-200' }} rounded-2xl shadow-sm overflow-hidden transition-all duration-200 hover:border-slate-300">
                 
-                <!-- HEADER DE LA TARJETA DE LA SEMANA -->
-                <div class="p-5 sm:p-6 bg-white flex flex-col lg:flex-row lg:items-center justify-between gap-5 border-b border-slate-100">
+                <!-- HEADER DE LA TARJETA DE LA SEMANA (INTERACTIVO / CLICKABLE) -->
+                <div onclick="toggleSemana('{{ $sem['key'] }}')"
+                     role="button"
+                     tabindex="0"
+                     onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();toggleSemana('{{ $sem['key'] }}');}"
+                     class="p-4 sm:p-5 bg-white flex flex-col lg:flex-row lg:items-center justify-between gap-4 border-b border-slate-100 cursor-pointer select-none hover:bg-slate-50/70 transition-colors group">
                     
                     <!-- INFORMACIÓN DE LA SEMANA -->
-                    <div class="flex items-center gap-4">
-                        <div class="w-14 h-14 rounded-2xl {{ $sem['es_semana_actual'] ? 'bg-gradient-to-tr from-blue-600 to-indigo-600 text-white' : 'bg-slate-100 text-slate-700' }} font-black text-center flex flex-col items-center justify-center shadow-xs flex-shrink-0">
+                    <div class="flex items-center gap-3.5 min-w-0">
+                        <div class="w-12 h-12 rounded-2xl {{ $sem['es_semana_actual'] ? 'bg-gradient-to-tr from-blue-600 to-indigo-600 text-white shadow-sm' : 'bg-slate-100 text-slate-700' }} font-black text-center flex flex-col items-center justify-center flex-shrink-0 transition-transform group-hover:scale-105">
                             <span class="text-[9px] uppercase tracking-wider leading-none">Sem</span>
-                            <span class="text-xl leading-none mt-0.5">{{ $sem['semana_numero'] }}</span>
+                            <span class="text-lg leading-none mt-0.5">{{ $sem['semana_numero'] }}</span>
                         </div>
-                        <div>
+                        <div class="min-w-0">
                             <div class="flex items-center gap-2 flex-wrap">
-                                <h2 class="text-lg font-black text-slate-900 tracking-tight">
-                                    Semana {{ $sem['semana_numero'] }} ({{ $sem['year'] }})
+                                <h2 class="text-base sm:text-lg font-black text-slate-900 tracking-tight group-hover:text-blue-600 transition-colors">
+                                    Semana {{ $sem['semana_numero'] }} <span class="text-slate-400 font-semibold text-sm">({{ $sem['year'] }})</span>
                                 </h2>
                                 @if($sem['es_semana_actual'])
-                                <span class="px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider bg-blue-100 text-blue-700 border border-blue-200">
+                                <span class="px-2 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider bg-blue-100 text-blue-700 border border-blue-200">
                                     Semana Actual
                                 </span>
                                 @endif
+                                @if($sem['total_pendiente'] > 0)
+                                <span class="px-2 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider bg-amber-100 text-amber-800 border border-amber-200">
+                                    Por Liquidar
+                                </span>
+                                @endif
                             </div>
-                            <p class="text-xs text-slate-500 font-semibold mt-0.5 flex items-center gap-1.5">
-                                <i class="fas fa-calendar-range text-slate-400"></i>
+                            <p class="text-xs text-slate-500 font-semibold mt-0.5 flex items-center gap-1.5 flex-wrap">
+                                <i class="fas fa-calendar-week text-slate-400 text-[11px]"></i>
                                 <span>{{ $sem['inicio_semana']->format('d/m/Y') }}</span>
                                 <span class="text-slate-300">—</span>
                                 <span>{{ $sem['fin_semana']->format('d/m/Y') }}</span>
+                                <span class="text-slate-300 hidden sm:inline">·</span>
+                                <span class="text-slate-400 font-medium text-[11px] hidden sm:inline">
+                                    {{ $vendedoresSemana->count() }} {{ $vendedoresSemana->count() === 1 ? 'vendedor' : 'vendedores' }}
+                                </span>
                             </p>
-                            <p class="text-[10px] font-semibold text-slate-400">Corte completo: lunes a domingo</p>
                         </div>
                     </div>
 
                     <!-- RESUMEN DE CIFRAS DE LA SEMANA -->
-                    <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 bg-slate-50/80 p-3.5 rounded-2xl border border-slate-100 flex-1 max-w-2xl">
+                    <div class="grid grid-cols-2 sm:grid-cols-4 gap-2.5 sm:gap-3 bg-slate-50/90 p-3 rounded-xl border border-slate-100 flex-1 max-w-xl">
                         <div>
-                            <span class="text-[10px] font-bold uppercase tracking-wider text-slate-400 block">Total Semana</span>
-                            <span class="text-base font-black text-slate-900">${{ number_format($sem['total_comisiones'], 2) }}</span>
+                            <span class="text-[9px] font-bold uppercase tracking-wider text-slate-400 block">Total Semana</span>
+                            <span class="text-sm sm:text-base font-black text-slate-900">${{ number_format($sem['total_comisiones'], 2) }}</span>
                         </div>
                         <div>
-                            <span class="text-[10px] font-bold uppercase tracking-wider text-amber-600 block">Por Liquidar</span>
-                            <span class="text-base font-black text-amber-700">${{ number_format($sem['total_pendiente'], 2) }}</span>
+                            <span class="text-[9px] font-bold uppercase tracking-wider text-amber-600 block">Por Liquidar</span>
+                            <span class="text-sm sm:text-base font-black text-amber-700">${{ number_format($sem['total_pendiente'], 2) }}</span>
                         </div>
                         <div>
-                            <span class="text-[10px] font-bold uppercase tracking-wider text-emerald-600 block">Pagado</span>
-                            <span class="text-base font-black text-emerald-700">${{ number_format($sem['total_pagada'], 2) }}</span>
+                            <span class="text-[9px] font-bold uppercase tracking-wider text-emerald-600 block">Pagado</span>
+                            <span class="text-sm sm:text-base font-black text-emerald-700">${{ number_format($sem['total_pagada'], 2) }}</span>
                         </div>
                         <div>
-                            <span class="text-[10px] font-bold uppercase tracking-wider text-slate-400 block">Ventas</span>
-                            <span class="text-base font-black text-slate-700">{{ $sem['total_ventas'] }}</span>
+                            <span class="text-[9px] font-bold uppercase tracking-wider text-slate-400 block">Ventas</span>
+                            <span class="text-sm sm:text-base font-black text-slate-700">{{ $sem['total_ventas'] }}</span>
                         </div>
+                    </div>
+
+                    <!-- BOTÓN ACCIÓN DE DESPLIEGUE / COLAPSO -->
+                    <div class="flex items-center gap-2 self-end lg:self-center flex-shrink-0" onclick="event.stopPropagation()">
+                        <button type="button"
+                                onclick="toggleSemana('{{ $sem['key'] }}')"
+                                id="btn-toggle-semana-{{ $sem['key'] }}"
+                                aria-expanded="{{ $sem['es_semana_actual'] ? 'true' : 'false' }}"
+                                class="inline-flex items-center justify-center gap-2 px-3.5 py-2 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 hover:border-slate-300 text-slate-700 text-xs font-black transition-all cursor-pointer shadow-2xs group-hover:border-blue-300 group-hover:text-blue-600">
+                            <span id="btn-text-semana-{{ $sem['key'] }}">{{ $sem['es_semana_actual'] ? 'Plegar' : 'Desplegar' }}</span>
+                            <i id="chevron-semana-{{ $sem['key'] }}" class="fas fa-chevron-down text-[11px] transition-transform duration-300 {{ $sem['es_semana_actual'] ? 'rotate-180' : '' }}"></i>
+                        </button>
                     </div>
 
                 </div>
 
-                <div class="bg-slate-50/40 p-4 sm:p-5 border-t border-slate-100 space-y-4">
+                <!-- CUERPO DE LA SEMANA (COLAPSABLE / DESPLEGABLE) -->
+                <div id="semana-body-{{ $sem['key'] }}" class="{{ $sem['es_semana_actual'] ? '' : 'hidden' }} bg-slate-50/40 p-4 sm:p-5 border-t border-slate-100 space-y-4 transition-all">
                     
                     <div class="space-y-2">
                         <div class="flex flex-wrap items-center justify-between gap-2">
@@ -444,6 +557,136 @@
     const CSRF = document.querySelector('meta[name="csrf-token"]').content;
     let filtroKpiSemanal = 'all';
 
+    // ── Funciones de Control y Despliegue Independiente de Semanas ──
+
+    function toggleSemana(semanaKey, forceState = null) {
+        const body = document.getElementById(`semana-body-${semanaKey}`);
+        const chevron = document.getElementById(`chevron-semana-${semanaKey}`);
+        const btnText = document.getElementById(`btn-text-semana-${semanaKey}`);
+        const btnToggle = document.getElementById(`btn-toggle-semana-${semanaKey}`);
+        if (!body) return;
+
+        // Cada semana es 100% independiente: desplegar o replegar una jamás afecta o cierra otra
+        const willOpen = forceState !== null ? forceState : body.classList.contains('hidden');
+
+        if (willOpen) {
+            body.classList.remove('hidden');
+            chevron?.classList.add('rotate-180');
+            if (btnText) btnText.textContent = 'Plegar';
+            btnToggle?.setAttribute('aria-expanded', 'true');
+        } else {
+            body.classList.add('hidden');
+            chevron?.classList.remove('rotate-180');
+            if (btnText) btnText.textContent = 'Desplegar';
+            btnToggle?.setAttribute('aria-expanded', 'false');
+        }
+
+        actualizarContadorSemanas();
+    }
+
+    function actualizarContadorSemanas() {
+        const cards = document.querySelectorAll('[data-week-card]');
+        const total = cards.length;
+        const abiertas = document.querySelectorAll('[data-week-card] [id^="semana-body-"]:not(.hidden)').length;
+        const contador = document.getElementById('contadorSemanas');
+        if (contador) {
+            contador.textContent = `${abiertas} de ${total} ${total === 1 ? 'semana desplegada' : 'semanas desplegadas'}`;
+        }
+    }
+
+    function irASemana(semanaKey) {
+        if (!semanaKey) return;
+        const card = document.getElementById(`semana-${semanaKey}`);
+        if (!card) return;
+
+        // Asegurar que la semana esté visible
+        card.classList.remove('hidden');
+
+        // Desplegar esta semana exclusivamente, de forma independiente
+        toggleSemana(semanaKey, true);
+
+        // Desplazamiento suave al centro de la pantalla
+        card.scrollIntoView({ behavior: 'smooth', block: 'center' });
+
+        // Resaltar con destello visual temporal y estilo premium
+        card.classList.remove('semana-highlight-search', 'semana-flash-anim');
+        void card.offsetWidth; // forzar reflow para reiniciar la animación
+        card.classList.add('semana-highlight-search', 'semana-flash-anim');
+        setTimeout(() => {
+            card.classList.remove('semana-highlight-search', 'semana-flash-anim');
+        }, 2400);
+
+        const sel = document.getElementById('selectorDirectoSemana');
+        if (sel) sel.value = semanaKey;
+    }
+
+    function buscarYDesplegarSemana(query) {
+        const q = (query || '').trim().toLowerCase();
+        const btnLimpiar = document.getElementById('btnLimpiarBusquedaSemanas');
+        if (btnLimpiar) btnLimpiar.classList.toggle('hidden', q === '');
+
+        const cards = Array.from(document.querySelectorAll('[data-week-card]'));
+
+        if (!q) {
+            cards.forEach(card => {
+                card.classList.remove('semana-highlight-search', 'semana-flash-anim');
+            });
+            actualizarContadorSemanas();
+            return;
+        }
+
+        let primerMatch = null;
+        let coincidencias = 0;
+
+        cards.forEach(card => {
+            // NUNCA OCULTAR LAS SEMANAS: TODAS PERMANECEN VISIBLES EN LA LISTA
+            card.classList.remove('hidden');
+
+            const searchable = (card.dataset.weekSearchable || '').toLowerCase();
+            const coincide = searchable.includes(q);
+
+            if (coincide) {
+                coincidencias++;
+                card.classList.add('semana-highlight-search');
+                // Desplegar la semana coincidente de forma independiente
+                toggleSemana(card.dataset.weekKey, true);
+                if (!primerMatch) primerMatch = card;
+            } else {
+                card.classList.remove('semana-highlight-search', 'semana-flash-anim');
+            }
+        });
+
+        if (primerMatch) {
+            primerMatch.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
+
+        const contador = document.getElementById('contadorSemanas');
+        if (contador) {
+            contador.textContent = `${coincidencias} coincidencia${coincidencias !== 1 ? 's' : ''} (todas visibles)`;
+        }
+    }
+
+    function limpiarBuscadorSemanas() {
+        const input = document.getElementById('buscadorSemanasInput');
+        if (input) {
+            input.value = '';
+            buscarYDesplegarSemana('');
+            input.focus();
+        }
+    }
+
+    function expandirTodasSemanas() {
+        document.querySelectorAll('[data-week-card]').forEach(card => {
+            toggleSemana(card.dataset.weekKey, true);
+        });
+    }
+
+    function colapsarTodasSemanas() {
+        document.querySelectorAll('[data-week-card]').forEach(card => {
+            toggleSemana(card.dataset.weekKey, false);
+        });
+    }
+
     function toggleDesgloseVendedor(detalleId) {
         const desglose = document.getElementById(detalleId);
         const chevron = document.getElementById(`icon-${detalleId}`);
@@ -497,6 +740,7 @@
     function aplicarFiltroKpiSemanal(filtro) {
         const listaSemanas = document.getElementById('listaSemanas');
         const aviso = document.getElementById('filtroKpiAnuncio');
+        const avisoTexto = document.getElementById('filtroKpiAnuncioTexto');
         const tarjetasKpi = document.querySelectorAll('[data-weekly-kpi]');
         const semanaActual = document.querySelector('[data-week-card][data-week-current="1"]');
 
@@ -507,73 +751,42 @@
             return;
         }
 
-        if (filtro === 'current' && !semanaActual) {
-            aviso.textContent = 'No hay una semana actual disponible para mostrar.';
-            aviso.classList.remove('hidden');
-            return;
-        }
-
         filtroKpiSemanal = filtroKpiSemanal === filtro && filtro !== 'all' ? 'all' : filtro;
-        const autoAbrir = ['pending', 'paid', 'current'].includes(filtroKpiSemanal);
-        let semanasVisibles = 0;
 
-        document.querySelectorAll('[data-week-card]').forEach((semana) => {
-            const mostrarSemana = filtroKpiSemanal === 'all'
-                || filtroKpiSemanal === 'current' && semana.dataset.weekCurrent === '1'
-                || filtroKpiSemanal === 'pending' && semana.dataset.weekHasPending === '1'
-                || filtroKpiSemanal === 'paid' && semana.dataset.weekHasPaid === '1';
-            semana.classList.toggle('hidden', !mostrarSemana);
-            if (!mostrarSemana) return;
-            semanasVisibles++;
-
-            const busqueda = semana.querySelector('[oninput^="buscarEnCarruselSemana"]')?.value || '';
-            const vendedorCards = semana.querySelectorAll('[data-vendedor-card]');
-            let vendedoresVisibles = 0;
-
-            vendedorCards.forEach((vendedor) => {
-                const nombre = vendedor.dataset.vendedorNombre || '';
-                const username = vendedor.dataset.vendedorUsername || '';
-                const q = busqueda.trim().toLowerCase();
-                const coincideNombre = !q || nombre.includes(q) || username.includes(q);
-                const coincideEstado = filtroKpiSemanal === 'all'
-                    || filtroKpiSemanal === 'current'
-                    || filtroKpiSemanal === 'pending' && vendedor.dataset.vendedorHasPending === '1'
-                    || filtroKpiSemanal === 'paid' && vendedor.dataset.vendedorHasPaid === '1';
-                const mostrarVendedor = coincideNombre && coincideEstado;
-                vendedor.classList.toggle('hidden', !mostrarVendedor);
-                if (!mostrarVendedor) return;
-                vendedoresVisibles++;
-
-                const desglose = vendedor.querySelector('[id^="desglose-"]');
-                const chevron = desglose ? document.getElementById(`icon-${desglose.id}`) : null;
-                if (desglose && autoAbrir) {
-                    desglose.classList.remove('hidden');
-                    chevron?.classList.add('rotate-180');
-                }
-                if (desglose) {
-                    desglose.querySelectorAll('[data-comision-estado]').forEach((fila) => {
-                        const mostrarComision = filtroKpiSemanal === 'all'
-                            || filtroKpiSemanal === 'current'
-                            || filtroKpiSemanal === 'pending' && fila.dataset.comisionPendiente === '1'
-                            || filtroKpiSemanal === 'paid' && fila.dataset.comisionEstado === 'pagada';
-                        fila.classList.toggle('hidden', !mostrarComision);
-                    });
-                }
-            });
-
-            const sinResultados = semana.querySelector('[id^="carrusel-empty-"]');
-            if (sinResultados) {
-                sinResultados.textContent = vendedoresVisibles
-                    ? 'No se encontró ningún vendedor con ese nombre.'
-                    : filtroKpiSemanal === 'pending'
-                        ? 'No hay vendedores con comisiones pendientes en esta semana.'
-                        : filtroKpiSemanal === 'paid'
-                            ? 'No hay vendedores con comisiones pagadas en esta semana.'
-                            : 'No se encontró ningún vendedor con ese nombre.';
-                sinResultados.classList.toggle('hidden', vendedoresVisibles > 0);
-            }
+        // Limpiar resaltes previos de KPI pero NUNCA OCULTAR SEMANAS
+        const cards = document.querySelectorAll('[data-week-card]');
+        cards.forEach(card => {
+            card.classList.remove('hidden');
+            card.classList.remove('semana-highlight-search', 'semana-highlight-pending', 'semana-highlight-paid', 'semana-highlight-current', 'semana-flash-anim');
         });
 
+        let primeraSemanaMatch = null;
+
+        if (filtroKpiSemanal === 'current') {
+            if (semanaActual) {
+                toggleSemana(semanaActual.dataset.weekKey, true);
+                semanaActual.classList.add('semana-highlight-current', 'semana-flash-anim');
+                primeraSemanaMatch = semanaActual;
+            }
+        } else if (filtroKpiSemanal === 'pending') {
+            cards.forEach(card => {
+                if (card.dataset.weekHasPending === '1') {
+                    toggleSemana(card.dataset.weekKey, true);
+                    card.classList.add('semana-highlight-pending', 'semana-flash-anim');
+                    if (!primeraSemanaMatch) primeraSemanaMatch = card;
+                }
+            });
+        } else if (filtroKpiSemanal === 'paid') {
+            cards.forEach(card => {
+                if (card.dataset.weekHasPaid === '1') {
+                    toggleSemana(card.dataset.weekKey, true);
+                    card.classList.add('semana-highlight-paid', 'semana-flash-anim');
+                    if (!primeraSemanaMatch) primeraSemanaMatch = card;
+                }
+            });
+        }
+
+        // Actualizar estados visuales de las tarjetas KPI
         tarjetasKpi.forEach((tarjeta) => {
             const activa = tarjeta.dataset.weeklyKpi === filtroKpiSemanal;
             tarjeta.setAttribute('aria-pressed', activa ? 'true' : 'false');
@@ -585,14 +798,23 @@
         });
 
         const descripciones = {
-            all: 'Mostrando todas las semanas y todos los vendedores.',
-            pending: 'Mostrando semanas y desglose de comisiones pendientes.',
-            paid: 'Mostrando semanas y desglose de comisiones pagadas.',
-            current: 'Mostrando la semana actual y su desglose.'
+            all: '',
+            pending: 'Enfocando y desplegando semanas con saldo por liquidar. Las demás semanas permanecen visibles e independientes abajo.',
+            paid: 'Enfocando y desplegando semanas con comisiones pagadas. Las demás semanas permanecen visibles e independientes abajo.',
+            current: 'Enfocando y desplegando la semana en curso. Las demás semanas permanecen visibles e independientes abajo.'
         };
-        aviso.textContent = `${descripciones[filtroKpiSemanal]} ${semanasVisibles} ${semanasVisibles === 1 ? 'semana visible' : 'semanas visibles'}. Haz clic de nuevo para quitar el filtro.`;
-        aviso.classList.remove('hidden');
-        listaSemanas.scrollIntoView({ behavior: 'smooth', block: 'start' });
+
+        if (filtroKpiSemanal !== 'all' && descripciones[filtroKpiSemanal]) {
+            if (avisoTexto) avisoTexto.textContent = descripciones[filtroKpiSemanal];
+            aviso?.classList.remove('hidden');
+            if (primeraSemanaMatch) {
+                primeraSemanaMatch.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            }
+        } else {
+            aviso?.classList.add('hidden');
+        }
+
+        actualizarContadorSemanas();
     }
 
     document.querySelectorAll('[data-weekly-kpi]').forEach((tarjeta) => {
@@ -608,6 +830,9 @@
 
     const filtroVendedorSemana = document.querySelector('select[data-searchable-vendedor]');
     filtroVendedorSemana?.addEventListener('change', () => filtroVendedorSemana.form.requestSubmit());
+
+    // Inicializar contador de semanas desplegadas
+    actualizarContadorSemanas();
 
     // ── Cargar pendientes dinámicos al seleccionar vendedor para liquidar ──
 
