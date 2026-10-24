@@ -106,9 +106,25 @@
                         <span>Administración</span>
                     </div>
                     <div class="grid grid-cols-1 gap-1 pl-1">
+                        <!-- Dashboard Administrativo -->
+                        <a href="{{ route('admin.dashboard') }}" class="text-xs font-semibold flex items-center gap-2.5 p-2 rounded-lg transition-colors {{ request()->routeIs('admin.dashboard') ? 'bg-blue-50 text-blue-700 font-bold' : 'text-gray-700 hover:bg-gray-50' }}">
+                            <div class="w-6 h-6 rounded bg-blue-100 text-blue-600 flex items-center justify-center shrink-0">
+                                <i class="fas fa-chart-pie text-[11px]"></i>
+                            </div>
+                            <span>Dashboard General</span>
+                        </a>
+
+                        <!-- Reportes de Movimientos -->
+                        <a href="{{ route('admin.reportes.movimientos') }}" class="text-xs font-semibold flex items-center gap-2.5 p-2 rounded-lg transition-colors {{ request()->routeIs('admin.reportes.movimientos') ? 'bg-blue-50 text-blue-700 font-bold' : 'text-gray-700 hover:bg-gray-50' }}">
+                            <div class="w-6 h-6 rounded bg-emerald-100 text-emerald-600 flex items-center justify-center shrink-0">
+                                <i class="fas fa-file-invoice-dollar text-[11px]"></i>
+                            </div>
+                            <span>Reporte de Movimientos</span>
+                        </a>
+
                         <!-- Usuarios -->
                         <a href="{{ route('usuarios.index') }}" class="text-xs font-semibold flex items-center gap-2.5 p-2 rounded-lg transition-colors {{ request()->routeIs('usuarios.*') ? 'bg-blue-50 text-blue-700 font-bold' : 'text-gray-700 hover:bg-gray-50' }}">
-                            <div class="w-6 h-6 rounded bg-blue-100 text-blue-600 flex items-center justify-center shrink-0">
+                            <div class="w-6 h-6 rounded bg-purple-100 text-purple-600 flex items-center justify-center shrink-0">
                                 <i class="fas fa-users-gear text-[11px]"></i>
                             </div>
                             <span>Usuarios</span>

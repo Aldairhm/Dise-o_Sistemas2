@@ -17,10 +17,18 @@ class PreventBackHistory
     {
         $response = $next($request);
 
-        return $response->withHeaders([
-            'Cache-Control' => 'no-store, no-cache, must-revalidate, max-age=0, post-check=0, pre-check=0',
-            'Pragma'        => 'no-cache',
-            'Expires'       => 'Sat, 01 Jan 2000 00:00:00 GMT',
-        ]);
+        if (method_exists($response, 'withHeaders')) {
+            return $response->withHeaders([
+                'Cache-Control' => 'no-store, no-cache, must-revalidate, max-age=0, post-check=0, pre-check=0',
+                'Pragma'        => 'no-cache',
+                'Expires'       => 'Sat, 01 Jan 2000 00:00:00 GMT',
+            ]);
+        }
+
+        $response->headers->set('Cache-Control', 'no-store, no-cache, must-revalidate, max-age=0, post-check=0, pre-check=0');
+        $response->headers->set('Pragma', 'no-cache');
+        $response->headers->set('Expires', 'Sat, 01 Jan 2000 00:00:00 GMT');
+
+        return $response;
     }
 }

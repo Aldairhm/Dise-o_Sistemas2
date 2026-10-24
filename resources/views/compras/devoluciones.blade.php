@@ -20,21 +20,138 @@
         <section class="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
             <div class="border-b border-slate-100 bg-slate-50/70 px-5 py-4"><h2 class="text-base font-black text-slate-900">Tickets registrados</h2><p class="mt-1 text-xs text-slate-500">El inventario y el monto solo cambian al resolver un ticket pendiente.</p></div>
             <div class="overflow-x-auto">
-                <table class="w-full min-w-[1000px] text-left text-sm">
-                    <thead class="border-b border-slate-200 bg-white text-[10px] font-black uppercase tracking-widest text-slate-500"><tr><th class="px-5 py-4">Ticket / fecha</th><th class="px-5 py-4">Compra</th><th class="px-5 py-4">Ubicación</th><th class="px-5 py-4">Motivo</th><th class="px-5 py-4">Estado</th><th class="px-5 py-4 text-right">Evidencia</th><th class="px-5 py-4 text-right">Acción</th></tr></thead>
+                <table class="w-full min-w-[1100px] text-left text-sm">
+                    <thead class="border-b border-slate-200 bg-white text-[10px] font-black uppercase tracking-widest text-slate-500">
+                        <tr>
+                            <th class="px-5 py-4">Ticket / fecha</th>
+                            <th class="px-5 py-4">Compra</th>
+                            <th class="px-5 py-4">Ubicación</th>
+                            <th class="px-5 py-4">Motivo</th>
+                            <th class="px-5 py-4">Estado / Resolución</th>
+                            <th class="px-5 py-4 text-right">Monto</th>
+                            <th class="px-5 py-4 text-right">Evidencia</th>
+                            <th class="px-5 py-4 text-right">Acción</th>
+                        </tr>
+                    </thead>
                     <tbody class="divide-y divide-slate-100">
                         @forelse ($devoluciones as $devolucion)
                             <tr class="transition-colors hover:bg-slate-50/70">
                                 <td class="whitespace-nowrap px-5 py-4"><p class="font-mono text-xs font-black text-slate-800">DEV-{{ str_pad($devolucion->id, 5, '0', STR_PAD_LEFT) }}</p><p class="mt-1 text-xs text-slate-500">{{ optional($devolucion->created_at)->format('d/m/Y H:i') }}</p></td>
                                 <td class="px-5 py-4"><span class="inline-flex rounded-lg border border-violet-200 bg-violet-50 px-2.5 py-1.5 text-xs font-bold text-violet-700"><i class="fas fa-cart-shopping mr-1.5"></i>Compra #{{ $devolucion->origen_id }}</span></td>
-                                <td class="px-5 py-4"><span class="rounded-lg border border-slate-200 bg-slate-50 px-2.5 py-1.5 text-xs font-bold capitalize text-slate-700">{{ $devolucion->ubicacion_falla ?? 'Sin ubicación' }}</span></td>
-                                <td class="max-w-[300px] px-5 py-4"><span class="block truncate text-xs text-slate-600" title="{{ $devolucion->motivo }}">{{ \Illuminate\Support\Str::limit($devolucion->motivo, 60) }}</span></td>
-                                <td class="px-5 py-4"><span class="rounded-lg border px-2.5 py-1.5 text-xs font-bold {{ $devolucion->estado === 'pendiente' ? 'border-amber-200 bg-amber-50 text-amber-700' : 'border-emerald-200 bg-emerald-50 text-emerald-700' }}">{{ ucfirst($devolucion->estado ?? 'completado') }}</span></td>
+                                <!-- UBICACIÓN (Leyendo desde detalles_json) -->
+<td class="px-5 py-4 max-w-[150px]">
+    @php
+        $ubicacionesUnicas = [];
+        $detallesDev = is_array($devolucion->detalles_json) 
+            ? $devolucion->detalles_json 
+            : json_decode($devolucion->detalles_json ?? '[]', true);
+
+        if (is_array($detallesDev)) {
+            foreach ($detallesDev as $prod) {
+                if (isset($prod['ubicaciones']['stock']) && $prod['ubicaciones']['stock'] > 0) $ubicacionesUnicas['stock'] = true;
+                if (isset($prod['ubicaciones']['reserva']) && $prod['ubicaciones']['reserva'] > 0) $ubicacionesUnicas['reserva'] = true;
+                if (isset($prod['ubicaciones']['cuarentena']) && $prod['ubicaciones']['cuarentena'] > 0) $ubicacionesUnicas['cuarentena'] = true;
+            }
+        }
+    @endphp
+
+    @if(count($ubicacionesUnicas) > 0)
+        <div class="flex flex-wrap gap-1">
+            @if(isset($ubicacionesUnicas['stock']))
+                <span class="rounded-md border border-blue-200 bg-blue-50 px-2 py-1 text-[10px] font-bold text-blue-700">Tienda</span>
+            @endif
+            @if(isset($ubicacionesUnicas['reserva']))
+                <span class="rounded-md border border-amber-200 bg-amber-50 px-2 py-1 text-[10px] font-bold text-amber-700">Reserva</span>
+            @endif
+            @if(isset($ubicacionesUnicas['cuarentena']))
+                <span class="rounded-md border border-rose-200 bg-rose-50 px-2 py-1 text-[10px] font-bold text-rose-700">Cuarentena</span>
+            @endif
+        </div>
+    @else
+        <span class="rounded-lg border border-slate-200 bg-slate-50 px-2.5 py-1.5 text-xs font-bold text-slate-400">Sin ubicación</span>
+    @endif
+</td>
+                                <td class="max-w-[250px] px-5 py-4"><span class="block truncate text-xs text-slate-600" title="{{ $devolucion->motivo }}">{{ \Illuminate\Support\Str::limit($devolucion->motivo, 60) }}</span></td>
+                                <td class="px-5 py-4">
+    <span class="rounded-lg border px-2.5 py-1.5 text-xs font-bold {{ $devolucion->estado === 'pendiente' ? 'border-amber-200 bg-amber-50 text-amber-700' : 'border-emerald-200 bg-emerald-50 text-emerald-700' }}">
+        {{ ucfirst($devolucion->estado) }}
+    </span>
+    @if($devolucion->estado === 'resuelto' && $devolucion->tipo_resolucion)
+        <p class="mt-2.5 text-[10px] font-black uppercase tracking-wider text-slate-500">
+            <i class="fas fa-turn-down text-slate-300 mr-1"></i> 
+            {{ str_replace('_', ' ', $devolucion->tipo_resolucion) }}
+        </p>
+    @endif
+</td>
+                                
+                                <!-- LÓGICA DE MONTO ACTUALIZADA -->
+                                <td class="px-5 py-4 text-right">
+                                    @if($devolucion->estado !== 'pendiente')
+                                        @if($devolucion->tipo_resolucion === 'merma')
+                                            <span class="inline-flex items-center gap-1 rounded-lg bg-rose-50 px-2.5 py-1 text-sm font-black text-rose-600 border border-rose-100">
+                                                <i class="fas fa-minus text-[10px]"></i> ${{ number_format($devolucion->monto_reembolsado ?? 0, 2) }}
+                                            </span>
+                                        @elseif($devolucion->tipo_resolucion === 'reembolso')
+                                            <span class="inline-flex items-center gap-1 rounded-lg bg-emerald-50 px-2.5 py-1 text-sm font-black text-emerald-600 border border-emerald-100">
+                                                <i class="fas fa-plus text-[10px]"></i> ${{ number_format($devolucion->monto_reembolsado ?? 0, 2) }}
+                                            </span>
+                                        @else
+                                            <span class="text-sm font-black text-slate-600">
+                                                ${{ number_format($devolucion->monto_reembolsado ?? 0, 2) }}
+                                            </span>
+                                        @endif
+                                    @else
+                                        <span class="text-sm font-black text-slate-800">
+                                            ${{ number_format($devolucion->monto_reembolsado ?? 0, 2) }}
+                                        </span>
+                                    @endif
+                                </td>
+                                <!-- FIN DE LÓGICA DE MONTO -->
+
                                 <td class="px-5 py-4 text-right">@if($devolucion->comprobante)<a href="{{ asset('storage/' . $devolucion->comprobante) }}" target="_blank" rel="noopener" class="inline-flex items-center gap-1.5 rounded-lg border border-blue-200 bg-blue-50 px-3 py-1.5 text-xs font-bold text-blue-700 hover:bg-blue-600 hover:text-white"><i class="fas fa-paperclip"></i> Ver archivo</a>@else<span class="text-xs text-slate-400">Sin evidencia</span>@endif</td>
-                                <td class="px-5 py-4 text-right">@if($devolucion->estado === 'pendiente')<button type="button" onclick="document.getElementById('resolver-proveedor-{{ $devolucion->id }}').showModal()" class="inline-flex items-center gap-1.5 rounded-lg bg-amber-500 px-3 py-1.5 text-xs font-black text-white hover:bg-amber-600"><i class="fas fa-check"></i> Resolver</button><dialog id="resolver-proveedor-{{ $devolucion->id }}" class="m-auto w-[min(440px,calc(100vw-2rem))] rounded-2xl border border-slate-200 bg-white p-0 text-left shadow-2xl backdrop:bg-slate-900/50"><form method="POST" action="{{ route('devoluciones.compra.resolver', $devolucion->id) }}" class="p-5">@csrf @method('PATCH')<div class="mb-4 flex items-center justify-between border-b border-slate-100 pb-3"><div><p class="text-xs font-black uppercase tracking-widest text-amber-600">Resolver ticket</p><h3 class="text-lg font-black text-slate-900">DEV-{{ str_pad($devolucion->id, 5, '0', STR_PAD_LEFT) }}</h3></div><button type="button" onclick="this.closest('dialog').close()" class="h-8 w-8 rounded-lg text-slate-400 hover:bg-slate-100"><i class="fas fa-xmark"></i></button></div><p class="mb-4 text-xs text-slate-500">La falla está registrada en <strong>{{ $devolucion->ubicacion_falla }}</strong>.</p><label class="block text-xs font-bold uppercase tracking-wider text-slate-600">Resolución final<select name="resolucion_final" required class="mt-1.5 w-full rounded-xl border border-slate-300 px-3 py-2.5 text-sm"><option value="" disabled selected>Selecciona una opción</option><option value="cambio_fisico">Cambio físico</option><option value="reembolso">Reembolso</option><option value="merma">Merma / pérdida</option></select></label><div class="mt-5 flex justify-end gap-2"><button type="button" onclick="this.closest('dialog').close()" class="rounded-xl border border-slate-200 px-4 py-2 text-sm font-bold text-slate-600">Cancelar</button><button type="submit" class="rounded-xl bg-amber-500 px-4 py-2 text-sm font-black text-white">Aplicar resolución</button></div></form></dialog>@else<span class="text-xs font-medium text-slate-400">Sin acciones</span>@endif</td>
+                                <td class="px-5 py-4 text-right">
+                                    @if($devolucion->estado === 'pendiente')
+                                        <button type="button" onclick="document.getElementById('resolver-proveedor-{{ $devolucion->id }}').showModal()" class="inline-flex items-center gap-1.5 rounded-lg bg-amber-500 px-3 py-1.5 text-xs font-black text-white hover:bg-amber-600"><i class="fas fa-check"></i> Resolver</button>
+                                        <dialog id="resolver-proveedor-{{ $devolucion->id }}" class="m-auto w-[min(440px,calc(100vw-2rem))] rounded-2xl border border-slate-200 bg-white p-0 text-left shadow-2xl backdrop:bg-slate-900/50">
+                                            <form method="POST" action="{{ route('devoluciones.compra.resolver', $devolucion->id) }}" class="p-5">
+                                                @csrf @method('PATCH')
+                                                <div class="mb-4 flex items-center justify-between border-b border-slate-100 pb-3">
+                                                    <div>
+                                                        <p class="text-xs font-black uppercase tracking-widest text-amber-600">Resolver ticket</p>
+                                                        <h3 class="text-lg font-black text-slate-900">DEV-{{ str_pad($devolucion->id, 5, '0', STR_PAD_LEFT) }}</h3>
+                                                    </div>
+                                                    <button type="button" onclick="this.closest('dialog').close()" class="h-8 w-8 rounded-lg text-slate-400 hover:bg-slate-100"><i class="fas fa-xmark"></i></button>
+                                                </div>
+                                                <p class="mb-4 text-xs text-slate-500">La falla está registrada en <strong>{{ $devolucion->ubicacion_falla }}</strong>.</p>
+                                                <label class="block text-xs font-bold uppercase tracking-wider text-slate-600">Resolución final
+                                                    <select name="resolucion_final" required class="mt-1.5 w-full rounded-xl border border-slate-300 px-3 py-2.5 text-sm">
+                                                        <option value="" disabled selected>Selecciona una opción</option>
+                                                        <option value="cambio_fisico">Cambio físico</option>
+                                                        <option value="reembolso">Reembolso</option>
+                                                        <option value="merma">Merma / pérdida</option>
+                                                    </select>
+                                                </label>
+                                                <div class="mt-5 flex justify-end gap-2">
+                                                    <button type="button" onclick="this.closest('dialog').close()" class="rounded-xl border border-slate-200 px-4 py-2 text-sm font-bold text-slate-600 hover:bg-slate-50">Cancelar</button>
+                                                    <button type="submit" class="rounded-xl bg-amber-500 px-4 py-2 text-sm font-black text-white hover:bg-amber-600">Aplicar resolución</button>
+                                                </div>
+                                            </form>
+                                        </dialog>
+                                    @else
+                                        <span class="inline-flex items-center gap-1.5 rounded-lg border border-slate-100 bg-slate-50 px-3 py-1.5 text-xs font-bold text-slate-400">
+                                            <i class="fas fa-lock text-slate-300"></i> Resuelto
+                                        </span>
+                                    @endif
+                                </td>
                             </tr>
                         @empty
-                            <tr><td colspan="7" class="px-5 py-16 text-center"><i class="fas fa-ticket mb-3 block text-2xl text-slate-300"></i><p class="text-sm font-bold text-slate-700">No hay tickets de proveedores</p><p class="mt-1 text-xs text-slate-400">Créalo desde Historial de compras con el botón Devolver.</p></td></tr>
+                            <tr>
+                                <td colspan="8" class="px-5 py-16 text-center">
+                                    <i class="fas fa-ticket mb-3 block text-2xl text-slate-300"></i>
+                                    <p class="text-sm font-bold text-slate-700">No hay tickets de proveedores</p>
+                                    <p class="mt-1 text-xs text-slate-400">Créalo desde Historial de compras con el botón Devolver.</p>
+                                </td>
+                            </tr>
                         @endforelse
                     </tbody>
                 </table>
