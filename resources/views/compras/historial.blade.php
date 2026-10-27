@@ -36,7 +36,44 @@
 
             @foreach ($compras as $compra)
                 <dialog id="compra-devolucion-{{ $compra->id }}" class="m-auto w-[min(820px,calc(100vw-2rem))] max-w-none rounded-2xl border border-slate-200 bg-white p-0 text-left shadow-2xl backdrop:bg-slate-900/50" x-data="{ cantidades: {}, excede(id, max) { const c = this.cantidades[id] || {}; return (Number(c.stock || 0) + Number(c.reserva || 0) + Number(c.cuarentena || 0)) > max; } }">
-                    <form method="POST" action="{{ route('devoluciones.compra.store') }}" novalidate class="p-6" onsubmit="event.preventDefault(); if (!this.checkValidity()) { let errorMsg = 'Por favor, completa todos los campos requeridos.'; this.querySelectorAll('input[type=number]').forEach(i => { if(i.validity.rangeOverflow) errorMsg = 'No puedes devolver más unidades de las que compraste.'; }); Swal.fire({ toast: true, position: 'top-end', showConfirmButton: false, timer: 5000, timerProgressBar: true, icon: 'error', title: 'Datos inválidos', text: errorMsg }); return; } Swal.fire({ title: '¿Estás seguro?', text: 'Verifica que las cantidades sean correctas antes de procesar.', icon: 'warning', showCancelButton: true, confirmButtonColor: '#3085d6', cancelButtonColor: '#d33', confirmButtonText: 'Sí, procesar', cancelButtonText: 'Cancelar' }).then((result) => { if (result.isConfirmed) { this.submit(); } });">
+                    <form method="POST" action="{{ route('devoluciones.compra.store') }}" novalidate class="p-6" 
+    onsubmit="
+        event.preventDefault(); 
+        let dialog = this.closest('dialog'); /* Capturamos el modal actual */
+        
+        if (!this.checkValidity()) { 
+            let errorMsg = 'Por favor, completa todos los campos requeridos.'; 
+            this.querySelectorAll('input[type=number]').forEach(i => { 
+                if(i.validity.rangeOverflow) errorMsg = 'No puedes devolver más unidades de las que compraste.'; 
+            }); 
+            Swal.fire({ 
+                target: dialog, /* SOLUCIÓN: Renderizar dentro del modal */
+                toast: true, 
+                position: 'top-end', 
+                showConfirmButton: false, 
+                timer: 5000, 
+                timerProgressBar: true, 
+                icon: 'error', 
+                title: 'Datos inválidos', 
+                text: errorMsg 
+            }); 
+            return; 
+        } 
+        
+        Swal.fire({ 
+            target: dialog, /* SOLUCIÓN: Renderizar dentro del modal */
+            title: '¿Estás seguro?', 
+            text: 'Verifica que las cantidades sean correctas antes de procesar.', 
+            icon: 'warning', 
+            showCancelButton: true, 
+            confirmButtonColor: '#3085d6', 
+            cancelButtonColor: '#d33', 
+            confirmButtonText: 'Sí, procesar', 
+            cancelButtonText: 'Cancelar' 
+        }).then((result) => { 
+            if (result.isConfirmed) { this.submit(); } 
+        });
+    ">
                         @csrf
                         <input type="hidden" name="compra_id" value="{{ $compra->id }}">
                         <div class="mb-5 flex items-start justify-between gap-4 border-b border-slate-100 pb-4">

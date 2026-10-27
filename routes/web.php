@@ -22,8 +22,10 @@ use App\Http\Controllers\DevolucionController; // Pon esto hasta arriba del arch
 use App\Http\Controllers\ProveedorController;
 use App\Http\Controllers\CatalogoController;
 use App\Http\Controllers\ComisionVendedorController;
+
 use App\Http\Controllers\DashboardVendedorController;
 use App\Http\Controllers\BitacoraController;
+use App\Http\Controllers\AdminDashboardController;
 
 // ── Autenticación (Rutas públicas) ───────────────────────────
 
@@ -66,6 +68,12 @@ Route::middleware('auth')->group(function () {
 
     // ── Módulo de Gestión de Usuarios (CRUD) - Solo Administradores ──
     Route::middleware('admin')->group(function () {
+        // ── Dashboard Administrativo & Reportes Ejecutivos ──
+        Route::get('/admin/dashboard', [AdminDashboardController::class, 'index'])->name('admin.dashboard');
+        Route::get('/admin/reportes/movimientos', [AdminDashboardController::class, 'reportesMovimientos'])->name('admin.reportes.movimientos');
+        Route::get('/admin/reportes/movimientos/csv', [AdminDashboardController::class, 'exportarMovimientosCsv'])->name('admin.reportes.movimientos.csv');
+        Route::get('/dashboard', fn() => redirect()->route('admin.dashboard'));
+
         Route::get('/usuarios', [UserController::class, 'index'])->name('usuarios.index');
         Route::post('/usuarios', [UserController::class, 'store'])->name('usuarios.store');
         Route::put('/usuarios/{user}', [UserController::class, 'update'])->name('usuarios.update');

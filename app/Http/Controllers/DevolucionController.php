@@ -542,8 +542,8 @@ class DevolucionController extends Controller
                         throw ValidationException::withMessages(['productos' => "No hay suficiente existencia en {$ubicacion} para resolver el ticket."]);
                     }
 
-                    if ($validated['resolucion_final'] === 'reembolso') {
-                        $monto += $cantidad * (float) $detalleCompra->precio_unitario;
+                    if ($validated['resolucion_final'] === 'reembolso' || $validated['resolucion_final'] === 'merma') {
+                         $monto += $cantidad * (float) $detalleCompra->precio_unitario;
                     }
 
                     $reservaNueva = $reservaAnterior - ($ubicacion === 'reserva' ? $cantidad : 0);
