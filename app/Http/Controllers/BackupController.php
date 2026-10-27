@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Services\ActivityLogger;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Storage;
@@ -64,15 +65,34 @@ class BackupController extends Controller
 
             if ($exitCode !== 0) {
                 \Illuminate\Support\Facades\Log::error("Spatie Backup fallo con código $exitCode: " . $output);
+
+                ActivityLogger::log(
+                    'CANCELAR',
+                    'Respaldos',
+                    'Intento fallido al generar respaldo manual de base de datos MySQL.'
+                );
+
                 return redirect()
                     ->route('backups.index')
                     ->with('error', 'No se pudo completar el respaldo. Por favor revisa el log de Laravel.');
             }
 
+            ActivityLogger::log(
+                'CREAR',
+                'Respaldos',
+                'Generación exitosa de respaldo manual de base de datos MySQL sincronizado con almacenamiento local y Google Drive.'
+            );
+
             return redirect()
                 ->route('backups.index')
                 ->with('success', 'Respaldo generado y sincronizado con Google Drive exitosamente.');
         } catch (\Exception $e) {
+            ActivityLogger::log(
+                'CANCELAR',
+                'Respaldos',
+                'Error inesperado al generar respaldo: ' . $e->getMessage()
+            );
+
             return redirect()
                 ->route('backups.index')
                 ->with('error', 'Error al generar el respaldo: ' . $e->getMessage());
@@ -93,6 +113,12 @@ class BackupController extends Controller
                 ->route('backups.index')
                 ->with('error', 'El archivo de respaldo no fue encontrado.');
         }
+
+        ActivityLogger::log(
+            'EXPORTAR',
+            'Respaldos',
+            "El administrador descargó el archivo de respaldo: {$fileName}"
+        );
 
         return $disk->download($filePath, $fileName);
     }
