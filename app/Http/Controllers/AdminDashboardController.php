@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Producto;
 use App\Models\User;
+use App\Services\ActivityLogger;
 use App\Services\DashboardReporteService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -118,6 +119,21 @@ class AdminDashboardController extends Controller
         $folioReporte = 'REP-' . date('Ymd') . '-' . strtoupper(substr(md5(json_encode($filtros) . time()), 0, 4));
         $fechaGeneracion = now()->format('d/m/Y H:i:s');
         $usuarioEmisor = Auth::user()?->nombre_real ?? Auth::user()?->username ?? 'Administrador';
+
+        // ── Registro en Bitácora ──
+        if ($request->query('modo') === 'imprimir') {
+            ActivityLogger::log(
+                'EXPORTAR',
+                'Reportes',
+                "El usuario generó la vista de impresión / PDF del informe de movimientos (Folio: {$folioReporte})."
+            );
+        } else {
+            ActivityLogger::log(
+                'EXPORTAR',
+                'Reportes',
+                "Consulta y generación del informe de movimientos y flujo financiero (Folio: {$folioReporte})."
+            );
+        }
 
         return view('admin.reportes.movimientos', compact(
             'kpis',
@@ -650,6 +666,13 @@ class AdminDashboardController extends Controller
         $spreadsheet->setActiveSheetIndex(0);
 
         $filename = 'reporte_movimientos_axstore_' . date('Ymd_His') . '.xlsx';
+
+        // ── Registro en Bitácora ──
+        ActivityLogger::log(
+            'EXPORTAR',
+            'Reportes',
+            "Descarga del informe oficial de movimientos en Excel (.xlsx) [Preset: {$filtros['preset']}, Desde: {$filtros['desde']} Hasta: {$filtros['hasta']}]."
+        );
 
         return response()->streamDownload(function () use ($spreadsheet) {
             $writer = new \PhpOffice\PhpSpreadsheet\Writer\Xlsx($spreadsheet);

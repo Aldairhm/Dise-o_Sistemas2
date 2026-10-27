@@ -109,6 +109,12 @@ class BackupController extends Controller
         $disk = Storage::disk('local');
 
         if (! $disk->exists($filePath)) {
+            ActivityLogger::log(
+                'CANCELAR',
+                'Respaldos',
+                "Intento fallido de descarga de respaldo inexistente: {$fileName}"
+            );
+
             return redirect()
                 ->route('backups.index')
                 ->with('error', 'El archivo de respaldo no fue encontrado.');
@@ -117,7 +123,7 @@ class BackupController extends Controller
         ActivityLogger::log(
             'EXPORTAR',
             'Respaldos',
-            "El administrador descargó el archivo de respaldo: {$fileName}"
+            "El administrador descargó exitosamente el archivo de respaldo: {$fileName}"
         );
 
         return $disk->download($filePath, $fileName);

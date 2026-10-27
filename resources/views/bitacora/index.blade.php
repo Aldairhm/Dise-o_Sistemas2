@@ -41,7 +41,8 @@
         .badge-DEVOLUCION { background-color: #fff1f2; color: #be123c; border: 1px solid #fecdd3; }
         .badge-APROBAR { background-color: #ecfdf5; color: #059669; border: 1px solid #6ee7b7; }
         .badge-RESTAURAR { background-color: #fefce8; color: #a16207; border: 1px solid #fef08a; }
-        .badge-REORDENAR, .badge-EXPORTAR { background-color: #f1f5f9; color: #334155; border: 1px solid #e2e8f0; }
+        .badge-REORDENAR { background-color: #f1f5f9; color: #334155; border: 1px solid #e2e8f0; }
+        .badge-EXPORTAR, .badge-DESCARGAR { background-color: #eff6ff; color: #1e40af; border: 1px solid #bfdbfe; }
     </style>
 </head>
 <body class="min-h-screen text-slate-800 antialiased font-['Plus_Jakarta_Sans',sans-serif] bg-slate-50 flex flex-col">

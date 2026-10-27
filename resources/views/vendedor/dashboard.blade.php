@@ -1,6 +1,6 @@
 <x-app title="Mi Dashboard | AXStore">
 
-    <div class="max-w-[1440px] mx-auto space-y-7"
+    <div class="max-w-[1440px] mx-auto space-y-6"
          x-data="vendedorDashboard({
              ventas: {{ Js::from($ventas) }},
              bonos: {{ Js::from($bonos) }},
@@ -12,39 +12,51 @@
          id="dashboardVendedor">
 
         {{-- ═══════════════════════════════════════════════════════════════════
-             1. ENCABEZADO + FILTRO DE PERIODO + BOTONES
+             1. ENCABEZADO + FILTROS DE PERIODO + BOTONES DE ACCIÓN
         ═══════════════════════════════════════════════════════════════════ --}}
         <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
             <div>
-                <div class="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-slate-400 mb-1">
-                    <a href="{{ route('home') }}" class="hover:text-blue-600 transition-colors">Inicio</a>
-                    <span>/</span>
-                    <span class="text-slate-600">Mi Dashboard</span>
+                <a href="{{ route('home') }}" class="inline-flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-slate-400 hover:text-blue-600 transition-colors mb-2">
+                    <i class="fas fa-arrow-left text-[10px]"></i> Volver al inicio
+                </a>
+                <div class="flex items-center gap-3">
+                    <div class="w-10 h-10 rounded-xl bg-blue-600 text-white flex items-center justify-center shadow-md shadow-blue-500/20">
+                        <i class="fas fa-chart-line text-lg"></i>
+                    </div>
+                    <div>
+                        <div class="flex items-center gap-2">
+                            <span class="text-xs font-extrabold uppercase tracking-wider text-blue-600">Panel de Rendimiento</span>
+                            <span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-blue-100 text-blue-600">Vendedor</span>
+                        </div>
+                        <h1 class="text-2xl font-black tracking-tight text-slate-900">
+                            Hola, {{ Auth::user()->nombre_real ?? Auth::user()->username }}
+                        </h1>
+                    </div>
                 </div>
-                <h1 class="text-2xl font-black tracking-tight text-slate-900">
-                    Hola, {{ Auth::user()->nombre_real ?? Auth::user()->username }} 👋
-                </h1>
             </div>
 
             <div class="flex items-center gap-3 flex-wrap">
-                {{-- Filtro de periodo --}}
-                <div class="inline-flex items-center rounded-xl border border-slate-200 bg-white p-0.5 text-xs font-bold shadow-xs">
+                {{-- Filtro de periodo en píldora redondeada --}}
+                <div class="inline-flex items-center rounded-full border border-slate-200 bg-white p-1 text-xs font-bold shadow-xs">
                     @foreach(['hoy' => 'Hoy', 'semana' => 'Semana', 'mes' => 'Mes', 'todo' => 'Todo'] as $key => $label)
-                    <a href="{{ route('vendedor.dashboard', ['periodo' => $key]) }}"
-                       class="px-3.5 py-1.5 rounded-[10px] transition-all {{ $periodoActual === $key ? 'bg-blue-600 text-white shadow-sm' : 'text-slate-500 hover:text-slate-700 hover:bg-slate-50' }}">
-                        {{ $label }}
-                    </a>
+                        <a href="{{ route('vendedor.dashboard', ['periodo' => $key]) }}"
+                           class="px-3.5 py-1.5 rounded-full transition-all {{ $periodoActual === $key ? 'bg-blue-600 text-white shadow-sm' : 'text-slate-600 hover:text-slate-900 hover:bg-slate-50' }}">
+                            {{ $label }}
+                        </a>
                     @endforeach
                 </div>
 
-                {{-- Botones de acción solicitados --}}
+                {{-- Botones de acción rápida --}}
                 <a href="{{ route('ventas.create') }}"
-                   class="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs shadow-sm transition-all hover:scale-[1.02] active:scale-[0.98]">
-                    <i class="fas fa-plus text-[10px]"></i> Nueva venta
+                   class="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-extrabold text-xs shadow-md shadow-blue-500/20 transition-all hover:scale-[1.02] active:scale-[0.98]">
+                    <i class="fas fa-shopping-cart text-[11px]"></i>
+                    <span>NUEVA VENTA</span>
                 </a>
+
                 <a href="{{ route('comisiones.index') }}"
-                   class="inline-flex items-center gap-2 px-4 py-2 rounded-xl border border-slate-200 bg-white text-slate-700 hover:text-indigo-600 hover:border-indigo-200 font-bold text-xs transition-all shadow-xs">
-                    <i class="fas fa-hand-holding-dollar text-[10px] text-indigo-500"></i> Mis comisiones
+                   class="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 font-extrabold text-xs shadow-xs transition-all hover:border-slate-300">
+                    <i class="fas fa-hand-holding-dollar text-slate-400"></i>
+                    <span>MIS COMISIONES</span>
                 </a>
             </div>
         </div>
@@ -54,140 +66,179 @@
         @endphp
 
         @if(!$hayDatos && $periodoActual !== 'todo')
-        {{-- ═══════════════════════════════════════════════════════════════════
-             6. ESTADO VACÍO (AMIGABLE)
-        ═══════════════════════════════════════════════════════════════════ --}}
-        <div class="bg-white border border-slate-200 rounded-3xl py-16 px-6 text-center shadow-xs">
-            <div class="w-20 h-20 mx-auto bg-blue-50 text-blue-600 rounded-full flex items-center justify-center mb-5">
-                <i class="fas fa-chart-line text-3xl"></i>
+            {{-- ESTADO VACÍO (AMIGABLE) --}}
+            <div class="bg-white border border-slate-200 rounded-3xl py-16 px-6 text-center shadow-xs">
+                <div class="w-20 h-20 mx-auto bg-blue-50 text-blue-600 rounded-full flex items-center justify-center mb-5">
+                    <i class="fas fa-chart-line text-3xl"></i>
+                </div>
+                <h2 class="text-xl font-black text-slate-800 mb-1">
+                    Aún no tienes actividad {{ $periodoActual === 'hoy' ? 'hoy' : ($periodoActual === 'semana' ? 'esta semana' : 'este mes') }}
+                </h2>
+                <p class="text-sm text-slate-400 mb-6 max-w-md mx-auto">
+                    Registra tu primera venta y cada comisión se calculará y visualizará aquí de forma automática.
+                </p>
+                <a href="{{ route('ventas.create') }}"
+                   class="inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold text-sm shadow-md shadow-blue-500/20 transition-all hover:scale-[1.02]">
+                    <i class="fas fa-plus"></i> Registrar mi primera venta
+                </a>
             </div>
-            <h2 class="text-xl font-black text-slate-800 mb-1">
-                Aún no tienes actividad {{ $periodoActual === 'hoy' ? 'hoy' : ($periodoActual === 'semana' ? 'esta semana' : 'este mes') }}
-            </h2>
-            <p class="text-sm text-slate-400 mb-6 max-w-md mx-auto">
-                Registra tu primera venta y cada comisión se calculará y visualizará aquí de forma automática.
-            </p>
-            <a href="{{ route('ventas.create') }}"
-               class="inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold text-sm shadow-md shadow-blue-500/20 transition-all hover:scale-[1.02]">
-                <i class="fas fa-plus"></i> Registrar mi primera venta
-            </a>
-        </div>
-
         @else
 
-        {{-- ═══════════════════════════════════════════════════════════════════
-             1. TARJETA HÉROE — TOTAL GANADO (ÚNICA CON FONDO FUERTE)
-        ═══════════════════════════════════════════════════════════════════ --}}
-        <x-vendedor.hero-card
-            :resumen="$resumen"
-            :metaMensual="$metaMensual"
-            :progresoMeta="$progresoMeta"
-            :variacion="$variacion"
-            :periodoActual="$periodoActual"
-        />
-
-        {{-- ═══════════════════════════════════════════════════════════════════
-             3. FRANJA COMPACTA DE RESUMEN DE VENTAS
-        ═══════════════════════════════════════════════════════════════════ --}}
-        <x-vendedor.stats-row :stats="$ventasStats" />
-
-        {{-- ═══════════════════════════════════════════════════════════════════
-             4. BONOS E INCENTIVOS (SOLO SI EXISTEN)
-        ═══════════════════════════════════════════════════════════════════ --}}
-        <x-vendedor.bonus-list :bonos="$bonos" />
-
-        {{-- ═══════════════════════════════════════════════════════════════════
-             2. TABLA PRINCIPAL: VENTAS Y COMISIONES (EL CENTRO DEL DASHBOARD)
-        ═══════════════════════════════════════════════════════════════════ --}}
-        <x-vendedor.sales-commission-table :ventas="$ventas" />
-
-        {{-- ═══════════════════════════════════════════════════════════════════
-             7. GRÁFICA DE COMISIONES POR DÍA (APILADA POR ESTADO)
-        ═══════════════════════════════════════════════════════════════════ --}}
-        @php
-            $totalComisionesChart = collect($chartDias)->sum('total_comision');
-            $maxComisionDia = max(1, collect($chartDias)->max('total_comision'));
-        @endphp
-
-        @if($totalComisionesChart > 0)
-        <section class="space-y-3">
-            <div class="flex items-center justify-between">
-                <div>
-                    <h2 class="text-base font-black tracking-tight text-slate-900">Comisiones por día</h2>
-                    <p class="text-xs text-slate-400">Desglose de los últimos 14 días según estado de comisión</p>
-                </div>
-                <div class="flex items-center gap-4 text-xs font-semibold text-slate-500">
-                    <span class="inline-flex items-center gap-1.5"><span class="w-2.5 h-2.5 rounded-sm bg-emerald-500"></span> Cobrada</span>
-                    <span class="inline-flex items-center gap-1.5"><span class="w-2.5 h-2.5 rounded-sm bg-amber-500"></span> Por cobrar</span>
-                    <span class="inline-flex items-center gap-1.5"><span class="w-2.5 h-2.5 rounded-sm bg-slate-300"></span> Por ganar</span>
-                </div>
-            </div>
-
-            <div class="bg-white border border-slate-200/90 rounded-2xl p-5 sm:p-6 shadow-sm">
-                <div class="flex items-end gap-2 sm:gap-3" style="height: 180px;">
-                    @foreach($chartDias as $d)
-                    @php
-                        $pctTotal = $maxComisionDia > 0 ? min(100, round(($d['total_comision'] / $maxComisionDia) * 100)) : 0;
-                        $pctPagada = $d['total_comision'] > 0 ? round(($d['pagada'] / $d['total_comision']) * 100) : 0;
-                        $pctPendiente = $d['total_comision'] > 0 ? round(($d['pendiente_cobro'] / $d['total_comision']) * 100) : 0;
-                        $pctProyectada = $d['total_comision'] > 0 ? round(($d['proyectada'] / $d['total_comision']) * 100) : 0;
-                    @endphp
-                    <div class="flex-1 flex flex-col items-center justify-end h-full group cursor-pointer relative">
-                        {{-- Tooltip hover con desglose --}}
-                        <div class="absolute -top-14 left-1/2 -translate-x-1/2 hidden group-hover:flex flex-col items-center z-20 pointer-events-none">
-                            <div class="bg-slate-900 text-white rounded-lg px-2.5 py-1.5 text-[10px] font-bold shadow-lg whitespace-nowrap space-y-0.5">
-                                <div class="text-slate-300">{{ $d['dia'] }} · {{ $d['cantidad'] }} venta(s)</div>
-                                <div>Total: ${{ number_format($d['total_comision'], 2) }}</div>
-                                @if($d['pagada'] > 0)
-                                <div class="text-emerald-300">Cobrado: ${{ number_format($d['pagada'], 2) }}</div>
-                                @endif
-                                @if($d['pendiente_cobro'] > 0)
-                                <div class="text-amber-300">Por cobrar: ${{ number_format($d['pendiente_cobro'], 2) }}</div>
-                                @endif
-                                @if($d['proyectada'] > 0)
-                                <div class="text-slate-300">Por ganar: ${{ number_format($d['proyectada'], 2) }}</div>
-                                @endif
-                            </div>
-                            <div class="w-2 h-2 bg-slate-900 rotate-45 -mt-1"></div>
+            {{-- ═══════════════════════════════════════════════════════════════════
+                 2. 4 TARJETAS KPIS ESTRATÉGICAS
+            ═══════════════════════════════════════════════════════════════════ --}}
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-5">
+                {{-- 1. TOTAL GANADO --}}
+                <div class="relative overflow-hidden rounded-2xl border border-slate-200 bg-white p-5 shadow-xs">
+                    <div class="absolute top-0 left-0 h-1 w-full bg-blue-600"></div>
+                    <div class="flex items-start justify-between">
+                        <span class="text-[11px] font-black uppercase tracking-wider text-slate-400">TOTAL GANADO</span>
+                        <div class="w-8 h-8 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center">
+                            <i class="fas fa-hand-holding-dollar text-xs"></i>
                         </div>
-
-                        {{-- Barra apilada --}}
-                        <div class="w-full flex justify-center items-end" style="height: 140px;">
-                            <div class="w-full max-w-[36px] rounded-t-md overflow-hidden flex flex-col-reverse transition-all duration-300 {{ $d['esHoy'] ? 'ring-2 ring-blue-500 ring-offset-2' : '' }}"
-                                 style="height: {{ max($d['total_comision'] > 0 ? 8 : 2, $pctTotal) }}%;">
-                                @if($d['total_comision'] > 0)
-                                    @if($d['pagada'] > 0)
-                                    <div class="w-full bg-emerald-500" style="height: {{ $pctPagada }}%;"></div>
-                                    @endif
-                                    @if($d['pendiente_cobro'] > 0)
-                                    <div class="w-full bg-amber-500" style="height: {{ $pctPendiente }}%;"></div>
-                                    @endif
-                                    @if($d['proyectada'] > 0)
-                                    <div class="w-full bg-slate-300" style="height: {{ $pctProyectada }}%;"></div>
-                                    @endif
-                                @else
-                                    <div class="w-full h-full bg-slate-100"></div>
-                                @endif
-                            </div>
-                        </div>
-
-                        {{-- Etiqueta del día --}}
-                        <p class="text-[10px] sm:text-[11px] font-bold mt-2 whitespace-nowrap {{ $d['esHoy'] ? 'text-blue-600 font-black' : 'text-slate-400' }}">
-                            {{ $d['label'] }}
-                        </p>
                     </div>
-                    @endforeach
+                    <h3 class="mt-2 text-3xl font-black text-slate-900 tracking-tight tabular-nums">
+                        $<span x-text="formatMoney(summary.total_ganado)">{{ number_format($resumen['total_ganado'], 2) }}</span>
+                    </h3>
+                    <div class="mt-4 pt-3 border-t border-slate-100 flex items-center justify-between text-xs">
+                        <span class="flex items-center gap-1.5 text-slate-500 font-medium">
+                            <span class="w-2 h-2 rounded-full bg-blue-600"></span>
+                            Comisiones + Bonos
+                        </span>
+                        @if($periodoActual !== 'todo' && $variacion != 0)
+                            <span class="font-bold flex items-center gap-0.5 {{ $variacion > 0 ? 'text-emerald-600' : 'text-rose-500' }}">
+                                <i class="fas {{ $variacion > 0 ? 'fa-arrow-up' : 'fa-arrow-down' }} text-[10px]"></i>
+                                {{ abs($variacion) }}%
+                            </span>
+                        @endif
+                    </div>
+                </div>
+
+                {{-- 2. COBRADO --}}
+                <div class="relative overflow-hidden rounded-2xl border border-slate-200 bg-white p-5 shadow-xs">
+                    <div class="absolute top-0 left-0 h-1 w-full bg-emerald-500"></div>
+                    <div class="flex items-start justify-between">
+                        <span class="text-[11px] font-black uppercase tracking-wider text-slate-400">COBRADO</span>
+                        <div class="w-8 h-8 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center">
+                            <i class="fas fa-check text-xs"></i>
+                        </div>
+                    </div>
+                    <h3 class="mt-2 text-3xl font-black text-emerald-600 tracking-tight tabular-nums">
+                        $<span x-text="formatMoney(summary.cobrado)">{{ number_format($resumen['cobrado'], 2) }}</span>
+                    </h3>
+                    <div class="mt-4 pt-3 border-t border-slate-100 flex items-center justify-between text-xs">
+                        <span class="flex items-center gap-1.5 text-slate-500 font-medium">
+                            <i class="fas fa-money-bill-wave text-emerald-500 text-[11px]"></i>
+                            Ya liquidado
+                        </span>
+                        <span class="px-2 py-0.5 rounded-lg bg-emerald-50 text-emerald-700 font-bold text-[10px] border border-emerald-100">
+                            Efectivo / Transferencia
+                        </span>
+                    </div>
+                </div>
+
+                {{-- 3. PENDIENTE DE COBRO --}}
+                <div class="relative overflow-hidden rounded-2xl border border-slate-200 bg-white p-5 shadow-xs">
+                    <div class="absolute top-0 left-0 h-1 w-full bg-amber-500"></div>
+                    <div class="flex items-start justify-between">
+                        <span class="text-[11px] font-black uppercase tracking-wider text-slate-400">PENDIENTE DE COBRO</span>
+                        <div class="w-8 h-8 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center">
+                            <i class="fas fa-clock text-xs"></i>
+                        </div>
+                    </div>
+                    <h3 class="mt-2 text-3xl font-black text-amber-600 tracking-tight tabular-nums">
+                        $<span x-text="formatMoney(summary.pendiente_cobro)">{{ number_format($resumen['pendiente_cobro'], 2) }}</span>
+                    </h3>
+                    <div class="mt-4 pt-3 border-t border-slate-100 flex items-center justify-between text-xs">
+                        <span class="flex items-center gap-1.5 text-slate-500 font-medium">
+                            <i class="fas fa-hourglass-half text-amber-500 text-[11px]"></i>
+                            Por liquidar
+                        </span>
+                        <span class="px-2 py-0.5 rounded-lg bg-amber-50 text-amber-700 font-bold text-[10px] border border-amber-100">
+                            Confirmadas
+                        </span>
+                    </div>
+                </div>
+
+                {{-- 4. POR GANAR --}}
+                <div class="relative overflow-hidden rounded-2xl border border-slate-200 bg-white p-5 shadow-xs">
+                    <div class="absolute top-0 left-0 h-1 w-full bg-slate-400"></div>
+                    <div class="flex items-start justify-between">
+                        <span class="text-[11px] font-black uppercase tracking-wider text-slate-400">POR GANAR</span>
+                        <div class="w-8 h-8 rounded-xl bg-slate-100 text-slate-600 flex items-center justify-center">
+                            <i class="fas fa-chart-line text-xs"></i>
+                        </div>
+                    </div>
+                    <h3 class="mt-2 text-3xl font-black text-slate-800 tracking-tight tabular-nums">
+                        $<span x-text="formatMoney(summary.proyectada)">{{ number_format($resumen['proyectada'], 2) }}</span>
+                    </h3>
+                    <div class="mt-4 pt-3 border-t border-slate-100 flex items-center justify-between text-xs">
+                        <span class="flex items-center gap-1.5 text-slate-400 font-medium">
+                            <i class="far fa-circle-dot text-[11px]"></i>
+                            En proceso
+                        </span>
+                        <span class="px-2 py-0.5 rounded-lg bg-slate-100 text-slate-600 font-bold text-[10px] border border-slate-200">
+                            En ruta / Pendiente
+                        </span>
+                    </div>
                 </div>
             </div>
-        </section>
-        @endif
 
-        @endif {{-- /hayDatos --}}
+            {{-- ═══════════════════════════════════════════════════════════════════
+                 3. META MENSUAL DE GANANCIAS
+            ═══════════════════════════════════════════════════════════════════ --}}
+            <div class="bg-white border border-slate-200 rounded-2xl p-5 shadow-xs">
+                <div class="flex items-center justify-between flex-wrap gap-2">
+                    <div class="flex items-center gap-3">
+                        <div class="w-9 h-9 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center">
+                            <i class="fas fa-bullseye text-base"></i>
+                        </div>
+                        <div>
+                            <h4 class="text-xs font-black uppercase tracking-wider text-slate-800">META MENSUAL DE GANANCIAS</h4>
+                            <p class="text-xs text-slate-400">Objetivo de comisiones y bonos acumulados en el mes</p>
+                        </div>
+                    </div>
+                    <div class="text-right">
+                        <span class="text-sm font-extrabold text-slate-800">
+                            $<span x-text="formatMoney(summary.total_ganado)">{{ number_format($resumen['total_ganado'], 2) }}</span> / ${{ number_format($metaMensual, 2) }}
+                        </span>
+                    </div>
+                </div>
+
+                {{-- Barra de progreso --}}
+                <div class="w-full bg-slate-100 rounded-full h-2 overflow-hidden mt-3">
+                    <div class="bg-blue-600 h-full rounded-full transition-all duration-700"
+                         :style="`width: ${metaProgreso}%`"
+                         style="width: {{ $progresoMeta }}%"></div>
+                </div>
+
+                <div class="flex items-center justify-between mt-2 text-xs">
+                    <span class="text-slate-400 font-medium">Progreso del periodo</span>
+                    <span class="text-blue-600 font-bold" x-text="`${metaProgreso}% completado`">{{ $progresoMeta }}% completado</span>
+                </div>
+            </div>
+
+            {{-- ═══════════════════════════════════════════════════════════════════
+                 4. FRANJA RESUMEN DE VENTAS (Vendido, Entregadas, En Proceso, Canceladas)
+            ═══════════════════════════════════════════════════════════════════ --}}
+            <x-vendedor.stats-row :stats="$ventasStats" />
+
+            {{-- ═══════════════════════════════════════════════════════════════════
+                 5. BONOS E INCENTIVOS (SI EXISTEN)
+            ═══════════════════════════════════════════════════════════════════ --}}
+            <x-vendedor.bonus-list :bonos="$bonos" />
+
+            {{-- ═══════════════════════════════════════════════════════════════════
+                 6. TABLA DE VENTAS Y COMISIONES (BÚSQUEDA, FILTROS Y DETALLE)
+            ═══════════════════════════════════════════════════════════════════ --}}
+            <x-vendedor.sales-commission-table :ventas="$ventas" />
+
+        @endif
 
     </div>
 
     {{-- ═══════════════════════════════════════════════════════════════════
-         LÓGICA CLIENTE CON ALPINE.JS (CÁLCULOS DERIVADOS REUTILIZABLES)
+         LÓGICA ALPINE.JS (CÁLCULOS DINÁMICOS Y FILTRADO 100% EN TIEMPO REAL)
     ═══════════════════════════════════════════════════════════════════ --}}
     <script>
         function vendedorDashboard(initial) {
@@ -203,38 +254,28 @@
                     this.expandedRow = this.expandedRow === id ? null : id;
                 },
 
-                /**
-                 * Ventas filtradas en tiempo real por búsqueda y estado
-                 */
                 get filteredSales() {
                     const q = this.searchQuery.toLowerCase().trim();
                     const status = this.filterStatus;
 
                     return this.salesList.filter(item => {
-                        // Filtro de búsqueda por folio o cliente
                         const matchesQuery = !q ||
                             (item.folio && item.folio.toLowerCase().includes(q)) ||
                             (item.cliente && item.cliente.toLowerCase().includes(q)) ||
                             (item.id && item.id.toString().includes(q));
 
-                        // Filtro por estado de comisión
                         const matchesStatus = status === 'todos' || (item.comision && item.comision.estado === status);
 
                         return matchesQuery && matchesStatus;
                     });
                 },
 
-                /**
-                 * Totales calculados a partir de las ventas filtradas visibles
-                 * (Garantiza que la tabla y el resumen coincidan al centavo)
-                 */
                 get filteredTotals() {
                     let sumMonto = 0;
                     let sumComision = 0;
 
                     this.filteredSales.forEach(item => {
                         sumMonto += Number(item.monto || 0);
-                        // Sumamos la comisión si no está anulada (o el monto registrado)
                         if (item.comision && item.comision.estado !== 'anulada') {
                             sumComision += Number(item.comision.monto || 0);
                         }
@@ -249,9 +290,6 @@
                     };
                 },
 
-                /**
-                 * Resumen derivado global sincronizado
-                 */
                 get summary() {
                     let comisionesPagadas = 0;
                     let comisionesPendientes = 0;
@@ -375,5 +413,4 @@
             };
         }
     </script>
-
 </x-app>

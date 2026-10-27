@@ -1281,6 +1281,13 @@ class VentaController extends Controller
         // Desglose impositivo según la normativa del Ministerio de Hacienda de El Salvador
         $calculos = $this->calcularTributosElSalvador($venta, $tipo, $cliente['retencion_1']);
 
+        // ── Registro en Bitácora ──
+        ActivityLogger::log(
+            'EXPORTAR',
+            'Ventas',
+            "Impresión de comprobante ({$tipo}) para la Venta #{$venta->id} a nombre de '{$cliente['nombre']}' por un total de \${$venta->total}."
+        );
+
         return view('ventas.comprobante', compact('venta', 'tipo', 'cliente', 'calculos'));
     }
 
