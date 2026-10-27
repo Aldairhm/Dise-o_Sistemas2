@@ -51,15 +51,27 @@ class BackupController extends Controller
     public function create()
     {
         try {
+            // Aumentar el tiempo límite para permitir el volcado y la subida a Drive
+            set_time_limit(300);
+
             // --only-db → solo respaldo de base de datos (sin archivos)
-            Artisan::call('backup:run', [
-                '--only-db'       => true,
+            $exitCode = Artisan::call('backup:run', [
+                '--only-db'               => true,
                 '--disable-notifications' => false,
             ]);
 
+            $output = Artisan::output();
+
+            if ($exitCode !== 0) {
+                \Illuminate\Support\Facades\Log::error("Spatie Backup fallo con código $exitCode: " . $output);
+                return redirect()
+                    ->route('backups.index')
+                    ->with('error', 'No se pudo completar el respaldo. Por favor revisa el log de Laravel.');
+            }
+
             return redirect()
                 ->route('backups.index')
-                ->with('success', 'Respaldo de base de datos generado exitosamente.');
+                ->with('success', 'Respaldo generado y sincronizado con Google Drive exitosamente.');
         } catch (\Exception $e) {
             return redirect()
                 ->route('backups.index')
