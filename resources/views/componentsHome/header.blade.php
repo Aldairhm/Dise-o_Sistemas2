@@ -153,7 +153,7 @@
 
                     <!-- 3. Grupo Administración -->
                     <div class="nav-dropdown">
-                        <button type="button" class="text-sm flex items-center gap-1.5 py-2 transition-colors focus:outline-none cursor-pointer {{ request()->routeIs('usuarios.*') || request()->routeIs('comisiones.*') ? 'text-blue-600 font-bold' : 'text-gray-600 hover:text-blue-600 font-medium' }}">
+                        <button type="button" class="text-sm flex items-center gap-1.5 py-2 transition-colors focus:outline-none cursor-pointer {{ request()->routeIs('usuarios.*') || request()->routeIs('comisiones.*') || request()->routeIs('bitacora.*') ? 'text-blue-600 font-bold' : 'text-gray-600 hover:text-blue-600 font-medium' }}">
                             <i class="fas fa-shield-halved"></i>
                             <span>Administración</span>
                             <i class="fas fa-chevron-down text-[10px] ml-0.5 nav-chevron opacity-70"></i>
@@ -183,6 +183,17 @@
                                     <div class="flex flex-col">
                                         <span class="text-xs font-bold leading-tight">Comisiones</span>
                                         <span class="text-[10px] text-gray-400 font-normal">Cálculo y liquidaciones</span>
+                                    </div>
+                                </a>
+
+                                <!-- Bitácora -->
+                                <a href="{{ route('bitacora.index') }}" class="flex items-center gap-3 p-2 rounded-xl transition-all duration-150 {{ request()->routeIs('bitacora.*') ? 'bg-blue-50 text-blue-700 font-bold' : 'text-gray-700 hover:bg-teal-50/60 hover:text-teal-600' }}">
+                                    <div class="w-8 h-8 rounded-lg bg-teal-100 text-teal-600 flex items-center justify-center shrink-0">
+                                        <i class="fas fa-clipboard-list text-sm"></i>
+                                    </div>
+                                    <div class="flex flex-col">
+                                        <span class="text-xs font-bold leading-tight">Bitácora</span>
+                                        <span class="text-[10px] text-gray-400 font-normal">Auditoría y movimientos</span>
                                     </div>
                                 </a>
                             </div>

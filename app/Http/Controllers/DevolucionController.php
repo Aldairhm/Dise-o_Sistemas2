@@ -14,6 +14,7 @@ use App\Models\MovimientoBodega;
 use App\Models\Salida;
 use App\Models\DetalleVenta;
 use Carbon\Carbon;
+use App\Services\ActivityLogger;
 use Illuminate\Validation\ValidationException;
 
 class DevolucionController extends Controller
@@ -369,6 +370,12 @@ class DevolucionController extends Controller
                     $mensajeExito .= " El reembolso registrado es de $" . number_format($montoReembolsado, 2);
                 }
 
+                // ── Bitácora ──
+                ActivityLogger::log(
+                    'DEVOLUCION', 'Devoluciones',
+                    "Se procesó {$nuevoEstado} para la Venta #{$venta->id}. Resolución: {$validated['tipo_resolucion']}. Motivo: {$validated['motivo']}."
+                );
+
                 if ($request->wantsJson() || $request->ajax()) {
                     return response()->json([
                         'success' => true,
@@ -576,6 +583,12 @@ class DevolucionController extends Controller
                 ->whereIn('estado', ['pendiente', 'resuelto']))
                 ->sum('cantidad');
             $compra->update(['estado' => $totalDevuelto >= $totalComprado ? 'Devolución' : 'Devolución Parcial']);
+
+            // ── Bitácora ──
+            ActivityLogger::log(
+                'APROBAR', 'Devoluciones',
+                "Se resolvió el ticket de devolución de Compra #{$compra->id}. Resolución final: {$validated['resolucion_final']}."
+            );
 
             return back()->with('success', 'Ticket resuelto correctamente.');
         });

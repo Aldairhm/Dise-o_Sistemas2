@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Categoria;
+use App\Services\ActivityLogger;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Response;
 use Illuminate\Support\Facades\Auth;
@@ -65,7 +66,7 @@ class CategoriaController extends Controller
 
         $maxOrden = Categoria::max('orden') ?? 0;
 
-        Categoria::create([
+        $categoria = Categoria::create([
             'nombre'      => $request->nombre,
             'descripcion' => $request->descripcion,
             'color'       => $request->color ?? '#3b82f6',
@@ -73,6 +74,12 @@ class CategoriaController extends Controller
             'estado'      => true,
             'orden'       => $maxOrden + 1,
         ]);
+
+        // ── Bitácora ──
+        ActivityLogger::log(
+            'CREAR', 'Categorías',
+            "Se creó la categoría: {$categoria->nombre}."
+        );
 
         return response()->json(['success' => true, 'message' => 'Categoría creada correctamente.']);
     }
@@ -100,12 +107,22 @@ class CategoriaController extends Controller
             'nombre.max'      => 'El nombre no puede superar los 100 caracteres.',
         ]);
 
+        $anterior = $categoria->only(['nombre','descripcion','color','icono']);
+
         $categoria->update([
             'nombre'      => $categoria->productos()->exists() ? $categoria->nombre : $request->nombre,
             'descripcion' => $request->descripcion,
             'color'       => $request->color ?? $categoria->color,
             'icono'       => $request->icono ?? $categoria->icono,
         ]);
+
+        // ── Bitácora ──
+        ActivityLogger::log(
+            'EDITAR', 'Categorías',
+            "Se editó la categoría: {$categoria->nombre}.",
+            $anterior,
+            $categoria->only(['nombre','descripcion','color','icono'])
+        );
 
         return response()->json(['success' => true, 'message' => 'Categoría actualizada correctamente.']);
     }
@@ -119,10 +136,19 @@ class CategoriaController extends Controller
             ], 409);
         }
 
+        $estadoAnterior = $categoria->estado;
         $categoria->estado = !$categoria->estado;
         $categoria->save();
 
         $action = $categoria->estado ? 'activada' : 'inactivada';
+
+        // ── Bitácora ──
+        ActivityLogger::log(
+            'CAMBIO_ESTADO', 'Categorías',
+            "Categoría «{$categoria->nombre}» {$action} (antes: " .
+            ($estadoAnterior ? 'activa' : 'inactiva') . ').',
+        );
+
         return response()->json([
             'success' => true,
             'message' => "Categoría «{$categoria->nombre}» $action correctamente."
@@ -139,6 +165,12 @@ class CategoriaController extends Controller
         foreach ($request->order as $index => $id) {
             Categoria::where('id', $id)->update(['orden' => $index + 1]);
         }
+
+        // ── Bitácora ──
+        ActivityLogger::log(
+            'REORDENAR', 'Categorías',
+            'Se reordenó la lista de categorías.'
+        );
 
         return response()->json(['success' => true, 'message' => 'Orden actualizado correctamente.']);
     }
@@ -182,6 +214,12 @@ class CategoriaController extends Controller
         ))->setPaper('a4', 'portrait');
 
         $fileName = 'Reporte_Categorias_' . date('Ymd_His') . '.pdf';
+
+        // ── Bitácora ──
+        ActivityLogger::log(
+            'EXPORTAR', 'Categorías',
+            "Se exportó el reporte PDF de categorías (filtro: {$estado})."
+        );
 
         return $pdf->download($fileName);
     }

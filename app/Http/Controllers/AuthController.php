@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Services\ActivityLogger;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Cache;
@@ -94,6 +95,13 @@ class AuthController extends Controller
 
             $request->session()->regenerate();
 
+            // ── Bitácora: login exitoso ─────────────────────────────────
+            ActivityLogger::log(
+                'LOGIN',
+                'Autenticación',
+                "Inicio de sesión exitoso. Usuario: {$usuario->username} | Rol: {$usuario->rol}"
+            );
+
             return $this->redirectByRole($usuario->rol);
         }
 
@@ -121,6 +129,14 @@ class AuthController extends Controller
             ])->withInput($request->only('username'));
         }
 
+        // ── Bitácora: intento fallido ───────────────────────────────────
+        ActivityLogger::logAnon(
+            'LOGIN',
+            'Autenticación',
+            "Intento de login fallido (intento #{$attempts}). Usuario ingresado: {$request->username}",
+            $request->username
+        );
+
         return back()->with('swal_error', [
             'title' => 'Credenciales Incorrectas',
             'text'  => 'El usuario o la contraseña ingresados son incorrectos. Por favor, verifica tus datos e inténtalo de nuevo.',
@@ -130,6 +146,16 @@ class AuthController extends Controller
     /** Cerrar sesión */
     public function logout(Request $request)
     {
+        // ── Bitácora: logout (antes de cerrar sesión) ──────────────────
+        $usuario = Auth::user();
+        if ($usuario) {
+            ActivityLogger::log(
+                'LOGOUT',
+                'Autenticación',
+                "Cierre de sesión. Usuario: {$usuario->username} | Rol: {$usuario->rol}"
+            );
+        }
+
         Auth::logout();
         $request->session()->invalidate();
         $request->session()->regenerateToken();

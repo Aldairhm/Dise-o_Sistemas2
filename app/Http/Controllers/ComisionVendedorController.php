@@ -6,6 +6,7 @@ use App\Models\ComisionVendedor;
 use App\Models\Salida;
 use App\Models\User;
 use App\Models\Venta;
+use App\Services\ActivityLogger;
 use App\Services\ComisionService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -442,7 +443,7 @@ class ComisionVendedorController extends Controller
             'monto.min'            => 'El monto debe ser mayor a 0.',
         ]);
 
-        ComisionVendedor::create([
+        $comision = ComisionVendedor::create([
             'id_vendedor'    => $validated['id_vendedor'],
             'id_salida'      => null,
             'concepto'       => $validated['concepto'],
@@ -452,6 +453,14 @@ class ComisionVendedorController extends Controller
             'estado'         => 'Pendiente',
             'fecha_registro' => now(),
         ]);
+
+        // ── Bitácora ──
+        $vendedor = User::find($validated['id_vendedor']);
+        $nombreVendedor = $vendedor ? "{$vendedor->nombre_real} ({$vendedor->username})" : "Vendedor #{$validated['id_vendedor']}";
+        ActivityLogger::log(
+            'CREAR', 'Comisiones',
+            "Se registró un bono/ajuste de $" . number_format((float) $validated['monto'], 2) . " para {$nombreVendedor}. Concepto: {$validated['concepto']}."
+        );
 
         if ($request->ajax()) {
             return response()->json([
@@ -483,11 +492,21 @@ class ComisionVendedorController extends Controller
             'notas'    => ['nullable', 'string', 'max:500'],
         ]);
 
+        $anterior = $comision->only(['concepto', 'monto', 'notas']);
+
         $comision->update([
             'concepto' => $validated['concepto'] ?? $comision->concepto,
             'monto'    => $validated['monto'],
             'notas'    => $validated['notas'] ?? $comision->notas,
         ]);
+
+        // ── Bitácora ──
+        ActivityLogger::log(
+            'EDITAR', 'Comisiones',
+            "Se actualizó la comisión #{$comision->id}. Nuevo monto: $" . number_format((float) $validated['monto'], 2) . ".",
+            $anterior,
+            $comision->only(['concepto', 'monto', 'notas'])
+        );
 
         return response()->json([
             'success' => true,
@@ -553,6 +572,15 @@ class ComisionVendedorController extends Controller
         }
 
         $metodoDesc = $validated['metodo_pago'];
+
+        // ── Bitácora ──
+        $vendedor = User::find($validated['id_vendedor']);
+        $nombreVendedor = $vendedor ? "{$vendedor->nombre_real}" : "Vendedor #{$validated['id_vendedor']}";
+        ActivityLogger::log(
+            'LIQUIDAR', 'Comisiones',
+            "Se liquidaron exitosamente {$cantidad} comisiones a {$nombreVendedor} mediante {$metodoDesc}."
+        );
+
         return response()->json([
             'success'  => true,
             'message'  => "Se liquidaron exitosamente {$cantidad} comisiones mediante {$metodoDesc}.",
@@ -579,6 +607,12 @@ class ComisionVendedorController extends Controller
             'estado' => 'Cancelada',
             'notas'  => ($comision->notas ? $comision->notas . ' | ' : '') . $motivo,
         ]);
+
+        // ── Bitácora ──
+        ActivityLogger::log(
+            'CANCELAR', 'Comisiones',
+            "Se canceló la comisión #{$comision->id}. Motivo: {$motivo}."
+        );
 
         return response()->json([
             'success' => true,

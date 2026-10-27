@@ -7,6 +7,7 @@ use App\Models\CompraDetalle;
 use App\Models\MovimientoBodega;
 use App\Models\Proveedor;
 use App\Models\Variante;
+use App\Services\ActivityLogger;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
@@ -223,6 +224,12 @@ class CompraController extends Controller
 
             return $compra;
         });
+
+        // ── Bitácora ──
+        ActivityLogger::log(
+            'CREAR', 'Compras',
+            "Se registró la compra #{$compra->id} con total de $" . number_format($compra->total, 2) . " (" . count($validated['lineas']) . " ítems)."
+        );
 
         return response()->json([
             'success' => true,

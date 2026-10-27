@@ -6,6 +6,7 @@ namespace App\Http\Controllers;
 use App\Http\Requests\StoreProveedorRequest;
 use App\Http\Requests\UpdateProveedorRequest;
 use App\Models\Proveedor;
+use App\Services\ActivityLogger;
 use App\Services\ProveedorService;
 use Illuminate\Http\JsonResponse;
 
@@ -23,6 +24,12 @@ class ProveedorController extends Controller
     {
         $proveedor = $service->crearProveedor($request->validated(), $request->file('archivo'));
 
+        // ── Bitácora ──
+        ActivityLogger::log(
+            'CREAR', 'Proveedores',
+            "Se registró el proveedor: {$proveedor->nombre}."
+        );
+
         return response()->json([
             'success' => true,
             'message' => 'Proveedor registrado exitosamente.',
@@ -32,7 +39,16 @@ class ProveedorController extends Controller
 
     public function update(UpdateProveedorRequest $request, Proveedor $proveedor, ProveedorService $service): JsonResponse
     {
+        $anterior = $proveedor->only(['nombre', 'telefono', 'correo', 'direccion']);
         $proveedor = $service->actualizarProveedor($proveedor, $request->validated(), $request->file('archivo'));
+
+        // ── Bitácora ──
+        ActivityLogger::log(
+            'EDITAR', 'Proveedores',
+            "Se actualizó el proveedor: {$proveedor->nombre}.",
+            $anterior,
+            $proveedor->only(['nombre', 'telefono', 'correo', 'direccion'])
+        );
 
         return response()->json([
             'success' => true,
@@ -44,7 +60,14 @@ class ProveedorController extends Controller
     // Soft delete (desactivar)
     public function destroy(Proveedor $proveedor, ProveedorService $service): JsonResponse
     {
+        $nombre = $proveedor->nombre;
         $proveedor = $service->desactivar($proveedor);
+
+        // ── Bitácora ──
+        ActivityLogger::log(
+            'ELIMINAR', 'Proveedores',
+            "Se desactivó el proveedor: {$nombre}."
+        );
 
         return response()->json([
             'success' => true,
@@ -58,6 +81,12 @@ class ProveedorController extends Controller
     {
         $proveedor = Proveedor::withTrashed()->findOrFail($id);
         $proveedor = $service->activar($proveedor);
+
+        // ── Bitácora ──
+        ActivityLogger::log(
+            'RESTAURAR', 'Proveedores',
+            "Se reactivó el proveedor: {$proveedor->nombre}."
+        );
 
         return response()->json([
             'success' => true,

@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\User;
+use App\Services\ActivityLogger;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
@@ -94,6 +95,12 @@ class UserController extends Controller
             'password'    => Hash::make($validated['password']),
         ]);
 
+        // ── Bitácora ──
+        ActivityLogger::log(
+            'CREAR', 'Usuarios',
+            "Se creó el usuario: {$user->nombre_real} ({$user->username}) con rol {$user->rol}."
+        );
+
         if ($request->ajax()) {
             return response()->json([
                 'success' => true,
@@ -129,6 +136,8 @@ class UserController extends Controller
             'password.confirmed'   => 'La confirmación de contraseña no coincide.',
         ]);
 
+        $anterior = $user->only(['nombre_real', 'username', 'rol', 'estado', 'telefono']);
+
         $updateData = [
             'nombre_real' => $validated['nombre_real'],
             'telefono'    => $validated['telefono'] ?? null,
@@ -142,6 +151,14 @@ class UserController extends Controller
         }
 
         $user->update($updateData);
+
+        // ── Bitácora ──
+        ActivityLogger::log(
+            'EDITAR', 'Usuarios',
+            "Se editó el usuario: {$user->nombre_real} ({$user->username}).",
+            $anterior,
+            $user->only(['nombre_real', 'username', 'rol', 'estado', 'telefono'])
+        );
 
         if ($request->ajax()) {
             return response()->json([
@@ -167,8 +184,17 @@ class UserController extends Controller
             ], 422);
         }
 
+        $estadoAnterior = $user->estado;
         $user->estado = $user->estado == 1 ? 0 : 1;
         $user->save();
+
+        // ── Bitácora ──
+        ActivityLogger::log(
+            'CAMBIO_ESTADO', 'Usuarios',
+            "Usuario {$user->nombre_real} ({$user->username}) cambiado de " .
+            ($estadoAnterior == 1 ? 'Activo' : 'Inactivo') . ' a ' .
+            ($user->estado == 1 ? 'Activo' : 'Inactivo') . '.'
+        );
 
         return response()->json([
             'success'   => true,
@@ -193,8 +219,16 @@ class UserController extends Controller
             return back()->with('error', 'No puedes eliminar tu propia cuenta.');
         }
 
-        $userName = $user->nombre_real ?? $user->username;
+        $userName  = $user->nombre_real ?? $user->username;
+        $snapAntes = $user->only(['id','nombre_real','username','rol','estado']);
         $user->delete();
+
+        // ── Bitácora ──
+        ActivityLogger::log(
+            'ELIMINAR', 'Usuarios',
+            "Se eliminó (soft-delete) el usuario: {$userName}.",
+            $snapAntes
+        );
 
         if ($request->ajax()) {
             return response()->json([

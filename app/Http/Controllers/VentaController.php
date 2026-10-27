@@ -9,6 +9,7 @@ use App\Models\Variante;
 use App\Models\ComisionVendedor;
 use App\Models\Producto;
 use App\Models\User;
+use App\Services\ActivityLogger;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Auth;
@@ -600,6 +601,12 @@ class VentaController extends Controller
 
             DB::commit();
 
+            // ── Bitácora ──
+            ActivityLogger::log(
+                'CANCELAR', 'Ventas',
+                "Venta #VNT-" . str_pad($venta->id, 5, '0', STR_PAD_LEFT) . " cancelada por vendedor ({$user->nombre_real}). Motivo: {$motivo}."
+            );
+
             return response()->json([
                 'success' => true,
                 'message' => "La venta #VNT-" . str_pad($venta->id, 5, '0', STR_PAD_LEFT) . " ha sido cancelada exitosamente y el stock restaurado.",
@@ -916,6 +923,13 @@ class VentaController extends Controller
                 return $venta;
             });
 
+            // ── Bitácora ──
+            $nombreComprador = !empty($venta->nombre_cliente) ? " a {$venta->nombre_cliente}" : "";
+            ActivityLogger::log(
+                'CREAR', 'Ventas',
+                "Se registró la venta #{$venta->id}{$nombreComprador} por un total de $" . number_format((float) $venta->total, 2) . " (Método: {$venta->metodo_pago}, Tipo: {$venta->tipo_venta})."
+            );
+
             // Retornar siempre respuesta JSON estandarizada para el cliente AJAX / fetch
             return response()->json([
                 'success' => true,
@@ -950,6 +964,7 @@ class VentaController extends Controller
         ]);
 
         $nuevoEstado = $validated['estado'];
+        $estadoAnteriorVenta = $venta->estado;
 
         // 1. Verificar si la venta está bloqueada
         if ($venta->estado_bloqueado) {
@@ -1116,6 +1131,13 @@ class VentaController extends Controller
             }
 
             DB::commit();
+
+            // ── Bitácora ──
+            $obsTxt = !empty($validated['observaciones']) ? " Observaciones: {$validated['observaciones']}" : "";
+            ActivityLogger::log(
+                'CAMBIO_ESTADO', 'Ventas',
+                "Venta #{$venta->id} cambió de estado: '{$estadoAnteriorVenta}' → '{$nuevoEstado}'.{$obsTxt}"
+            );
 
             return response()->json([
                 'success' => true,

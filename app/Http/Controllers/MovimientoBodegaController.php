@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\MovimientoBodega;
 use App\Models\Variante;
+use App\Services\ActivityLogger;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
@@ -53,6 +54,13 @@ class MovimientoBodegaController extends Controller
                 'observacion' => $validated['observacion'] ?? 'Transferencia de bodega a tienda.',
             ]);
         });
+
+        // ── Bitácora ──
+        $nomVariante = $movimiento->variante->nombre_variante ?? "Variante #{$movimiento->id_variante}";
+        ActivityLogger::log(
+            'TRANSFERIR', 'Bodega',
+            "Transferencia a tienda de {$movimiento->cantidad} unidad(es) de «{$nomVariante}»."
+        );
 
         return response()->json([
             'success' => true,

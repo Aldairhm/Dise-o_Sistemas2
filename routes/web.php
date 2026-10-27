@@ -22,6 +22,8 @@ use App\Http\Controllers\DevolucionController; // Pon esto hasta arriba del arch
 use App\Http\Controllers\ProveedorController;
 use App\Http\Controllers\CatalogoController;
 use App\Http\Controllers\ComisionVendedorController;
+use App\Http\Controllers\DashboardVendedorController;
+use App\Http\Controllers\BitacoraController;
 
 // ── Autenticación (Rutas públicas) ───────────────────────────
 
@@ -44,7 +46,8 @@ Route::middleware('auth')->group(function () {
     Route::get('/', [HomeController::class, 'index'])->name('home');
     Route::get('/home', [HomeController::class, 'index'])->name('home.alias');
 
-
+    // ── Dashboard del Vendedor ────────────────────────────────────────
+    Route::get('/vendedor/dashboard', [DashboardVendedorController::class, 'index'])->name('vendedor.dashboard');
 
     // ── Perfil del usuario autenticado ─────────────────────────────
     Route::get('/perfil',          [ProfileController::class, 'show'])->name('perfil.show');
@@ -137,6 +140,10 @@ Route::middleware('auth')->group(function () {
         Route::put('/comisiones/{comision}',               [ComisionVendedorController::class, 'update'])->name('comisiones.update');
         Route::post('/comisiones/liquidar',                [ComisionVendedorController::class, 'liquidar'])->name('comisiones.liquidar');
         Route::patch('/comisiones/{comision}/cancelar',    [ComisionVendedorController::class, 'cancelar'])->name('comisiones.cancelar');
+
+        // ── Bitácora del Sistema (Auditoría de Movimientos) ──
+        Route::get('/bitacora', [BitacoraController::class, 'index'])->name('bitacora.index');
+        Route::get('/bitacora/{bitacora}', [BitacoraController::class, 'show'])->name('bitacora.show')->whereNumber('bitacora');
     });
 
     // ── Productos: índice visible para todos los usuarios autenticados ──

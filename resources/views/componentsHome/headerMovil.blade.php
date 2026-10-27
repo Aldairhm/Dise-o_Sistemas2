@@ -121,6 +121,14 @@
                             </div>
                             <span>Comisiones</span>
                         </a>
+
+                        <!-- Bitácora -->
+                        <a href="{{ route('bitacora.index') }}" class="text-xs font-semibold flex items-center gap-2.5 p-2 rounded-lg transition-colors {{ request()->routeIs('bitacora.*') ? 'bg-teal-50 text-teal-700 font-bold' : 'text-gray-700 hover:bg-gray-50' }}">
+                            <div class="w-6 h-6 rounded bg-teal-100 text-teal-600 flex items-center justify-center shrink-0">
+                                <i class="fas fa-clipboard-list text-[11px]"></i>
+                            </div>
+                            <span>Bitácora del Sistema</span>
+                        </a>
                     </div>
                 </div>
                 @elseif(Auth::check() && Auth::user()->rol === 'vendedor')

@@ -7,6 +7,7 @@ use App\Models\Categoria;
 use App\Http\Requests\StoreProductoRequest;
 use App\Http\Requests\UpdateProductoRequest;
 use App\Models\Atributo;
+use App\Services\ActivityLogger;
 use Illuminate\Support\Str;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\DB;
@@ -66,6 +67,12 @@ class ProductoController extends Controller
             $producto->atributos()->sync($atributoIds);
         }
 
+        // ── Bitácora ──
+        ActivityLogger::log(
+            'CREAR', 'Productos',
+            "Se creó el producto: {$producto->nombre} (SKU: {$producto->sku})."
+        );
+
         return redirect()->route('productos.edit', $producto->id)
                          ->with('success', 'Producto creado exitosamente. Ahora puedes agregar las variantes.');
     }
@@ -103,6 +110,8 @@ class ProductoController extends Controller
             $validated['imagen_principal'] = $path;
         }
 
+        $anterior = $producto->only(['nombre', 'sku', 'id_categoria', 'estado', 'descripcion']);
+
         $producto->update($validated);
 
         $atributoIds = $request->input('atributos', []);
@@ -119,6 +128,14 @@ class ProductoController extends Controller
         } else {
             $producto->atributos()->detach();
         }
+
+        // ── Bitácora ──
+        ActivityLogger::log(
+            'EDITAR', 'Productos',
+            "Se editó el producto: {$producto->nombre} (SKU: {$producto->sku}).",
+            $anterior,
+            $producto->only(['nombre', 'sku', 'id_categoria', 'estado', 'descripcion'])
+        );
 
         return redirect()->route('productos.index')
                          ->with('success', 'Producto actualizado exitosamente.');
@@ -187,7 +204,18 @@ class ProductoController extends Controller
             }
         }
 
+        $nombre = $producto->nombre;
+        $sku = $producto->sku;
+        $snapAntes = $producto->only(['id', 'nombre', 'sku', 'id_categoria', 'estado']);
+
         $producto->delete();
+
+        // ── Bitácora ──
+        ActivityLogger::log(
+            'ELIMINAR', 'Productos',
+            "Se eliminó el producto: {$nombre} (SKU: {$sku}).",
+            $snapAntes
+        );
 
         return redirect()->route('productos.index')
                          ->with('success', 'Producto eliminado exitosamente.');
@@ -195,10 +223,17 @@ class ProductoController extends Controller
 
     public function toggleStatus(Producto $producto)
     {
+        $estadoAnterior = $producto->estado;
         $producto->estado = $producto->estado == 1 ? 0 : 1;
         $producto->save();
 
         $accion = $producto->estado == 1 ? 'activado' : 'desactivado';
+
+        // ── Bitácora ──
+        ActivityLogger::log(
+            'CAMBIO_ESTADO', 'Productos',
+            "Producto «{$producto->nombre}» {$accion} (antes: " . ($estadoAnterior == 1 ? 'activo' : 'inactivo') . ")."
+        );
 
         return response()->json([
             'success'      => true,

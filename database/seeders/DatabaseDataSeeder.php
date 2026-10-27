@@ -13,7 +13,9 @@ class DatabaseDataSeeder extends Seeder
      */
     public function run(): void
     {
-       $this->seedUsuario(); // 2 rows
+        Schema::disableForeignKeyConstraints();
+
+        $this->seedUsuario(); // 2 rows
         $this->seedProveedors(); // 2 rows
         $this->seedCategoria(); // 5 rows
         $this->seedAtributo(); // 6 rows
@@ -31,6 +33,8 @@ class DatabaseDataSeeder extends Seeder
         $this->seedDetalleventa(); // 17 rows
         $this->seedComisionVendedor(); // 16 rows
         $this->resetPostgresSequences();
+
+        Schema::enableForeignKeyConstraints();
     }
 
     protected function seedUsuario(): void
