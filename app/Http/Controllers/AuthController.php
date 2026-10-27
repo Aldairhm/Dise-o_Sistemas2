@@ -328,6 +328,32 @@ class AuthController extends Controller
         ]);
     }
 
+    /** Mostrar pantalla de confirmación de contraseña para acciones críticas */
+    public function showConfirmPassword()
+    {
+        return view('auth.confirm-password');
+    }
+
+    /** Procesar confirmación de contraseña */
+    public function confirmPassword(Request $request)
+    {
+        $request->validate([
+            'password' => 'required|string',
+        ], [
+            'password.required' => 'La contraseña es obligatoria.',
+        ]);
+
+        if (! \Illuminate\Support\Facades\Hash::check($request->password, $request->user()->password)) {
+            return back()->withErrors([
+                'password' => 'La contraseña ingresada no es correcta.',
+            ]);
+        }
+
+        $request->session()->put('auth.password_confirmed_at', time());
+
+        return redirect()->intended(route('backups.index'));
+    }
+
     /** Redirigir según el rol del usuario */
     private function redirectByRole(string $rol)
     {

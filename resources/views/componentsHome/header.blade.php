@@ -153,11 +153,7 @@
 
                     <!-- 3. Grupo Administración -->
                     <div class="nav-dropdown">
-
-                        <button type="button" class="text-sm flex items-center gap-1.5 py-2 transition-colors focus:outline-none cursor-pointer {{ request()->routeIs('usuarios.*') || request()->routeIs('comisiones.*') || request()->routeIs('bitacora.*') ? 'text-blue-600 font-bold' : 'text-gray-600 hover:text-blue-600 font-medium' }}">
-
-                        <button type="button" class="text-sm flex items-center gap-1.5 py-2 transition-colors focus:outline-none cursor-pointer {{ request()->routeIs('admin.*') || request()->routeIs('usuarios.*') || request()->routeIs('comisiones.*') ? 'text-blue-600 font-bold' : 'text-gray-600 hover:text-blue-600 font-medium' }}">
-
+                        <button type="button" class="text-sm flex items-center gap-1.5 py-2 transition-colors focus:outline-none cursor-pointer {{ request()->routeIs('admin.*') || request()->routeIs('usuarios.*') || request()->routeIs('comisiones.*') || request()->routeIs('bitacora.*') || request()->routeIs('backups.*') ? 'text-blue-600 font-bold' : 'text-gray-600 hover:text-blue-600 font-medium' }}">
                             <i class="fas fa-shield-halved"></i>
                             <span>Administración</span>
                             <i class="fas fa-chevron-down text-[10px] ml-0.5 nav-chevron opacity-70"></i>
@@ -220,6 +216,17 @@
                                     <div class="flex flex-col">
                                         <span class="text-xs font-bold leading-tight">Bitácora</span>
                                         <span class="text-[10px] text-gray-400 font-normal">Auditoría y movimientos</span>
+                                    </div>
+                                </a>
+
+                                <!-- Respaldos BD -->
+                                <a href="{{ route('backups.index') }}" class="flex items-center gap-3 p-2 rounded-xl transition-all duration-150 {{ request()->routeIs('backups.*') ? 'bg-blue-50 text-blue-700 font-bold' : 'text-gray-700 hover:bg-emerald-50/60 hover:text-emerald-600' }}">
+                                    <div class="w-8 h-8 rounded-lg bg-emerald-100 text-emerald-600 flex items-center justify-center shrink-0">
+                                        <i class="fas fa-database text-sm"></i>
+                                    </div>
+                                    <div class="flex flex-col">
+                                        <span class="text-xs font-bold leading-tight">Respaldos</span>
+                                        <span class="text-[10px] text-gray-400 font-normal">Base de datos y copias</span>
                                     </div>
                                 </a>
                             </div>

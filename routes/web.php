@@ -11,6 +11,7 @@ use App\Http\Controllers\CompraController;
 use App\Http\Controllers\MovimientoBodegaController;
 use App\Http\Controllers\AtributoController;
 use App\Http\Controllers\VentaController;
+use App\Http\Controllers\BackupController;
 
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\ProductoController;
@@ -43,7 +44,11 @@ Route::get('/preview-reset-password', [AuthController::class, 'previewResetPassw
 
 // ── Rutas protegidas (requieren estar logueado) ─────────────
 Route::middleware('auth')->group(function () {
-    
+
+    // ── Confirmación de Contraseña (Re-autenticación para acciones críticas) ──
+    Route::get('/confirm-password', [AuthController::class, 'showConfirmPassword'])->name('password.confirm');
+    Route::post('/confirm-password', [AuthController::class, 'confirmPassword']);
+
     // Inicio
     Route::get('/', [HomeController::class, 'index'])->name('home');
     Route::get('/home', [HomeController::class, 'index'])->name('home.alias');
@@ -68,6 +73,13 @@ Route::middleware('auth')->group(function () {
 
     // ── Módulo de Gestión de Usuarios (CRUD) - Solo Administradores ──
     Route::middleware('admin')->group(function () {
+        // ── Gestión de Respaldos de Base de Datos ──
+        Route::get('/backups', [BackupController::class, 'index'])->name('backups.index');
+        Route::post('/backups/create', [BackupController::class, 'create'])->name('backups.create');
+        Route::get('/backups/download/{file_name}', [BackupController::class, 'download'])
+            ->name('backups.download')
+            ->middleware('password.confirm');
+
         // ── Dashboard Administrativo & Reportes Ejecutivos ──
         Route::get('/admin/dashboard', [AdminDashboardController::class, 'index'])->name('admin.dashboard');
         Route::get('/admin/reportes/movimientos', [AdminDashboardController::class, 'reportesMovimientos'])->name('admin.reportes.movimientos');
@@ -114,7 +126,7 @@ Route::middleware('auth')->group(function () {
         Route::resource('atributos', AtributoController::class)->except(['create', 'show', 'edit']);
 
         // ── TU MÓDULO DE PROVEEDORES Y CATÁLOGOS ──
-        
+
         // 1. Estáticas (Catálogos)
         Route::post('/proveedores/catalogos', [CatalogoController::class, 'store']);
         Route::delete('/proveedores/catalogos/{id}', [CatalogoController::class, 'destroy'])->whereNumber('id');

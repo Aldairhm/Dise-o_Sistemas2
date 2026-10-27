@@ -145,6 +145,14 @@
                             </div>
                             <span>Bitácora del Sistema</span>
                         </a>
+
+                        <!-- Respaldos BD -->
+                        <a href="{{ route('backups.index') }}" class="text-xs font-semibold flex items-center gap-2.5 p-2 rounded-lg transition-colors {{ request()->routeIs('backups.*') ? 'bg-emerald-50 text-emerald-700 font-bold' : 'text-gray-700 hover:bg-gray-50' }}">
+                            <div class="w-6 h-6 rounded bg-emerald-100 text-emerald-600 flex items-center justify-center shrink-0">
+                                <i class="fas fa-database text-[11px]"></i>
+                            </div>
+                            <span>Respaldos de Base de Datos</span>
+                        </a>
                     </div>
                 </div>
                 @elseif(Auth::check() && Auth::user()->rol === 'vendedor')
