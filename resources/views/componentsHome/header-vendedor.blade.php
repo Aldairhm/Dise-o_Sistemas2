@@ -17,7 +17,12 @@
                     <a href="{{ route('vendedor.dashboard') }}" class="text-sm font-medium text-gray-600 hover:text-indigo-600 transition-colors flex items-center gap-2 {{ request()->routeIs('vendedor.dashboard') ? 'text-indigo-600 font-bold' : '' }}"><i class="fas fa-chart-line"></i> Mi Dashboard</a>
                     <a href="{{ route('ventas.mis-ventas') }}" class="text-sm font-medium text-gray-600 hover:text-blue-600 transition-colors flex items-center gap-2 {{ request()->routeIs('ventas.mis-ventas') ? 'text-blue-600 font-bold' : '' }}"><i class="fas fa-boxes-packing"></i> Mis Ventas</a>
                     <a href="{{ route('comisiones.index') }}" class="text-sm font-medium text-gray-600 hover:text-indigo-600 transition-colors flex items-center gap-2 {{ request()->routeIs('comisiones.*') ? 'text-indigo-600 font-bold' : '' }}"><i class="fas fa-hand-holding-dollar"></i> Mis Comisiones</a>
-                  </nav>
+                                      @auth
+                        <a href="{{ route('ayuda.index') }}" class="inline-flex items-center gap-2 text-sm font-semibold text-blue-700 hover:underline">
+                            <i class="fas fa-circle-question" aria-hidden="true"></i> Ayuda
+                        </a>
+                    @endauth
+                </nav>
 
                  <!-- Icons -->
                 <div class="flex items-center gap-4">

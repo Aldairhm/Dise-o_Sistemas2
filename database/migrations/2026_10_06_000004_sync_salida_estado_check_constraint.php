@@ -21,15 +21,30 @@ return new class extends Migration
 
     public function up(): void
     {
-        $constraint = DB::selectOne(
-            "SELECT CONSTRAINT_NAME FROM information_schema.TABLE_CONSTRAINTS
-            WHERE CONSTRAINT_SCHEMA = DATABASE()
-            AND TABLE_NAME = 'salida'
-            AND CONSTRAINT_NAME = 'chk_salida_estado'
-            AND CONSTRAINT_TYPE = 'CHECK'"
-        );
+        $driver = DB::getDriverName();
+
+        if ($driver === 'pgsql') {
+            // PostgreSQL: buscar con current_database()
+            $constraint = DB::selectOne(
+                "SELECT constraint_name FROM information_schema.table_constraints
+                WHERE constraint_catalog = current_database()
+                AND table_name = 'salida'
+                AND constraint_name = 'chk_salida_estado'
+                AND constraint_type = 'CHECK'"
+            );
+        } else {
+            // MySQL / MariaDB
+            $constraint = DB::selectOne(
+                "SELECT CONSTRAINT_NAME FROM information_schema.TABLE_CONSTRAINTS
+                WHERE CONSTRAINT_SCHEMA = DATABASE()
+                AND TABLE_NAME = 'salida'
+                AND CONSTRAINT_NAME = 'chk_salida_estado'
+                AND CONSTRAINT_TYPE = 'CHECK'"
+            );
+        }
 
         if ($constraint) {
+            // DROP CONSTRAINT funciona en ambos; DROP CHECK es solo MySQL
             try {
                 DB::statement('ALTER TABLE salida DROP CONSTRAINT chk_salida_estado');
             } catch (\Throwable $e) {
@@ -47,7 +62,11 @@ return new class extends Migration
 
     public function down(): void
     {
-        DB::statement('ALTER TABLE salida DROP CHECK chk_salida_estado');
+        try {
+            DB::statement('ALTER TABLE salida DROP CONSTRAINT chk_salida_estado');
+        } catch (\Throwable $e) {
+            DB::statement('ALTER TABLE salida DROP CHECK chk_salida_estado');
+        }
 
         $states = array_values(array_diff(self::ALLOWED_STATES, ['Cambio']));
         $quotedStates = implode(', ', array_map(

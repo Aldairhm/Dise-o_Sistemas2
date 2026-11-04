@@ -20,11 +20,16 @@ class User extends Authenticatable
         'estado',
         'token',
         'porcentaje_comision',
+        'mfa_enabled',
+        'mfa_secret',
+        'mfa_backup_codes',
     ];
 
     protected $hidden = [
         'password',
         'token',
+        'mfa_secret',
+        'mfa_backup_codes',
     ];
 
     protected function casts(): array
@@ -32,7 +37,25 @@ class User extends Authenticatable
         return [
             'password'            => 'hashed',
             'porcentaje_comision' => 'decimal:2',
+            'mfa_enabled'         => 'boolean',
         ];
+    }
+
+    // ── Helpers de Roles ───────────────────────────────────────────────────────
+
+    public function isSuperAdmin(): bool
+    {
+        return $this->rol === 'super_admin';
+    }
+
+    public function isAdmin(): bool
+    {
+        return in_array($this->rol, ['admin', 'super_admin']);
+    }
+
+    public function isVendedor(): bool
+    {
+        return $this->rol === 'vendedor';
     }
 
     // ── Relaciones ────────────────────────────────────────────────────────────
@@ -50,5 +73,25 @@ class User extends Authenticatable
     public function comisiones()
     {
         return $this->hasMany(ComisionVendedor::class, 'id_vendedor');
+    }
+
+    public function ticketsCreados()
+    {
+        return $this->hasMany(SoporteTicket::class, 'id_usuario');
+    }
+
+    public function ticketsAsignados()
+    {
+        return $this->hasMany(SoporteTicket::class, 'id_asignado');
+    }
+
+    public function auditoriasIniciadas()
+    {
+        return $this->hasMany(AuditoriaSesion::class, 'id_super_admin');
+    }
+
+    public function auditoriasRecibidas()
+    {
+        return $this->hasMany(AuditoriaSesion::class, 'id_usuario_auditado');
     }
 }

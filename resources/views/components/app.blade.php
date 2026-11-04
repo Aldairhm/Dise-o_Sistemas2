@@ -36,6 +36,34 @@
 
 <body class="bg-gray-50 text-gray-800 antialiased min-h-screen flex flex-col" style="font-family: 'Inter', sans-serif;">
 
+    {{-- Banner de Notificación Permanente de MODO AUDITORÍA (Secure Impersonation) --}}
+    @if(session()->has('auditoria_token'))
+        <div class="bg-purple-900 text-white px-4 py-2.5 shadow-md sticky top-0 z-[60] border-b border-purple-800 flex flex-wrap items-center justify-between text-xs font-semibold gap-3">
+            <div class="flex items-center gap-2.5">
+                <span class="w-2.5 h-2.5 rounded-full bg-amber-400 animate-ping"></span>
+                <span class="bg-purple-800 px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider text-purple-200">
+                    Modo Auditoría · Cuenta Supervisada
+                </span>
+                <span>
+                    Estás auditando la cuenta de: <strong class="underline decoration-purple-400">{{ Auth::user()->nombre_real }}</strong> ({{ Auth::user()->username }})
+                </span>
+                @if(session('auditoria_solo_lectura', true))
+                    <span class="bg-amber-500/30 text-amber-300 border border-amber-400/40 px-2 py-0.5 rounded text-[10px] font-black">
+                        SOLO LECTURA
+                    </span>
+                @endif
+            </div>
+
+            <form method="POST" action="{{ route('superadmin.auditorias.finalizar') }}" class="inline">
+                @csrf
+                <button type="submit" class="px-3.5 py-1.5 rounded-lg bg-rose-600 hover:bg-rose-700 text-white font-bold text-xs transition-colors shadow-sm flex items-center gap-1.5 cursor-pointer">
+                    <i class="fas fa-right-from-bracket"></i>
+                    <span>Finalizar Auditoría y Restaurar</span>
+                </button>
+            </form>
+        </div>
+    @endif
+
     <header class="bg-white/80 backdrop-blur-md sticky top-0 z-50 border-b border-gray-100 transition-all duration-300">
         @if(Auth::check() && Auth::user()->rol === 'vendedor')
             @include('componentsHome.header-vendedor')
@@ -96,3 +124,5 @@
 </body>
 
 </html>
+
+

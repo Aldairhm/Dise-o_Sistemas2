@@ -27,6 +27,8 @@ use App\Http\Controllers\ComisionVendedorController;
 use App\Http\Controllers\DashboardVendedorController;
 use App\Http\Controllers\BitacoraController;
 use App\Http\Controllers\AdminDashboardController;
+use App\Http\Controllers\SuperAdminController;
+use App\Http\Controllers\AyudaController;
 
 // ── Autenticación (Rutas públicas) ───────────────────────────
 
@@ -44,6 +46,14 @@ Route::get('/preview-reset-password', [AuthController::class, 'previewResetPassw
 
 // ── Rutas protegidas (requieren estar logueado) ─────────────
 Route::middleware('auth')->group(function () {
+    Route::get('/ayuda', [AyudaController::class, 'index'])->name('ayuda.index');
+    Route::post('/ayuda/subir-evidencia', [AyudaController::class, 'subirEvidencia'])->name('ayuda.subir-evidencia');
+    Route::post('/ayuda/tickets', [AyudaController::class, 'guardarTicket'])->name('ayuda.tickets.store');
+    Route::get('/ayuda/control-tickets', [AyudaController::class, 'tickets'])->name('ayuda.tickets.index');
+    Route::get('/ayuda/tickets/{ticket}', [AyudaController::class, 'verTicket'])->name('ayuda.tickets.show')->whereNumber('ticket');
+    Route::post('/ayuda/tickets/{ticket}/responder', [AyudaController::class, 'responderTicket'])->name('ayuda.tickets.responder')->whereNumber('ticket');
+    Route::post('/ayuda/tickets/{ticket}/escalar', [AyudaController::class, 'escalarTicket'])->name('ayuda.tickets.escalar')->whereNumber('ticket');
+    Route::patch('/ayuda/tickets/{ticket}/estado', [AyudaController::class, 'actualizarEstadoTicket'])->name('ayuda.tickets.estado')->whereNumber('ticket');
 
     // ── Confirmación de Contraseña (Re-autenticación para acciones críticas) ──
     Route::get('/confirm-password', [AuthController::class, 'showConfirmPassword'])->name('password.confirm');
@@ -166,6 +176,20 @@ Route::middleware('auth')->group(function () {
         Route::get('/bitacora', [BitacoraController::class, 'index'])->name('bitacora.index');
         Route::get('/bitacora/{bitacora}', [BitacoraController::class, 'show'])->name('bitacora.show')->whereNumber('bitacora');
     });
+
+    // ── Módulo Exclusivo del Super Administrador (Panel Superior, Auditorías Seguras & Gobernanza) ──
+    Route::middleware('super_admin')->prefix('superadmin')->name('superadmin.')->group(function () {
+        Route::get('/dashboard', [SuperAdminController::class, 'dashboard'])->name('dashboard');
+        Route::get('/usuarios', [SuperAdminController::class, 'usuarios'])->name('usuarios');
+        Route::post('/usuarios/{user}/auditar', [SuperAdminController::class, 'iniciarAuditoria'])->name('auditorias.iniciar')->whereNumber('user');
+        Route::get('/auditorias/historial', [SuperAdminController::class, 'historialAuditorias'])->name('auditorias.historial');
+        Route::post('/auditorias/{sesion}/revocar', [SuperAdminController::class, 'revocarAuditoria'])->name('auditorias.revocar')->whereNumber('sesion');
+        Route::get('/tickets', [SuperAdminController::class, 'tickets'])->name('tickets');
+        Route::post('/crear-superadmin', [SuperAdminController::class, 'guardarSuperAdmin'])->name('crear');
+    });
+
+    // Ruta de finalización de auditoría (accesible durante una sesión de impersonation)
+    Route::post('/superadmin/auditorias/finalizar', [SuperAdminController::class, 'finalizarAuditoria'])->name('superadmin.auditorias.finalizar');
 
     // ── Productos: índice visible para todos los usuarios autenticados ──
     Route::get('/productos', [ProductoController::class, 'index'])->name('productos.index');

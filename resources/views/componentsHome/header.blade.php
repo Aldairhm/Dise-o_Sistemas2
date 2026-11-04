@@ -19,7 +19,15 @@
                         <span>Inicio</span>
                     </a>
 
-                    @if(Auth::check() && Auth::user()->rol === 'admin')
+                    @if(Auth::check() && Auth::user()->isSuperAdmin())
+                    <!-- Acceso de Gobernanza Super Admin -->
+                    <a href="{{ route('superadmin.dashboard') }}" class="text-xs flex items-center gap-1.5 py-1.5 px-3 rounded-xl bg-indigo-50 border border-indigo-200 text-indigo-700 hover:bg-indigo-100 font-black transition-all shadow-sm">
+                        <i class="fas fa-shield-halved text-indigo-600"></i>
+                        <span>SUPER ADMIN</span>
+                    </a>
+                    @endif
+
+                    @if(Auth::check() && (Auth::user()->rol === 'admin' || Auth::user()->isSuperAdmin()))
                     <!-- 1. Grupo Ventas -->
                     <div class="nav-dropdown">
                         <button type="button" class="text-sm flex items-center gap-1.5 py-2 transition-colors focus:outline-none cursor-pointer {{ request()->routeIs('ventas.*') || request()->routeIs('devoluciones.*') ? 'text-blue-600 font-bold' : 'text-gray-600 hover:text-blue-600 font-medium' }}">
@@ -247,6 +255,11 @@
                         <span>Productos</span>
                     </a>
                     @endif
+                                    @auth
+                        <a href="{{ route('ayuda.index') }}" class="inline-flex items-center gap-2 text-sm font-semibold text-blue-700 hover:underline">
+                            <i class="fas fa-circle-question" aria-hidden="true"></i> Ayuda
+                        </a>
+                    @endauth
                 </nav>
 
                  <!-- Icons -->

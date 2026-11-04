@@ -66,11 +66,18 @@ class UserController extends Controller
      */
     public function store(Request $request)
     {
+        // Si el usuario a editar o crear es super_admin, o si se intenta asignar super_admin sin serlo:
+        $authUser = Auth::user();
+        $rolesPermitidos = ['admin', 'vendedor'];
+        if ($authUser->isSuperAdmin()) {
+            $rolesPermitidos[] = 'super_admin';
+        }
+
         $validated = $request->validate([
             'nombre_real' => ['required', 'string', 'max:255'],
             'telefono'    => ['nullable', 'string', 'regex:/^[267]\d{3}-\d{4}$/'],
             'username'    => ['required', 'string', 'email', 'max:255', Rule::unique('usuario', 'username')],
-            'rol'         => ['required', 'string', Rule::in(['admin', 'vendedor'])],
+            'rol'         => ['required', 'string', Rule::in($rolesPermitidos)],
             'estado'      => ['required', 'integer', Rule::in([0, 1])],
             'password'    => ['required', 'string', 'min:8', 'confirmed'],
         ], [
@@ -117,11 +124,25 @@ class UserController extends Controller
      */
     public function update(Request $request, User $user)
     {
+        // Seguridad: Un admin convencional NO puede modificar ni asignar el rol super_admin
+        $authUser = Auth::user();
+        if ($user->isSuperAdmin() && !$authUser->isSuperAdmin()) {
+            return response()->json([
+                'success' => false,
+                'message' => 'No tienes permisos para modificar una cuenta de Super Administrador.',
+            ], 403);
+        }
+
+        $rolesPermitidos = ['admin', 'vendedor'];
+        if ($authUser->isSuperAdmin()) {
+            $rolesPermitidos[] = 'super_admin';
+        }
+
         $validated = $request->validate([
             'nombre_real' => ['required', 'string', 'max:255'],
             'telefono'    => ['nullable', 'string', 'regex:/^[267]\d{3}-\d{4}$/'],
             'username'    => ['required', 'string', 'email', 'max:255', Rule::unique('usuario', 'username')->ignore($user->id)],
-            'rol'         => ['required', 'string', Rule::in(['admin', 'vendedor'])],
+            'rol'         => ['required', 'string', Rule::in($rolesPermitidos)],
             'estado'      => ['required', 'integer', Rule::in([0, 1])],
             'password'    => ['nullable', 'string', 'min:8', 'confirmed'],
         ], [
@@ -184,6 +205,14 @@ class UserController extends Controller
             ], 422);
         }
 
+        // Seguridad: Un admin no puede desactivar a un super_admin
+        if ($user->isSuperAdmin() && !Auth::user()->isSuperAdmin()) {
+            return response()->json([
+                'success' => false,
+                'message' => 'No tienes permisos para alterar el estado de un Super Administrador.',
+            ], 403);
+        }
+
         $estadoAnterior = $user->estado;
         $user->estado = $user->estado == 1 ? 0 : 1;
         $user->save();
@@ -217,6 +246,17 @@ class UserController extends Controller
                 ], 422);
             }
             return back()->with('error', 'No puedes eliminar tu propia cuenta.');
+        }
+
+        // Seguridad: Un admin no puede eliminar a un super_admin
+        if ($user->isSuperAdmin() && !Auth::user()->isSuperAdmin()) {
+            if ($request->ajax()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Acceso denegado: No puedes eliminar a un Super Administrador.',
+                ], 403);
+            }
+            return back()->with('error', 'Acceso denegado.');
         }
 
         $userName  = $user->nombre_real ?? $user->username;
