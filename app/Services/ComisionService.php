@@ -167,17 +167,11 @@ class ComisionService
         // Cargar relación de salida para detalle en el correo
         $comisiones->load('salida');
 
-        // Enviar correo de notificación al vendedor con el resumen de pago
-        try {
-            $vendedor = User::find($idVendedor);
-            if ($vendedor) {
-                $metodoMail = $comisiones->first()?->metodo_pago ?? $metodoPago;
-                Mail::to($vendedor->username)->send(
-                    new ComisionPagadaMail($vendedor, $comisiones, $metodoMail, $referenciaPago, $notas, $comprobantePath)
-                );
-            }
-        } catch (\Throwable $e) {
-            Log::error("Error al enviar correo de liquidación a vendedor ID {$idVendedor}: " . $e->getMessage());
+        // Enviar correo de notificación al vendedor mediante MailService unificado
+        $vendedor = User::find($idVendedor);
+        if ($vendedor) {
+            $metodoMail = $comisiones->first()?->metodo_pago ?? $metodoPago;
+            MailService::sendCommissionPaid($vendedor, $comisiones, $metodoMail, $referenciaPago, $notas, $comprobantePath);
         }
 
         return $comisiones->count();

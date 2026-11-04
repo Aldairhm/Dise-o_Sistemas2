@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Services\ActivityLogger;
+use App\Services\MailService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Cache;
@@ -248,17 +249,16 @@ class AuthController extends Controller
         $resetUrl = route('password.reset', ['token' => $token]);
         $expiresAt = now()->addMinutes(15)->format('d/m/Y H:i');
 
-        // Enviar el correo
-        $phpMailer = new \App\Services\PHPMailerService();
-        $mailResult = $phpMailer->sendResetPasswordEmail($user, $resetUrl, $expiresAt);
+        // Enviar el correo usando el MailService unificado
+        $resultado = MailService::sendPasswordReset($user, $resetUrl, $expiresAt);
 
         // Registrar en los logs de Laravel como respaldo
         \Illuminate\Support\Facades\Log::info("Enlace de recuperación generado para {$user->username}: {$resetUrl}");
 
-        if ($mailResult['success']) {
+        if ($resultado['success']) {
             return back()->with('status', 'Hemos enviado un correo electrónico a tu dirección con el enlace y las instrucciones para restablecer tu contraseña. Por favor, revisa tu bandeja de entrada.');
         } else {
-            return back()->withErrors(['username' => 'No se pudo enviar el correo: ' . $mailResult['message']]);
+            return back()->withErrors(['username' => 'No se pudo enviar el correo de recuperación: ' . ($resultado['message'] ?: 'Error en el servidor de correo.')]);
         }
     }
 
