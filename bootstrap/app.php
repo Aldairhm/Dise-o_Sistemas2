@@ -14,10 +14,12 @@ return Application::configure(basePath: dirname(__DIR__))
         // Evitar que el navegador cachee páginas protegidas (botón "atrás" post-logout)
         $middleware->web(append: [
             \App\Http\Middleware\PreventBackHistory::class,
+            \App\Http\Middleware\AuditoriaSesionMiddleware::class,
         ]);
 
         $middleware->alias([
-            'admin' => \App\Http\Middleware\AdminMiddleware::class,
+            'admin'       => \App\Http\Middleware\AdminMiddleware::class,
+            'super_admin' => \App\Http\Middleware\SuperAdminMiddleware::class,
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {

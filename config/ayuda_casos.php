@@ -89,6 +89,75 @@ return [
             'check' => 'Verifica el estado Pagada y la evidencia del pago. Las comisiones de ventas sin entregar o en garantía siguen fuera del saldo liquidable.',
         ],
     ],
+    'usuarios' => [
+        'Desactivar o reactivar un usuario' => [
+            'roles' => ['admin'],
+            'steps' => [
+                'Ubica al colaborador en la tabla de usuarios.',
+                'Haz clic en el interruptor de estado (Activo / Inactivo).',
+                'Confirma la acción cuando el sistema solicite validación.',
+            ],
+            'check' => 'Los usuarios inactivos perderán el acceso a la plataforma de inmediato sin perder su historial de ventas ni comisiones previas.',
+        ],
+        'Modificar rol o porcentaje de comisión' => [
+            'roles' => ['admin'],
+            'steps' => [
+                'Pulsa Editar en la fila del colaborador.',
+                'Ajusta el rol asignado o el porcentaje de comisión personalizado.',
+                'Guarda los cambios.',
+            ],
+            'check' => 'Las nuevas ventas procesadas por el vendedor tomarán el porcentaje de comisión actualizado.',
+        ],
+    ],
+    'bitacora' => [
+        'Comparar cambios con el visor Diff' => [
+            'roles' => ['admin'],
+            'steps' => [
+                'Identifica un evento con la etiqueta verde Diff (por ejemplo, CAMBIO_ESTADO o EDITAR).',
+                'Haz clic sobre el botón Diff.',
+                'Revisa el panel comparativo: a la izquierda verás los valores anteriores y a la derecha los nuevos valores guardados.',
+            ],
+            'check' => 'El modal te mostrará con exactitud los campos que sufrieron alteración en formato legible.',
+        ],
+        'Filtrar eventos por fecha o módulo' => [
+            'roles' => ['admin'],
+            'steps' => [
+                'Usa los desplegables del encabezado para elegir el módulo (ej. Ventas, Usuarios, Compras).',
+                'Opcionalmente ingresa un rango de fechas desde / hasta.',
+                'Pulsa Filtrar para actualizar la vista de la bitácora.',
+            ],
+            'check' => 'La tabla mostrará exclusivamente las actividades ocurridas en el periodo y contexto seleccionado.',
+        ],
+    ],
+    'backups' => [
+        'Descargar una copia de seguridad' => [
+            'roles' => ['admin'],
+            'steps' => [
+                'Localiza la copia que deseas respaldar en el historial de copias.',
+                'Haz clic en el botón de descarga con el icono de flecha.',
+                'Guarda el archivo en una unidad externa, disco secundario o nube segura.',
+            ],
+            'check' => 'Verifica que el archivo descargado se guarde en tu equipo y contenga el sufijo con la fecha y hora de creación.',
+        ],
+    ],
+    'atributos' => [
+        'Editar o renombrar un atributo' => [
+            'roles' => ['admin'],
+            'steps' => [
+                'En el listado de Atributos, ubica el atributo deseado.',
+                'Haz clic en Editar, modifica el nombre de la propiedad y confirma.',
+            ],
+            'check' => 'El nuevo nombre se reflejará automáticamente en las fichas técnicas y selector de variantes.',
+        ],
+        'Eliminar un atributo sin uso' => [
+            'roles' => ['admin'],
+            'steps' => [
+                'Verifica que el atributo no esté siendo utilizado en variantes activas con stock.',
+                'Haz clic en Eliminar y confirma el mensaje de advertencia.',
+            ],
+            'check' => 'El atributo se retirará del listado y ya no aparecerá como opción para nuevos productos.',
+        ],
+    ],
 ];
 
 
