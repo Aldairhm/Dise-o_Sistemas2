@@ -168,4 +168,36 @@ class SecurityAndHierarchyTest extends TestCase
         $ultimoLog = Bitacora::where('modulo', 'Auditoría y Seguridad')->latest('id')->first();
         $this->assertNotNull($ultimoLog);
     }
+
+    /** Test 7: Bloqueo de inicio de sesión cuando la cuenta está en auditoría activa */
+    public function test_login_is_blocked_when_account_is_under_active_audit(): void
+    {
+        // Aseguramos que no haya sesión previa
+        $this->flushSession();
+        auth()->logout();
+
+        // Creamos una sesión de auditoría activa en base de datos para el vendedor
+        $sesion = AuditoriaSesion::create([
+            'token_sesion'        => 'token_test_audit_' . rand(1000, 9999),
+            'id_super_admin'      => $this->superAdmin->id,
+            'id_usuario_auditado' => $this->vendedor->id,
+            'justificacion'       => 'Auditoría en curso de prueba',
+            'solo_lectura'        => true,
+            'estado'              => 'activa',
+            'iniciada_en'         => now(),
+            'expira_en'           => now()->addMinutes(15),
+        ]);
+
+        // Intentar iniciar sesión como el vendedor auditado
+        $response = $this->post(route('login.post'), [
+            'username' => $this->vendedor->username,
+            'password' => 'Password2026!',
+        ]);
+
+        // Debe rebotar con alerta swal_warning informando que la cuenta está en auditoría
+        $response->assertSessionHas('swal_warning');
+
+        // Limpiar sesión de auditoría de prueba
+        $sesion->delete();
+    }
 }

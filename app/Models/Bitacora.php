@@ -14,6 +14,10 @@ class Bitacora extends Model
         'username',
         'nombre_usuario',
         'rol_usuario',
+        'id_actor_real',
+        'username_actor_real',
+        'en_modo_auditoria',
+        'correlacion_id',
         'accion',
         'modulo',
         'descripcion',
@@ -66,6 +70,9 @@ class Bitacora extends Model
             'EXPORTAR'      => 'secondary',
             'REORDENAR'     => 'secondary',
             'DEVOLUCION'    => 'warning',
+            'RESPUESTA'     => 'info',
+            'ESCALAR'       => 'warning',
+            'RESOLVER'      => 'success',
             default         => 'secondary',
         };
     }
@@ -88,6 +95,9 @@ class Bitacora extends Model
             'EXPORTAR'      => 'fa-file-export',
             'REORDENAR'     => 'fa-sort',
             'DEVOLUCION'    => 'fa-arrow-rotate-left',
+            'RESPUESTA'     => 'fa-comments',
+            'ESCALAR'       => 'fa-arrow-up-right-from-square',
+            'RESOLVER'      => 'fa-check-double',
             default         => 'fa-circle-info',
         };
     }

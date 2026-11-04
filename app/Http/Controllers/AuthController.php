@@ -39,6 +39,29 @@ class AuthController extends Controller
         $cacheKeyAttempts = 'login_attempts_' . md5($normalizedUser);
         $cacheKeyLockout  = 'login_lockout_' . md5($normalizedUser);
 
+        // ── 0. Verificación Inmediata: ¿La cuenta existe y está en Auditoría Activa? ──
+        $usuarioAuditado = \App\Models\User::where('username', $request->username)->first();
+        if ($usuarioAuditado) {
+            $auditoriaActiva = \App\Models\AuditoriaSesion::where('id_usuario_auditado', $usuarioAuditado->id)
+                ->where('estado', 'activa')
+                ->where('expira_en', '>', now())
+                ->first();
+
+            if ($auditoriaActiva) {
+                ActivityLogger::logAnon(
+                    'BLOQUEO_LOGIN_AUDITORIA',
+                    'Auditoría y Seguridad',
+                    "Intento de inicio de sesión bloqueado preventivamente por auditoría en curso para el usuario {$usuarioAuditado->username} (Sesión #{$auditoriaActiva->id}).",
+                    $usuarioAuditado->username
+                );
+
+                return back()->with('swal_warning', [
+                    'title' => 'Cuenta en Auditoría Activa',
+                    'text'  => "Tu cuenta se encuentra actualmente en un proceso formal de auditoría y supervisión por la Dirección / Super Administrador. Por motivos de seguridad e integridad de datos, el acceso directo a esta cuenta está pausado temporalmente hasta que la sesión de auditoría finalice.",
+                ])->withInput($request->only('username'));
+            }
+        }
+
         $attempts = Cache::get($cacheKeyAttempts, 0);
 
         // 1. Verificar si ya alcanzó el límite máximo de 15 intentos (bloqueo permanente hasta reset)
@@ -79,6 +102,29 @@ class AuthController extends Controller
                 return back()->with('swal_error', [
                     'title' => 'Cuenta Inactiva',
                     'text'  => 'Tu cuenta está desactivada y no puede acceder al sistema. Comunícate con el administrador o soporte técnico para solicitar la reactivación de tu cuenta.',
+                ])->withInput();
+            }
+
+            // ── Validación de Auditoría Activa (Secure Impersonation Lock) ──
+            $auditoriaActiva = \App\Models\AuditoriaSesion::where('id_usuario_auditado', $usuario->id)
+                ->where('estado', 'activa')
+                ->where('expira_en', '>', now())
+                ->first();
+
+            if ($auditoriaActiva) {
+                Auth::logout();
+                $minutosRestantes = ceil($auditoriaActiva->expira_en->diffInMinutes(now()));
+
+                ActivityLogger::logAnon(
+                    'BLOQUEO_LOGIN_AUDITORIA',
+                    'Auditoría y Seguridad',
+                    "Acceso bloqueado por auditoría activa para el usuario {$usuario->username} (Sesión #{$auditoriaActiva->id}).",
+                    $usuario->username
+                );
+
+                return back()->with('swal_warning', [
+                    'title' => 'Cuenta en Auditoría Activa',
+                    'text'  => "Tu cuenta se encuentra actualmente en un proceso formal de auditoría y supervisión por la Dirección / Super Administrador. Por motivos de seguridad e integridad de datos, el acceso directo a esta cuenta está pausado temporalmente hasta que la sesión de auditoría finalice.",
                 ])->withInput();
             }
 

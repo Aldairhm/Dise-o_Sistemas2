@@ -28,18 +28,22 @@
 
             <!-- Acciones según Rol -->
             <div class="flex flex-wrap items-center gap-2">
-                @if(Auth::user()->isAdmin() && $ticket->estado !== 'Escalada' && $ticket->estado !== 'Resuelta' && $ticket->estado !== 'Cerrada')
+                @if(Auth::user()->isAdmin() && !in_array($ticket->estado, ['Escalada', 'Resuelta', 'Cancelada']))
                     <button type="button" onclick="document.getElementById('modalEscalar').classList.remove('hidden')" class="px-4 py-2 rounded-xl text-xs font-bold bg-amber-500 hover:bg-amber-600 text-white transition-colors shadow-sm flex items-center gap-1.5">
                         <i class="fas fa-arrow-up-right-from-square"></i>
                         <span>Escalar a Super Admin</span>
                     </button>
                 @endif
 
-                @if(Auth::user()->isAdmin() || Auth::user()->isSuperAdmin() || (Auth::user()->isVendedor() && in_array($ticket->estado, ['Resuelta', 'Cerrada'])))
+                @if(!in_array($ticket->estado, ['Resuelta', 'Cancelada']) || Auth::user()->isSuperAdmin())
                     <button type="button" onclick="document.getElementById('modalCambiarEstado').classList.remove('hidden')" class="px-4 py-2 rounded-xl text-xs font-bold bg-slate-800 hover:bg-slate-700 text-white transition-colors shadow-sm flex items-center gap-1.5">
                         <i class="fas fa-sliders"></i>
                         <span>Cambiar Estado</span>
                     </button>
+                @else
+                    <span class="px-3 py-1.5 rounded-xl text-xs font-bold bg-slate-100 text-slate-500 border border-slate-200">
+                        <i class="fas fa-lock mr-1 text-slate-400"></i> Estado Definitivo
+                    </span>
                 @endif
             </div>
         </div>
@@ -97,10 +101,11 @@
             </div>
 
             <div class="p-6 space-y-4 max-h-[600px] overflow-y-auto">
-                @foreach($mensajes as $msg)
+                @foreach($mensajes as $index => $msg)
                     @php
                         $esMio = $msg->id_usuario === Auth::id();
                         $esInterno = $msg->tipo_mensaje === 'interno_admin';
+                        $esPrimerMensaje = ($index === 0);
                     @endphp
                     <div class="flex flex-col {{ $esMio ? 'items-end' : 'items-start' }}">
                         <div class="max-w-xl rounded-2xl p-4 text-xs shadow-sm {{ $esInterno ? 'bg-amber-50 border border-amber-200 text-amber-950' : ($esMio ? 'bg-blue-600 text-white' : 'bg-slate-100 text-slate-800') }}">
@@ -112,9 +117,29 @@
                                             NOTA INTERNA
                                         </span>
                                     @endif
+                                    @if($esPrimerMensaje)
+                                        <span class="ml-1 px-1.5 py-0.5 rounded {{ $esMio ? 'bg-white/20 text-white' : 'bg-emerald-100 text-emerald-800' }} font-bold">
+                                            Ticket Apertura
+                                        </span>
+                                    @endif
                                 </span>
                                 <span class="font-mono">{{ $msg->created_at->format('d/m/Y H:i') }}</span>
                             </div>
+
+                            @if($esPrimerMensaje)
+                                <!-- Tarjeta de Contexto Rápido del Ticket -->
+                                <div class="my-2 p-2.5 rounded-xl {{ $esMio ? 'bg-white/10 border border-white/20' : 'bg-white border border-slate-200' }} grid grid-cols-2 gap-2 text-[11px]">
+                                    <div>
+                                        <span class="{{ $esMio ? 'text-blue-200' : 'text-slate-400' }} block text-[10px] uppercase font-bold">Módulo:</span>
+                                        <span class="font-bold {{ $esMio ? 'text-white' : 'text-slate-800' }}">{{ $ticket->modulo }}</span>
+                                    </div>
+                                    <div>
+                                        <span class="{{ $esMio ? 'text-blue-200' : 'text-slate-400' }} block text-[10px] uppercase font-bold">Motivo / Tipo:</span>
+                                        <span class="font-bold {{ $esMio ? 'text-white' : 'text-slate-800' }}">{{ $ticket->tipo_consulta }}</span>
+                                    </div>
+                                </div>
+                            @endif
+
                             <p class="leading-relaxed whitespace-pre-line">{{ $msg->mensaje }}</p>
                             
                             @if($msg->evidencia_url)
@@ -129,8 +154,8 @@
                 @endforeach
             </div>
 
-            <!-- Formulario de Respuesta -->
-            @if($ticket->estado !== 'Cerrada' || Auth::user()->isSuperAdmin())
+            <!-- Formulario de Respuesta o Aviso de Ticket Cerrado -->
+            @if(!in_array($ticket->estado, ['Resuelta', 'Cancelada']))
                 <form method="POST" action="{{ route('ayuda.tickets.responder', $ticket->id) }}" class="p-5 bg-slate-50 border-t border-slate-200 space-y-3">
                     @csrf
                     <div>
@@ -153,9 +178,22 @@
                         </button>
                     </div>
                 </form>
+            @elseif($ticket->estado === 'Resuelta')
+                <div class="p-5 bg-emerald-50/70 border-t border-emerald-100 flex items-center justify-between gap-3 text-xs">
+                    <div class="flex items-center gap-2.5 text-emerald-900">
+                        <span class="w-8 h-8 rounded-xl bg-emerald-100 text-emerald-600 flex items-center justify-center text-sm font-bold shrink-0">
+                            <i class="fas fa-lock"></i>
+                        </span>
+                        <div>
+                            <span class="font-bold text-sm block">Ticket Resuelto</span>
+                            <span class="text-emerald-700 text-[11px]">Esta duda ha sido resuelta satisfactoriamente y su estado se encuentra cerrado de forma definitiva.</span>
+                        </div>
+                    </div>
+                </div>
             @else
-                <div class="p-4 bg-slate-100 text-center text-xs text-slate-500 font-medium">
-                    Este ticket se encuentra cerrado. Puedes reabrirlo cambiando su estado si el problema persiste.
+                <div class="p-4 bg-slate-100 text-center text-xs text-slate-500 font-medium border-t border-slate-200">
+                    <i class="fas fa-ban mr-1.5 text-slate-400"></i>
+                    Este ticket se encuentra cancelado. Puedes reactivarlo cambiando su estado a 'En proceso' si es necesario.
                 </div>
             @endif
         </div>

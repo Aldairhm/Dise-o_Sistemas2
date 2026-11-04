@@ -44,16 +44,13 @@ class SoporteTicket extends Model
         'updated_at'       => 'datetime',
     ];
 
-    // Transiciones válidas de estado según la jerarquía
+    // Estados esenciales y claros del ciclo de vida del ticket
     public const ESTADOS = [
         'Pendiente',
-        'Asignada',
         'En proceso',
-        'Esperando respuesta',
         'Escalada',
         'Resuelta',
-        'Cerrada',
-        'Reabierta',
+        'Cancelada',
     ];
 
     public const PRIORIDADES = [
@@ -112,35 +109,36 @@ class SoporteTicket extends Model
             return true;
         }
 
-        // SUPER_ADMIN tiene facultad de supervisión y puede reajustar cualquier estado
+        // Regla estricta: si el ticket ya está en estado Resuelta o Cancelada, su estado es DEFINITIVO y no se permite cambiar
+        if (in_array($this->estado, ['Resuelta', 'Cancelada'], true) && !$usuario->isSuperAdmin()) {
+            return false;
+        }
+
+        // SUPER_ADMIN tiene facultad de supervisión global
         if ($usuario->isSuperAdmin()) {
             return true;
         }
 
-        // Si es vendedor: solo puede reabrir si estaba resuelta o cerrada, o cerrar voluntariamente
+        // Si es vendedor: solo puede cancelar su propio ticket si está en Pendiente o En proceso
         if ($usuario->isVendedor()) {
             if ($this->id_usuario !== $usuario->id) {
                 return false;
             }
-            if ($nuevoEstado === 'Reabierta' && in_array($this->estado, ['Resuelta', 'Cerrada'])) {
-                return true;
-            }
-            if ($nuevoEstado === 'Cerrada' && in_array($this->estado, ['Resuelta', 'En proceso'])) {
+            if ($nuevoEstado === 'Cancelada' && in_array($this->estado, ['Pendiente', 'En proceso'])) {
                 return true;
             }
             return false;
         }
 
-        // Si es admin: puede gestionar el flujo normal
+        // Si es admin: gestiona el ciclo de vida de tickets activos
         $transicionesValidas = [
-            'Pendiente'           => ['Asignada', 'En proceso', 'Esperando respuesta', 'Escalada', 'Resuelta', 'Cerrada'],
-            'Asignada'            => ['En proceso', 'Esperando respuesta', 'Escalada', 'Resuelta', 'Cerrada'],
-            'En proceso'          => ['Esperando respuesta', 'Escalada', 'Resuelta', 'Cerrada'],
-            'Esperando respuesta' => ['En proceso', 'Resuelta', 'Cerrada'],
-            'Escalada'            => ['En proceso', 'Resuelta'], // Admin puede retomar si super admin responde
-            'Resuelta'            => ['Cerrada', 'Reabierta'],
-            'Cerrada'             => ['Reabierta'],
-            'Reabierta'           => ['En proceso', 'Esperando respuesta', 'Escalada', 'Resuelta'],
+            'Pendiente'  => ['En proceso', 'Escalada', 'Resuelta', 'Cancelada'],
+            'En proceso' => ['Escalada', 'Resuelta', 'Cancelada'],
+            'Escalada'   => ['En proceso', 'Resuelta', 'Cancelada'],
+            // Compatibilidad transitoria con registros antiguos que no eran Resuelta/Cancelada
+            'Asignada'            => ['En proceso', 'Resuelta', 'Cancelada'],
+            'Esperando respuesta' => ['En proceso', 'Resuelta', 'Cancelada'],
+            'Reabierta'           => ['En proceso', 'Resuelta', 'Cancelada'],
         ];
 
         return in_array($nuevoEstado, $transicionesValidas[$this->estado] ?? []);

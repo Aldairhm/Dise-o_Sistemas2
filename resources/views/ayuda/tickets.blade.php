@@ -37,6 +37,7 @@
                     'todos'      => ['label' => 'Todos',       'badge_bg' => 'bg-slate-100',   'badge_fg' => 'text-slate-700'],
                     'Pendiente'  => ['label' => 'Pendientes',  'badge_bg' => 'bg-amber-100',   'badge_fg' => 'text-amber-800'],
                     'En proceso' => ['label' => 'En proceso',  'badge_bg' => 'bg-blue-100',    'badge_fg' => 'text-blue-800'],
+                    'Escalada'   => ['label' => 'Escaladas',   'badge_bg' => 'bg-purple-100',  'badge_fg' => 'text-purple-800'],
                     'Resuelta'   => ['label' => 'Resueltas',   'badge_bg' => 'bg-emerald-100', 'badge_fg' => 'text-emerald-800'],
                     'Cancelada'  => ['label' => 'Canceladas',  'badge_bg' => 'bg-rose-100',    'badge_fg' => 'text-rose-800'],
                 ];
@@ -174,12 +175,13 @@
                                         $badgeStyles = [
                                             'Pendiente'  => 'bg-amber-50 text-amber-700 border-amber-200',
                                             'En proceso' => 'bg-blue-50 text-blue-700 border-blue-200',
+                                            'Escalada'   => 'bg-purple-50 text-purple-700 border-purple-200',
                                             'Resuelta'   => 'bg-emerald-50 text-emerald-700 border-emerald-200',
                                             'Cancelada'  => 'bg-rose-50 text-rose-700 border-rose-200',
                                         ];
                                     @endphp
                                     <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider border {{ $badgeStyles[$ticket->estado] ?? 'bg-slate-50 text-slate-700 border-slate-200' }}">
-                                        <span class="w-1.5 h-1.5 rounded-full {{ $ticket->estado === 'Resuelta' ? 'bg-emerald-500' : ($ticket->estado === 'Pendiente' ? 'bg-amber-500' : ($ticket->estado === 'En proceso' ? 'bg-blue-500' : 'bg-rose-500')) }}"></span>
+                                        <span class="w-1.5 h-1.5 rounded-full {{ $ticket->estado === 'Resuelta' ? 'bg-emerald-500' : ($ticket->estado === 'Pendiente' ? 'bg-amber-500' : ($ticket->estado === 'En proceso' ? 'bg-blue-500' : ($ticket->estado === 'Escalada' ? 'bg-purple-500' : 'bg-rose-500'))) }}"></span>
                                         {{ $ticket->estado }}
                                     </span>
                                 </td>
@@ -193,13 +195,17 @@
                                             <span>Hilo</span>
                                         </a>
 
-                                        @if (auth()->user()->isAdmin() || auth()->user()->isSuperAdmin())
+                                        @if ((auth()->user()->isAdmin() || auth()->user()->isSuperAdmin()) && (!in_array($ticket->estado, ['Resuelta', 'Cancelada']) || auth()->user()->isSuperAdmin()))
                                             <button type="button"
                                                     onclick='abrirModalGestion(@json($ticket))'
                                                     class="px-2.5 py-1 rounded-lg text-xs font-bold text-slate-700 bg-slate-100 hover:bg-slate-200 transition-colors cursor-pointer">
                                                 <i class="fas fa-sliders mr-1 text-slate-400"></i>
                                                 Gestionar
                                             </button>
+                                        @else
+                                            <span class="px-2 py-1 rounded-lg text-[10px] font-bold text-slate-400 bg-slate-50 border border-slate-100">
+                                                <i class="fas fa-lock mr-0.5"></i> Cerrado
+                                            </span>
                                         @endif
                                     </div>
                                 </td>
@@ -248,6 +254,7 @@
                     <select id="gestionEstadoSelect" class="w-full text-xs rounded-xl border border-slate-300 px-3 py-2 text-slate-700 focus:outline-none focus:ring-2 focus:ring-slate-300">
                         <option value="Pendiente">Pendiente</option>
                         <option value="En proceso">En proceso</option>
+                        <option value="Escalada">Escalada</option>
                         <option value="Resuelta">Resuelta</option>
                         <option value="Cancelada">Cancelada</option>
                     </select>
@@ -326,13 +333,32 @@
 
                 const data = await response.json();
                 if (data.success) {
-                    window.location.reload();
+                    Swal.fire({
+                        icon: 'success',
+                        title: '¡Estado Actualizado!',
+                        text: data.message || 'El ticket ha sido modificado correctamente.',
+                        timer: 1600,
+                        showConfirmButton: false
+                    }).then(() => {
+                        window.location.reload();
+                    });
                 } else {
-                    alert(data.message || 'Error al actualizar el ticket');
+                    Swal.fire({
+                        icon: 'warning',
+                        title: 'Transición No Permitida',
+                        text: data.message || 'No se pudo actualizar el ticket.',
+                        confirmButtonColor: '#1e293b',
+                        confirmButtonText: 'Entendido'
+                    });
                 }
             } catch (err) {
                 console.error(err);
-                alert('Ocurrió un error al procesar la solicitud.');
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Error de Servidor',
+                    text: 'Ocurrió un error al procesar la solicitud.',
+                    confirmButtonColor: '#1e293b'
+                });
             } finally {
                 btn.disabled = false;
                 btn.innerHTML = 'Guardar Cambios';

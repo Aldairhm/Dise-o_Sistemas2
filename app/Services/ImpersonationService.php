@@ -93,20 +93,32 @@ class ImpersonationService
         $superAdmin = User::find($superAdminId);
         $targetUser = Auth::user();
 
+        // Registrar en bitácora antes de olvidar sesión o pasando correlacion_id
+        if ($superAdmin && $targetUser) {
+            try {
+                \App\Models\Bitacora::create([
+                    'id_usuario'          => $targetUser->id,
+                    'username'            => $targetUser->username,
+                    'nombre_usuario'      => $targetUser->nombre_real,
+                    'rol_usuario'         => $targetUser->rol,
+                    'id_actor_real'       => $superAdmin->id,
+                    'username_actor_real' => $superAdmin->username,
+                    'en_modo_auditoria'   => true,
+                    'correlacion_id'      => $token,
+                    'accion'              => 'FIN_AUDITORIA',
+                    'modulo'              => 'Auditoría y Seguridad',
+                    'descripcion'         => "El Super Administrador {$superAdmin->nombre_real} finalizó la sesión de auditoría de la cuenta {$targetUser->nombre_real} ({$targetUser->username}).",
+                    'ip_address'          => Request::ip(),
+                    'user_agent'          => substr(Request::userAgent() ?? '', 0, 255),
+                    'created_at'          => now(),
+                ]);
+            } catch (\Throwable $e) {
+                \Illuminate\Support\Facades\Log::error('Error registrando FIN_AUDITORIA: ' . $e->getMessage());
+            }
+        }
+
         // Limpiar tokens de auditoría
         Session::forget(['auditoria_token', 'auditoria_actor_real_id', 'auditoria_target_id', 'auditoria_solo_lectura']);
-
-        // Registrar en bitácora
-        if ($superAdmin && $targetUser) {
-            ActivityLogger::log(
-                'FIN_AUDITORIA',
-                'Auditoría y Seguridad',
-                "El Super Administrador {$superAdmin->nombre_real} finalizó la sesión de auditoría de la cuenta {$targetUser->nombre_real} ({$targetUser->username}).",
-                null,
-                null,
-                $superAdmin->id
-            );
-        }
 
         // Restaurar login del Super Admin
         if ($superAdmin) {
@@ -127,11 +139,26 @@ class ImpersonationService
             'notas_cierre'  => "Revocada: {$motivo}",
         ]);
 
-        ActivityLogger::log(
-            'REVOCAR_AUDITORIA',
-            'Auditoría y Seguridad',
-            "Se revocó la sesión de auditoría #{$sesion->id}. Motivo: {$motivo}"
-        );
+        try {
+            \App\Models\Bitacora::create([
+                'id_usuario'          => $sesion->id_usuario_auditado,
+                'username'            => $sesion->usuarioAuditado?->username,
+                'nombre_usuario'      => $sesion->usuarioAuditado?->nombre_real,
+                'rol_usuario'         => $sesion->usuarioAuditado?->rol,
+                'id_actor_real'       => Auth::id(),
+                'username_actor_real' => Auth::user()?->username,
+                'en_modo_auditoria'   => false,
+                'correlacion_id'      => $sesion->token_sesion,
+                'accion'              => 'REVOCAR_AUDITORIA',
+                'modulo'              => 'Auditoría y Seguridad',
+                'descripcion'         => "Se revocó la sesión de auditoría #{$sesion->id}. Motivo: {$motivo}",
+                'ip_address'          => Request::ip(),
+                'user_agent'          => substr(Request::userAgent() ?? '', 0, 255),
+                'created_at'          => now(),
+            ]);
+        } catch (\Throwable $e) {
+            \Illuminate\Support\Facades\Log::error('Error registrando REVOCAR_AUDITORIA: ' . $e->getMessage());
+        }
     }
 }
 

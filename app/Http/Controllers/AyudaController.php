@@ -23,9 +23,20 @@ class AyudaController extends Controller
         $user = $request->user();
         $role = $user ? $user->rol : 'vendedor';
 
-        // Si no es admin ni super_admin, limitar módulos según rol
+        // Si no es admin ni super_admin, limitar módulos según rol (el vendedor solo ve guías acordes a su labor)
         if ($role !== 'admin' && $role !== 'super_admin') {
-            unset($guides['inventario'], $guides['devolucion'], $guides['categorias'], $guides['compras'], $guides['proveedores'], $guides['variantes']);
+            unset(
+                $guides['inventario'],
+                $guides['devolucion'],
+                $guides['categorias'],
+                $guides['compras'],
+                $guides['proveedores'],
+                $guides['variantes'],
+                $guides['usuarios'],
+                $guides['bitacora'],
+                $guides['backups'],
+                $guides['atributos']
+            );
         }
 
         foreach ($guides as $key => &$item) {
@@ -137,13 +148,23 @@ class AyudaController extends Controller
             'nivel_escalamiento' => $nivelDestino,
         ]);
 
-        // Guardar mensaje inicial en el hilo
+        // Guardar mensaje inicial estructurado en el hilo con el formato y contexto idéntico al ticket de WhatsApp
+        $separador = '────────────────────────────────────────────';
+        $mensajeInicial = "📋 CONSULTA INICIAL DE SOPORTE\n" .
+                          "{$separador}\n" .
+                          "• Módulo: {$ticket->modulo}\n" .
+                          "• Tipo/Motivo: {$ticket->tipo_consulta}\n" .
+                          "• Prioridad: {$ticket->prioridad}\n" .
+                          "{$separador}\n" .
+                          "DETALLE DE LA DUDA:\n" .
+                          "{$dudaTexto}";
+
         SoporteTicketMensaje::create([
             'id_ticket'      => $ticket->id,
             'id_usuario'     => $user->id,
             'nombre_usuario' => $user->nombre_real ?? $user->username,
             'rol_usuario'    => $user->rol,
-            'mensaje'        => $dudaTexto,
+            'mensaje'        => $mensajeInicial,
             'evidencia_url'  => $validated['evidencia_url'] ?? null,
             'tipo_mensaje'   => 'publico',
         ]);
@@ -164,10 +185,14 @@ class AyudaController extends Controller
             "Se registró el ticket de soporte #{$ticket->codigo_ticket} sobre '{$ticket->modulo}' por {$ticket->nombre_usuario} [Nivel: {$nivelDestino}].",
             null,
             [
-                'codigo'    => $ticket->codigo_ticket,
-                'modulo'    => $ticket->modulo,
-                'prioridad' => $ticket->prioridad,
-                'estado'    => $ticket->estado,
+                'codigo'             => $ticket->codigo_ticket,
+                'modulo'             => $ticket->modulo,
+                'tipo_consulta'      => $ticket->tipo_consulta,
+                'prioridad'          => $ticket->prioridad,
+                'estado'             => $ticket->estado,
+                'nivel_escalamiento' => $ticket->nivel_escalamiento,
+                'duda'               => Str::limit($ticket->duda, 250),
+                'evidencia'          => $ticket->evidencia_url ? 'Sí (adjunta)' : 'No',
             ]
         );
 
@@ -245,13 +270,12 @@ class AyudaController extends Controller
         }
 
         $conteoEstados = [
-            'todos'               => (clone $baseCounts)->count(),
-            'Pendiente'           => (clone $baseCounts)->where('estado', 'Pendiente')->count(),
-            'En proceso'          => (clone $baseCounts)->where('estado', 'En proceso')->count(),
-            'Esperando respuesta' => (clone $baseCounts)->where('estado', 'Esperando respuesta')->count(),
-            'Escalada'            => (clone $baseCounts)->where('estado', 'Escalada')->count(),
-            'Resuelta'            => (clone $baseCounts)->where('estado', 'Resuelta')->count(),
-            'Cerrada'             => (clone $baseCounts)->where('estado', 'Cerrada')->count(),
+            'todos'      => (clone $baseCounts)->count(),
+            'Pendiente'  => (clone $baseCounts)->where('estado', 'Pendiente')->count(),
+            'En proceso' => (clone $baseCounts)->where('estado', 'En proceso')->count(),
+            'Escalada'   => (clone $baseCounts)->where('estado', 'Escalada')->count(),
+            'Resuelta'   => (clone $baseCounts)->where('estado', 'Resuelta')->count(),
+            'Cancelada'  => (clone $baseCounts)->where('estado', 'Cancelada')->count(),
         ];
 
         $tickets = $query->paginate(15)->withQueryString();
@@ -296,6 +320,15 @@ class AyudaController extends Controller
     {
         $user = Auth::user();
 
+        // Si el ticket ya está en estado Resuelta o Cancelada, no se permiten más mensajes
+        if ($ticket->estado === 'Resuelta') {
+            return back()->with('error', 'Este ticket ya fue resuelto y se encuentra cerrado. Para continuar la consulta, cambia su estado a "En proceso".');
+        }
+
+        if ($ticket->estado === 'Cancelada') {
+            return back()->with('error', 'Este ticket se encuentra cancelado.');
+        }
+
         // Validar acceso
         if ($user->isVendedor() && $ticket->id_usuario !== $user->id) {
             abort(403, 'No autorizado.');
@@ -324,20 +357,24 @@ class AyudaController extends Controller
         ]);
 
         // Ajustar estado según quién respondió
-        if ($user->isVendedor()) {
-            if ($ticket->estado === 'Esperando respuesta') {
-                $ticket->update(['estado' => 'En proceso']);
-            }
-        } elseif ($user->isAdmin() || $user->isSuperAdmin()) {
+        if ($user->isAdmin() || $user->isSuperAdmin()) {
             if ($ticket->estado === 'Pendiente') {
                 $ticket->update(['estado' => 'En proceso', 'id_asignado' => $user->id]);
             }
         }
 
         ActivityLogger::log(
-            'RESPUESTA_TICKET',
+            'RESPUESTA',
             'Soporte',
-            "{$user->nombre_real} respondió en el ticket #{$ticket->codigo_ticket} ({$tipoMensaje})."
+            "{$user->nombre_real} ({$user->rol}) agregó una " . ($tipoMensaje === 'interno_admin' ? 'nota interna privada' : 'respuesta pública') . " en el ticket #{$ticket->codigo_ticket}.",
+            null,
+            [
+                'codigo_ticket' => $ticket->codigo_ticket,
+                'modulo'        => $ticket->modulo,
+                'tipo_mensaje'  => $tipoMensaje,
+                'mensaje'       => Str::limit($mensaje->mensaje, 200),
+                'evidencia'     => $mensaje->evidencia_url ? 'Sí' : 'No',
+            ]
         );
 
         return back()->with('success', 'Respuesta registrada correctamente.');
@@ -389,9 +426,19 @@ class AyudaController extends Controller
         ]);
 
         ActivityLogger::log(
-            'ESCALAMIENTO_TICKET',
+            'ESCALAR',
             'Soporte',
-            "El ticket #{$ticket->codigo_ticket} fue escalado al Super Administrador por {$user->nombre_real}."
+            "El ticket #{$ticket->codigo_ticket} fue escalado al Super Administrador por {$user->nombre_real}.",
+            [
+                'estado'             => $estadoAnterior,
+                'nivel_escalamiento' => 'admin',
+            ],
+            [
+                'estado'                     => 'Escalada',
+                'nivel_escalamiento'         => 'super_admin',
+                'escalado_por'               => $user->nombre_real,
+                'justificacion_escalamiento' => $request->justificacion,
+            ]
         );
 
         return back()->with('success', 'El caso ha sido escalado exitosamente al Super Administrador.');
@@ -430,9 +477,6 @@ class AyudaController extends Controller
         if ($nuevoEstado === 'Resuelta') {
             $ticket->resuelto_por = $user->id;
             $ticket->fecha_resolucion = now();
-        }
-
-        if ($nuevoEstado === 'Cerrada') {
             $ticket->fecha_cerrado = now();
         }
 
@@ -447,12 +491,15 @@ class AyudaController extends Controller
             'motivo'          => $validated['motivo'] ?? ($ticket->resolucion ?? 'Cambio de estado operativo'),
         ]);
 
-        // ── Registro en Bitácora con Diff ──
+        // ── Registro en Bitácora con Diff Detallado ──
         ActivityLogger::log(
-            'CAMBIO_ESTADO',
+            $nuevoEstado === 'Resuelta' ? 'RESOLVER' : 'CAMBIO_ESTADO',
             'Soporte',
-            "Ticket de soporte #{$ticket->codigo_ticket} cambió de estado: '{$estadoAnterior}' → '{$nuevoEstado}'.",
-            ['estado' => $estadoAnterior],
+            "Ticket de soporte #{$ticket->codigo_ticket} cambió de estado: '{$estadoAnterior}' → '{$nuevoEstado}'." . ($ticket->resolucion ? " Resolución: {$ticket->resolucion}" : ''),
+            [
+                'estado'     => $estadoAnterior,
+                'resolucion' => $estadoAnterior === 'Resuelta' ? $ticket->resolucion : null,
+            ],
             [
                 'estado'           => $nuevoEstado,
                 'resolucion'       => $ticket->resolucion,

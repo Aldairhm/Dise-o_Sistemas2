@@ -36,31 +36,33 @@
 
 <body class="bg-gray-50 text-gray-800 antialiased min-h-screen flex flex-col" style="font-family: 'Inter', sans-serif;">
 
-    {{-- Banner de Notificación Permanente de MODO AUDITORÍA (Secure Impersonation) --}}
+    {{-- Barra Sutil de MODO AUDITORÍA (Estilo nativo AXStore) --}}
     @if(session()->has('auditoria_token'))
-        <div class="bg-purple-900 text-white px-4 py-2.5 shadow-md sticky top-0 z-[60] border-b border-purple-800 flex flex-wrap items-center justify-between text-xs font-semibold gap-3">
-            <div class="flex items-center gap-2.5">
-                <span class="w-2.5 h-2.5 rounded-full bg-amber-400 animate-ping"></span>
-                <span class="bg-purple-800 px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider text-purple-200">
-                    Modo Auditoría · Cuenta Supervisada
-                </span>
-                <span>
-                    Estás auditando la cuenta de: <strong class="underline decoration-purple-400">{{ Auth::user()->nombre_real }}</strong> ({{ Auth::user()->username }})
-                </span>
-                @if(session('auditoria_solo_lectura', true))
-                    <span class="bg-amber-500/30 text-amber-300 border border-amber-400/40 px-2 py-0.5 rounded text-[10px] font-black">
-                        SOLO LECTURA
+        <div class="bg-slate-900 text-slate-200 border-b border-slate-800 text-xs py-2 px-4 shadow-sm relative z-[60]">
+            <div class="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-2.5">
+                <div class="flex flex-wrap items-center gap-2">
+                    <span class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md text-[10px] font-black uppercase tracking-wider bg-blue-500/20 text-blue-400 border border-blue-500/30">
+                        <span class="w-1.5 h-1.5 rounded-full bg-blue-400 animate-pulse"></span>
+                        Modo Auditoría
                     </span>
-                @endif
-            </div>
+                    <span class="text-slate-300 text-xs">
+                        Supervisando cuenta de: <strong class="text-white font-bold">{{ Auth::user()->nombre_real }}</strong> <span class="text-slate-400 font-mono text-[11px]">({{ Auth::user()->username }})</span>
+                    </span>
+                    @if(session('auditoria_solo_lectura', true))
+                        <span class="px-2 py-0.5 rounded text-[10px] font-bold bg-amber-500/10 text-amber-300 border border-amber-500/20">
+                            Solo Lectura
+                        </span>
+                    @endif
+                </div>
 
-            <form method="POST" action="{{ route('superadmin.auditorias.finalizar') }}" class="inline">
-                @csrf
-                <button type="submit" class="px-3.5 py-1.5 rounded-lg bg-rose-600 hover:bg-rose-700 text-white font-bold text-xs transition-colors shadow-sm flex items-center gap-1.5 cursor-pointer">
-                    <i class="fas fa-right-from-bracket"></i>
-                    <span>Finalizar Auditoría y Restaurar</span>
-                </button>
-            </form>
+                <form method="POST" action="{{ route('superadmin.auditorias.finalizar') }}" class="shrink-0 w-full sm:w-auto">
+                    @csrf
+                    <button type="submit" class="w-full sm:w-auto justify-center inline-flex items-center gap-1.5 px-3 py-1 rounded-lg bg-slate-800 hover:bg-rose-600 hover:text-white text-slate-300 border border-slate-700 hover:border-rose-600 font-bold text-xs transition-all shadow-sm cursor-pointer">
+                        <i class="fas fa-arrow-right-from-bracket text-[11px]"></i>
+                        <span>Salir de Auditoría</span>
+                    </button>
+                </form>
+            </div>
         </div>
     @endif
 

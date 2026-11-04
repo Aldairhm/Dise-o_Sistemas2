@@ -461,7 +461,13 @@
 
         async function enviarAWhatsapp() {
             if (subiendoFoto) {
-                alert('Espera un segundo mientras se termina de adjuntar la evidencia...');
+                Swal.fire({
+                    icon: 'info',
+                    title: 'Subiendo Evidencia',
+                    text: 'Espera un segundo mientras se termina de adjuntar la imagen...',
+                    timer: 2500,
+                    showConfirmButton: false
+                });
                 return;
             }
 

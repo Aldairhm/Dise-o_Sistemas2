@@ -79,6 +79,45 @@
             </div>
         </div>
 
+        <!-- ALERTA CONTEXTUAL DE TRAZABILIDAD DE AUDITORÍA -->
+        @if($sesionAuditoria)
+            <div class="mb-6 p-4 rounded-2xl bg-gradient-to-r from-blue-500/10 via-indigo-500/10 to-purple-500/10 border border-blue-200/80 shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-4">
+                <div class="flex items-start md:items-center gap-3">
+                    <div class="w-10 h-10 rounded-xl bg-blue-600 text-white flex items-center justify-center shrink-0 shadow-sm">
+                        <i class="fas fa-clipboard-check text-base"></i>
+                    </div>
+                    <div>
+                        <div class="flex items-center gap-2 flex-wrap">
+                            <span class="px-2 py-0.5 rounded-full text-[10px] font-black uppercase bg-blue-600 text-white tracking-wider">
+                                Trazabilidad de Auditoría
+                            </span>
+                            <span class="font-mono text-xs font-bold text-slate-800">
+                                #AUD-{{ str_pad($sesionAuditoria->id, 4, '0', STR_PAD_LEFT) }}
+                            </span>
+                            <span class="text-xs text-slate-400">•</span>
+                            <span class="text-xs font-medium text-slate-600">
+                                Cuenta auditada: <strong>{{ $sesionAuditoria->usuarioAuditado?->nombre_real ?? 'Usuario #' . $sesionAuditoria->id_usuario_auditado }}</strong> ({{ $sesionAuditoria->usuarioAuditado?->username }})
+                            </span>
+                        </div>
+                        <p class="text-xs text-slate-600 mt-1">
+                            Auditor responsable: <strong>{{ $sesionAuditoria->superAdmin?->nombre_real ?? 'Super Admin' }}</strong> &bull; Justificación: <em>"{{ $sesionAuditoria->justificacion }}"</em>
+                        </p>
+                    </div>
+                </div>
+
+                <div class="flex items-center gap-2 shrink-0">
+                    <a href="{{ route('superadmin.auditorias.historial') }}" class="px-3 py-1.5 rounded-xl text-xs font-bold bg-white text-slate-700 hover:bg-slate-100 border border-slate-200 shadow-sm transition-all inline-flex items-center gap-1.5">
+                        <i class="fas fa-arrow-left text-[10px]"></i>
+                        <span>Volver a Historial</span>
+                    </a>
+                    <a href="{{ route('bitacora.index') }}" class="px-3 py-1.5 rounded-xl text-xs font-bold bg-rose-50 text-rose-600 hover:bg-rose-100 border border-rose-200 transition-all inline-flex items-center gap-1.5">
+                        <i class="fas fa-times text-[10px]"></i>
+                        <span>Ver Toda la Bitácora</span>
+                    </a>
+                </div>
+            </div>
+        @endif
+
         <!-- TARJETAS DE RESUMEN KPI -->
         <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
             <!-- Total de eventos -->
@@ -147,7 +186,7 @@
                     <i class="fas fa-filter text-teal-600 text-sm"></i>
                     <h2 class="text-sm font-bold text-slate-800 uppercase tracking-wider">Filtros de Búsqueda</h2>
                 </div>
-                @if(request()->anyFilled(['modulo', 'accion', 'usuario_id', 'desde', 'hasta', 'q']))
+                @if(request()->anyFilled(['modulo', 'accion', 'usuario_id', 'desde', 'hasta', 'q', 'auditoria_id']))
                     <a href="{{ route('bitacora.index') }}" class="text-xs font-bold text-rose-600 hover:text-rose-700 flex items-center gap-1.5 transition-colors">
                         <i class="fas fa-times-circle"></i>
                         <span>Limpiar Filtros</span>

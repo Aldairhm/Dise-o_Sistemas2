@@ -1,38 +1,71 @@
 <x-app title="Panel de Control Super Administrador | AXStore">
-    <div class="mx-auto max-w-7xl space-y-8 pb-12">
+    <div class="mx-auto max-w-7xl space-y-6 pb-12">
         
-        <!-- Header Principal Exclusivo de Gobernanza -->
-        <div class="relative overflow-hidden rounded-3xl bg-gradient-to-r from-slate-900 via-indigo-950 to-slate-900 p-8 text-white shadow-xl border border-slate-800">
-            <div class="absolute -right-10 -bottom-10 w-64 h-64 bg-indigo-500/10 rounded-full blur-3xl pointer-events-none"></div>
-            <div class="relative z-10 flex flex-col md:flex-row md:items-center md:justify-between gap-6">
-                <div>
-                    <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-indigo-500/20 border border-indigo-400/30 text-indigo-300 text-xs font-semibold mb-3">
-                        <i class="fas fa-shield-halved"></i>
-                        <span>Nivel Máximo · Gobernanza & Control Total</span>
+        <!-- 1. ENCABEZADO PRINCIPAL (Estilo Oficial AXStore) -->
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            <div>
+                <a href="{{ route('home') }}" class="inline-flex items-center gap-2 text-xs font-bold uppercase tracking-widest text-slate-400 hover:text-blue-600 transition-colors mb-3">
+                    <i class="fas fa-arrow-left"></i> Volver al inicio
+                </a>
+                <div class="flex items-center gap-3.5">
+                    <div class="w-12 h-12 rounded-2xl bg-slate-900 text-white flex items-center justify-center shadow-lg shadow-slate-900/20">
+                        <i class="fas fa-shield-halved text-xl text-blue-400"></i>
                     </div>
-                    <h1 class="text-3xl sm:text-4xl font-black tracking-tight text-white">
-                        Panel de Super Administrador
-                    </h1>
-                    <p class="text-sm text-slate-300 max-w-2xl mt-1">
-                        Supervisión integral de usuarios, resolución de dudas administrativas, auditorías seguras y monitoreo de integridad del sistema.
-                    </p>
-                </div>
-                <div class="flex flex-wrap items-center gap-3">
-                    <a href="{{ route('superadmin.usuarios') }}" class="px-4 py-2.5 rounded-xl text-xs font-bold bg-indigo-600 hover:bg-indigo-500 text-white shadow-lg shadow-indigo-600/30 transition-all flex items-center gap-2">
-                        <i class="fas fa-users-gear"></i>
-                        <span>Gestión de Cuentas</span>
-                    </a>
-                    <a href="{{ route('superadmin.tickets') }}" class="px-4 py-2.5 rounded-xl text-xs font-bold bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 transition-all flex items-center gap-2">
-                        <i class="fas fa-headset"></i>
-                        <span>Centro de Dudas</span>
-                    </a>
-                    <a href="{{ route('superadmin.auditorias.historial') }}" class="px-4 py-2.5 rounded-xl text-xs font-bold bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 transition-all flex items-center gap-2">
-                        <i class="fas fa-user-secret"></i>
-                        <span>Auditorías</span>
-                    </a>
+                    <div>
+                        <div class="flex items-center gap-2">
+                            <span class="text-[11px] font-black uppercase tracking-[0.18em] text-blue-600">Gobernanza & Auditoría</span>
+                            <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-extrabold bg-indigo-100 text-indigo-700">SUPER ADMIN</span>
+                        </div>
+                        <h1 class="text-2xl sm:text-3xl font-black tracking-tight text-slate-900">Panel de Super Administrador</h1>
+                    </div>
                 </div>
             </div>
+
+            <!-- BOTONES DE ACCIÓN RÁPIDA -->
+            <div class="flex flex-wrap items-center gap-2.5">
+                <a href="{{ route('superadmin.usuarios') }}"
+                    class="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 font-bold text-xs shadow-sm transition-all hover:border-blue-300">
+                    <i class="fas fa-users-gear text-blue-600"></i>
+                    <span>Gestión de Cuentas</span>
+                </a>
+
+                <a href="{{ route('superadmin.tickets') }}"
+                    class="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs shadow-md shadow-blue-600/20 transition-all hover:scale-[1.02] active:scale-[0.98]">
+                    <i class="fas fa-headset"></i>
+                    <span>Centro de Dudas</span>
+                </a>
+
+                <a href="{{ route('superadmin.auditorias.historial') }}"
+                    class="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 font-bold text-xs shadow-sm transition-all hover:border-purple-300">
+                    <i class="fas fa-user-secret text-purple-600"></i>
+                    <span>Auditorías</span>
+                </a>
+            </div>
         </div>
+
+        <!-- 2. SUB-NAV / PESTAÑAS DE GOBERNANZA -->
+        <nav class="flex flex-wrap items-center gap-2 rounded-2xl border border-slate-200 bg-white p-1.5 shadow-sm" aria-label="Secciones de superadministración">
+            <a href="{{ route('superadmin.dashboard') }}" class="rounded-xl bg-blue-600 px-4 py-2 text-sm font-bold text-white shadow-sm flex items-center gap-2 transition-all">
+                <i class="fas fa-gauge-high"></i>
+                <span>Vista General</span>
+            </a>
+            <a href="{{ route('superadmin.usuarios') }}" class="rounded-xl px-4 py-2 text-sm font-bold text-slate-600 hover:bg-slate-50 hover:text-blue-600 transition-all flex items-center gap-2">
+                <i class="fas fa-users-gear text-slate-400"></i>
+                <span>Usuarios & Permisos</span>
+            </a>
+            <a href="{{ route('superadmin.tickets') }}" class="rounded-xl px-4 py-2 text-sm font-bold text-slate-600 hover:bg-slate-50 hover:text-blue-600 transition-all flex items-center gap-2">
+                <i class="fas fa-bolt text-slate-400"></i>
+                <span>Casos Escalados</span>
+            </a>
+            <a href="{{ route('superadmin.auditorias.historial') }}" class="rounded-xl px-4 py-2 text-sm font-bold text-slate-600 hover:bg-slate-50 hover:text-blue-600 transition-all flex items-center gap-2">
+                <i class="fas fa-user-shield text-slate-400"></i>
+                <span>Sesiones de Auditoría</span>
+            </a>
+            <a href="{{ route('bitacora.index') }}" class="rounded-xl px-4 py-2 text-sm font-bold text-slate-600 hover:bg-slate-50 hover:text-blue-600 transition-all flex items-center gap-2">
+                <i class="fas fa-clipboard-list text-slate-400"></i>
+                <span>Bitácora Global</span>
+            </a>
+        </nav>
 
         <!-- Indicadores KPI Globales -->
         <div class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">
@@ -174,9 +207,9 @@
                                 </div>
                             </div>
                             @if($aud->estado === 'activa')
-                                <form action="{{ route('superadmin.auditorias.revocar', $aud->id) }}" method="POST" onsubmit="return confirm('¿Revocar forzosamente esta sesión de auditoría?');">
+                                <form id="formRevocarDash{{ $aud->id }}" action="{{ route('superadmin.auditorias.revocar', $aud->id) }}" method="POST">
                                     @csrf
-                                    <button type="submit" class="px-2.5 py-1 rounded-lg text-[11px] font-bold bg-rose-50 text-rose-600 hover:bg-rose-100 transition-colors">
+                                    <button type="button" onclick="confirmarRevocacionDash({{ $aud->id }})" class="px-2.5 py-1 rounded-lg text-[11px] font-bold bg-rose-50 text-rose-600 hover:bg-rose-100 transition-colors cursor-pointer">
                                         Revocar
                                     </button>
                                 </form>
@@ -258,5 +291,25 @@
         </div>
 
     </div>
+
+    <script>
+        function confirmarRevocacionDash(id) {
+            Swal.fire({
+                title: '¿Revocar Sesión de Auditoría?',
+                text: 'Esta acción cancelará inmediatamente el acceso temporal de supervisión y reactivará la cuenta del usuario para el inicio de sesión ordinario.',
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#e11d48',
+                cancelButtonColor: '#64748b',
+                confirmButtonText: 'Sí, revocar acceso',
+                cancelButtonText: 'Cancelar',
+                reverseButtons: true
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    document.getElementById('formRevocarDash' + id).submit();
+                }
+            });
+        }
+    </script>
 </x-app>
 

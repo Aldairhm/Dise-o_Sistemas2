@@ -8,7 +8,37 @@
                     <span>Inicio</span>
                 </a>
 
-                @if(Auth::check() && Auth::user()->rol === 'admin')
+                @if(Auth::check() && Auth::user()->isSuperAdmin())
+                <!-- Sección Exclusiva Super Administrador (Móvil) -->
+                <div class="space-y-1">
+                    <div class="px-2 pb-1 text-[11px] font-black uppercase tracking-wider text-indigo-600 flex items-center gap-1.5">
+                        <i class="fas fa-shield-halved text-[10px]"></i>
+                        <span>Gobernanza Super Admin</span>
+                    </div>
+                    <div class="grid grid-cols-1 gap-1 pl-1">
+                        <a href="{{ route('superadmin.dashboard') }}" class="text-xs font-semibold flex items-center gap-2.5 p-2 rounded-lg transition-colors {{ request()->routeIs('superadmin.dashboard') ? 'bg-indigo-50 text-indigo-700 font-bold' : 'text-gray-700 hover:bg-gray-50' }}">
+                            <div class="w-6 h-6 rounded bg-indigo-100 text-indigo-600 flex items-center justify-center shrink-0">
+                                <i class="fas fa-gauge-high text-[11px]"></i>
+                            </div>
+                            <span>Panel de Control</span>
+                        </a>
+                        <a href="{{ route('superadmin.usuarios') }}" class="text-xs font-semibold flex items-center gap-2.5 p-2 rounded-lg transition-colors {{ request()->routeIs('superadmin.usuarios') ? 'bg-indigo-50 text-indigo-700 font-bold' : 'text-gray-700 hover:bg-gray-50' }}">
+                            <div class="w-6 h-6 rounded bg-indigo-100 text-indigo-600 flex items-center justify-center shrink-0">
+                                <i class="fas fa-users-gear text-[11px]"></i>
+                            </div>
+                            <span>Cuentas & Auditoría</span>
+                        </a>
+                        <a href="{{ route('superadmin.tickets') }}" class="text-xs font-semibold flex items-center gap-2.5 p-2 rounded-lg transition-colors {{ request()->routeIs('superadmin.tickets') ? 'bg-indigo-50 text-indigo-700 font-bold' : 'text-gray-700 hover:bg-gray-50' }}">
+                            <div class="w-6 h-6 rounded bg-indigo-100 text-indigo-600 flex items-center justify-center shrink-0">
+                                <i class="fas fa-headset text-[11px]"></i>
+                            </div>
+                            <span>Centro de Dudas</span>
+                        </a>
+                    </div>
+                </div>
+                @endif
+
+                @if(Auth::check() && (Auth::user()->rol === 'admin' || Auth::user()->isSuperAdmin()))
                 <!-- Sección Ventas -->
                 <div class="space-y-1">
                     <div class="px-2 pb-1 text-[11px] font-black uppercase tracking-wider text-gray-400 flex items-center gap-1.5">
