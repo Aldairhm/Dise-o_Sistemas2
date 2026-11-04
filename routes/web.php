@@ -76,6 +76,7 @@ Route::middleware('auth')->group(function () {
         // ── Gestión de Respaldos de Base de Datos ──
         Route::get('/backups', [BackupController::class, 'index'])->name('backups.index');
         Route::post('/backups/create', [BackupController::class, 'create'])->name('backups.create');
+        Route::post('/backups/restore', [BackupController::class, 'restoreDatabase'])->name('backups.restore');
         Route::get('/backups/download/{file_name}', [BackupController::class, 'download'])
             ->name('backups.download')
             ->middleware('password.confirm');

@@ -19,14 +19,20 @@ class PHPMailerService
         // Configuración del Servidor SMTP
         $mail->isSMTP();
         $mail->CharSet  = 'UTF-8';
-        $username       = (string) env('MAIL_USERNAME');
-        $password       = (string) env('MAIL_PASSWORD');
-        $host           = env('MAIL_HOST');
-        $port           = env('MAIL_PORT');
-        $encryption     = strtolower((string) env('MAIL_ENCRYPTION', 'tls'));
+        $host           = env('MAIL_HOST', 'smtp.resend.com');
+        $port           = env('MAIL_PORT', 465);
+        $username       = (string) env('MAIL_USERNAME', 'resend');
+        $password       = (string) (env('RESEND_API_KEY') ?: env('MAIL_PASSWORD'));
+        $encryption     = strtolower((string) env('MAIL_ENCRYPTION', 'ssl'));
 
-        // Auto-detección inteligente si el host no se especificó o se dejó el valor por defecto
-        if (empty($host) || $host === 'smtp.gmail.com') {
+        // Detección de proveedor Resend o servidores estándar
+        if ($host === 'smtp.resend.com' || str_contains((string) $host, 'resend')) {
+            $host = 'smtp.resend.com';
+            $username = (!empty($username) && $username !== 'resend') ? $username : 'resend';
+            $password = !empty($password) ? $password : (string) env('RESEND_API_KEY');
+            $port = $port ?: 465;
+            $encryption = ($port == 465) ? 'ssl' : 'tls';
+        } elseif (empty($host) || $host === 'smtp.gmail.com') {
             $userLower = strtolower($username);
             if (str_ends_with($userLower, '@icloud.com') || str_ends_with($userLower, '@me.com') || str_ends_with($userLower, '@mac.com')) {
                 $host = 'smtp.mail.me.com';
@@ -44,7 +50,7 @@ class PHPMailerService
         }
 
         $mail->Host     = $host;
-        $mail->Port     = (int) ($port ?: 587);
+        $mail->Port     = (int) ($port ?: 465);
         $mail->SMTPAuth = !empty($username);
         $mail->Username = $username;
         $mail->Password = $password;
@@ -59,10 +65,10 @@ class PHPMailerService
             $mail->SMTPAutoTLS = false;
         }
 
-        // Remitente por defecto: si no está definido o es genérico, usa el correo autenticado
+        // Remitente por defecto (debe pertenecer al dominio verificado en Resend)
         $fromAddress = env('MAIL_FROM_ADDRESS');
-        if (empty($fromAddress) || $fromAddress === 'soporte@axstore.com') {
-            $fromAddress = !empty($username) ? $username : 'soporte@axstore.com';
+        if (empty($fromAddress)) {
+            $fromAddress = ($username && filter_var($username, FILTER_VALIDATE_EMAIL)) ? $username : 'notificaciones@axstore.com';
         }
         $fromName = env('MAIL_FROM_NAME', 'AXStore');
         $mail->setFrom($fromAddress, $fromName);

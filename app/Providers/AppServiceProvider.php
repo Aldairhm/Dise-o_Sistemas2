@@ -2,8 +2,12 @@
 
 namespace App\Providers;
 
+use App\Services\MailService;
+use Illuminate\Support\Facades\Event;
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Support\Facades\Storage;
+use Spatie\Backup\Events\BackupHasFailed;
+use Spatie\Backup\Events\BackupWasSuccessful;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -20,6 +24,7 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
+        // 1. Proveedor de Google Drive Storage
         try {
             Storage::extend('google', function ($app, $config) {
                 $options = [];
@@ -46,6 +51,35 @@ class AppServiceProvider extends ServiceProvider
             });
         } catch (\Throwable $e) {
             // Continúa sin bloquear el sistema si no hay credenciales de Drive
+        }
+
+        // 2. Escuchar eventos de Spatie Backup para ejecuciones desde consola / cron
+        try {
+            Event::listen(BackupWasSuccessful::class, function (BackupWasSuccessful $event) {
+                // Solo ejecutar si se corre desde consola (en la interfaz web ya lo envía el BackupController)
+                if (app()->runningInConsole()) {
+                    MailService::sendBackupNotification(
+                        isSuccess: true,
+                        fileName: $event->backupName,
+                        fileSize: 'Completado',
+                        disk: $event->diskName
+                    );
+                }
+            });
+
+            Event::listen(BackupHasFailed::class, function (BackupHasFailed $event) {
+                if (app()->runningInConsole()) {
+                    MailService::sendBackupNotification(
+                        isSuccess: false,
+                        fileName: $event->backupName ?? 'No disponible',
+                        fileSize: '0 KB',
+                        errorMessage: $event->exception?->getMessage(),
+                        disk: $event->diskName ?? 'Servidor'
+                    );
+                }
+            });
+        } catch (\Throwable $e) {
+            // No interrumpir si el paquete o los eventos no están listos
         }
     }
 }
