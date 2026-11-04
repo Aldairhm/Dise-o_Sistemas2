@@ -44,6 +44,7 @@ Route::get('/preview-reset-password', [AuthController::class, 'previewResetPassw
 
 // ── Rutas protegidas (requieren estar logueado) ─────────────
 Route::middleware('auth')->group(function () {
+    Route::get('/ayuda', [\App\Http\Controllers\AyudaController::class, 'index'])->name('ayuda.index');
 
     // ── Confirmación de Contraseña (Re-autenticación para acciones críticas) ──
     Route::get('/confirm-password', [AuthController::class, 'showConfirmPassword'])->name('password.confirm');

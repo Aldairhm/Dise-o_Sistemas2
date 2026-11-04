@@ -247,6 +247,11 @@
                         <span>Productos</span>
                     </a>
                     @endif
+                                    @auth
+                        <a href="{{ route('ayuda.index') }}" class="inline-flex items-center gap-2 text-sm font-semibold text-blue-700 hover:underline">
+                            <i class="fas fa-circle-question" aria-hidden="true"></i> Ayuda
+                        </a>
+                    @endauth
                 </nav>
 
                  <!-- Icons -->
