@@ -2,10 +2,12 @@
 
 return [
     'venta' => [
+        'module' => 'Ventas', 'description' => 'Registro y cobro',
+        'icon' => 'fa-cash-register', 'icon_bg' => '#dbeafe', 'icon_fg' => '#164caf',
         'title' => 'Registrar una venta en tienda',
-        'question' => '¿Cómo registro una venta?',
         'keywords' => 'ventas carrito terminal POS pago comprobante',
         'route' => 'ventas.create',
+        'check' => 'En Mis Ventas, abre el registro y verifica los artículos y el total del comprobante.',
         'steps' => [
             'Abre Registrar Venta y busca el producto o la variante en Catálogo de Productos.',
             'Pulsa Agregar y verifica que la cantidad del carrito no supere el stock de tienda.',
@@ -14,10 +16,12 @@ return [
         ],
     ],
     'inventario' => [
+        'module' => 'Inventario', 'description' => 'Bodega, tienda y Kardex',
+        'icon' => 'fa-boxes-stacked', 'icon_bg' => '#e0e7ff', 'icon_fg' => '#3730a3',
         'title' => 'Transferir existencias de bodega a tienda',
-        'question' => '¿Cómo paso productos de bodega a tienda?',
         'keywords' => 'stock inventario kardex transferencias unidades existencias',
         'route' => 'compras.movimientos',
+        'check' => 'En Kardex, comprueba que bodega bajó y tienda subió por la misma cantidad.',
         'steps' => [
             'En Manejo de inventario, abre la pestaña Transferir.',
             'Elige una variante con existencias en bodega e indica una cantidad entera positiva que no supere el saldo disponible.',
@@ -26,10 +30,12 @@ return [
         ],
     ],
     'devolucion' => [
+        'module' => 'Devoluciones', 'description' => 'Cambios y reembolsos',
+        'icon' => 'fa-rotate-left', 'icon_bg' => '#ffe4e6', 'icon_fg' => '#9f1239',
         'title' => 'Procesar una devolución de cliente',
-        'question' => '¿Cómo registro una devolución?',
         'keywords' => 'devoluciones reembolso cambio garantía cuarentena',
         'route' => 'ventas.devoluciones',
+        'check' => 'En Devoluciones de clientes, revisa los artículos, las cantidades y la resolución registrada.',
         'steps' => [
             'Localiza la venta entregada, abre su detalle y pulsa Registrar Devolución si la operación sigue dentro de garantía.',
             'Marca los artículos que recibiste e indica las cantidades y el motivo.',
@@ -37,7 +43,71 @@ return [
             'Confirma la operación y comprueba el registro en Devoluciones de clientes.',
         ],
     ],
+    'productos' => [
+        'module' => 'Productos', 'description' => 'Catálogo, variantes y stock',
+        'icon' => 'fa-shopping-bag', 'icon_bg' => '#dbeafe', 'icon_fg' => '#164caf',
+        'title' => 'Consultar un producto y sus variantes',
+        'keywords' => 'catálogo productos variantes SKU precio existencias',
+        'route' => 'productos.index',
+        'check' => 'Verifica que el nombre, la presentación y el precio correspondan al producto que buscabas.',
+        'steps' => [
+            'Abre Productos y busca el artículo por nombre.',
+            'Abre sus variantes y localiza la presentación que necesitas.',
+            'Consulta el precio y las existencias de esa variante.',
+        ],
+    ],
+    'categorias' => [
+        'module' => 'Categorías', 'description' => 'Organización y clasificación',
+        'icon' => 'fa-folder-open', 'icon_bg' => '#f3e8ff', 'icon_fg' => '#7e22ce',
+        'title' => 'Crear una categoría',
+        'keywords' => 'categorías clasificación agrupar catálogo',
+        'route' => 'categorias.index',
+        'check' => 'Busca el nombre de la nueva categoría en la lista.',
+        'steps' => [
+            'Abre Categorías y selecciona la opción para agregar una categoría.',
+            'Escribe el nombre con el que quieres identificar el grupo de productos.',
+            'Guarda los cambios.',
+        ],
+    ],
+    'compras' => [
+        'module' => 'Compras', 'description' => 'Abastecimiento a proveedores',
+        'icon' => 'fa-cart-plus', 'icon_bg' => '#d1fae5', 'icon_fg' => '#047857',
+        'title' => 'Registrar la recepción de una compra',
+        'keywords' => 'compras recepción proveedor unidades abastecimiento',
+        'route' => 'compras.create',
+        'check' => 'Abre el historial de compras y comprueba el proveedor y las cantidades recibidas.',
+        'steps' => [
+            'En Registrar compra, selecciona el proveedor.',
+            'Agrega las variantes recibidas e indica las cantidades y los costos solicitados.',
+            'Revisa el resumen y confirma la recepción.',
+        ],
+    ],
+    'proveedores' => [
+        'module' => 'Proveedores', 'description' => 'Directorio y catálogos',
+        'icon' => 'fa-truck', 'icon_bg' => '#fef3c7', 'icon_fg' => '#92400e',
+        'title' => 'Consultar la ficha de un proveedor',
+        'keywords' => 'proveedor proveedores contacto directorio catálogo historial',
+        'route' => 'proveedores.index',
+        'check' => 'Comprueba el nombre del proveedor antes de usar sus datos o consultar sus compras.',
+        'steps' => [
+            'Abre el Directorio de Proveedores y busca el proveedor.',
+            'Abre su detalle para consultar los datos de contacto.',
+            'Revisa el historial de compras o los recursos del catálogo cuando estén disponibles.',
+        ],
+    ],
+    'variantes' => [
+        'module' => 'Variantes', 'description' => 'Presentaciones, imágenes y estado',
+        'icon' => 'fa-layer-group', 'icon_bg' => '#ede9fe', 'icon_fg' => '#5b21b6',
+        'title' => 'Gestionar variantes de un producto',
+        'keywords' => 'variantes atributos presentación imágenes galería',
+        'route' => 'productos.index',
+    ],
+    'comisiones' => [
+        'module' => 'Comisiones', 'description' => 'Consulta, bonos y pagos según tu rol',
+        'icon' => 'fa-coins', 'icon_bg' => '#fef3c7', 'icon_fg' => '#92400e',
+        'title' => 'Consultar y gestionar comisiones',
+        'keywords' => 'comisiones cobro estado',
+        'route' => 'comisiones.index',
+    ],
 ];
-
-
 

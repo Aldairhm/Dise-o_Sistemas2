@@ -12,9 +12,18 @@ class AyudaController extends Controller
     {
         $guides = config('ayuda');
 
-        if ($request->user()->rol !== 'admin') {
-            unset($guides['inventario'], $guides['devolucion']);
+        $role = $request->user()->rol;
+        if ($role !== 'admin') {
+            unset($guides['inventario'], $guides['devolucion'], $guides['categorias'], $guides['compras'], $guides['proveedores'], $guides['variantes']);
         }
+
+        foreach ($guides as $key => &$item) {
+            $item['cases'] = array_filter(
+                config('ayuda_casos.'.$key, []),
+                static fn (array $case) => !isset($case['roles']) || in_array($role, $case['roles'], true)
+            );
+        }
+        unset($item);
 
         $topic = $request->query('tema');
         $guide = is_string($topic) ? ($guides[$topic] ?? null) : null;
@@ -28,7 +37,8 @@ class AyudaController extends Controller
         $scores = [];
 
         foreach ($guides as $key => $item) {
-            $haystack = $normalize(implode(' ', [$item['title'], $item['question'], $item['keywords']]));
+            $haystack = $normalize(implode(' ', [$item['title'], $item['module'], $item['description'], $item['keywords']]));
+            $haystack .= ' '. $normalize(implode(' ', array_keys($item['cases'])));
             foreach (array_unique($words) as $word) {
                 if (str_contains($haystack, $word)) {
                     $scores[$key] = ($scores[$key] ?? 0) + 1;
@@ -45,5 +55,8 @@ class AyudaController extends Controller
         return view('ayuda.index', compact('guides', 'guide', 'topic', 'query', 'results'));
     }
 }
+
+
+
 
 

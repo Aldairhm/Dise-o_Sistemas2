@@ -86,25 +86,6 @@
     </script>
 
     <main class="flex-grow p-6 w-full max-w-7xl mx-auto mt-4">
-        @auth
-            @php
-                $helpEntry = config('ayuda_contextual')[request()->route()?->getName()] ?? null;
-                $helpText = is_array($helpEntry) ? ($helpEntry[auth()->user()->rol] ?? null) : $helpEntry;
-                $helpGuide = is_array($helpEntry) ? ($helpEntry['guide'] ?? null) : null;
-            @endphp
-            @if ($helpText)
-                <details class="mb-4 rounded-lg border border-blue-200 bg-white px-3 py-2 text-sm text-slate-800">
-                    <summary class="cursor-pointer font-semibold text-blue-700">¿Necesitas ayuda?</summary>
-                    <p class="mt-2">{{ $helpText }}
-                        @if ($helpGuide)
-                            <a href="{{ route('ayuda.index', ['tema' => $helpGuide]) }}" target="_blank" rel="noopener"
-                               class="font-semibold text-blue-700 underline">Ver guía (nueva pestaña)</a>
-                        @endif
-                    </p>
-                </details>
-            @endif
-        @endauth
-
         {{ $slot }}
     </main>
 
@@ -115,4 +96,5 @@
 </body>
 
 </html>
+
 
