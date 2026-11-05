@@ -156,6 +156,14 @@ class AuthController extends Controller
         $attempts++;
         Cache::put($cacheKeyAttempts, $attempts, now()->addDays(2));
 
+        if (in_array($attempts, [5, 10, 15], true) && $usuarioAuditado) {
+            $notifications = app(\App\Services\NotificationService::class);
+            $notifications->publish('login-threshold:'.$usuarioAuditado->id.':'.now()->format('Y-m-d-H').':'.$attempts,
+                'acceso_bloqueado', 'seguridad', 'alta', 'Límite de acceso alcanzado',
+                'La cuenta #'.$usuarioAuditado->id.' alcanzó un umbral de intentos fallidos. Revisa el registro de seguridad; este aviso no confirma un ataque.',
+                'usuarios', $usuarioAuditado->id, $notifications->roles('super_admin'));
+        }
+
         // Caso A: Alcanzó el límite máximo de intentos -> Bloqueo total
         if ($attempts >= 15) {
             return back()->with('swal_error', [

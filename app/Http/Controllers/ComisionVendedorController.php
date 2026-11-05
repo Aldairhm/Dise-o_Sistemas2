@@ -53,6 +53,10 @@ class ComisionVendedorController extends Controller
             $query->whereDate('fecha_registro', '<=', $request->fecha_hasta);
         }
 
+        if ($request->filled('notification_commission')) {
+            $query->where('id', $request->integer('notification_commission'));
+        }
+
         $comisiones = $query->paginate(15)->withQueryString();
         ComisionVendedor::cargarVentas(collect($comisiones->items()));
 

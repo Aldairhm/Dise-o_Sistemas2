@@ -114,6 +114,10 @@ class SuperAdminController extends Controller
                 'Auditoría y Seguridad',
                 "Intento fallido de iniciar auditoría sobre el usuario ID {$user->id} por contraseña incorrecta."
             );
+            $notifications = app(\App\Services\NotificationService::class);
+            $notifications->publish('audit-denied:'.$superAdmin->id.':'.now()->format('Y-m-d-H'), 'auditoria_denegada', 'seguridad', 'alta',
+                'Inicio de auditoría rechazado', 'No se confirmó la reautenticación requerida para una auditoría administrativa. Consulta la bitácora.',
+                'usuarios', $user->id, $notifications->roles('super_admin'));
             return back()->with('error', 'Credenciales de validación incorrectas. Acción rechazada.');
         }
 

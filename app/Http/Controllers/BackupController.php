@@ -70,6 +70,7 @@ class BackupController extends Controller
             $output = Artisan::output();
 
             if ($exitCode !== 0) {
+                app(\App\Services\NotificationService::class)->backupFailed();
                 Log::error("Spatie Backup fallo con código $exitCode: " . $output);
 
                 ActivityLogger::log(
@@ -120,6 +121,7 @@ class BackupController extends Controller
                 ->with('success', 'Respaldo generado exitosamente. Se ha notificado por correo a los administradores.');
 
         } catch (\Exception $e) {
+            app(\App\Services\NotificationService::class)->backupFailed();
             ActivityLogger::log(
                 'CANCELAR',
                 'Respaldos',
@@ -258,6 +260,10 @@ class BackupController extends Controller
             );
 
             // 5. Notificar a todos los administradores activos mediante el MailService unificado
+            $notifications = app(\App\Services\NotificationService::class);
+            $notifications->publish('database-restored:'.\Illuminate\Support\Str::uuid(), 'base_restaurada', 'administracion', 'critica',
+                'Base de datos restaurada', 'Se confirmó una restauración de la base de datos. Consulta la bitácora autorizada.',
+                'backup', null, $notifications->roles('super_admin'));
             MailService::sendDatabaseRestorationNotification(true, $origen, null, $request);
 
             // Renovar marca de confirmación de contraseña en sesión

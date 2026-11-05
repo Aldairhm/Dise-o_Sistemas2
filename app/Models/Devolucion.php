@@ -6,6 +6,8 @@ use Illuminate\Database\Eloquent\Model;
 
 class Devolucion extends Model
 {
+    use \App\Models\Concerns\NotifiesBusinessChanges;
+
     protected $table = 'devoluciones';
 
     protected $fillable = [

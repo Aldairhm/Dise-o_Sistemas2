@@ -264,6 +264,7 @@
 
                  <!-- Icons -->
                 <div class="flex items-center gap-4">
+                    @include('notifications.bell')
                     <!-- WhatsApp Dropdown -->
                     <div class="wa-dropdown">
                         <a href="#" class="wa-trigger" title="Grupos de WhatsApp">

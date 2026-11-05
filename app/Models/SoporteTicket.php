@@ -9,6 +9,8 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class SoporteTicket extends Model
 {
+    use \App\Models\Concerns\NotifiesBusinessChanges;
+
     use HasFactory;
 
     protected $table = 'soporte_tickets';

@@ -21,6 +21,10 @@ class AyudaController extends Controller
         $guides = config('ayuda', []);
 
         $user = $request->user();
+        if (isset($ticket)) {
+            abort_unless(app(\App\Services\NotificationService::class)->canSeeTicket($user, $ticket), 403);
+        }
+
         $role = $user ? $user->rol : 'vendedor';
 
         // Si no es admin ni super_admin, limitar módulos según rol (el vendedor solo ve guías acordes a su labor)
@@ -121,6 +125,10 @@ class AyudaController extends Controller
         ]);
 
         $user = $request->user();
+        if (isset($ticket)) {
+            abort_unless(app(\App\Services\NotificationService::class)->canSeeTicket($user, $ticket), 403);
+        }
+
         $codigo = $validated['codigo_ticket'] ?: ('TK-' . rand(10000, 99999));
         $dudaTexto = !empty(trim($validated['duda'] ?? ''))
             ? trim($validated['duda'])
@@ -213,6 +221,10 @@ class AyudaController extends Controller
     public function tickets(Request $request): View
     {
         $user = $request->user();
+        if (isset($ticket)) {
+            abort_unless(app(\App\Services\NotificationService::class)->canSeeTicket($user, $ticket), 403);
+        }
+
         $query = SoporteTicket::with(['usuario', 'asignado', 'resolvedor'])->orderByDesc('created_at');
 
         // SEGURIDAD & PRIVACIDAD JERÁRQUICA:
@@ -290,6 +302,10 @@ class AyudaController extends Controller
     public function verTicket(SoporteTicket $ticket): View
     {
         $user = Auth::user();
+        if (isset($ticket)) {
+            abort_unless(app(\App\Services\NotificationService::class)->canSeeTicket($user, $ticket), 403);
+        }
+
 
         // Control estricto de acceso (Anti-IDOR)
         if ($user->isVendedor() && $ticket->id_usuario !== $user->id) {
@@ -319,6 +335,10 @@ class AyudaController extends Controller
     public function responderTicket(Request $request, SoporteTicket $ticket)
     {
         $user = Auth::user();
+        if (isset($ticket)) {
+            abort_unless(app(\App\Services\NotificationService::class)->canSeeTicket($user, $ticket), 403);
+        }
+
 
         // Si el ticket ya está en estado Resuelta o Cancelada, no se permiten más mensajes
         if ($ticket->estado === 'Resuelta') {
@@ -386,6 +406,10 @@ class AyudaController extends Controller
     public function escalarTicket(Request $request, SoporteTicket $ticket)
     {
         $user = Auth::user();
+        if (isset($ticket)) {
+            abort_unless(app(\App\Services\NotificationService::class)->canSeeTicket($user, $ticket), 403);
+        }
+
         if (!$user->isAdmin()) {
             abort(403, 'Solo un administrador puede escalar dudas al Super Administrador.');
         }
@@ -450,6 +474,10 @@ class AyudaController extends Controller
     public function actualizarEstadoTicket(Request $request, SoporteTicket $ticket)
     {
         $user = $request->user();
+        if (isset($ticket)) {
+            abort_unless(app(\App\Services\NotificationService::class)->canSeeTicket($user, $ticket), 403);
+        }
+
 
         $validated = $request->validate([
             'estado'     => ['required', 'string', 'in:' . implode(',', SoporteTicket::ESTADOS)],
