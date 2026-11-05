@@ -58,18 +58,70 @@
         @if($errors->any())<p role="alert" class="p-4 text-red-700">{{ $errors->first() }}</p>@endif
         <div class="space-y-3">
         @forelse($notifications as $item)
-            @php($event = $item->event)
-            <article class="rounded-2xl border p-5 {{ $item->read_at ? 'bg-white border-gray-200' : 'bg-blue-50 border-blue-200' }}">
-                <div class="flex gap-3">
-                    <i aria-hidden="true" class="fas {{ ['ventas'=>'fa-cart-shopping','comisiones'=>'fa-hand-holding-dollar','ayuda'=>'fa-circle-question','auditorias'=>'fa-clipboard-check','seguridad'=>'fa-shield-halved','administracion'=>'fa-gear'][$event->category] ?? 'fa-circle-info' }} text-blue-600 mt-1"></i>
-                    <div class="flex-1"><h2 class="font-bold">{{ $event->title }} @unless($item->read_at)<span class="text-xs text-blue-700">• No leída</span>@endunless</h2>
-                    <p class="text-sm mt-1">{{ $event->message }}</p>
-                    <p class="text-xs text-gray-600 mt-2"><span class="font-bold {{ in_array($event->priority, ['alta','critica']) ? 'text-red-700' : '' }}">{{ ucfirst($event->priority) }}</span> · {{ ucfirst($event->category) }} · <time datetime="{{ $event->created_at->toIso8601String() }}">{{ $event->created_at->format('d/m/Y H:i') }}</time></p>
-                    <div class="flex flex-wrap items-center gap-4 mt-3 text-sm">
-                        <a class="text-blue-700 font-bold" href="{{ route('notifications.open', $item->id) }}">Abrir contenido</a>
-                        @unless($item->read_at)<form method="POST" action="{{ route('notifications.read', $item->id) }}">@csrf<button class="text-blue-700">Marcar como leída</button></form>@endunless
-                        @unless($item->archived_at)<form method="POST" action="{{ route('notifications.archive', $item->id) }}">@csrf<button class="text-gray-600">Archivar</button></form>@endunless
-                    </div></div>
+            @php
+                $event = $item->event;
+                $categoryLabel = ['ventas'=>'Ventas','comisiones'=>'Comisiones','ayuda'=>'Ayuda','auditorias'=>'Auditorías','seguridad'=>'Seguridad','administracion'=>'Administración'][$event->category] ?? 'Información';
+                $categoryIcon = ['ventas'=>'fa-cart-shopping','comisiones'=>'fa-hand-holding-dollar','ayuda'=>'fa-circle-question','auditorias'=>'fa-clipboard-check','seguridad'=>'fa-shield-halved','administracion'=>'fa-gear'][$event->category] ?? 'fa-circle-info';
+                $priorityLabel = ['informativa'=>'Informativa','importante'=>'Importante','alta'=>'Alta','critica'=>'Crítica'][$event->priority] ?? ucfirst($event->priority);
+                $priorityColor = ['informativa'=>'text-slate-700','importante'=>'text-blue-600','alta'=>'text-orange-600','critica'=>'text-red-600'][$event->priority] ?? 'text-slate-700';
+            @endphp
+            <article aria-labelledby="notification-title-{{ $item->id }}"
+                class="grid items-center gap-5 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm transition-shadow hover:shadow-md lg:grid-cols-[minmax(0,1fr)_minmax(0,1.1fr)_auto]">
+                <div class="flex min-w-0 items-center gap-4">
+                    <div class="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-indigo-600 to-blue-600 text-xl text-white shadow-md shadow-blue-600/20">
+                        <i class="fas {{ $categoryIcon }}" aria-hidden="true"></i>
+                    </div>
+                    <div class="min-w-0">
+                        <div class="mb-1.5 flex flex-wrap items-center gap-2">
+                            <span class="rounded-full bg-blue-100 px-2 py-0.5 text-[9px] font-extrabold uppercase tracking-wide text-blue-700">{{ $categoryLabel }}</span>
+                            @if($item->archived_at)<span class="text-[10px] font-semibold text-slate-500"><i class="fas fa-box-archive" aria-hidden="true"></i> Archivada</span>@endif
+                        </div>
+                        <h2 id="notification-title-{{ $item->id }}" class="break-words text-sm font-extrabold leading-snug text-slate-900">{{ $event->title }}</h2>
+                        <p class="mt-1.5 break-words text-xs leading-relaxed text-slate-500">{{ $event->message }}</p>
+                    </div>
+                </div>
+                <div class="grid min-w-0 grid-cols-2 gap-4 rounded-2xl border border-slate-100 p-4 sm:grid-cols-3" style="background-color:var(--bg-page, #f8fafc)">
+                    <div class="min-w-0">
+                        <p class="mb-1 text-[9px] font-extrabold uppercase tracking-wide text-slate-400">Prioridad</p>
+                        <p class="break-words text-xs font-extrabold {{ $priorityColor }}">{{ $priorityLabel }}</p>
+                    </div>
+                    <div class="min-w-0">
+                        <p class="mb-1 text-[9px] font-extrabold uppercase tracking-wide text-slate-400">Lectura</p>
+                        <p class="inline-flex items-center gap-1.5 text-xs font-extrabold {{ $item->read_at ? 'text-emerald-600' : 'text-blue-600' }}">
+                            <i class="fas {{ $item->read_at ? 'fa-circle-check' : 'fa-circle' }} text-[9px]" aria-hidden="true"></i>
+                            {{ $item->read_at ? 'Leída' : 'No leída' }}
+                        </p>
+                    </div>
+                    <div class="col-span-2 min-w-0 sm:col-span-1">
+                        <p class="mb-1 text-[9px] font-extrabold uppercase tracking-wide text-slate-400">Fecha</p>
+                        <time datetime="{{ $event->created_at->toIso8601String() }}" class="block text-xs font-bold text-slate-700">
+                            {{ $event->created_at->format('d/m/Y') }}
+                            <span class="mt-0.5 block text-[10px] font-medium text-slate-500">{{ $event->created_at->format('H:i') }}</span>
+                        </time>
+                    </div>
+                </div>
+                <div class="flex flex-wrap items-center gap-3 lg:flex-col lg:items-stretch lg:gap-2">
+                    <a href="{{ route('notifications.open', $item->id) }}" aria-label="Ver detalle: {{ $event->title }}"
+                        style="background-color:var(--bg-page, #f1f5f9)"
+                        class="inline-flex items-center justify-center gap-2 rounded-xl px-3 py-2 text-xs font-bold text-slate-700 transition hover:bg-blue-100 hover:text-blue-700 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600">
+                        <i class="fas fa-list-ul text-slate-400" aria-hidden="true"></i> Ver detalle <i class="fas fa-chevron-right text-[9px]" aria-hidden="true"></i>
+                    </a>
+                    @unless($item->read_at)
+                        <form method="POST" action="{{ route('notifications.read', $item->id) }}">
+                            @csrf
+                            <button type="submit" class="inline-flex items-center justify-center gap-1.5 py-1 text-[11px] font-semibold text-blue-600 hover:underline lg:w-full">
+                                <i class="fas fa-check" aria-hidden="true"></i> Marcar como leída
+                            </button>
+                        </form>
+                    @endunless
+                    @unless($item->archived_at)
+                        <form method="POST" action="{{ route('notifications.archive', $item->id) }}">
+                            @csrf
+                            <button type="submit" class="inline-flex items-center justify-center gap-1.5 py-1 text-[11px] font-semibold text-slate-500 hover:underline lg:w-full">
+                                <i class="fas fa-box-archive" aria-hidden="true"></i> Archivar
+                            </button>
+                        </form>
+                    @endunless
                 </div>
             </article>
         @empty
