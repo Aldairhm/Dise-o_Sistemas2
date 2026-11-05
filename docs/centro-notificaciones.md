@@ -16,6 +16,7 @@ Todos los eventos se entregan mediante base de datos y polling autenticado. El m
 |---|---|---|---|
 | Venta nueva en tienda o por envío | Vendedor titular y administradores activos | Modalidad y confirmación de registro | Detalle de venta |
 | Venta por envío cambia de estado | Vendedor titular | Estado anterior y nuevo | Detalle de venta |
+| Venta por envío pasa a Entregada | Administradores activos | Confirmación de entrega | Detalle de venta |
 | Comisión generada, bono registrado o ajuste | Vendedor titular | Concepto, monto y estado | Historial filtrado por registro |
 | Comisión, bono o ajuste cambia de monto, estado, porcentaje o concepto | Vendedor titular | Monto, estado y monto anterior cuando cambia | Historial filtrado por registro |
 | Comisión, bono o ajuste efectivamente liquidado | Vendedor titular | Confirmación del pago o liquidación | Historial filtrado por registro |
@@ -84,7 +85,7 @@ En AyudaController se refuerza el control jerárquico antes de responder, escala
 
 ## Validación y límites
 
-- Suite `NotificationCenterTest`: **26 pruebas y 180 comprobaciones**. Incluye destinatarios por rol, avisos de Kardex y perfil, aviso inmediato de bono, liquidación agrupada tras la garantía, ajuste de comisión en devoluciones, privacidad, deduplicación, filtros y enlaces.
+- Suite `NotificationCenterTest`: **26 pruebas y 183 comprobaciones**. Incluye destinatarios por rol, aviso de entrega al administrador, avisos de Kardex y perfil, aviso inmediato de bono, liquidación agrupada tras la garantía, ajuste de comisión en devoluciones, privacidad, deduplicación, filtros y enlaces.
 - La suite usa SQLite **en memoria y aislado**. Reutiliza migraciones de usuarios, ventas, bitácora y soporte; emplea fixtures mínimos en las tablas heredadas con ALTER CHECK de PostgreSQL no compatible con SQLite. Sí ejecuta la migración nueva completa. No accede a la base `axstore2026` de la configuración de pruebas antigua.
 - `npm run build`: correcto. `node --check public/js/notification-center.js`: correcto. Rutas nuevas registradas correctamente.
 - Navegador integrado sobre base local descartable: centro y campana renderizados, contador 4→3 al leer y 3→0 al marcar todas, persistencia al recargar, cierre Escape y desplegable móvil de 390 px dentro de pantalla. Se creó una comisión mediante el modelo real en la base aislada y se verificó la llegada automática del aviso (contador 0→1) sin recargar la página. Las capturas contienen datos de prueba; no se agregan seeds demostrativos al producto.

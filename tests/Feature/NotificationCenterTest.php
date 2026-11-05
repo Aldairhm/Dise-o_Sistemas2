@@ -129,7 +129,7 @@ class NotificationCenterTest extends TestCase
         return ComisionVendedor::create(['id_vendedor' => $sale->id_usuario, 'id_salida' => $outbound, 'monto' => 15, 'estado' => 'Pendiente']);
     }
 
-    public function test_shipping_notifies_admin_on_creation_and_seller_on_each_transition(): void
+    public function test_shipping_notifies_admin_on_creation_and_delivery_and_seller_on_each_transition(): void
     {
         $this->actingAs($this->admin);
         $sale = $this->sale();
@@ -142,14 +142,17 @@ class NotificationCenterTest extends TestCase
             $sale->update(['estado' => $state]);
             $sale->update(['estado' => $state]);
             $expected++;
-            $this->feed($this->admin)->assertOk()->assertJsonPath('unread', 1);
+            $this->feed($this->admin)->assertOk()->assertJsonPath('unread', $state === 'Entregada' ? 2 : 1);
             $this->feed($this->seller)->assertJsonPath('unread', $expected)
                 ->assertJsonPath('items.0.title', 'Venta #'.$sale->id.': '.$state);
         }
+        $delivery = $this->feed($this->admin)->assertJsonPath('items.0.title', 'Venta #'.$sale->id.': Entregada')
+            ->json('items.0.id');
+        $this->get(route('notifications.open', $delivery))->assertRedirect(route('ventas.show', $sale->id));
         $this->feed($this->other)->assertJsonPath('unread', 0);
         $this->feed($this->super)->assertJsonPath('unread', 0);
         $this->assertSame(4, NotificationEvent::where('category', 'ventas')->count());
-        $this->assertSame(5, NotificationDelivery::count());
+        $this->assertSame(6, NotificationDelivery::count());
     }
 
     public function test_commission_payment_is_emitted_only_after_actual_payment_and_is_idempotent(): void
