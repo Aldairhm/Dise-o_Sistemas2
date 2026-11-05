@@ -17,11 +17,12 @@
 </div>
 @once
 <style>
+html.dark .notification-bell [data-bell-items] > .bg-blue-50 { background-color: #172554; }
 @media (max-width: 640px) {
     .notification-bell [data-bell-panel] { position: fixed; left: 12px; right: 12px; top: 80px; width: auto !important; margin-top: 8px; }
 }
 </style>
-<script src="{{ asset('js/notification-center.js') }}" defer></script>
+<script src="{{ asset('js/notification-center.js') }}?v={{ filemtime(public_path('js/notification-center.js')) }}" defer></script>
 @endonce
 @endif
 @endauth

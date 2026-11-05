@@ -10,7 +10,7 @@
     const all = root.querySelector('[data-bell-read-all]');
     const csrf = document.querySelector('meta[name="csrf-token"]')?.content;
     const channel = typeof BroadcastChannel !== 'undefined' ? new BroadcastChannel('axstore-notifications') : null;
-    const icons = {ventas:'🛒', comisiones:'💵', ayuda:'💬', auditorias:'📋', seguridad:'🛡', administracion:'⚙'};
+    const icons = {ventas:'fa-cart-shopping', comisiones:'fa-hand-holding-dollar', ayuda:'fa-circle-question', auditorias:'fa-clipboard-check', seguridad:'fa-shield-halved', administracion:'fa-gear'};
     let timer, busy = false, stopped = false, delay = 30000;
     const close = () => { panel.hidden = true; toggle.setAttribute('aria-expanded', 'false'); };
     const sync = () => { channel?.postMessage('refresh'); localStorage.setItem('axstore-notifications-sync', String(Date.now())); };
@@ -35,7 +35,13 @@
             const a = document.createElement('a');
             a.href = item.open; a.className = 'block text-sm';
             const title = document.createElement('strong');
-            title.textContent = `${icons[item.category] || '🔔'} ${item.title}`;
+            title.className = 'flex items-start gap-2';
+            const icon = document.createElement('i');
+            icon.className = `fas ${icons[item.category] || 'fa-circle-info'} text-blue-600 mt-1 shrink-0`;
+            icon.setAttribute('aria-hidden', 'true');
+            const titleText = document.createElement('span');
+            titleText.textContent = item.title;
+            title.append(icon, titleText);
             const message = document.createElement('p'); message.textContent = item.message; message.className = 'text-gray-600 mt-1';
             const time = document.createElement('p'); time.className = `text-xs mt-1 ${['alta', 'critica'].includes(item.priority) ? 'text-red-700 font-bold' : 'text-gray-600'}`;
             time.textContent = `${item.priority.toUpperCase()} · ${relative(item.date)}${item.read ? '' : ' · No leída'}`;
