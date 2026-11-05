@@ -2,7 +2,7 @@
 
 namespace App\Services;
 
-use App\Models\{ComisionVendedor, NotificationDelivery, NotificationEvent, SoporteTicket, User};
+use App\Models\{ComisionVendedor, NotificationDelivery, NotificationEvent, SoporteTicket, User, Venta};
 use Illuminate\Support\Facades\DB;
 
 class NotificationService
@@ -31,6 +31,22 @@ class NotificationService
     public function roles(string $role): array
     {
         return User::where('rol', $role)->where('estado', 1)->pluck('id')->all();
+    }
+
+    public function notifyDeliveredShippingCommission(Venta $sale, float $total): void
+    {
+        $admins = $this->roles('admin');
+        if (!$admins) {
+            return;
+        }
+
+        $name = $sale->usuario?->nombre_real ?? "Vendedor #{$sale->id_usuario}";
+        $amount = '$'.number_format($total, 2);
+        $deadline = $sale->fecha_limite_devolucion->format('d/m/Y');
+        $this->publish("comision-envio:{$sale->id}", 'comision_envio_entregado', 'comisiones', 'importante',
+            'Comisión por envío entregado',
+            "La entrega de la venta #{$sale->id} generó {$amount} en comisiones para {$name}. Se podrá liquidar al vencer la garantía del {$deadline} a las 23:59.",
+            'liquidacion', $sale->id_usuario, $admins);
     }
 
     public function notifyPayableCommissions(?int $bonusId = null): void

@@ -52,7 +52,8 @@ class NotificationObserver
 
             $seller = $model->usuario()->first();
             $ids = $seller?->isVendedor() ? [$seller->id] : [];
-            if ($created || ($shipping && $model->estado === 'Entregada')) {
+            $notifyAdmins = $shipping ? $model->estado === 'Entregada' : $created;
+            if ($notifyAdmins) {
                 $ids = array_merge($ids, $service->roles('admin'));
             }
             $old = $created ? null : $model->getRawOriginal('estado');

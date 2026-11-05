@@ -10,6 +10,7 @@ use App\Models\ComisionVendedor;
 use App\Models\Producto;
 use App\Models\User;
 use App\Services\ActivityLogger;
+use App\Services\NotificationService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Auth;
@@ -1564,6 +1565,8 @@ class VentaController extends Controller
         }
 
         $vendedorVentaId = (int) $venta->id_usuario;
+        $esEnvio = in_array($venta->tipo_venta, ['Envio', 'Envío'], true);
+        $totalPendiente = 0.0;
 
         foreach ($salidas as $salida) {
             // Verificar si ya existe registro de comisión para esta salida
@@ -1602,7 +1605,7 @@ class VentaController extends Controller
                 $partesNotas[] = 'Descuento de venta aplicado a comisión: -$' . number_format($descuentoComision, 2)
                     . ' (comisión bruta: $' . number_format($comisionBruta, 2) . ')';
             }
-            if (in_array($venta->tipo_venta, ['Envio', 'Envío'])) {
+            if ($esEnvio) {
                 $partesNotas[] = 'Comisión registrada tras entrega exitosa del envío.';
             }
             $notasComision = !empty($partesNotas) ? implode(' | ', $partesNotas) : null;
@@ -1619,6 +1622,11 @@ class VentaController extends Controller
                 'notas'          => $notasComision,
                 'fecha_registro' => now(),
             ]);
+            $totalPendiente += max(0, $comisionTotal);
+        }
+
+        if ($esEnvio && $totalPendiente > 0 && $venta->puede_devolver) {
+            app(NotificationService::class)->notifyDeliveredShippingCommission($venta, $totalPendiente);
         }
     }
 }

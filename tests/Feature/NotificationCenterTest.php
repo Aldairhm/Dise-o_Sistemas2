@@ -30,7 +30,10 @@ class NotificationCenterTest extends TestCase
         Schema::create('salida', function (Blueprint $t) {
             $t->id(); $t->text('observaciones')->nullable();
             $t->unsignedBigInteger('id_variante')->nullable(); $t->unsignedInteger('cantidad')->nullable();
+            $t->string('estado')->nullable(); $t->date('fecha_entrega')->nullable();
+            $t->decimal('costo_extra', 10, 2)->nullable(); $t->decimal('comision_aplicada', 10, 2)->nullable();
         });
+        Schema::create('detalleventa', function (Blueprint $t) { $t->id(); $t->unsignedBigInteger('id_venta'); });
         Schema::create('variante', function (Blueprint $t) { $t->id(); $t->string('sku'); $t->unsignedBigInteger('id_producto')->nullable(); });
         Schema::create('compra', fn (Blueprint $t) => $t->id());
         (require database_path('migrations/2026_09_15_000012_create_movimiento_bodega_table.php'))->up();
@@ -78,7 +81,7 @@ class NotificationCenterTest extends TestCase
         $sale = $this->sale();
         $this->feed($this->seller)->assertOk()->assertJsonPath('unread', 1)
             ->assertJsonPath('items.0.title', 'Venta #'.$sale->id.': Pendiente');
-        $this->feed($this->admin)->assertOk()->assertJsonPath('unread', 1);
+        $this->feed($this->admin)->assertOk()->assertJsonPath('unread', 0);
         $this->feed($this->super)->assertJsonPath('unread', 0);
         $this->feed($this->other)->assertJsonPath('unread', 0);
         $sale->update(['estado' => 'Confirmada']);
@@ -90,7 +93,7 @@ class NotificationCenterTest extends TestCase
     public function test_admin_registering_a_sellers_sale_also_receives_confirmation(): void
     {
         $this->actingAs($this->admin);
-        $sale = $this->sale();
+        $sale = Venta::create(['id_usuario' => $this->seller->id, 'total' => 100, 'metodo_pago' => 'Efectivo', 'estado' => 'Entregada', 'tipo_venta' => 'Tienda']);
         app(NotificationObserver::class)->created($sale);
         $this->feed($this->admin)->assertOk()->assertJsonPath('unread', 1);
         $this->feed($this->seller)->assertOk()->assertJsonPath('unread', 1);
@@ -129,20 +132,19 @@ class NotificationCenterTest extends TestCase
         return ComisionVendedor::create(['id_vendedor' => $sale->id_usuario, 'id_salida' => $outbound, 'monto' => 15, 'estado' => 'Pendiente']);
     }
 
-    public function test_shipping_notifies_admin_on_creation_and_delivery_and_seller_on_each_transition(): void
+    public function test_shipping_notifies_admin_only_on_delivery_and_seller_on_each_transition(): void
     {
         $this->actingAs($this->admin);
         $sale = $this->sale();
         $this->assertSame(0, ComisionVendedor::count());
-        $this->feed($this->admin)->assertOk()->assertJsonPath('unread', 1)
-            ->assertJsonPath('items.0.title', 'Venta #'.$sale->id.': Pendiente');
+        $this->feed($this->admin)->assertOk()->assertJsonPath('unread', 0);
         $expected = 1;
         foreach (['Confirmada', 'En ruta', 'Entregada'] as $state) {
             $this->actingAs($this->admin);
             $sale->update(['estado' => $state]);
             $sale->update(['estado' => $state]);
             $expected++;
-            $this->feed($this->admin)->assertOk()->assertJsonPath('unread', $state === 'Entregada' ? 2 : 1);
+            $this->feed($this->admin)->assertOk()->assertJsonPath('unread', $state === 'Entregada' ? 1 : 0);
             $this->feed($this->seller)->assertJsonPath('unread', $expected)
                 ->assertJsonPath('items.0.title', 'Venta #'.$sale->id.': '.$state);
         }
@@ -152,7 +154,7 @@ class NotificationCenterTest extends TestCase
         $this->feed($this->other)->assertJsonPath('unread', 0);
         $this->feed($this->super)->assertJsonPath('unread', 0);
         $this->assertSame(4, NotificationEvent::where('category', 'ventas')->count());
-        $this->assertSame(6, NotificationDelivery::count());
+        $this->assertSame(5, NotificationDelivery::count());
     }
 
     public function test_commission_payment_is_emitted_only_after_actual_payment_and_is_idempotent(): void
@@ -207,6 +209,36 @@ class NotificationCenterTest extends TestCase
 
         $this->artisan('notifications:payable-commissions')->assertExitCode(0);
         $this->feed($this->admin)->assertJsonPath('unread', 1);
+    }
+
+    public function test_delivered_shipment_notifies_admin_of_commission_and_when_it_becomes_payable(): void
+    {
+        $this->travelTo(now()->setDate(2026, 3, 2)->startOfDay());
+        $sale = $this->sale();
+        $sale->update(['estado' => 'En ruta']);
+        foreach ([5, 7, 0] as $amount) {
+            DB::table('salida')->insert([
+                'observaciones' => "Venta #{$sale->id}", 'cantidad' => 1,
+                'costo_extra' => 7, 'comision_aplicada' => $amount,
+            ]);
+        }
+
+        $route = route('ventas.actualizar-estado', $sale->id);
+        $this->actingAs($this->admin)->patchJson($route, ['estado' => 'Entregada'])->assertOk();
+        $this->patchJson($route, ['estado' => 'Entregada'])->assertUnprocessable();
+        $notice = $this->feed($this->admin)->assertJsonPath('unread', 2)
+            ->assertJsonPath('items.0.title', 'Comisión por envío entregado')
+            ->assertJsonPath('items.0.message', "La entrega de la venta #{$sale->id} generó \$12.00 en comisiones para seller. Se podrá liquidar al vencer la garantía del 08/03/2026 a las 23:59.")
+            ->json('items.0.id');
+        $this->get(route('notifications.open', $notice))->assertRedirect(route('comisiones.index', ['vendedor_id' => $this->seller->id, 'estado' => 'Pendiente']));
+
+        $this->artisan('notifications:payable-commissions')->assertExitCode(0);
+        $this->assertSame(0, NotificationEvent::where('type', 'liquidacion_pendiente')->count());
+        $this->travel(7)->days();
+        $this->artisan('notifications:payable-commissions')->assertExitCode(0);
+        $this->artisan('notifications:payable-commissions')->assertExitCode(0);
+        $this->feed($this->admin)->assertJsonPath('unread', 3)->assertJsonPath('items.0.title', 'Pagos pendientes de liquidación');
+        $this->assertSame(1, NotificationEvent::where('type', 'liquidacion_pendiente')->count());
     }
 
     public function test_return_adjusts_and_notifies_only_the_commission_of_the_matching_sale(): void
