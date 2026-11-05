@@ -11,13 +11,36 @@
             <button type="button" data-bell-read-all class="block text-sm text-blue-700 mt-2">Marcar todas como leídas</button>
         </div>
         <p data-bell-status role="status" class="p-3 text-sm text-gray-500">Cargando notificaciones…</p>
-        <ul data-bell-items class="divide-y divide-gray-100"></ul>
-        <a href="{{ route('notifications.index') }}" class="block p-3 text-center text-sm font-bold text-blue-700">Ver todas las notificaciones</a>
+        <ul data-bell-items></ul>
+        <a href="{{ route('notifications.index') }}" class="block border-t border-gray-100 p-3 text-center text-sm font-bold text-blue-700">Ver todas las notificaciones</a>
     </section>
 </div>
 @once
 <style>
-html.dark .notification-bell [data-bell-items] > .bg-blue-50 { background-color: #172554; }
+.notification-bell [data-bell-items]:not(:empty) { display: grid; gap: 10px; padding: 12px; }
+.notification-bell .notification-preview {
+    min-width: 0;
+    padding: 12px;
+    border: 1px solid var(--border, #e2e8f0);
+    border-radius: 12px;
+    background: var(--bg-card, #fff);
+    box-shadow: 0 2px 5px rgb(15 23 42 / 5%);
+    overflow-wrap: anywhere;
+    transition: box-shadow 150ms ease, border-color 150ms ease;
+}
+.notification-bell .notification-preview:hover,
+.notification-bell .notification-preview:focus-within { border-color: #93c5fd; box-shadow: 0 3px 10px rgb(37 99 235 / 12%); }
+.notification-bell .notification-preview.is-unread { border-color: #bfdbfe; border-left: 3px solid #3b82f6; background: #eff6ff; }
+.notification-bell .notification-preview strong { line-height: 1.4; }
+.notification-bell .notification-preview button {
+    padding: 5px 9px;
+    border: 1px solid var(--border, #dbeafe);
+    border-radius: 8px;
+    background: var(--bg-card, #fff);
+    color: #2563eb;
+}
+html.dark .notification-bell .notification-preview.is-unread { border-color: #1e40af; border-left-color: #60a5fa; background: #172554; }
+html.dark .notification-bell .notification-preview button { color: #93c5fd; }
 @media (max-width: 640px) {
     .notification-bell [data-bell-panel] { position: fixed; left: 12px; right: 12px; top: 80px; width: auto !important; margin-top: 8px; }
 }

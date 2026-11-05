@@ -31,7 +31,7 @@
         list.replaceChildren();
         for (const item of items) {
             const li = document.createElement('li');
-            li.className = `p-3 ${item.read ? '' : 'bg-blue-50'}`;
+            li.className = `notification-preview${item.read ? '' : ' is-unread'}`;
             const a = document.createElement('a');
             a.href = item.open; a.className = 'block text-sm';
             const title = document.createElement('strong');
