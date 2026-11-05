@@ -29,3 +29,8 @@ Artisan::command('notifications:expire-audits', function () {
         });
 })->purpose('Finaliza auditorías vencidas y persiste sus notificaciones');
 Schedule::command('notifications:expire-audits')->everyMinute()->withoutOverlapping();
+
+Artisan::command('notifications:payable-commissions', function () {
+    app(\App\Services\NotificationService::class)->notifyPayableCommissions();
+})->purpose('Avisa a administración sobre comisiones y bonos disponibles para liquidar');
+Schedule::command('notifications:payable-commissions')->everyMinute()->withoutOverlapping();

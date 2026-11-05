@@ -2,7 +2,7 @@
 
 namespace App\Services;
 
-use App\Models\{NotificationDelivery, NotificationEvent, SoporteTicket, User};
+use App\Models\{ComisionVendedor, NotificationDelivery, NotificationEvent, SoporteTicket, User};
 use Illuminate\Support\Facades\DB;
 
 class NotificationService
@@ -31,6 +31,39 @@ class NotificationService
     public function roles(string $role): array
     {
         return User::where('rol', $role)->where('estado', 1)->pluck('id')->all();
+    }
+
+    public function notifyPayableCommissions(): void
+    {
+        $admins = $this->roles('admin');
+        if (!$admins) {
+            return;
+        }
+
+        $pending = ComisionVendedor::pendientes()->where('monto', '>', 0)->whereNull('aviso_liquidacion_at');
+        $sellers = (clone $pending)->select('id_vendedor')->distinct()->lazyById(100, 'id_vendedor');
+        foreach ($sellers as $seller) {
+            DB::transaction(function () use ($seller, $pending, $admins) {
+                $sellerId = $seller->id_vendedor;
+                $commissions = (clone $pending)->deVendedor($sellerId)->with('salida')->orderBy('id')->lockForUpdate()->get();
+                ComisionVendedor::cargarVentas($commissions);
+                $payable = $commissions->reject(fn ($commission) => $commission->es_liquidacion_bloqueada);
+                if ($payable->isEmpty()) {
+                    return;
+                }
+
+                $ids = $payable->modelKeys();
+                $key = 'liquidacion:'.$sellerId.':'.hash('sha256', implode(',', $ids));
+                $bonuses = $payable->whereNull('id_salida')->count();
+                $commissionCount = $payable->count() - $bonuses;
+                $name = User::find($sellerId)?->nombre_real ?? "Vendedor #{$sellerId}";
+                $amount = '$'.number_format((float) $payable->sum('monto'), 2);
+                $this->publish($key, 'liquidacion_pendiente', 'comisiones', 'importante', 'Pagos pendientes de liquidación',
+                    "{$name} tiene {$commissionCount} comisión(es) y {$bonuses} bono(s) que ya se pueden liquidar. Subtotal de estos registros: {$amount}.",
+                    'liquidacion', $sellerId, $admins);
+                ComisionVendedor::whereKey($ids)->update(['aviso_liquidacion_at' => now()]);
+            });
+        }
     }
 
     public function canSeeTicket(User $user, SoporteTicket $ticket): bool

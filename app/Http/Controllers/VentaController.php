@@ -594,13 +594,13 @@ class VentaController extends Controller
             }
 
             // Anular comisiones con lógica de descuento y deducción de envío
-            $salidasIds = Salida::where('observaciones', 'like', "Venta #{$venta->id}%")->pluck('id');
+            $salidasIds = Salida::deVenta($venta->id)->pluck('id');
             if ($salidasIds->isNotEmpty()) {
                 $this->cancelarComisionesVenta($venta, $salidasIds, 'Cancelada');
             }
 
             // Actualizar salidas asociadas
-            Salida::where('observaciones', 'like', "Venta #{$venta->id}%")->update([
+            Salida::deVenta($venta->id)->update([
                 'estado' => $nuevoEstado,
                 'fecha_cancelacion' => now()->toDateString(),
                 'observaciones' => DB::raw("CONCAT(observaciones, ' - Cancelada por vendedor: {$motivo}')"),
@@ -1092,13 +1092,13 @@ class VentaController extends Controller
                 }
 
                 // Anular comisiones con lógica de descuento y deducción de envío
-                $salidasIds = Salida::where('observaciones', 'like', "Venta #{$venta->id}%")->pluck('id');
+                $salidasIds = Salida::deVenta($venta->id)->pluck('id');
                 if ($salidasIds->isNotEmpty()) {
                     $this->cancelarComisionesVenta($venta, $salidasIds, $nuevoEstado);
                 }
             } elseif ($nuevoEstado === 'Cambio') {
                 // En un cambio físico la venta sigue vigente: se conserva la comisión del vendedor
-                $salidasIds = Salida::where('observaciones', 'like', "Venta #{$venta->id}%")->pluck('id');
+                $salidasIds = Salida::deVenta($venta->id)->pluck('id');
                 if ($salidasIds->isNotEmpty()) {
                     ComisionVendedor::whereIn('id_salida', $salidasIds)->each(function ($comision) {
                         $comision->update([
@@ -1129,7 +1129,7 @@ class VentaController extends Controller
                 $salidasUpdates['observaciones'] = "Venta #{$venta->id} - {$nuevoEstado}: " . trim($validated['observaciones']);
             }
 
-            Salida::where('observaciones', 'like', "Venta #{$venta->id}%")->update($salidasUpdates);
+            Salida::deVenta($venta->id)->update($salidasUpdates);
 
             // REGLA: Si la venta ha sido entregada (ej. envíos finalizados),
             // registrar las comisiones de los productos para el vendedor asignado si aún no están registradas.
@@ -1185,7 +1185,7 @@ class VentaController extends Controller
         }
 
         // Asociar costos extras guardados en la tabla salida
-        $salidas = Salida::where('observaciones', 'like', "Venta #{$venta->id}%")
+        $salidas = Salida::deVenta($venta->id)
             ->get()
             ->keyBy('id_variante');
 
@@ -1254,7 +1254,7 @@ class VentaController extends Controller
         }
 
         // Recuperar costos extras asociados a esta venta
-        $salidas = Salida::where('observaciones', 'like', "Venta #{$venta->id}%")
+        $salidas = Salida::deVenta($venta->id)
             ->get()
             ->keyBy('id_variante');
 
@@ -1556,7 +1556,7 @@ class VentaController extends Controller
     {
         $comisionService = app(\App\Services\ComisionService::class);
         $salidas = Salida::with(['variante.producto'])
-            ->where('observaciones', 'like', "Venta #{$venta->id}%")
+            ->deVenta($venta->id)
             ->get();
 
         if ($salidas->isEmpty()) {

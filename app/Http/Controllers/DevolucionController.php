@@ -250,7 +250,7 @@ class DevolucionController extends Controller
                     $datosActualizacionVenta['observaciones'] = trim(($venta->observaciones ? $venta->observaciones . PHP_EOL : '') . $notaCambio);
 
                     // Actualizar las salidas asociadas con la nueva información de entrega y estado Cambio
-                    Salida::where('observaciones', 'like', "Venta #{$venta->id}%")->update([
+                    Salida::deVenta($venta->id)->update([
                         'nombre_cliente' => $nombreClienteEnvio,
                         'telefono' => $telefonoEnvio,
                         'departamento' => $deptoEnvio,
@@ -267,7 +267,7 @@ class DevolucionController extends Controller
                     $datosActualizacionVenta['observaciones'] = trim(($venta->observaciones ? $venta->observaciones . PHP_EOL : '') . $notaCambio);
 
                     // 1. Actualizar las salidas de la venta original a estado 'Cambio'
-                    Salida::where('observaciones', 'like', "Venta #{$venta->id}%")->update([
+                    Salida::deVenta($venta->id)->update([
                         'estado' => 'Cambio',
                     ]);
 
@@ -344,7 +344,7 @@ class DevolucionController extends Controller
                     $devolucion->update(['detalles_json' => $detallesDev]);
                 } else {
                     $datosActualizacionVenta['observaciones'] = trim(($venta->observaciones ? $venta->observaciones . PHP_EOL : '') . $nuevoEstado . ': ' . $validated['motivo']);
-                    Salida::where('observaciones', 'like', "Venta #{$venta->id}%")->update([
+                    Salida::deVenta($venta->id)->update([
                         'estado' => $nuevoEstado,
                     ]);
                 }

@@ -14,6 +14,7 @@
     const categories = {
         ventas: { label: 'Ventas', icon: 'fa-cart-shopping', color: '#2563eb', bg: '#eff6ff', text: '#1d4ed8' },
         comisiones: { label: 'Comisiones', icon: 'fa-hand-holding-dollar', color: '#059669', bg: '#ecfdf5', text: '#047857' },
+        inventario: { label: 'Inventario', icon: 'fa-warehouse', color: '#d97706', bg: '#fffbeb', text: '#92400e' },
         ayuda: { label: 'Ayuda', icon: 'fa-circle-question', color: '#0284c7', bg: '#f0f9ff', text: '#0369a1' },
         auditorias: { label: 'Auditorías', icon: 'fa-clipboard-check', color: '#7c3aed', bg: '#f5f3ff', text: '#6d28d9' },
         seguridad: { label: 'Seguridad', icon: 'fa-shield-halved', color: '#d97706', bg: '#fffbeb', text: '#b45309' },

@@ -2,7 +2,7 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\{AuditoriaSesion, ComisionVendedor, Devolucion, NotificationDelivery, SoporteTicket, User, Venta};
+use App\Models\{AuditoriaSesion, ComisionVendedor, Devolucion, MovimientoBodega, NotificationDelivery, SoporteTicket, User, Venta};
 use App\Services\NotificationService;
 use Illuminate\Http\Request;
 
@@ -19,6 +19,9 @@ class NotificationController extends Controller
             }
             if (!$user->isAdmin()) {
                 $q->where('resource_type', '!=', 'devolucion');
+            }
+            if ($user->rol !== 'admin') {
+                $q->whereNotIn('resource_type', ['liquidacion', 'movimiento_bodega']);
             }
             $q->where(function ($q) use ($user) {
                 $q->where('resource_type', '!=', 'ticket')->orWhere(function ($q) use ($user) {
@@ -42,7 +45,7 @@ class NotificationController extends Controller
     {
         $validated = $request->validate([
             'status' => 'nullable|in:all,unread,read,archived',
-            'category' => 'nullable|in:ventas,comisiones,ayuda,auditorias,seguridad,administracion',
+            'category' => 'nullable|in:ventas,comisiones,inventario,ayuda,auditorias,seguridad,administracion',
             'priority' => 'nullable|in:informativa,importante,alta,critica',
             'q' => 'nullable|string|max:120', 'order' => 'nullable|in:asc,desc',
         ]);
@@ -113,6 +116,16 @@ class NotificationController extends Controller
                 $commission = ComisionVendedor::find($resourceId);
                 if ($commission && ($user->rol === 'admin' || (int) $commission->id_vendedor === (int) $user->id)) {
                     $destination = route('comisiones.index', ['notification_commission' => $commission->id]);
+                }
+                break;
+            case 'liquidacion':
+                if ($user->rol === 'admin' && ComisionVendedor::deVendedor($resourceId)->exists()) {
+                    $destination = route('comisiones.index', ['vendedor_id' => $resourceId, 'estado' => 'Pendiente']);
+                }
+                break;
+            case 'movimiento_bodega':
+                if ($user->rol === 'admin' && MovimientoBodega::find($resourceId)) {
+                    $destination = route('compras.movimientos', ['movimiento' => $resourceId]);
                 }
                 break;
             case 'ticket':

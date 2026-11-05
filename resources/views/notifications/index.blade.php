@@ -39,6 +39,7 @@
                 ''               => ['label' => 'Todas', 'icon' => 'fas fa-border-all text-slate-400'],
                 'ventas'         => ['label' => 'Ventas', 'icon' => 'fas fa-cart-shopping text-blue-500'],
                 'comisiones'     => ['label' => 'Comisiones', 'icon' => 'fas fa-hand-holding-dollar text-emerald-500'],
+                'inventario'     => ['label' => 'Inventario', 'icon' => 'fas fa-warehouse text-amber-500'],
                 'ayuda'          => ['label' => 'Ayuda', 'icon' => 'fas fa-circle-question text-sky-500'],
                 'auditorias'     => ['label' => 'Auditorías', 'icon' => 'fas fa-clipboard-check text-purple-500'],
                 'seguridad'      => ['label' => 'Seguridad', 'icon' => 'fas fa-shield-halved text-amber-500'],
@@ -247,6 +248,12 @@
                         'icon'     => 'fa-hand-holding-dollar',
                         'gradient' => 'from-emerald-500 to-teal-600',
                         'badge'    => 'bg-emerald-50 text-emerald-700 border-emerald-200/80',
+                    ],
+                    'inventario' => [
+                        'label'    => 'Inventario',
+                        'icon'     => 'fa-warehouse',
+                        'gradient' => 'from-amber-500 to-orange-600',
+                        'badge'    => 'bg-amber-50 text-amber-700 border-amber-200/80',
                     ],
                     'ayuda' => [
                         'label'    => 'Ayuda',

@@ -255,7 +255,7 @@ class ComisionService
         };
 
         // Salidas asociadas a la venta
-        $salidas = Salida::where('observaciones', 'like', "Venta #{$venta->id}%")->get()->keyBy('id_variante');
+        $salidas = Salida::deVenta($venta->id)->get()->keyBy('id_variante');
 
         foreach ($productosDevueltos as $item) {
             $idVariante = (int) $item['id_variante'];

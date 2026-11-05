@@ -14,11 +14,12 @@ Todos los eventos se entregan mediante base de datos y polling autenticado. El m
 
 | Evento / condición confirmada | Destinatarios | Prioridad / mensaje | Destino y acción |
 |---|---|---|---|
-| Venta creada mediante Eloquent | Vendedor responsable y administradores activos, incluido quien registra la venta | Informativa; identificador, vendedor, monto y estado | Detalle de venta con autorización actual |
-| Venta cambia realmente de estado | Vendedor y administradores activos, incluido quien confirma el cambio de estado | Importante en cancelación/devolución; informativa en los demás; estado anterior y nuevo | Detalle de venta |
-| Comisión creada | Vendedor titular | Importante; monto y estado real | Historial filtrado por comisión |
-| Comisión cambia estado, monto o porcentaje | Vendedor titular | Importante; monto y estado real | Historial filtrado por comisión |
-| Comisión cambia efectivamente a Pagada | Vendedor titular | Importante; “Comisión pagada”, monto y estado confirmado | Historial filtrado; no altera reglas de liquidación ni garantía |
+| Venta nueva en tienda o por envío | Vendedor titular y administradores activos | Modalidad y confirmación de registro | Detalle de venta |
+| Venta por envío cambia de estado | Vendedor titular | Estado anterior y nuevo | Detalle de venta |
+| Comisión generada, bono registrado o ajuste | Vendedor titular | Concepto, monto y estado | Historial filtrado por registro |
+| Comisión, bono o ajuste cambia de monto, estado, porcentaje o concepto | Vendedor titular | Monto, estado y monto anterior cuando cambia | Historial filtrado por registro |
+| Comisión, bono o ajuste efectivamente liquidado | Vendedor titular | Confirmación del pago o liquidación | Historial filtrado por registro |
+| Comisión o bono disponible para pagar | Administradores activos | Resumen de nuevos importes liquidables por vendedor | Comisiones pendientes del vendedor |
 | Ticket creado | Titular y personal activo del nivel correspondiente; si hay asignado, se limita el grupo | Importante; alta si prioridad Alta/Urgente; código, estado y prioridad | Conversación autorizada |
 | Ticket cambia estado, prioridad, asignado o nivel | Titular y personal actualmente autorizado, excepto actor | Importante/alta; código, estado y prioridad | Conversación; leer no resuelve |
 | Respuesta pública | Titular y personal autorizado, excepto autor/actor | Importante; aviso de nueva respuesta sin copiar texto privado | Conversación |
@@ -27,14 +28,14 @@ Todos los eventos se entregan mediante base de datos y polling autenticado. El m
 | Auditoría finalizada, expirada o revocada | Cuenta auditada | Importante; estado de la revisión | Perfil |
 | Auditoría expirada o revocada | Superadministrador responsable, excepto quien realiza la acción | Alta; identificador y estado | Historial de auditorías |
 | Reautenticación fallida al iniciar auditoría | Superadministradores activos | Alta; aviso de rechazo, agrupado por actor/hora | Usuarios y bitácora autorizados |
-| Cambio de contraseña, username, rol, estado, comisión porcentual o MFA | Cuenta afectada | Alta; aviso genérico de modificación de acceso/configuración | Perfil |
+| Cambio de nombre, teléfono, correo, contraseña, rol, estado, porcentaje de comisión o MFA | Cuenta afectada | Nombres de los campos modificados | Perfil |
 | Cambio de rol, estado o MFA | Superadministradores activos, excepto actor | Alta; identificador de cuenta | Gestión de usuarios |
 | Intentos de login alcanzan 5, 10 o 15 en el contador existente | Superadministradores activos, solo si la cuenta existe | Alta; umbral alcanzado, sin afirmar ataque; agrupación cuenta/hora/umbral | Gestión de usuarios y bitácora |
-| Devolución a proveedor creada o cambia estado | Administradores activos, excepto actor | Importante; identificador y estado | Devoluciones a proveedores |
+| Movimiento registrado en Kardex | Administradores activos | Producto, cantidad y cambios de existencias | Registro del Kardex |
 | Respaldo falla mediante evento Spatie o ejecución manual | Superadministradores activos | Crítica; fallo confirmado sin mensajes técnicos sensibles; un grupo por hora | Respaldos y registros autorizados |
 | Restauración de base de datos confirmada | Superadministradores activos | Crítica; restauración confirmada | Respaldos y bitácora |
 
-No se envían todas las ventas o comisiones al SUPER_ADMIN. La creación de un ticket confirma recepción al titular. Las ventas nuevas y sus transiciones confirmadas también notifican al actor autorizado para permitir seguimiento operativo; en otros módulos se suprimen acciones propias rutinarias. Los avisos de comisiones y seguridad se conservan aunque el titular sea el actor por su función financiera o de seguridad.
+Las ventas nuevas notifican también al administrador que las registra. Los avisos personales y de comisión se entregan al titular incluso cuando realiza la acción.
 
 ## Datos y consistencia
 
@@ -78,12 +79,12 @@ En AyudaController se refuerza el control jerárquico antes de responder, escala
 1. Usar PHP 8.3 o superior compatible con composer.lock. Instalar las dependencias bloqueadas con `composer install`.
 2. Con el entorno de base de datos del proyecto configurado y un respaldo disponible, ejecutar `php artisan migrate`. No se ha ejecutado contra una base de producción.
 3. Ejecutar `npm ci` y `npm run build`; publicar también `public/js/notification-center.js`.
-4. Mantener activo el scheduler habitual de Laravel (`php artisan schedule:run` cada minuto). La expiración sigue comprobándose por el middleware existente cuando se usa una sesión; el scheduler permite avisar incluso sin actividad.
+4. Mantener activo el scheduler de Laravel mediante `php artisan schedule:run` cada minuto. Ejecuta `notifications:payable-commissions` para avisar cuando vence la garantía o se registra un bono liquidable, además de gestionar la expiración de auditorías.
 5. Verificar la migración y los flujos reales en staging PostgreSQL. No hace falta contratar servicios ni configurar WebSockets/colas para este centro.
 
 ## Validación y límites
 
-- Suite `NotificationCenterTest`: **21 pruebas, 124 comprobaciones, correctas**. Incluye destinatarios, cambios reales/no-op, pago mediante ComisionService, ausencia de anuncio prematuro de pago, rollback, notas internas, escalamiento/resolución, IDOR, lectura/archivado, filtros/paginación, idempotencia, auditoría privada, expiración programada, sesión inactiva, recursos eliminados/permisos retirados, agrupación de respaldos y umbrales reales de login.
+- Suite `NotificationCenterTest`: **25 pruebas y 170 comprobaciones**. Incluye destinatarios por rol, avisos de Kardex y perfil, liquidación agrupada tras la garantía, ajuste de comisión en devoluciones, privacidad, deduplicación, filtros y enlaces.
 - La suite usa SQLite **en memoria y aislado**. Reutiliza migraciones de usuarios, ventas, bitácora y soporte; emplea fixtures mínimos en las tablas heredadas con ALTER CHECK de PostgreSQL no compatible con SQLite. Sí ejecuta la migración nueva completa. No accede a la base `axstore2026` de la configuración de pruebas antigua.
 - `npm run build`: correcto. `node --check public/js/notification-center.js`: correcto. Rutas nuevas registradas correctamente.
 - Navegador integrado sobre base local descartable: centro y campana renderizados, contador 4→3 al leer y 3→0 al marcar todas, persistencia al recargar, cierre Escape y desplegable móvil de 390 px dentro de pantalla. Se creó una comisión mediante el modelo real en la base aislada y se verificó la llegada automática del aviso (contador 0→1) sin recargar la página. Las capturas contienen datos de prueba; no se agregan seeds demostrativos al producto.
@@ -99,6 +100,8 @@ Nuevos: migración del centro; modelos NotificationEvent/NotificationDelivery; t
 
 Modificados: modelos User, Venta, ComisionVendedor, SoporteTicket, SoporteTicketMensaje, AuditoriaSesion y Devolucion; AppServiceProvider; AuthController, AyudaController, BackupController, ComisionVendedorController y SuperAdminController; rutas web/console; cabeceras compartidas header y header-vendedor.
 
-## Corrección del seguimiento de ventas
+## Avisos de liquidación e inventario
 
-Se eliminó la supresión del actor para los avisos de ventas. Una venta en tienda genera su aviso de venta Entregada, además del aviso independiente de comisión cuando el proceso de negocio la genera. Una venta de envío notifica desde Pendiente, aunque todavía no tenga comisión. Los cambios reales a Confirmada, En ruta, Entregada, Cancelada, Devolución o Cambio notifican al titular y a los administradores activos, incluido quien confirma la operación. La selección de destinatarios no copia ventas rutinarias al SUPER_ADMIN ni a vendedores ajenos. Se mantienen la deduplicación, transacciones y permisos. No se recrean avisos de ventas anteriores: la corrección aplica a las operaciones que se registren después de actualizar el código.
+La migración `2026_11_05_000001_add_payment_notice_to_commissions.php` registra qué partidas ya generaron un aviso de liquidación. El scheduler revisa comisiones y bonos positivos que siguen pendientes, incluidas partidas existentes. Usa el mismo bloqueo por entrega y garantía que el proceso de liquidación. Agrupa las partidas recién disponibles por vendedor y guarda la notificación y la marca en la misma transacción.
+
+Los avisos de inventario se crean con los registros de `movimiento_bodega` que alimentan el Kardex físico. Incluyen compras recibidas, transferencias y devoluciones que registran movimiento. Cada aviso abre ese registro. La creación de venta ya confirma la salida asociada al administrador.

@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
@@ -91,6 +92,15 @@ class Salida extends Model
             return (int) $m[1];
         }
         return null;
+    }
+
+    public function scopeDeVenta(Builder $query, int $ventaId): Builder
+    {
+        $reference = "Venta #{$ventaId}";
+
+        return $query->where(fn (Builder $query) => $query
+            ->where('observaciones', $reference)
+            ->orWhere('observaciones', 'like', $reference.' %'));
     }
 
     public function getVentaAttribute(): ?Venta

@@ -24,7 +24,7 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
-        foreach ([\App\Models\User::class, \App\Models\Venta::class, \App\Models\ComisionVendedor::class, \App\Models\SoporteTicket::class, \App\Models\SoporteTicketMensaje::class, \App\Models\AuditoriaSesion::class, \App\Models\Devolucion::class] as $model) {
+        foreach ([\App\Models\User::class, \App\Models\Venta::class, \App\Models\ComisionVendedor::class, \App\Models\SoporteTicket::class, \App\Models\SoporteTicketMensaje::class, \App\Models\AuditoriaSesion::class, \App\Models\MovimientoBodega::class] as $model) {
             $model::observe(\App\Observers\NotificationObserver::class);
         }
         Event::listen(BackupHasFailed::class, function () {
