@@ -19,6 +19,9 @@ class NotificationObserver
         }
 
         $this->dispatch($model, true);
+        if ($model instanceof ComisionVendedor && !$model->id_salida && $model->estado === 'Pendiente' && (float) $model->monto > 0) {
+            $this->notifications->notifyPayableCommissions($model->id);
+        }
     }
     public function updated(Model $model): void
     {

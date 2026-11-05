@@ -173,6 +173,7 @@ class NotificationCenterTest extends TestCase
         $commission = $this->saleCommission($sale);
         $bonus = ComisionVendedor::create(['id_vendedor' => $this->seller->id, 'monto' => 20, 'estado' => 'Pendiente', 'concepto' => 'Meta mensual']);
         $this->feed($this->seller)->assertJsonPath('items.0.title', 'Bono registrado');
+        $this->feed($this->admin)->assertJsonPath('items.0.title', 'Bono pendiente de pago');
         $this->artisan('notifications:payable-commissions')->assertExitCode(0);
         $this->assertNull($commission->fresh()->aviso_liquidacion_at);
         $this->assertNotNull($bonus->fresh()->aviso_liquidacion_at);
@@ -187,6 +188,22 @@ class NotificationCenterTest extends TestCase
         $notice = NotificationDelivery::whereHas('event', fn ($query) => $query->where('type', 'liquidacion_pendiente'))->latest('id')->firstOrFail();
         $this->get(route('notifications.open', $notice))->assertRedirect(route('comisiones.index', ['vendedor_id' => $this->seller->id, 'estado' => 'Pendiente']));
         $this->actingAs($this->seller)->get(route('notifications.open', $notice))->assertNotFound();
+    }
+
+    public function test_recording_bonus_from_commissions_notifies_admin_immediately(): void
+    {
+        $this->actingAs($this->admin)->post(route('comisiones.store'), [
+            'id_vendedor' => $this->seller->id, 'concepto' => 'Meta mensual', 'monto' => 20,
+        ])->assertRedirect(route('comisiones.porVendedor'));
+
+        $this->feed($this->admin)->assertJsonPath('unread', 1)
+            ->assertJsonPath('items.0.title', 'Bono pendiente de pago')
+            ->assertJsonPath('items.0.message', 'seller tiene un bono de $20.00 pendiente de pago. Concepto: Meta mensual.');
+        $this->feed($this->seller)->assertJsonPath('items.0.title', 'Bono registrado');
+        $this->feed($this->other)->assertJsonPath('unread', 0);
+
+        $this->artisan('notifications:payable-commissions')->assertExitCode(0);
+        $this->feed($this->admin)->assertJsonPath('unread', 1);
     }
 
     public function test_return_adjusts_and_notifies_only_the_commission_of_the_matching_sale(): void

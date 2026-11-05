@@ -79,12 +79,12 @@ En AyudaController se refuerza el control jerárquico antes de responder, escala
 1. Usar PHP 8.3 o superior compatible con composer.lock. Instalar las dependencias bloqueadas con `composer install`.
 2. Con el entorno de base de datos del proyecto configurado y un respaldo disponible, ejecutar `php artisan migrate`. No se ha ejecutado contra una base de producción.
 3. Ejecutar `npm ci` y `npm run build`; publicar también `public/js/notification-center.js`.
-4. Mantener activo el scheduler de Laravel mediante `php artisan schedule:run` cada minuto. Ejecuta `notifications:payable-commissions` para avisar cuando vence la garantía o se registra un bono liquidable, además de gestionar la expiración de auditorías.
+4. Mantener activo el scheduler de Laravel mediante `php artisan schedule:run` cada minuto. Ejecuta `notifications:payable-commissions` para avisar cuando vence la garantía y revisar pagos pendientes de aviso, además de gestionar la expiración de auditorías.
 5. Verificar la migración y los flujos reales en staging PostgreSQL. No hace falta contratar servicios ni configurar WebSockets/colas para este centro.
 
 ## Validación y límites
 
-- Suite `NotificationCenterTest`: **25 pruebas y 170 comprobaciones**. Incluye destinatarios por rol, avisos de Kardex y perfil, liquidación agrupada tras la garantía, ajuste de comisión en devoluciones, privacidad, deduplicación, filtros y enlaces.
+- Suite `NotificationCenterTest`: **26 pruebas y 180 comprobaciones**. Incluye destinatarios por rol, avisos de Kardex y perfil, aviso inmediato de bono, liquidación agrupada tras la garantía, ajuste de comisión en devoluciones, privacidad, deduplicación, filtros y enlaces.
 - La suite usa SQLite **en memoria y aislado**. Reutiliza migraciones de usuarios, ventas, bitácora y soporte; emplea fixtures mínimos en las tablas heredadas con ALTER CHECK de PostgreSQL no compatible con SQLite. Sí ejecuta la migración nueva completa. No accede a la base `axstore2026` de la configuración de pruebas antigua.
 - `npm run build`: correcto. `node --check public/js/notification-center.js`: correcto. Rutas nuevas registradas correctamente.
 - Navegador integrado sobre base local descartable: centro y campana renderizados, contador 4→3 al leer y 3→0 al marcar todas, persistencia al recargar, cierre Escape y desplegable móvil de 390 px dentro de pantalla. Se creó una comisión mediante el modelo real en la base aislada y se verificó la llegada automática del aviso (contador 0→1) sin recargar la página. Las capturas contienen datos de prueba; no se agregan seeds demostrativos al producto.
@@ -102,6 +102,6 @@ Modificados: modelos User, Venta, ComisionVendedor, SoporteTicket, SoporteTicket
 
 ## Avisos de liquidación e inventario
 
-La migración `2026_11_05_000001_add_payment_notice_to_commissions.php` registra qué partidas ya generaron un aviso de liquidación. El scheduler revisa comisiones y bonos positivos que siguen pendientes, incluidas partidas existentes. Usa el mismo bloqueo por entrega y garantía que el proceso de liquidación. Agrupa las partidas recién disponibles por vendedor y guarda la notificación y la marca en la misma transacción.
+La migración `2026_11_05_000001_add_payment_notice_to_commissions.php` registra qué partidas ya generaron un aviso de liquidación. Al registrar un bono pendiente, los administradores reciben un aviso con su importe y concepto en la misma transacción. El scheduler revisa comisiones y bonos pendientes que aún carecen de aviso. Usa el mismo bloqueo por entrega y garantía que el proceso de liquidación, agrupa las partidas recién disponibles por vendedor y guarda la notificación y la marca en la misma transacción.
 
 Los avisos de inventario se crean con los registros de `movimiento_bodega` que alimentan el Kardex físico. Incluyen compras recibidas, transferencias y devoluciones que registran movimiento. Cada aviso abre ese registro. La creación de venta ya confirma la salida asociada al administrador.

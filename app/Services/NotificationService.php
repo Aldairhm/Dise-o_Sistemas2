@@ -33,7 +33,7 @@ class NotificationService
         return User::where('rol', $role)->where('estado', 1)->pluck('id')->all();
     }
 
-    public function notifyPayableCommissions(): void
+    public function notifyPayableCommissions(?int $bonusId = null): void
     {
         $admins = $this->roles('admin');
         if (!$admins) {
@@ -41,6 +41,9 @@ class NotificationService
         }
 
         $pending = ComisionVendedor::pendientes()->where('monto', '>', 0)->whereNull('aviso_liquidacion_at');
+        if ($bonusId !== null) {
+            $pending->whereKey($bonusId)->whereNull('id_salida');
+        }
         $sellers = (clone $pending)->select('id_vendedor')->distinct()->lazyById(100, 'id_vendedor');
         foreach ($sellers as $seller) {
             DB::transaction(function () use ($seller, $pending, $admins) {
@@ -58,8 +61,18 @@ class NotificationService
                 $commissionCount = $payable->count() - $bonuses;
                 $name = User::find($sellerId)?->nombre_real ?? "Vendedor #{$sellerId}";
                 $amount = '$'.number_format((float) $payable->sum('monto'), 2);
-                $this->publish($key, 'liquidacion_pendiente', 'comisiones', 'importante', 'Pagos pendientes de liquidación',
-                    "{$name} tiene {$commissionCount} comisión(es) y {$bonuses} bono(s) que ya se pueden liquidar. Subtotal de estos registros: {$amount}.",
+                if ($bonuses === 1 && $commissionCount === 0) {
+                    $bonus = $payable->first();
+                    $title = 'Bono pendiente de pago';
+                    $message = "{$name} tiene un bono de {$amount} pendiente de pago.";
+                    if ($bonus->concepto) {
+                        $message .= " Concepto: {$bonus->concepto}.";
+                    }
+                } else {
+                    $title = 'Pagos pendientes de liquidación';
+                    $message = "{$name} tiene {$commissionCount} comisión(es) y {$bonuses} bono(s) que ya se pueden liquidar. Subtotal de estos registros: {$amount}.";
+                }
+                $this->publish($key, 'liquidacion_pendiente', 'comisiones', 'importante', $title, $message,
                     'liquidacion', $sellerId, $admins);
                 ComisionVendedor::whereKey($ids)->update(['aviso_liquidacion_at' => now()]);
             });
