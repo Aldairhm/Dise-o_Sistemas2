@@ -313,6 +313,9 @@ function resetAllFilters() {
     document.getElementById('clearSearchBtn').classList.add('hidden');
     document.getElementById('roleFilter').value = 'todos';
     document.getElementById('statusFilter').value = 'todos';
+    ['roleFilter', 'statusFilter'].forEach((id) => {
+        document.getElementById(id).dispatchEvent(new Event('filter-select:refresh'));
+    });
     applyFilters();
 }
 
