@@ -188,6 +188,7 @@ Route::middleware('auth')->group(function () {
         Route::post('/auditorias/{sesion}/revocar', [SuperAdminController::class, 'revocarAuditoria'])->name('auditorias.revocar')->whereNumber('sesion');
         Route::get('/tickets', [SuperAdminController::class, 'tickets'])->name('tickets');
         Route::post('/crear-superadmin', [SuperAdminController::class, 'guardarSuperAdmin'])->name('crear');
+        Route::put('/usuarios/{user}/superadmin', [SuperAdminController::class, 'actualizarSuperAdmin'])->name('superadmin.actualizar')->whereNumber('user');
     });
 
     // Ruta de finalización de auditoría (accesible durante una sesión de impersonation)

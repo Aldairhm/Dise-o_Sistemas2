@@ -312,15 +312,26 @@ class SuperAdminController extends Controller
     }
 
     /**
-     * Crear o actualizar un Super Administrador de forma segura
+     * Crear un nuevo Super Administrador de forma segura
      */
     public function guardarSuperAdmin(Request $request)
     {
         $validated = $request->validate([
             'nombre_real'   => 'required|string|max:255',
             'username'      => 'required|email|max:255|unique:usuario,username',
-            'password'      => 'required|string|min:10|confirmed',
+            'telefono'      => 'nullable|string|max:20',
+            'estado'        => 'required|in:0,1',
+            'password'      => 'required|string|min:8|confirmed',
             'auth_password' => 'required|string',
+        ], [
+            'nombre_real.required'   => 'El nombre completo es obligatorio.',
+            'username.required'      => 'El correo institucional es obligatorio.',
+            'username.email'         => 'El correo debe ser una dirección de email válida.',
+            'username.unique'        => 'Este correo ya se encuentra registrado en el sistema.',
+            'password.required'      => 'La contraseña es obligatoria.',
+            'password.min'           => 'La contraseña debe tener al menos 8 caracteres.',
+            'password.confirmed'     => 'Las contraseñas no coinciden.',
+            'auth_password.required' => 'Debes ingresar tu contraseña de Super Administrador en sesión para autorizar la creación.',
         ]);
 
         if (!Hash::check($request->auth_password, Auth::user()->password)) {
@@ -330,9 +341,10 @@ class SuperAdminController extends Controller
         $nuevoAdmin = User::create([
             'nombre_real' => $validated['nombre_real'],
             'username'    => $validated['username'],
+            'telefono'    => $validated['telefono'] ?? null,
             'password'    => Hash::make($validated['password']),
             'rol'         => 'super_admin',
-            'estado'      => 1,
+            'estado'      => (int) $validated['estado'],
         ]);
 
         ActivityLogger::log(
@@ -342,6 +354,77 @@ class SuperAdminController extends Controller
         );
 
         return back()->with('success', "Cuenta SUPER_ADMIN creada exitosamente para {$nuevoAdmin->nombre_real}.");
+    }
+
+    /**
+     * Actualizar una cuenta Super Administrador con paso de seguridad reforzado (contraseña del Super Admin en sesión)
+     */
+    public function actualizarSuperAdmin(Request $request, User $user)
+    {
+        if (!$user->isSuperAdmin()) {
+            abort(404, 'El usuario seleccionado no es un Super Administrador.');
+        }
+
+        $validated = $request->validate([
+            'nombre_real'   => 'required|string|max:255',
+            'username'      => 'required|email|max:255|unique:usuario,username,' . $user->id,
+            'telefono'      => 'nullable|string|max:20',
+            'password'      => 'nullable|string|min:8|confirmed',
+            'estado'        => 'required|in:0,1',
+            'auth_password' => 'required|string',
+        ], [
+            'nombre_real.required'   => 'El nombre completo es obligatorio.',
+            'username.required'      => 'El correo institucional es obligatorio.',
+            'username.email'         => 'El correo debe ser una dirección de email válida.',
+            'username.unique'        => 'Este correo ya se encuentra registrado por otro usuario.',
+            'password.min'           => 'La contraseña debe tener al menos 8 caracteres.',
+            'password.confirmed'     => 'Las contraseñas no coinciden.',
+            'auth_password.required' => 'Debes ingresar tu contraseña de Super Administrador en sesión para autorizar la edición.',
+        ]);
+
+        // Verificación estricta de seguridad: contraseña del Super Admin autenticado
+        if (!Hash::check($request->auth_password, Auth::user()->password)) {
+            ActivityLogger::log(
+                'INTENTO_EDICION_SUPER_ADMIN_FALLIDO',
+                'Auditoría y Seguridad',
+                "Intento fallido de editar al Super Administrador {$user->username} por contraseña de autorización incorrecta."
+            );
+            return back()->with('error', 'Contraseña de autorización incorrecta. Acción denegada por seguridad.');
+        }
+
+        $datosAnteriores = [
+            'nombre_real' => $user->nombre_real,
+            'username'    => $user->username,
+            'telefono'    => $user->telefono,
+            'estado'      => $user->estado,
+        ];
+
+        $user->nombre_real = $validated['nombre_real'];
+        $user->username = $validated['username'];
+        $user->telefono = $validated['telefono'] ?? null;
+        $user->estado = (int) $validated['estado'];
+
+        if (!empty($validated['password'])) {
+            $user->password = Hash::make($validated['password']);
+        }
+
+        $user->save();
+
+        ActivityLogger::log(
+            'ACTUALIZAR_SUPER_ADMIN',
+            'Auditoría y Seguridad',
+            "El Super Administrador " . Auth::user()->username . " actualizó los datos del Super Administrador: {$user->username}",
+            $datosAnteriores,
+            [
+                'nombre_real' => $user->nombre_real,
+                'username'    => $user->username,
+                'telefono'    => $user->telefono,
+                'estado'      => $user->estado,
+                'cambio_password' => !empty($validated['password']),
+            ]
+        );
+
+        return back()->with('success', "Cuenta de Super Administrador {$user->nombre_real} actualizada exitosamente.");
     }
 }
 

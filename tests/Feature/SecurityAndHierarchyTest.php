@@ -25,7 +25,7 @@ class SecurityAndHierarchyTest extends TestCase
         $this->superAdmin = User::firstOrCreate(
             ['username' => 'test_superadmin@axstore.com'],
             [
-                'nombre_real' => 'Super Admin Test',
+                'nombre_real' => 'Ing. Alejandro Ramos',
                 'password'    => Hash::make('SuperPassword2026!'),
                 'rol'         => 'super_admin',
                 'estado'      => 1,
@@ -35,7 +35,7 @@ class SecurityAndHierarchyTest extends TestCase
         $this->admin = User::firstOrCreate(
             ['username' => 'test_admin@axstore.com'],
             [
-                'nombre_real' => 'Admin Test',
+                'nombre_real' => 'Rodrigo Morales',
                 'password'    => Hash::make('Password2026!'),
                 'rol'         => 'admin',
                 'estado'      => 1,
@@ -45,7 +45,7 @@ class SecurityAndHierarchyTest extends TestCase
         $this->vendedor = User::firstOrCreate(
             ['username' => 'test_vendedor@axstore.com'],
             [
-                'nombre_real' => 'Vendedor Test',
+                'nombre_real' => 'Valeria Gómez',
                 'password'    => Hash::make('Password2026!'),
                 'rol'         => 'vendedor',
                 'estado'      => 1,
