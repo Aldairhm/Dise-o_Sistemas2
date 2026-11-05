@@ -69,13 +69,71 @@ class NotificationCenterTest extends TestCase
     {
         $this->actingAs($this->seller);
         $sale = $this->sale();
+        $this->feed($this->seller)->assertOk()->assertJsonPath('unread', 1)
+            ->assertJsonPath('items.0.title', 'Venta #'.$sale->id.': Pendiente');
         $this->feed($this->admin)->assertOk()->assertJsonPath('unread', 1);
         $this->feed($this->super)->assertJsonPath('unread', 0);
         $this->feed($this->other)->assertJsonPath('unread', 0);
         $sale->update(['estado' => 'Confirmada']);
-        $this->feed($this->seller)->assertJsonPath('unread', 1)->assertJsonPath('items.0.title', 'Venta #'.$sale->id.': Confirmada');
+        $this->feed($this->seller)->assertJsonPath('unread', 2)->assertJsonPath('items.0.title', 'Venta #'.$sale->id.': Confirmada');
         $sale->update(['estado' => 'Confirmada']);
         $this->assertSame(2, NotificationEvent::count());
+    }
+
+    public function test_admin_registering_a_sellers_sale_also_receives_confirmation(): void
+    {
+        $this->actingAs($this->admin);
+        $sale = $this->sale();
+        app(NotificationObserver::class)->created($sale);
+        $this->feed($this->admin)->assertOk()->assertJsonPath('unread', 1);
+        $this->feed($this->seller)->assertOk()->assertJsonPath('unread', 1);
+        $this->feed($this->other)->assertJsonPath('unread', 0);
+        $this->feed($this->super)->assertJsonPath('unread', 0);
+        $this->assertSame(1, NotificationEvent::where('type', 'venta_creada')->count());
+        $this->assertSame(2, NotificationDelivery::count());
+    }
+
+    public function test_admin_registering_own_sale_receives_only_one_delivery(): void
+    {
+        $this->actingAs($this->admin);
+        $sale = Venta::create(['id_usuario' => $this->admin->id, 'total' => 100, 'metodo_pago' => 'Efectivo', 'estado' => 'Entregada', 'tipo_venta' => 'Tienda']);
+        $sale->save();
+        $this->feed($this->admin)->assertOk()->assertJsonPath('unread', 1);
+        $this->assertSame(1, NotificationDelivery::count());
+        $this->assertSame(1, NotificationEvent::where('type', 'venta_creada')->count());
+    }
+
+    public function test_store_sale_notification_is_independent_of_commission_notification(): void
+    {
+        $this->actingAs($this->admin);
+        $sale = Venta::create(['id_usuario' => $this->admin->id, 'total' => 100, 'metodo_pago' => 'Efectivo', 'estado' => 'Entregada', 'tipo_venta' => 'Tienda']);
+        ComisionVendedor::create(['id_vendedor' => $this->admin->id, 'monto' => 15, 'estado' => 'Pendiente']);
+        $this->feed($this->admin)->assertOk()->assertJsonPath('unread', 2)
+            ->assertJsonFragment(['title' => 'Venta #'.$sale->id.': Entregada'])
+            ->assertJsonFragment(['category' => 'comisiones']);
+    }
+
+    public function test_shipping_notifies_admin_from_pending_through_each_confirmed_transition_without_commission(): void
+    {
+        $this->actingAs($this->admin);
+        $sale = $this->sale();
+        $this->assertSame(0, ComisionVendedor::count());
+        $this->feed($this->admin)->assertOk()->assertJsonPath('unread', 1)
+            ->assertJsonPath('items.0.title', 'Venta #'.$sale->id.': Pendiente');
+        $expected = 1;
+        foreach (['Confirmada', 'En ruta', 'Entregada'] as $state) {
+            $this->actingAs($this->admin);
+            $sale->update(['estado' => $state]);
+            $sale->update(['estado' => $state]);
+            $expected++;
+            $this->feed($this->admin)->assertOk()->assertJsonPath('unread', $expected)
+                ->assertJsonPath('items.0.title', 'Venta #'.$sale->id.': '.$state);
+            $this->feed($this->seller)->assertJsonPath('unread', $expected);
+        }
+        $this->feed($this->other)->assertJsonPath('unread', 0);
+        $this->feed($this->super)->assertJsonPath('unread', 0);
+        $this->assertSame(4, NotificationEvent::where('category', 'ventas')->count());
+        $this->assertSame(8, NotificationDelivery::count());
     }
 
     public function test_commission_payment_is_emitted_only_after_actual_payment_and_is_idempotent(): void

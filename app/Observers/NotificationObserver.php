@@ -30,14 +30,13 @@ class NotificationObserver
 
         if ($model instanceof Venta && ($created || $model->wasChanged('estado'))) {
             $old = $created ? null : $model->getRawOriginal('estado');
-            $ids = [$model->id_usuario];
-            if ($created || in_array($model->estado, ['Cancelada', 'Devolución', 'Cambio'], true)) {
-                $ids = array_merge($ids, $service->roles('admin'));
-            }
+            // Sales are a persistent operational receipt, including for the administrator
+            // performing the action. Shipping starts notifying at Pendiente, before commission.
+            $ids = array_merge([$model->id_usuario], $service->roles('admin'));
             $emit($created ? 'venta_creada' : 'venta_estado', 'ventas', in_array($model->estado, ['Cancelada', 'Devolución']) ? 'importante' : 'informativa',
                 "Venta #{$model->id}: {$model->estado}",
                 $created ? "Se registró la venta #{$model->id} de {$model->usuario?->nombre_real} por $".number_format($model->total, 2)." en estado {$model->estado}." : "La venta #{$model->id} cambió de {$old} a {$model->estado}.",
-                'venta', $model->id, $ids, ['previous_state' => $old, 'state' => $model->estado]);
+                'venta', $model->id, $ids, ['previous_state' => $old, 'state' => $model->estado], true);
         } elseif ($model instanceof ComisionVendedor && ($created || $model->wasChanged(['estado', 'monto', 'porcentaje']))) {
             $paid = $model->estado === 'Pagada' && ($created || $model->wasChanged('estado'));
             $emit($paid ? 'comision_pagada' : ($created ? 'comision_generada' : 'comision_actualizada'), 'comisiones', 'importante',

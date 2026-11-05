@@ -14,8 +14,8 @@ Todos los eventos se entregan mediante base de datos y polling autenticado. El m
 
 | Evento / condición confirmada | Destinatarios | Prioridad / mensaje | Destino y acción |
 |---|---|---|---|
-| Venta creada mediante Eloquent | Vendedor responsable y administradores activos; se excluye al actor | Informativa; identificador, vendedor, monto y estado | Detalle de venta con autorización actual |
-| Venta cambia realmente de estado | Vendedor; administradores también ante Cancelada, Devolución o Cambio; se excluye al actor | Importante en cancelación/devolución; informativa en los demás; estado anterior y nuevo | Detalle de venta |
+| Venta creada mediante Eloquent | Vendedor responsable y administradores activos, incluido quien registra la venta | Informativa; identificador, vendedor, monto y estado | Detalle de venta con autorización actual |
+| Venta cambia realmente de estado | Vendedor y administradores activos, incluido quien confirma el cambio de estado | Importante en cancelación/devolución; informativa en los demás; estado anterior y nuevo | Detalle de venta |
 | Comisión creada | Vendedor titular | Importante; monto y estado real | Historial filtrado por comisión |
 | Comisión cambia estado, monto o porcentaje | Vendedor titular | Importante; monto y estado real | Historial filtrado por comisión |
 | Comisión cambia efectivamente a Pagada | Vendedor titular | Importante; “Comisión pagada”, monto y estado confirmado | Historial filtrado; no altera reglas de liquidación ni garantía |
@@ -34,7 +34,7 @@ Todos los eventos se entregan mediante base de datos y polling autenticado. El m
 | Respaldo falla mediante evento Spatie o ejecución manual | Superadministradores activos | Crítica; fallo confirmado sin mensajes técnicos sensibles; un grupo por hora | Respaldos y registros autorizados |
 | Restauración de base de datos confirmada | Superadministradores activos | Crítica; restauración confirmada | Respaldos y bitácora |
 
-No se envían todas las ventas o comisiones al SUPER_ADMIN. La creación de un ticket confirma recepción al titular; las demás acciones propias rutinarias se suprimen. Los avisos de comisiones y seguridad se conservan aunque el titular sea el actor por su función financiera o de seguridad.
+No se envían todas las ventas o comisiones al SUPER_ADMIN. La creación de un ticket confirma recepción al titular. Las ventas nuevas y sus transiciones confirmadas también notifican al actor autorizado para permitir seguimiento operativo; en otros módulos se suprimen acciones propias rutinarias. Los avisos de comisiones y seguridad se conservan aunque el titular sea el actor por su función financiera o de seguridad.
 
 ## Datos y consistencia
 
@@ -83,7 +83,7 @@ En AyudaController se refuerza el control jerárquico antes de responder, escala
 
 ## Validación y límites
 
-- Suite `NotificationCenterTest`: **17 pruebas, 85 comprobaciones, correctas**. Incluye destinatarios, cambios reales/no-op, pago mediante ComisionService, ausencia de anuncio prematuro de pago, rollback, notas internas, escalamiento/resolución, IDOR, lectura/archivado, filtros/paginación, idempotencia, auditoría privada, expiración programada, sesión inactiva, recursos eliminados/permisos retirados, agrupación de respaldos y umbrales reales de login.
+- Suite `NotificationCenterTest`: **21 pruebas, 124 comprobaciones, correctas**. Incluye destinatarios, cambios reales/no-op, pago mediante ComisionService, ausencia de anuncio prematuro de pago, rollback, notas internas, escalamiento/resolución, IDOR, lectura/archivado, filtros/paginación, idempotencia, auditoría privada, expiración programada, sesión inactiva, recursos eliminados/permisos retirados, agrupación de respaldos y umbrales reales de login.
 - La suite usa SQLite **en memoria y aislado**. Reutiliza migraciones de usuarios, ventas, bitácora y soporte; emplea fixtures mínimos en las tablas heredadas con ALTER CHECK de PostgreSQL no compatible con SQLite. Sí ejecuta la migración nueva completa. No accede a la base `axstore2026` de la configuración de pruebas antigua.
 - `npm run build`: correcto. `node --check public/js/notification-center.js`: correcto. Rutas nuevas registradas correctamente.
 - Navegador integrado sobre base local descartable: centro y campana renderizados, contador 4→3 al leer y 3→0 al marcar todas, persistencia al recargar, cierre Escape y desplegable móvil de 390 px dentro de pantalla. Se creó una comisión mediante el modelo real en la base aislada y se verificó la llegada automática del aviso (contador 0→1) sin recargar la página. Las capturas contienen datos de prueba; no se agregan seeds demostrativos al producto.
@@ -98,3 +98,7 @@ En AyudaController se refuerza el control jerárquico antes de responder, escala
 Nuevos: migración del centro; modelos NotificationEvent/NotificationDelivery; trait NotifiesBusinessChanges; NotificationService; NotificationObserver; NotificationController; vistas notifications/index y bell; public/js/notification-center.js; NotificationCenterTest; este documento.
 
 Modificados: modelos User, Venta, ComisionVendedor, SoporteTicket, SoporteTicketMensaje, AuditoriaSesion y Devolucion; AppServiceProvider; AuthController, AyudaController, BackupController, ComisionVendedorController y SuperAdminController; rutas web/console; cabeceras compartidas header y header-vendedor.
+
+## Corrección del seguimiento de ventas
+
+Se eliminó la supresión del actor para los avisos de ventas. Una venta en tienda genera su aviso de venta Entregada, además del aviso independiente de comisión cuando el proceso de negocio la genera. Una venta de envío notifica desde Pendiente, aunque todavía no tenga comisión. Los cambios reales a Confirmada, En ruta, Entregada, Cancelada, Devolución o Cambio notifican al titular y a los administradores activos, incluido quien confirma la operación. La selección de destinatarios no copia ventas rutinarias al SUPER_ADMIN ni a vendedores ajenos. Se mantienen la deduplicación, transacciones y permisos. No se recrean avisos de ventas anteriores: la corrección aplica a las operaciones que se registren después de actualizar el código.
