@@ -20,27 +20,6 @@
                     </div>
                 </div>
             </div>
-
-            <!-- BOTONES DE ACCIÓN RÁPIDA -->
-            <div class="flex flex-wrap items-center gap-2.5">
-                <a href="{{ route('superadmin.usuarios') }}"
-                    class="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 font-bold text-xs shadow-sm transition-all hover:border-blue-300">
-                    <i class="fas fa-users-gear text-blue-600"></i>
-                    <span>Gestión de Cuentas</span>
-                </a>
-
-                <a href="{{ route('superadmin.tickets') }}"
-                    class="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs shadow-md shadow-blue-600/20 transition-all hover:scale-[1.02] active:scale-[0.98]">
-                    <i class="fas fa-headset"></i>
-                    <span>Centro de Dudas</span>
-                </a>
-
-                <a href="{{ route('superadmin.auditorias.historial') }}"
-                    class="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 font-bold text-xs shadow-sm transition-all hover:border-purple-300">
-                    <i class="fas fa-user-secret text-purple-600"></i>
-                    <span>Auditorías</span>
-                </a>
-            </div>
         </div>
 
         <!-- 2. SUB-NAV / PESTAÑAS DE GOBERNANZA -->
@@ -139,10 +118,6 @@
                                     <span class="px-2 py-0.5 rounded-md text-[10px] font-bold 
                                         {{ $tk->estado === 'Escalada' ? 'bg-amber-100 text-amber-800' : 'bg-slate-100 text-slate-700' }}">
                                         {{ $tk->estado }}
-                                    </span>
-                                    <span class="px-2 py-0.5 rounded-md text-[10px] font-bold 
-                                        {{ $tk->prioridad === 'Urgente' ? 'bg-rose-100 text-rose-800' : 'bg-blue-50 text-blue-700' }}">
-                                        {{ $tk->prioridad }}
                                     </span>
                                 </div>
                                 <h3 class="text-xs font-bold text-slate-700 line-clamp-1">

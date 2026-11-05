@@ -20,8 +20,33 @@
             </div>
         </div>
 
+        <!-- Barra de Pestañas por Estado (Mismo estilo que Control de Dudas) -->
+        <div class="flex flex-wrap items-center gap-2 border-b border-slate-200 pb-3">
+            @php
+                $tabs = [
+                    'todos'      => ['label' => 'Todos',       'badge_bg' => 'bg-slate-100',   'badge_fg' => 'text-slate-700'],
+                    'Pendiente'  => ['label' => 'Pendientes',  'badge_bg' => 'bg-amber-100',   'badge_fg' => 'text-amber-800'],
+                    'En proceso' => ['label' => 'En proceso',  'badge_bg' => 'bg-blue-100',    'badge_fg' => 'text-blue-800'],
+                    'Escalada'   => ['label' => 'Escaladas',   'badge_bg' => 'bg-purple-100',  'badge_fg' => 'text-purple-800'],
+                    'Resuelta'   => ['label' => 'Resueltas',   'badge_bg' => 'bg-emerald-100', 'badge_fg' => 'text-emerald-800'],
+                    'Cancelada'  => ['label' => 'Canceladas',  'badge_bg' => 'bg-rose-100',    'badge_fg' => 'text-rose-800'],
+                ];
+            @endphp
+
+            @foreach ($tabs as $key => $t)
+                <a href="{{ route('superadmin.tickets', array_merge(request()->query(), ['estado' => $key, 'page' => 1])) }}"
+                   class="inline-flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-bold transition-all {{ $estadoTab === $key ? 'bg-slate-800 text-white shadow-sm' : 'bg-white text-slate-600 hover:bg-slate-100 border border-slate-200' }}">
+                    <span>{{ $t['label'] }}</span>
+                    <span class="px-2 py-0.5 rounded-full text-[10px] font-black {{ $estadoTab === $key ? 'bg-white/20 text-white' : $t['badge_bg'] . ' ' . $t['badge_fg'] }}">
+                        {{ $conteoEstados[$key] ?? 0 }}
+                    </span>
+                </a>
+            @endforeach
+        </div>
+
         <!-- Filtros y Búsqueda -->
         <form method="GET" action="{{ route('superadmin.tickets') }}" class="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm flex flex-wrap items-center gap-3">
+            <input type="hidden" name="estado" value="{{ $estadoTab }}">
             <div class="flex-1 min-w-[240px]">
                 <div class="relative">
                     <i class="fas fa-search absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 text-xs"></i>
@@ -29,27 +54,16 @@
                 </div>
             </div>
 
-            <div>
-                <select name="estado" class="px-3 py-2 rounded-xl border border-slate-200 text-xs text-slate-700 focus:outline-none focus:border-indigo-500">
-                    <option value="todos">Todos los estados</option>
-                    @foreach(\App\Models\SoporteTicket::ESTADOS as $est)
-                        <option value="{{ $est }}" {{ request('estado') === $est ? 'selected' : '' }}>{{ $est }}</option>
-                    @endforeach
-                </select>
+            <div class="flex items-center gap-2">
+                <button type="submit" class="px-4 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-white text-xs font-bold transition-colors">
+                    Filtrar
+                </button>
+                @if (request()->hasAny(['search']) || $estadoTab !== 'Pendiente')
+                    <a href="{{ route('superadmin.tickets') }}" class="px-3 py-2 rounded-xl text-xs font-semibold text-slate-600 hover:bg-slate-100 transition-colors" title="Restablecer filtros">
+                        <i class="fas fa-rotate-left"></i>
+                    </a>
+                @endif
             </div>
-
-            <div>
-                <select name="prioridad" class="px-3 py-2 rounded-xl border border-slate-200 text-xs text-slate-700 focus:outline-none focus:border-indigo-500">
-                    <option value="todos">Todas las prioridades</option>
-                    @foreach(\App\Models\SoporteTicket::PRIORIDADES as $prio)
-                        <option value="{{ $prio }}" {{ request('prioridad') === $prio ? 'selected' : '' }}>{{ $prio }}</option>
-                    @endforeach
-                </select>
-            </div>
-
-            <button type="submit" class="px-4 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-white text-xs font-bold transition-colors">
-                Filtrar
-            </button>
         </form>
 
         <!-- Lista de Tickets -->
@@ -64,10 +78,6 @@
                             <span class="px-2.5 py-1 rounded-md text-[10px] font-bold 
                                 {{ $tk->estado === 'Escalada' ? 'bg-amber-100 text-amber-800' : ($tk->estado === 'Resuelta' ? 'bg-emerald-100 text-emerald-800' : 'bg-slate-100 text-slate-700') }}">
                                 {{ $tk->estado }}
-                            </span>
-                            <span class="px-2.5 py-1 rounded-md text-[10px] font-bold 
-                                {{ $tk->prioridad === 'Urgente' ? 'bg-rose-100 text-rose-800 animate-pulse' : ($tk->prioridad === 'Alta' ? 'bg-amber-100 text-amber-800' : 'bg-blue-50 text-blue-700') }}">
-                                Prioridad: {{ $tk->prioridad }}
                             </span>
                             <span class="text-xs text-slate-400">&bull;</span>
                             <span class="text-xs font-bold text-slate-600">{{ $tk->modulo }}</span>

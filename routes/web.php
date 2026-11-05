@@ -183,6 +183,8 @@ Route::middleware('auth')->group(function () {
         Route::get('/usuarios', [SuperAdminController::class, 'usuarios'])->name('usuarios');
         Route::post('/usuarios/{user}/auditar', [SuperAdminController::class, 'iniciarAuditoria'])->name('auditorias.iniciar')->whereNumber('user');
         Route::get('/auditorias/historial', [SuperAdminController::class, 'historialAuditorias'])->name('auditorias.historial');
+        Route::get('/auditorias/{sesion}/informe', [SuperAdminController::class, 'informeAuditoria'])->name('auditorias.informe')->whereNumber('sesion');
+        Route::get('/auditorias/{sesion}/informe/pdf', [SuperAdminController::class, 'exportarInformePdf'])->name('auditorias.informe.pdf')->whereNumber('sesion');
         Route::post('/auditorias/{sesion}/revocar', [SuperAdminController::class, 'revocarAuditoria'])->name('auditorias.revocar')->whereNumber('sesion');
         Route::get('/tickets', [SuperAdminController::class, 'tickets'])->name('tickets');
         Route::post('/crear-superadmin', [SuperAdminController::class, 'guardarSuperAdmin'])->name('crear');

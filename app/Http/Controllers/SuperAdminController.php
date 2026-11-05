@@ -134,8 +134,16 @@ class SuperAdminController extends Controller
      */
     public function finalizarAuditoria(Request $request)
     {
+        $token = session('auditoria_token');
+        $sesion = $token ? AuditoriaSesion::where('token_sesion', $token)->first() : null;
+
         $notas = $request->input('notas_cierre', 'Auditoría completada exitosamente.');
         ImpersonationService::finalizarAuditoria($notas);
+
+        if ($sesion) {
+            return redirect()->route('superadmin.auditorias.informe', $sesion->id)
+                ->with('success', 'Sesión de auditoría finalizada exitosamente. A continuación se presenta el informe completo de la auditoría.');
+        }
 
         return redirect()->route('superadmin.dashboard')->with('success', 'Sesión de auditoría finalizada. Has vuelto a tu perfil de Super Administrador.');
     }
@@ -150,6 +158,97 @@ class SuperAdminController extends Controller
             ->paginate(15);
 
         return view('superadmin.historial-auditorias', compact('auditorias'));
+    }
+
+    /**
+     * Informe completo y detallado de una sesión de auditoría realizada
+     */
+    public function informeAuditoria(AuditoriaSesion $sesion)
+    {
+        $sesion->load(['superAdmin', 'usuarioAuditado']);
+
+        // Consultar todos los eventos registrados durante la auditoría
+        $eventos = \App\Models\Bitacora::where(function ($q) use ($sesion) {
+            $q->where('correlacion_id', $sesion->token_sesion)
+              ->orWhere(function ($sub) use ($sesion) {
+                  $sub->where('en_modo_auditoria', true)
+                      ->where('id_actor_real', $sesion->id_super_admin)
+                      ->where('id_usuario', $sesion->id_usuario_auditado)
+                      ->whereBetween('created_at', [
+                          $sesion->iniciada_en,
+                          $sesion->finalizada_en ?? ($sesion->expira_en ?? now())
+                      ]);
+              });
+        })
+        ->orderBy('id', 'asc')
+        ->get();
+
+        // Agrupaciones y resúmenes para el informe
+        $modulosRevisados = $eventos->pluck('modulo')->unique()->filter()->values();
+        $accionesTotales = $eventos->count();
+        $resumenAcciones = $eventos->groupBy('accion')->map->count();
+
+        // Calcular duración exacta de la auditoría
+        $duracionRealMinutos = $sesion->finalizada_en 
+            ? max(1, round($sesion->iniciada_en->diffInMinutes($sesion->finalizada_en)))
+            : round($sesion->iniciada_en->diffInMinutes(now()));
+
+        return view('superadmin.informe-auditoria', compact(
+            'sesion',
+            'eventos',
+            'modulosRevisados',
+            'accionesTotales',
+            'resumenAcciones',
+            'duracionRealMinutos'
+        ));
+    }
+
+    /**
+     * Descargar o imprimir/visualizar el informe de auditoría en formato PDF formal
+     */
+    public function exportarInformePdf(Request $request, AuditoriaSesion $sesion)
+    {
+        $sesion->load(['superAdmin', 'usuarioAuditado']);
+
+        $eventos = \App\Models\Bitacora::where(function ($q) use ($sesion) {
+            $q->where('correlacion_id', $sesion->token_sesion)
+              ->orWhere(function ($sub) use ($sesion) {
+                  $sub->where('en_modo_auditoria', true)
+                      ->where('id_actor_real', $sesion->id_super_admin)
+                      ->where('id_usuario', $sesion->id_usuario_auditado)
+                      ->whereBetween('created_at', [
+                          $sesion->iniciada_en,
+                          $sesion->finalizada_en ?? ($sesion->expira_en ?? now())
+                      ]);
+              });
+        })
+        ->orderBy('id', 'asc')
+        ->get();
+
+        $modulosRevisados = $eventos->pluck('modulo')->unique()->filter()->values();
+        $accionesTotales = $eventos->count();
+        $resumenAcciones = $eventos->groupBy('accion')->map->count();
+
+        $duracionRealMinutos = $sesion->finalizada_en 
+            ? max(1, round($sesion->iniciada_en->diffInMinutes($sesion->finalizada_en)))
+            : round($sesion->iniciada_en->diffInMinutes(now()));
+
+        $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadView('pdf.informe-auditoria', compact(
+            'sesion',
+            'eventos',
+            'modulosRevisados',
+            'accionesTotales',
+            'resumenAcciones',
+            'duracionRealMinutos'
+        ))->setPaper('letter', 'portrait');
+
+        $filename = 'Informe_Auditoria_AUD-' . str_pad($sesion->id, 4, '0', STR_PAD_LEFT) . '_' . date('Ymd_His') . '.pdf';
+
+        if ($request->query('action') === 'stream' || $request->has('print')) {
+            return $pdf->stream($filename);
+        }
+
+        return $pdf->download($filename);
     }
 
     /**
@@ -177,12 +276,21 @@ class SuperAdminController extends Controller
               ->orWhere('estado', 'Escalada');
         });
 
-        if ($request->filled('estado') && $request->estado !== 'todos') {
-            $query->where('estado', $request->estado);
-        }
+        // Conteo base para las pestañas de estado
+        $baseCounts = clone $query;
+        $conteoEstados = [
+            'todos'      => (clone $baseCounts)->count(),
+            'Pendiente'  => (clone $baseCounts)->where('estado', 'Pendiente')->count(),
+            'En proceso' => (clone $baseCounts)->where('estado', 'En proceso')->count(),
+            'Escalada'   => (clone $baseCounts)->where('estado', 'Escalada')->count(),
+            'Resuelta'   => (clone $baseCounts)->where('estado', 'Resuelta')->count(),
+            'Cancelada'  => (clone $baseCounts)->where('estado', 'Cancelada')->count(),
+        ];
 
-        if ($request->filled('prioridad') && $request->prioridad !== 'todos') {
-            $query->where('prioridad', $request->prioridad);
+        // Por defecto, siempre entra filtrando por 'Pendiente' para mayor autonomía
+        $estadoTab = $request->query('estado', 'Pendiente');
+        if ($estadoTab !== 'todos' && in_array($estadoTab, SoporteTicket::ESTADOS, true)) {
+            $query->where('estado', $estadoTab);
         }
 
         if ($request->filled('search')) {
@@ -195,16 +303,12 @@ class SuperAdminController extends Controller
             });
         }
 
-        $tickets = $query->orderByRaw("
-            CASE 
-                WHEN estado = 'Escalada' THEN 1
-                WHEN estado = 'Pendiente' THEN 2
-                WHEN estado = 'En proceso' THEN 3
-                ELSE 4
-            END
-        ")->orderBy('id', 'desc')->paginate(10)->withQueryString();
+        $tickets = $query->orderBy('created_at', 'asc')
+            ->orderBy('id', 'asc')
+            ->paginate(10)
+            ->withQueryString();
 
-        return view('superadmin.tickets', compact('tickets'));
+        return view('superadmin.tickets', compact('tickets', 'conteoEstados', 'estadoTab'));
     }
 
     /**

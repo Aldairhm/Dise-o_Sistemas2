@@ -123,8 +123,8 @@ class SecurityAndHierarchyTest extends TestCase
             'nivel_escalamiento' => 'super_admin',
         ]);
 
-        // 1. En el listado no debe aparecer el ajeno
-        $responseList = $this->actingAs($this->vendedor)->get(route('ayuda.tickets.index'));
+        // 1. En el listado no debe aparecer el ajeno y debe aparecer el propio (consultando la última página o buscando por su código)
+        $responseList = $this->actingAs($this->vendedor)->get(route('ayuda.tickets.index', ['q' => $codePropio]));
         $responseList->assertStatus(200);
         $responseList->assertSee($codePropio);
         $responseList->assertDontSee($codeAjeno);
@@ -198,6 +198,31 @@ class SecurityAndHierarchyTest extends TestCase
         $response->assertSessionHas('swal_warning');
 
         // Limpiar sesión de auditoría de prueba
+        $sesion->delete();
+    }
+
+    /** Test 8: Si el usuario ya tenía sesión iniciada en otro dispositivo, se le cierra de inmediato al entrar en auditoría */
+    public function test_active_user_session_is_terminated_when_audit_begins(): void
+    {
+        $sesion = AuditoriaSesion::create([
+            'token_sesion'        => 'token_test_audit_term_' . rand(1000, 9999),
+            'id_super_admin'      => $this->superAdmin->id,
+            'id_usuario_auditado' => $this->vendedor->id,
+            'justificacion'       => 'Auditoría en curso de prueba para expulsión',
+            'solo_lectura'        => true,
+            'estado'              => 'activa',
+            'iniciada_en'         => now(),
+            'expira_en'           => now()->addMinutes(15),
+        ]);
+
+        // Simular que el usuario ya estaba navegando con su sesión ordinaria (sin auditoria_token)
+        $response = $this->actingAs($this->vendedor)->get(route('home'));
+
+        // El middleware debe desconectarlo y redirigirlo al login con mensaje explicativo
+        $response->assertRedirect(route('login'));
+        $response->assertSessionHas('swal_error');
+        $this->assertGuest();
+
         $sesion->delete();
     }
 }

@@ -41,6 +41,9 @@
         <!-- ENCABEZADO DE SECCION Y BREADCRUMB -->
         <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8">
             <div>
+                <a href="{{ route('home') }}" class="inline-flex items-center gap-2 text-xs font-bold uppercase tracking-widest text-slate-400 hover:text-blue-600 transition-colors mb-3">
+                    <i class="fas fa-arrow-left"></i> Volver al inicio
+                </a>
                 <div class="flex items-center gap-2 text-xs font-bold text-blue-600 uppercase tracking-widest mb-1.5">
                     <i class="fas fa-users-gear"></i>
                     <span>Módulo de Control y Seguridad</span>

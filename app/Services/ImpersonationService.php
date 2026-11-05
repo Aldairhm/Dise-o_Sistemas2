@@ -50,20 +50,29 @@ class ImpersonationService
             'expira_en'           => $expiraEn,
         ]);
 
-        // 3. Establecer el contexto seguro en sesión sin perder la identidad real
+        // 3. Invalidar inmediatamente sesiones activas previas del usuario auditado en otros dispositivos
+        try {
+            \Illuminate\Support\Facades\DB::table('sessions')
+                ->where('user_id', $targetUser->id)
+                ->delete();
+        } catch (\Throwable $e) {
+            \Illuminate\Support\Facades\Log::warning('No se pudieron purgar las sesiones previas del usuario auditado: ' . $e->getMessage());
+        }
+
+        // 4. Establecer el contexto seguro en sesión sin perder la identidad real
         Session::put('auditoria_token', $token);
         Session::put('auditoria_actor_real_id', $superAdmin->id);
         Session::put('auditoria_target_id', $targetUser->id);
         Session::put('auditoria_solo_lectura', $soloLectura);
 
-        // 4. Cambiar el usuario autenticado al usuario auditado
+        // 5. Cambiar el usuario autenticado al usuario auditado
         Auth::login($targetUser);
 
-        // 5. Registrar en bitácora
+        // 6. Registrar en bitácora
         ActivityLogger::log(
             'INICIO_AUDITORIA',
             'Auditoría y Seguridad',
-            "El Super Administrador {$superAdmin->nombre_real} ({$superAdmin->username}) inició sesión de auditoría sobre {$targetUser->nombre_real} ({$targetUser->username}). Justificación: {$justificacion} (Modo: " . ($soloLectura ? 'Solo Lectura' : 'Permisivo') . ", Expira: {$expiraEn->format('d/m/Y H:i:s')})"
+            "El Super Administrador {$superAdmin->nombre_real} ({$superAdmin->username}) inició sesión de auditoría sobre {$targetUser->nombre_real} ({$targetUser->username}). Sesiones previas del usuario cerradas automáticamente por seguridad. Justificación: {$justificacion} (Modo: " . ($soloLectura ? 'Solo Lectura' : 'Permisivo') . ", Expira: {$expiraEn->format('d/m/Y H:i:s')})"
         );
 
         return $sesion;
@@ -118,7 +127,7 @@ class ImpersonationService
         }
 
         // Limpiar tokens de auditoría
-        Session::forget(['auditoria_token', 'auditoria_actor_real_id', 'auditoria_target_id', 'auditoria_solo_lectura']);
+        Session::forget(['auditoria_token', 'auditoria_actor_real_id', 'auditoria_target_id', 'auditoria_solo_lectura', 'auditoria_last_logged_route']);
 
         // Restaurar login del Super Admin
         if ($superAdmin) {
