@@ -285,6 +285,7 @@ class VentaController extends Controller
         $desde = $request->input('desde');
         $hasta = $request->input('hasta');
         $vendedorId = $request->input('vendedor_id');
+        $productoId = $request->input('producto_id');
         $busqueda = trim($request->input('q', ''));
         $estadoTab = $request->input('tab', 'todos');
 
@@ -292,7 +293,12 @@ class VentaController extends Controller
             ->whereNotIn('estado', ['Entregada', 'Entregado'])
             ->when($desde, fn($q) => $q->whereDate('fecha', '>=', $desde))
             ->when($hasta, fn($q) => $q->whereDate('fecha', '<=', $hasta))
-            ->when($vendedorId, fn($q) => $q->where('id_usuario', $vendedorId));
+            ->when($vendedorId, fn($q) => $q->where('id_usuario', $vendedorId))
+            ->when($productoId, function ($q) use ($productoId) {
+                return $q->whereHas('detalles.variante', function ($sub) use ($productoId) {
+                    $sub->where('id_producto', $productoId);
+                });
+            });
 
         if (!empty($busqueda)) {
             $query->where(function ($q) use ($busqueda) {
@@ -366,8 +372,9 @@ class VentaController extends Controller
         ];
 
         $vendedores = User::where('estado', 1)->orderBy('nombre_real')->get(['id', 'nombre_real', 'username', 'rol']);
+        $productos = Producto::where('estado', 1)->orderBy('nombre')->get(['id', 'nombre']);
 
-        return view('ventas.pedidos', compact('todasVentas', 'conteoEstados', 'vendedores', 'desde', 'hasta', 'vendedorId', 'busqueda', 'estadoTab'));
+        return view('ventas.pedidos', compact('todasVentas', 'conteoEstados', 'vendedores', 'productos', 'desde', 'hasta', 'vendedorId', 'productoId', 'busqueda', 'estadoTab'));
     }
 
     /**

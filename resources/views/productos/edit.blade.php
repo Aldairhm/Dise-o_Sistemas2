@@ -265,26 +265,61 @@
                     </button>
                 </div>
 
-                <!-- Filtro por Estado -->
+                <!-- Filtro por Estado Personalizado -->
                 <div class="flex flex-wrap items-center gap-3">
-                    <div class="flex items-center gap-2">
-                        <span class="text-xs font-bold text-slate-500 uppercase tracking-wider hidden sm:inline">Estado:</span>
-                        <select id="statusVarFilter" 
-                                onchange="applyFiltersVar()" 
-                                class="bg-white border border-slate-200 rounded-xl px-3 py-2 text-xs font-bold text-slate-700 focus:border-blue-600 focus:ring-2 focus:ring-blue-600/20 focus:outline-none cursor-pointer">
-                            <option value="todos">Todos</option>
-                            <option value="1">Activos</option>
-                            <option value="0">Inactivos</option>
-                        </select>
+                    <div class="relative" data-custom-var-select="estado">
+                        <label class="mb-1.5 flex items-center gap-1.5 text-xs font-bold text-slate-700 tracking-tight">
+                            <i class="fas fa-toggle-on text-blue-600 text-xs"></i>
+                            <span>Estado</span>
+                        </label>
+                        <input type="hidden" id="statusVarFilter" value="todos">
+                        <button type="button" class="h-10 min-w-[130px] rounded-xl border border-slate-200 bg-white px-3.5 text-xs font-bold text-slate-700 shadow-sm transition hover:border-slate-300 hover:bg-slate-50 focus:border-blue-500 focus:bg-white focus:outline-none focus:ring-4 focus:ring-blue-500/10 flex items-center justify-between gap-2 cursor-pointer text-left" data-toggle aria-expanded="false">
+                            <span class="flex items-center gap-2 truncate">
+                                <i class="fas fa-layer-group text-slate-400" data-icon></i>
+                                <span class="truncate" data-label>Todos</span>
+                            </span>
+                            <i class="fas fa-chevron-down text-[10px] text-slate-400 transition-transform duration-200" data-arrow></i>
+                        </button>
+                        <div class="hidden absolute right-0 md:left-0 top-full z-50 mt-1.5 w-full min-w-[160px] rounded-2xl border border-slate-200 bg-white p-1.5 shadow-2xl" data-menu>
+                            <div class="space-y-0.5">
+                                <button type="button" data-option data-value="todos" data-label="Todos" data-icon="fas fa-layer-group text-slate-400"
+                                    class="w-full flex items-center justify-between rounded-xl px-3 py-2 text-xs font-bold transition-colors text-left bg-blue-50 text-blue-700">
+                                    <span class="flex items-center gap-2 truncate">
+                                        <i class="fas fa-layer-group text-slate-400"></i>
+                                        <span>Todos</span>
+                                    </span>
+                                    <i class="fas fa-check text-blue-600 text-[10px]" data-check></i>
+                                </button>
+                                <button type="button" data-option data-value="1" data-label="Activos" data-icon="fas fa-circle-check text-emerald-500"
+                                    class="w-full flex items-center justify-between rounded-xl px-3 py-2 text-xs font-bold transition-colors text-left text-slate-700 hover:bg-slate-50 hover:text-slate-900">
+                                    <span class="flex items-center gap-2 truncate">
+                                        <i class="fas fa-circle-check text-emerald-500"></i>
+                                        <span>Activos</span>
+                                    </span>
+                                    <i class="fas fa-check text-blue-600 text-[10px] hidden" data-check></i>
+                                </button>
+                                <button type="button" data-option data-value="0" data-label="Inactivos" data-icon="fas fa-ban text-rose-500"
+                                    class="w-full flex items-center justify-between rounded-xl px-3 py-2 text-xs font-bold transition-colors text-left text-slate-700 hover:bg-slate-50 hover:text-slate-900">
+                                    <span class="flex items-center gap-2 truncate">
+                                        <i class="fas fa-ban text-rose-500"></i>
+                                        <span>Inactivos</span>
+                                    </span>
+                                    <i class="fas fa-check text-blue-600 text-[10px] hidden" data-check></i>
+                                </button>
+                            </div>
+                        </div>
                     </div>
 
                     <!-- Boton Restablecer -->
-                    <button type="button" 
-                            onclick="resetAllFiltersVar()" 
-                            class="p-2 text-slate-400 hover:text-blue-600 rounded-xl hover:bg-slate-100 transition-colors cursor-pointer"
-                            title="Restablecer filtros">
-                        <i class="fas fa-rotate-right text-xs"></i>
-                    </button>
+                    <div class="flex items-end">
+                        <button type="button" 
+                                onclick="resetAllFiltersVar()" 
+                                class="h-10 rounded-xl border border-slate-200 hover:bg-red-50 hover:text-red-600 hover:border-red-200 text-slate-500 px-3 text-xs font-bold transition-all cursor-pointer flex items-center justify-center gap-1.5 shadow-sm"
+                                title="Restablecer filtros">
+                            <i class="fas fa-rotate-left text-xs"></i>
+                            <span class="hidden sm:inline">Limpiar</span>
+                        </button>
+                    </div>
                 </div>
             </div>
 
@@ -494,8 +529,120 @@
         function resetAllFiltersVar() {
             document.getElementById('searchVarInput').value = '';
             document.getElementById('statusVarFilter').value = 'todos';
+            if (window.resetVarianteCustomSelects) {
+                window.resetVarianteCustomSelects();
+            }
             applyFiltersVar();
         }
+
+        // Custom Select para Estado de Variantes
+        function initVarianteCustomSelects() {
+            const containers = document.querySelectorAll('[data-custom-var-select]');
+            containers.forEach(container => {
+                const toggle = container.querySelector('[data-toggle]');
+                const menu = container.querySelector('[data-menu]');
+                const arrow = container.querySelector('[data-arrow]');
+                const labelSpan = container.querySelector('[data-label]');
+                const iconEl = container.querySelector('[data-icon]');
+                const hiddenInput = container.querySelector('input[type="hidden"]');
+                const options = container.querySelectorAll('[data-option]');
+
+                function openMenu() {
+                    menu.classList.remove('hidden');
+                    arrow?.classList.add('rotate-180');
+                    toggle.setAttribute('aria-expanded', 'true');
+                }
+
+                function closeMenu() {
+                    menu.classList.add('hidden');
+                    arrow?.classList.remove('rotate-180');
+                    toggle.setAttribute('aria-expanded', 'false');
+                }
+
+                toggle.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    if (menu.classList.contains('hidden')) {
+                        openMenu();
+                    } else {
+                        closeMenu();
+                    }
+                });
+
+                options.forEach(opt => {
+                    opt.addEventListener('click', (e) => {
+                        e.stopPropagation();
+                        const val = opt.dataset.value;
+                        const lbl = opt.dataset.label;
+                        const icn = opt.dataset.icon;
+
+                        hiddenInput.value = val;
+                        if (labelSpan) labelSpan.textContent = lbl;
+                        if (iconEl && icn) iconEl.className = icn;
+
+                        options.forEach(o => {
+                            const isSelected = o === opt;
+                            o.classList.toggle('bg-blue-50', isSelected);
+                            o.classList.toggle('text-blue-700', isSelected);
+                            o.classList.toggle('text-slate-700', !isSelected);
+                            const check = o.querySelector('[data-check]');
+                            if (check) check.classList.toggle('hidden', !isSelected);
+                        });
+
+                        closeMenu();
+                        applyFiltersVar();
+                    });
+                });
+            });
+
+            document.addEventListener('click', (e) => {
+                if (!e.target.closest('[data-custom-var-select]')) {
+                    document.querySelectorAll('[data-custom-var-select]').forEach(container => {
+                        container.querySelector('[data-menu]')?.classList.add('hidden');
+                        container.querySelector('[data-arrow]')?.classList.remove('rotate-180');
+                        container.querySelector('[data-toggle]')?.setAttribute('aria-expanded', 'false');
+                    });
+                }
+            });
+
+            document.addEventListener('keydown', (e) => {
+                if (e.key === 'Escape') {
+                    document.querySelectorAll('[data-custom-var-select]').forEach(container => {
+                        container.querySelector('[data-menu]')?.classList.add('hidden');
+                        container.querySelector('[data-arrow]')?.classList.remove('rotate-180');
+                        container.querySelector('[data-toggle]')?.setAttribute('aria-expanded', 'false');
+                    });
+                }
+            });
+
+            window.resetVarianteCustomSelects = function() {
+                containers.forEach(container => {
+                    const hiddenInput = container.querySelector('input[type="hidden"]');
+                    const defaultOption = container.querySelector('[data-option][data-value="todos"]');
+                    if (defaultOption && hiddenInput) {
+                        hiddenInput.value = 'todos';
+                        const labelSpan = container.querySelector('[data-label]');
+                        const iconEl = container.querySelector('[data-icon]');
+                        if (labelSpan) labelSpan.textContent = defaultOption.dataset.label;
+                        if (iconEl && defaultOption.dataset.icon) iconEl.className = defaultOption.dataset.icon;
+
+                        const options = container.querySelectorAll('[data-option]');
+                        options.forEach(o => {
+                            const isDefault = o === defaultOption;
+                            o.classList.toggle('bg-blue-50', isDefault);
+                            o.classList.toggle('text-blue-700', isDefault);
+                            o.classList.toggle('text-slate-700', !isDefault);
+                            const check = o.querySelector('[data-check]');
+                            if (check) check.classList.toggle('hidden', !isDefault);
+                        });
+                    }
+                    container.querySelector('[data-menu]')?.classList.add('hidden');
+                    container.querySelector('[data-arrow]')?.classList.remove('rotate-180');
+                    container.querySelector('[data-toggle]')?.setAttribute('aria-expanded', 'false');
+                });
+            };
+        }
+
+        document.addEventListener('DOMContentLoaded', initVarianteCustomSelects);
 
         window.applyFiltersVar = applyFiltersVar;
     </script>

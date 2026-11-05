@@ -46,27 +46,72 @@
                 </div>
             </div>
             <div class="grid grid-cols-1 md:grid-cols-12 gap-5">
-                <label class="block md:col-span-5">
-                    <span class="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-2">Proveedor <b class="text-red-500">*</b></span>
-                    <select x-model="proveedorId" class="w-full rounded-xl border border-slate-300 bg-slate-50 px-4 py-2.5 text-sm focus:border-blue-500 focus:bg-white focus:ring-4 focus:ring-blue-500/10 transition-all">
-                        <option value="">Selecciona un proveedor</option>
-                        @foreach ($proveedores as $proveedor)
-                            <option value="{{ $proveedor['id'] }}">{{ $proveedor['nombre'] }}</option>
-                        @endforeach
-                    </select>
-                </label>
-                <label class="block md:col-span-3">
-                    <span class="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-2">Recepción <b class="text-red-500">*</b></span>
-                    <input type="date" x-model="fecha" class="w-full rounded-xl border border-slate-300 bg-slate-50 px-4 py-2.5 text-sm focus:border-blue-500 focus:bg-white focus:ring-4 focus:ring-blue-500/10 transition-all">
-                </label>
-                <label class="block md:col-span-4">
-                    <span class="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-2">Referencia <span class="font-normal text-slate-400 normal-case">(opcional)</span></span>
-                    <input type="text" x-model="referencia" placeholder="Ej. FAC-000124" class="w-full rounded-xl border border-slate-300 bg-slate-50 px-4 py-2.5 text-sm focus:border-blue-500 focus:bg-white focus:ring-4 focus:ring-blue-500/10 transition-all">
-                </label>
-                <label class="block md:col-span-12">
-                    <span class="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-2">Descripción <span class="font-normal text-slate-400 normal-case">(opcional)</span></span>
-                    <textarea x-model="observaciones" rows="2" placeholder="Estado de las cajas, acuerdos o cualquier detalle importante..." class="w-full rounded-xl border border-slate-300 bg-slate-50 px-4 py-3 text-sm focus:border-blue-500 focus:bg-white focus:ring-4 focus:ring-blue-500/10 transition-all resize-none"></textarea>
-                </label>
+                {{-- PROVEEDOR CON CUSTOM SELECT --}}
+                <div class="block md:col-span-5 relative" x-data="{ openProv: false }">
+                    <label class="mb-1.5 flex items-center gap-1.5 text-xs font-bold text-slate-700 tracking-tight">
+                        <i class="fas fa-truck text-blue-600 text-xs"></i>
+                        <span>Proveedor</span> <b class="text-red-500">*</b>
+                    </label>
+                    <input type="hidden" x-model="proveedorId">
+                    <button type="button" @click="openProv = !openProv" @click.outside="openProv = false"
+                        class="h-11 w-full min-w-0 rounded-xl border border-slate-200 bg-slate-50/90 px-3.5 text-xs font-bold text-slate-700 shadow-sm transition hover:border-slate-300 hover:bg-white focus:border-blue-500 focus:bg-white focus:outline-none focus:ring-4 focus:ring-blue-500/10 flex items-center justify-between gap-2 cursor-pointer text-left">
+                        <span class="flex items-center gap-2 truncate">
+                            <i class="fas fa-building text-slate-400" :class="proveedorId ? 'text-blue-600' : 'text-slate-400'"></i>
+                            <span class="truncate" x-text="proveedores.find(p => String(p.id) === String(proveedorId))?.nombre || 'Selecciona un proveedor'">Selecciona un proveedor</span>
+                        </span>
+                        <i class="fas fa-chevron-down text-[10px] text-slate-400 transition-transform duration-200" :class="openProv ? 'rotate-180' : ''"></i>
+                    </button>
+                    <div x-show="openProv" x-transition.origin.top.left class="absolute left-0 top-full z-50 mt-1.5 w-full min-w-[220px] rounded-2xl border border-slate-200 bg-white p-1.5 shadow-2xl max-h-64 overflow-y-auto" style="display: none;">
+                        <div class="space-y-0.5">
+                            <button type="button" @click="proveedorId = ''; openProv = false"
+                                class="w-full flex items-center justify-between rounded-xl px-3 py-2 text-xs font-bold transition-colors text-left text-slate-600 hover:bg-slate-50">
+                                <span class="flex items-center gap-2">
+                                    <i class="fas fa-building text-slate-400"></i>
+                                    <span>Selecciona un proveedor</span>
+                                </span>
+                                <i class="fas fa-check text-blue-600 text-[10px]" x-show="!proveedorId"></i>
+                            </button>
+                            <template x-for="p in proveedores" :key="p.id">
+                                <button type="button" @click="proveedorId = p.id; openProv = false"
+                                    class="w-full flex items-center justify-between rounded-xl px-3 py-2 text-xs font-bold transition-colors text-left hover:bg-slate-50 hover:text-slate-900"
+                                    :class="String(proveedorId) === String(p.id) ? 'bg-blue-50 text-blue-700' : 'text-slate-700'">
+                                    <span class="flex items-center gap-2 truncate">
+                                        <i class="fas fa-truck text-blue-500"></i>
+                                        <span x-text="p.nombre"></span>
+                                    </span>
+                                    <i class="fas fa-check text-blue-600 text-[10px]" x-show="String(proveedorId) === String(p.id)"></i>
+                                </button>
+                            </template>
+                        </div>
+                    </div>
+                </div>
+
+                {{-- RECEPCIÓN --}}
+                <div class="block md:col-span-3">
+                    <label class="mb-1.5 flex items-center gap-1.5 text-xs font-bold text-slate-700 tracking-tight">
+                        <i class="fas fa-calendar-day text-blue-600 text-xs"></i>
+                        <span>Recepción</span> <b class="text-red-500">*</b>
+                    </label>
+                    <input type="date" x-model="fecha" class="h-11 w-full rounded-xl border border-slate-200 bg-slate-50/90 px-3.5 text-xs font-semibold text-slate-700 shadow-sm transition hover:border-slate-300 hover:bg-white focus:border-blue-500 focus:bg-white focus:outline-none focus:ring-4 focus:ring-blue-500/10">
+                </div>
+
+                {{-- REFERENCIA --}}
+                <div class="block md:col-span-4">
+                    <label class="mb-1.5 flex items-center gap-1.5 text-xs font-bold text-slate-700 tracking-tight">
+                        <i class="fas fa-hashtag text-blue-600 text-xs"></i>
+                        <span>Referencia</span> <span class="font-normal text-slate-400 text-[11px]">(opcional)</span>
+                    </label>
+                    <input type="text" x-model="referencia" placeholder="Ej. FAC-000124" class="h-11 w-full rounded-xl border border-slate-200 bg-slate-50/90 px-3.5 text-xs font-semibold text-slate-700 shadow-sm transition hover:border-slate-300 hover:bg-white focus:border-blue-500 focus:bg-white focus:outline-none focus:ring-4 focus:ring-blue-500/10">
+                </div>
+
+                {{-- DESCRIPCIÓN --}}
+                <div class="block md:col-span-12">
+                    <label class="mb-1.5 flex items-center gap-1.5 text-xs font-bold text-slate-700 tracking-tight">
+                        <i class="fas fa-comment-dots text-blue-600 text-xs"></i>
+                        <span>Descripción</span> <span class="font-normal text-slate-400 text-[11px]">(opcional)</span>
+                    </label>
+                    <textarea x-model="observaciones" rows="2" placeholder="Estado de las cajas, acuerdos o cualquier detalle importante..." class="w-full rounded-xl border border-slate-200 bg-slate-50/90 px-3.5 py-2.5 text-xs font-semibold text-slate-700 shadow-sm transition hover:border-slate-300 hover:bg-white focus:border-blue-500 focus:bg-white focus:outline-none focus:ring-4 focus:ring-blue-500/10 resize-none"></textarea>
+                </div>
             </div>
         </section>
 

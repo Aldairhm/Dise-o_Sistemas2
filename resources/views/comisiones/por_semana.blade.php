@@ -60,27 +60,46 @@
         </nav>
 
         <!-- FILTROS GLOBALES DE SEMANAS -->
-        <section class="bg-white border border-slate-200 rounded-2xl p-4 sm:p-5 shadow-sm">
+        <section class="bg-white border border-slate-200/90 rounded-2xl p-4 sm:p-5 shadow-sm mb-6 transition-all hover:shadow-md">
             <form method="GET" action="{{ route('comisiones.porSemana') }}" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-12 gap-3.5 items-end">
 
                 {{-- Selector de Año --}}
-                <div class="sm:col-span-1 md:col-span-3">
-                    <label for="anio" class="block text-[11px] font-bold uppercase tracking-wider text-slate-600 mb-1.5">
-                        <i class="fas fa-calendar text-slate-400 mr-1"></i> Año
+                <div class="sm:col-span-1 md:col-span-3 relative" data-custom-semana-select="anio">
+                    <label class="mb-1.5 flex items-center gap-1.5 text-xs font-bold text-slate-700 tracking-tight">
+                        <i class="fas fa-calendar text-blue-600 text-xs"></i>
+                        <span>Año</span>
                     </label>
-                    <select id="anio" name="anio"
-                            class="w-full rounded-xl border border-slate-300 bg-slate-50 px-3 py-2 text-xs font-semibold text-slate-700 focus:border-blue-500 focus:bg-white focus:outline-none focus:ring-4 focus:ring-blue-500/10 transition-all">
-                        @for($y = now()->year; $y >= now()->year - 3; $y--)
-                            <option value="{{ $y }}" {{ (int)$anio === $y ? 'selected' : '' }}>Año {{ $y }}</option>
-                        @endfor
-                    </select>
+                    <input type="hidden" id="anio" name="anio" value="{{ (int)$anio }}">
+                    <button type="button" class="h-10 w-full min-w-0 rounded-xl border border-slate-200 bg-slate-50/90 px-3.5 text-xs font-bold text-slate-700 shadow-sm transition hover:border-slate-300 hover:bg-white focus:border-blue-500 focus:bg-white focus:outline-none focus:ring-4 focus:ring-blue-500/10 flex items-center justify-between gap-2 cursor-pointer text-left" data-toggle aria-expanded="false">
+                        <span class="flex items-center gap-2 truncate">
+                            <i class="fas fa-calendar text-blue-600" data-icon></i>
+                            <span class="truncate" data-label>Año {{ $anio }}</span>
+                        </span>
+                        <i class="fas fa-chevron-down text-[10px] text-slate-400 transition-transform duration-200" data-arrow></i>
+                    </button>
+                    <div class="hidden absolute left-0 top-full z-50 mt-1.5 w-full min-w-[170px] rounded-2xl border border-slate-200 bg-white p-1.5 shadow-2xl" data-menu>
+                        <div class="space-y-0.5">
+                            @for($y = now()->year; $y >= now()->year - 3; $y--)
+                                @php $isSelected = ((int)$anio === $y); @endphp
+                                <button type="button" data-option data-value="{{ $y }}" data-label="Año {{ $y }}" data-icon="fas fa-calendar text-blue-600"
+                                    class="w-full flex items-center justify-between rounded-xl px-3 py-2 text-xs font-bold transition-colors text-left {{ $isSelected ? 'bg-blue-50 text-blue-700' : 'text-slate-700 hover:bg-slate-50 hover:text-slate-900' }}">
+                                    <span class="flex items-center gap-2">
+                                        <i class="fas fa-calendar text-blue-500"></i>
+                                        <span>Año {{ $y }}</span>
+                                    </span>
+                                    <i class="fas fa-check text-blue-600 text-[10px] {{ $isSelected ? '' : 'hidden' }}" data-check></i>
+                                </button>
+                            @endfor
+                        </div>
+                    </div>
                 </div>
 
                 @if($isAdmin)
                 {{-- Selector de Vendedor --}}
                 <div class="sm:col-span-1 md:col-span-6">
-                    <label for="vendedor_id" class="block text-[11px] font-bold uppercase tracking-wider text-slate-600 mb-1.5">
-                        <i class="fas fa-user-tie text-slate-400 mr-1"></i> Vendedor
+                    <label for="vendedor_id" class="mb-1.5 flex items-center gap-1.5 text-xs font-bold text-slate-700 tracking-tight">
+                        <i class="fas fa-user-tie text-blue-600 text-xs"></i>
+                        <span>Vendedor</span>
                     </label>
                     <select id="vendedor_id" name="vendedor_id" data-searchable-vendedor
                             class="w-full rounded-xl border border-slate-300 bg-slate-50 px-3 py-2 text-xs font-semibold text-slate-700 focus:border-blue-500 focus:bg-white focus:outline-none focus:ring-4 focus:ring-blue-500/10 transition-all">
@@ -95,15 +114,15 @@
                 @endif
 
                 {{-- Botones --}}
-                <div class="sm:col-span-2 md:col-span-3 flex items-center gap-1.5">
+                <div class="sm:col-span-2 md:col-span-3 flex items-center gap-2">
                     <button type="submit"
-                            class="w-full rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-bold py-2 px-2.5 text-xs transition-all shadow-md shadow-blue-600/15 flex items-center justify-center gap-1 cursor-pointer">
-                        <i class="fas fa-filter text-[11px]"></i>
+                            class="h-10 w-full rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-3 text-xs transition-all shadow-md shadow-blue-600/20 active:scale-95 flex items-center justify-center gap-1.5 cursor-pointer">
+                        <i class="fas fa-filter text-xs"></i>
                         <span>Filtrar</span>
                     </button>
                     @if($vendedorId || $anio != now()->year)
                     <a href="{{ route('comisiones.porSemana') }}"
-                       class="rounded-xl border border-slate-300 hover:bg-slate-100 text-slate-500 p-2 text-xs transition-all flex items-center justify-center"
+                       class="h-10 rounded-xl border border-slate-200 hover:bg-red-50 hover:text-red-600 hover:border-red-200 text-slate-500 px-3 text-xs transition-all flex items-center justify-center"
                        title="Restablecer filtros">
                         <i class="fas fa-rotate-left"></i>
                     </a>
@@ -192,18 +211,30 @@
             <!-- BUSCADOR RÁPIDO Y SELECTOR DIRECTO -->
             <div class="flex flex-col sm:flex-row items-center gap-2.5 flex-1 max-w-2xl">
                 <!-- SELECTOR DIRECTO DE SEMANA (DESPLAZA Y DESPLIEGA SIN OCULTAR NINGUNA) -->
-                <div class="relative w-full sm:w-64 flex-shrink-0">
-                    <select id="selectorDirectoSemana"
-                            onchange="irASemana(this.value)"
-                            aria-label="Seleccionar semana para ubicar y desplegar"
-                            class="w-full pl-3 pr-8 py-2.5 text-xs font-bold rounded-xl border border-slate-200 bg-slate-50 text-slate-700 hover:bg-slate-100/70 focus:bg-white focus:outline-none focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 transition-all cursor-pointer">
-                        <option value="">Ir a semana y desplegar...</option>
-                        @foreach($reporteSemanas as $semOpt)
-                            <option value="{{ $semOpt['key'] }}">
-                                Sem {{ $semOpt['semana_numero'] }} ({{ $semOpt['inicio_semana']->format('d/m') }} - {{ $semOpt['fin_semana']->format('d/m') }}) {{ $semOpt['es_semana_actual'] ? '★ En curso' : '' }}
-                            </option>
-                        @endforeach
-                    </select>
+                <div class="relative w-full sm:w-72 flex-shrink-0" data-custom-semana-select="directo">
+                    <button type="button" class="h-10 w-full min-w-0 rounded-xl border border-slate-200 bg-slate-50/90 px-3.5 text-xs font-bold text-slate-700 shadow-sm transition hover:border-slate-300 hover:bg-white focus:border-blue-500 focus:bg-white focus:outline-none focus:ring-4 focus:ring-blue-500/10 flex items-center justify-between gap-2 cursor-pointer text-left" data-toggle aria-expanded="false">
+                        <span class="flex items-center gap-2 truncate">
+                            <i class="fas fa-calendar-week text-blue-600" data-icon></i>
+                            <span class="truncate" data-label>Ir a semana...</span>
+                        </span>
+                        <i class="fas fa-chevron-down text-[10px] text-slate-400 transition-transform duration-200" data-arrow></i>
+                    </button>
+                    <div class="hidden absolute left-0 top-full z-50 mt-1.5 w-full min-w-[240px] rounded-2xl border border-slate-200 bg-white p-1.5 shadow-2xl max-h-64 overflow-y-auto" data-menu>
+                        <div class="space-y-0.5">
+                            @foreach($reporteSemanas as $semOpt)
+                                <button type="button" data-option data-value="{{ $semOpt['key'] }}" data-label="Sem {{ $semOpt['semana_numero'] }} ({{ $semOpt['inicio_semana']->format('d/m') }} - {{ $semOpt['fin_semana']->format('d/m') }})" data-icon="fas fa-calendar-week text-blue-600"
+                                    class="w-full flex items-center justify-between rounded-xl px-3 py-2 text-xs font-bold transition-colors text-left text-slate-700 hover:bg-slate-50 hover:text-slate-900">
+                                    <span class="flex items-center gap-2 truncate">
+                                        <i class="fas {{ $semOpt['es_semana_actual'] ? 'fa-star text-amber-500' : 'fa-calendar-week text-blue-500' }}"></i>
+                                        <span>Sem {{ $semOpt['semana_numero'] }} ({{ $semOpt['inicio_semana']->format('d/m') }} - {{ $semOpt['fin_semana']->format('d/m') }})</span>
+                                    </span>
+                                    @if($semOpt['es_semana_actual'])
+                                        <span class="text-[9px] font-extrabold uppercase px-1.5 py-0.5 rounded bg-amber-100 text-amber-800">Actual</span>
+                                    @endif
+                                </button>
+                            @endforeach
+                        </div>
+                    </div>
                 </div>
 
                 <!-- BUSCADOR EN VIVO (UBICA Y DESPLIEGA LA COINCIDENCIA SIN OCULTAR LAS DEMÁS) -->
@@ -1491,6 +1522,92 @@
             closeCreateModal();
         }
     });
+
+    // ── Custom Dropdowns para Comisiones por Semana ────────────────────────
+    (() => {
+        function initSemanaSelects() {
+            const dropdowns = document.querySelectorAll('[data-custom-semana-select]');
+            if (!dropdowns.length) return;
+
+            function closeAll() {
+                dropdowns.forEach(dd => {
+                    const menu = dd.querySelector('[data-menu]');
+                    const arrow = dd.querySelector('[data-arrow]');
+                    const toggle = dd.querySelector('[data-toggle]');
+                    if (menu) menu.classList.add('hidden');
+                    if (arrow) arrow.classList.remove('rotate-180');
+                    if (toggle) toggle.setAttribute('aria-expanded', 'false');
+                });
+            }
+
+            dropdowns.forEach(dd => {
+                const toggle = dd.querySelector('[data-toggle]');
+                const menu = dd.querySelector('[data-menu]');
+                const arrow = dd.querySelector('[data-arrow]');
+                const input = dd.querySelector('input[type="hidden"]');
+                const label = dd.querySelector('[data-label]');
+                const icon = dd.querySelector('[data-icon]');
+                const options = dd.querySelectorAll('[data-option]');
+                const type = dd.dataset.customSemanaSelect;
+
+                if (!toggle || !menu) return;
+
+                toggle.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    const isHidden = menu.classList.contains('hidden');
+                    closeAll();
+                    if (isHidden) {
+                        menu.classList.remove('hidden');
+                        if (arrow) arrow.classList.add('rotate-180');
+                        toggle.setAttribute('aria-expanded', 'true');
+                    }
+                });
+
+                options.forEach(opt => {
+                    opt.addEventListener('click', (e) => {
+                        e.stopPropagation();
+                        const val = opt.dataset.value;
+                        const text = opt.dataset.label;
+                        const iconClass = opt.dataset.icon;
+
+                        if (input) input.value = val;
+                        if (label) label.textContent = text;
+                        if (icon && iconClass) icon.className = iconClass;
+
+                        options.forEach(o => {
+                            const check = o.querySelector('[data-check]');
+                            if (o === opt) {
+                                o.classList.add('bg-blue-50', 'text-blue-700');
+                                o.classList.remove('text-slate-700');
+                                if (check) check.classList.remove('hidden');
+                            } else {
+                                o.classList.remove('bg-blue-50', 'text-blue-700');
+                                o.classList.add('text-slate-700');
+                                if (check) check.classList.add('hidden');
+                            }
+                        });
+
+                        closeAll();
+
+                        if (type === 'directo' && typeof irASemana === 'function' && val) {
+                            irASemana(val);
+                        }
+                    });
+                });
+            });
+
+            document.addEventListener('click', () => closeAll());
+            document.addEventListener('keydown', (e) => {
+                if (e.key === 'Escape') closeAll();
+            });
+        }
+
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', initSemanaSelects);
+        } else {
+            initSemanaSelects();
+        }
+    })();
     </script>
     @if($isAdmin)
         @include('comisiones.partials.searchable-vendedor-select')
