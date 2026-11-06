@@ -2484,6 +2484,11 @@
     <script>
         function gestorVentasIndex() {
             return {
+                init() {
+                    const id = window.location.hash.match(/^#venta-([1-9][0-9]*)$/)?.[1];
+                    if (id) this.abrirDetalle(id);
+                },
+
                 modalDetalleAbierto: false,
                 cargandoDetalle: false,
                 ventaSeleccionada: null,

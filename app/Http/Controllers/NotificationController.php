@@ -109,7 +109,8 @@ class NotificationController extends Controller
             case 'venta':
                 $sale = Venta::find($resourceId);
                 if ($sale && ($user->rol === 'admin' || (int) $sale->id_usuario === (int) $user->id)) {
-                    $destination = route('ventas.show', $sale->id);
+                    $history = $user->rol === 'admin' ? 'ventas.index' : 'ventas.mis-ventas';
+                    $destination = route($history).'#venta-'.$sale->id;
                 }
                 break;
             case 'comision':

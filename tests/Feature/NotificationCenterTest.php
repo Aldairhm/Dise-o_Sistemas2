@@ -150,7 +150,7 @@ class NotificationCenterTest extends TestCase
         }
         $delivery = $this->feed($this->admin)->assertJsonPath('items.0.title', 'Venta #'.$sale->id.': Entregada')
             ->json('items.0.id');
-        $this->get(route('notifications.open', $delivery))->assertRedirect(route('ventas.show', $sale->id));
+        $this->get(route('notifications.open', $delivery))->assertRedirect(route('ventas.index').'#venta-'.$sale->id);
         $this->feed($this->other)->assertJsonPath('unread', 0);
         $this->feed($this->super)->assertJsonPath('unread', 0);
         $this->assertSame(4, NotificationEvent::where('category', 'ventas')->count());
@@ -397,7 +397,7 @@ class NotificationCenterTest extends TestCase
     {
         $sale = $this->sale();
         $item = NotificationDelivery::where('user_id', $this->seller->id)->firstOrFail();
-        $this->actingAs($this->seller)->get(route('notifications.open', $item->id))->assertRedirect(route('ventas.show', $sale->id));
+        $this->actingAs($this->seller)->get(route('notifications.open', $item->id))->assertRedirect(route('ventas.mis-ventas').'#venta-'.$sale->id);
         $sale->update(['id_usuario' => $this->other->id]);
         $this->get(route('notifications.open', $item->id))->assertRedirect(route('notifications.index'));
         $sale->delete();

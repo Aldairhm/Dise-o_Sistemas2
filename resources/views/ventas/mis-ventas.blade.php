@@ -1004,6 +1004,11 @@
     <script>
         function gestorMisVentas() {
             return {
+                init() {
+                    const id = window.location.hash.match(/^#venta-([1-9][0-9]*)$/)?.[1];
+                    if (id) this.abrirDetalle(id);
+                },
+
                 tabActiva: '{{ $estadoTab ?? "todos" }}',
                 conteoEstados: @json($conteoEstados),
                 metricasPorTab: @json($metricas['por_tab'] ?? []),
