@@ -27,12 +27,28 @@
                 </a>
             </div>
         </header>
-        <form action="{{ route('ayuda.index') }}" method="GET" role="search" class="flex flex-wrap gap-2">
-            <label for="ayuda-busqueda" class="sr-only">Buscar una tarea</label>
-            <input id="ayuda-busqueda" name="q" type="search" maxlength="120" value="{{ $query }}"
-                   placeholder="Ejemplo: venta, stock o devolución" required
-                   class="min-w-0 flex-1 rounded-lg border px-4 py-3 text-sm">
-            <button class="rounded-lg bg-blue-700 px-5 py-3 text-sm font-bold text-white">Buscar</button>
+        <form action="{{ route('ayuda.index') }}" method="GET" role="search" class="space-y-2"
+              x-data="{ busquedaInvalida: false }" :novalidate="true"
+              @submit="if (!$refs.busqueda.value.trim()) {
+                  $event.preventDefault();
+                  busquedaInvalida = true;
+                  $refs.busqueda.focus();
+              }">
+            <div class="flex flex-wrap gap-2">
+                <label for="ayuda-busqueda" class="sr-only">Buscar una tarea</label>
+                <input id="ayuda-busqueda" name="q" type="search" maxlength="120" value="{{ $query }}"
+                       placeholder="Ejemplo: venta, stock o devolución" required x-ref="busqueda"
+                       :aria-invalid="busquedaInvalida"
+                       :aria-describedby="busquedaInvalida ? 'ayuda-busqueda-error' : null"
+                       @input="if ($event.target.value.trim()) busquedaInvalida = false"
+                       class="min-w-0 flex-1 rounded-lg border border-slate-300 px-4 py-3 text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 aria-invalid:border-rose-500 aria-invalid:focus:border-rose-500 aria-invalid:focus:ring-rose-500/20">
+                <button type="submit" class="rounded-lg bg-blue-700 px-5 py-3 text-sm font-bold text-white">Buscar</button>
+            </div>
+            <p id="ayuda-busqueda-error" x-show="busquedaInvalida" role="alert" style="display: none;"
+               class="flex items-center gap-2 rounded-lg border border-rose-200 bg-rose-50 px-3 py-2 text-xs font-semibold text-rose-700">
+                <i class="fas fa-circle-exclamation" aria-hidden="true"></i>
+                Escribe una palabra o una tarea para buscar.
+            </p>
         </form>
 
         <div class="grid items-start gap-5 ayuda-modulos">
