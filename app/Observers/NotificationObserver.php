@@ -104,10 +104,12 @@ class NotificationObserver
             $ticket = $model->ticket;
             // The opening message is already represented by ticket_creado.
             if ($ticket && !((int) $model->id_usuario === (int) $ticket->id_usuario && $ticket->mensajes()->count() === 1)) {
-                $ids = array_filter($service->ticketRecipients($ticket, $model->tipo_mensaje !== 'publico'), fn ($id) => (int) $id !== (int) $model->id_usuario);
-                $emit('ticket_respuesta', 'ayuda', 'importante', "Nueva respuesta #{$ticket->codigo_ticket}",
+                $internal = $model->tipo_mensaje !== 'publico';
+                $ids = array_filter($service->ticketRecipients($ticket, $internal), fn ($id) => (int) $id !== (int) $model->id_usuario);
+                $title = $internal ? 'Nueva respuesta' : 'Solicitud contestada';
+                $emit('ticket_respuesta', 'ayuda', 'importante', "{$title} #{$ticket->codigo_ticket}",
                     'Hay una nueva respuesta en la conversación de soporte.', 'ticket', $ticket->id, $ids,
-                    ['internal' => $model->tipo_mensaje !== 'publico']);
+                    ['internal' => $internal]);
             }
         } elseif ($model instanceof AuditoriaSesion && ($created || $model->wasChanged('estado'))) {
             $emit('auditoria_'.$model->estado, 'auditorias', 'importante', 'Auditoría administrativa de cuenta',

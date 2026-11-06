@@ -25,7 +25,7 @@ Todos los eventos se entregan mediante base de datos y polling autenticado. El m
 | Comisión o bono disponible para pagar | Administradores activos | Resumen de nuevos importes liquidables por vendedor | Comisiones pendientes del vendedor |
 | Ticket creado | Titular y personal activo del nivel correspondiente; si hay asignado, se limita el grupo | Importante; alta si prioridad Alta/Urgente; código, estado y prioridad | Conversación autorizada |
 | Ticket cambia estado, prioridad, asignado o nivel | Titular y personal actualmente autorizado, excepto actor | Importante/alta; código, estado y prioridad | Conversación; leer no resuelve |
-| Respuesta pública | Titular y personal autorizado, excepto autor/actor | Importante; aviso de nueva respuesta sin copiar texto privado | Conversación |
+| Respuesta pública | Titular y personal autorizado, excepto autor/actor | Un aviso de «Solicitud contestada» que cubre el pase automático a En proceso | Conversación |
 | Nota interna | Solo personal autorizado; nunca vendedor | Importante; aviso sin contenido de la nota | Conversación con validación de rol |
 | Auditoría iniciada | Cuenta auditada, incluso si coincide con el contexto autenticado | Importante; aviso de revisión autorizada | Perfil; no se expone la investigación |
 | Auditoría finalizada, expirada o revocada | Cuenta auditada | Importante; estado de la revisión | Perfil |
@@ -87,7 +87,7 @@ En AyudaController se aplica el control jerárquico al consultar, responder, esc
 
 ## Validación y límites
 
-- Suite `NotificationCenterTest`: **27 pruebas y 204 comprobaciones**. Incluye destinatarios por rol, aviso de entrega y comisión de envío al administrador, avisos de Kardex y perfil, aviso inmediato de bono, liquidación agrupada tras la garantía, ajuste de comisión en devoluciones, privacidad, deduplicación, filtros y enlaces.
+- Suite `NotificationCenterTest`: **27 pruebas y 210 comprobaciones**. Incluye destinatarios por rol, aviso único por respuesta pública, avisos de entrega y comisión de envío al administrador, Kardex, perfil, bonos, liquidación tras la garantía, ajustes de comisión, privacidad, filtros y enlaces.
 - La suite usa SQLite **en memoria y aislado**. Reutiliza migraciones de usuarios, ventas, bitácora y soporte; emplea fixtures mínimos en las tablas heredadas con ALTER CHECK de PostgreSQL no compatible con SQLite. Sí ejecuta la migración nueva completa. No accede a la base `axstore2026` de la configuración de pruebas antigua.
 - `npm run build`: correcto. `node --check public/js/notification-center.js`: correcto. Rutas nuevas registradas correctamente.
 - Navegador integrado sobre base local descartable: centro y campana renderizados, contador 4→3 al leer y 3→0 al marcar todas, persistencia al recargar, cierre Escape y desplegable móvil de 390 px dentro de pantalla. Se creó una comisión mediante el modelo real en la base aislada y se verificó la llegada automática del aviso (contador 0→1) sin recargar la página. Las capturas contienen datos de prueba; no se agregan seeds demostrativos al producto.

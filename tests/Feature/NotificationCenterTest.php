@@ -311,7 +311,13 @@ class NotificationCenterTest extends TestCase
         $this->feed($this->seller)->assertJsonPath('unread', 1);
         SoporteTicketMensaje::create(['id_ticket' => $ticket->id, 'id_usuario' => $this->seller->id, 'nombre_usuario' => 'seller', 'rol_usuario' => 'vendedor', 'mensaje' => 'Inicial', 'tipo_mensaje' => 'publico']);
         $this->actingAs($this->admin)->post(route('ayuda.tickets.responder', $ticket), ['mensaje' => 'Respuesta autorizada'])->assertRedirect();
-        $this->feed($this->seller)->assertOk()->assertJsonFragment(['title' => 'Nueva respuesta #'.$ticket->codigo_ticket]);
+        $this->assertSame('En proceso', $ticket->fresh()->estado);
+        $this->assertEquals($this->admin->id, $ticket->fresh()->id_asignado);
+        $notice = $this->feed($this->seller)->assertOk()->assertJsonPath('unread', 2)
+            ->assertJsonPath('items.0.title', 'Solicitud contestada #'.$ticket->codigo_ticket)
+            ->assertJsonMissing(['title' => 'Solicitud actualizada #'.$ticket->codigo_ticket])
+            ->json('items.0.id');
+        $this->get(route('notifications.open', $notice))->assertRedirect(route('ayuda.tickets.show', $ticket));
         $before = NotificationDelivery::where('user_id', $this->seller->id)->count();
         SoporteTicketMensaje::create(['id_ticket' => $ticket->id, 'id_usuario' => $this->admin->id, 'nombre_usuario' => 'admin', 'rol_usuario' => 'admin', 'mensaje' => 'Privado', 'tipo_mensaje' => 'interno_admin']);
         $this->assertSame($before, NotificationDelivery::where('user_id', $this->seller->id)->count());

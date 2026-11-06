@@ -8,6 +8,7 @@ use App\Models\SoporteTicketMensaje;
 use App\Services\ActivityLogger;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 use Illuminate\View\View;
 
@@ -346,69 +347,62 @@ class AyudaController extends Controller
     public function responderTicket(Request $request, SoporteTicket $ticket)
     {
         $user = Auth::user();
-        if (isset($ticket)) {
+        return DB::transaction(function () use ($request, $ticket, $user) {
+            $ticket = SoporteTicket::lockForUpdate()->findOrFail($ticket->id);
             abort_unless(app(\App\Services\NotificationService::class)->canSeeTicket($user, $ticket), 403);
-        }
 
-
-        // Si el ticket ya está en estado Resuelta o Cancelada, no se permiten más mensajes
-        if ($ticket->estado === 'Resuelta') {
-            return back()->with('error', 'Este ticket ya fue resuelto y se encuentra cerrado. Para continuar la consulta, cambia su estado a "En proceso".');
-        }
-
-        if ($ticket->estado === 'Cancelada') {
-            return back()->with('error', 'Este ticket se encuentra cancelado.');
-        }
-
-        // Validar acceso
-        if ($user->isVendedor() && $ticket->id_usuario !== $user->id) {
-            abort(403, 'No autorizado.');
-        }
-
-        $request->validate([
-            'mensaje'       => 'required|string|max:2000',
-            'evidencia_url' => 'nullable|string|max:500',
-            'tipo_mensaje'  => 'nullable|string|in:publico,interno_admin',
-        ]);
-
-        $tipoMensaje = 'publico';
-        // Solo administradores o super admins pueden publicar notas internas
-        if ($request->tipo_mensaje === 'interno_admin' && ($user->isAdmin() || $user->isSuperAdmin())) {
-            $tipoMensaje = 'interno_admin';
-        }
-
-        $mensaje = SoporteTicketMensaje::create([
-            'id_ticket'      => $ticket->id,
-            'id_usuario'     => $user->id,
-            'nombre_usuario' => $user->nombre_real ?? $user->username,
-            'rol_usuario'    => $user->rol,
-            'mensaje'        => trim($request->mensaje),
-            'evidencia_url'  => $request->evidencia_url,
-            'tipo_mensaje'   => $tipoMensaje,
-        ]);
-
-        // Ajustar estado según quién respondió
-        if ($user->isAdmin() || $user->isSuperAdmin()) {
-            if ($ticket->estado === 'Pendiente') {
-                $ticket->update(['estado' => 'En proceso', 'id_asignado' => $user->id]);
+            if ($ticket->estado === 'Resuelta') {
+                return back()->with('error', 'Este ticket ya fue resuelto y se encuentra cerrado. Para continuar la consulta, cambia su estado a "En proceso".');
             }
-        }
 
-        ActivityLogger::log(
-            'RESPUESTA',
-            'Soporte',
-            "{$user->nombre_real} ({$user->rol}) agregó una " . ($tipoMensaje === 'interno_admin' ? 'nota interna privada' : 'respuesta pública') . " en el ticket #{$ticket->codigo_ticket}.",
-            null,
-            [
-                'codigo_ticket' => $ticket->codigo_ticket,
-                'modulo'        => $ticket->modulo,
-                'tipo_mensaje'  => $tipoMensaje,
-                'mensaje'       => Str::limit($mensaje->mensaje, 200),
-                'evidencia'     => $mensaje->evidencia_url ? 'Sí' : 'No',
-            ]
-        );
+            if ($ticket->estado === 'Cancelada') {
+                return back()->with('error', 'Este ticket se encuentra cancelado.');
+            }
 
-        return back()->with('success', 'Respuesta registrada correctamente.');
+            $validated = $request->validate([
+                'mensaje'       => 'required|string|max:2000',
+                'evidencia_url' => 'nullable|string|max:500',
+                'tipo_mensaje'  => 'nullable|string|in:publico,interno_admin',
+            ]);
+
+            $esNotaInterna = $user->isAdmin() && ($validated['tipo_mensaje'] ?? null) === 'interno_admin';
+            $tipoMensaje = $esNotaInterna ? 'interno_admin' : 'publico';
+            $mensaje = SoporteTicketMensaje::create([
+                'id_ticket'      => $ticket->id,
+                'id_usuario'     => $user->id,
+                'nombre_usuario' => $user->nombre_real ?? $user->username,
+                'rol_usuario'    => $user->rol,
+                'mensaje'        => trim($validated['mensaje']),
+                'evidencia_url'  => $validated['evidencia_url'] ?? null,
+                'tipo_mensaje'   => $tipoMensaje,
+            ]);
+
+            if ($user->isAdmin() && $ticket->estado === 'Pendiente') {
+                $cambios = ['estado' => 'En proceso', 'id_asignado' => $user->id];
+                if ($esNotaInterna) {
+                    $ticket->update($cambios);
+                } else {
+                    // El aviso de la respuesta pública ya cubre el cambio automático de estado.
+                    $ticket->updateQuietly($cambios);
+                }
+            }
+
+            DB::afterCommit(fn () => ActivityLogger::log(
+                'RESPUESTA',
+                'Soporte',
+                "{$user->nombre_real} ({$user->rol}) agregó una " . ($esNotaInterna ? 'nota interna privada' : 'respuesta pública') . " en el ticket #{$ticket->codigo_ticket}.",
+                null,
+                [
+                    'codigo_ticket' => $ticket->codigo_ticket,
+                    'modulo'        => $ticket->modulo,
+                    'tipo_mensaje'  => $tipoMensaje,
+                    'mensaje'       => Str::limit($mensaje->mensaje, 200),
+                    'evidencia'     => $mensaje->evidencia_url ? 'Sí' : 'No',
+                ]
+            ));
+
+            return back()->with('success', 'Respuesta registrada correctamente.');
+        });
     }
 
     /**
