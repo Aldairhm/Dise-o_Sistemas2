@@ -106,7 +106,7 @@
                         <label for="id_categoria" class="block text-xs font-bold text-slate-500 uppercase tracking-widest mb-1.5">
                             Categoría <span class="text-red-500">*</span>
                         </label>
-                        <select name="id_categoria" id="id_categoria"
+                        <select name="id_categoria" id="id_categoria" data-select-icon="fa-layer-group"
                                 class="w-full rounded-xl border border-slate-200 px-4 py-2.5 text-sm text-slate-800 bg-white focus:outline-none focus:ring-2 focus:ring-blue-500/30 focus:border-blue-500 transition-all">
                             <option value="">Selecciona una categoría...</option>
                             @foreach($categorias as $cat)

@@ -1,6 +1,5 @@
-/* Scoped to the dashboard/report/users/log filters requested by the user. */
-.filter-select {
-    --select-bg: #f8fafc;
+.filter-select,
+.filter-select__menu {
     --select-panel: #fff;
     --select-text: #334155;
     --select-muted: #94a3b8;
@@ -8,41 +7,51 @@
     --select-hover: #f1f5f9;
     --select-active: #eff6ff;
     --select-blue: #2563eb;
-    position: relative;
+}
+.filter-select {
     min-width: 0;
     width: 100%;
 }
-.filter-select [hidden] { display: none !important; }
+.filter-select:has(.filter-select__native:not(.w-full)) { width: auto; }
+.filter-select[hidden], .filter-select [hidden], .filter-select__menu[hidden],
+.filter-select__menu [hidden] { display: none !important; }
+.filter-select__field { position: relative; }
+.filter-select__native {
+    display: block;
+    appearance: none;
+    width: 100%;
+    min-width: 0;
+    min-height: 2.5rem;
+    padding-inline: 2.25rem 1.9rem;
+    border-radius: .75rem;
+    text-overflow: ellipsis;
+}
 .filter-select__toggle {
+    position: absolute;
+    inset: 0;
     display: flex;
     align-items: center;
     justify-content: space-between;
     gap: .5rem;
     width: 100%;
     min-width: 0;
-    min-height: 2.5rem;
-    padding: .625rem .875rem;
-    border: 1px solid var(--select-border);
+    padding-inline: .75rem;
+    border: 1px solid transparent;
     border-radius: .75rem;
-    background: var(--select-bg);
+    background: transparent;
     color: var(--select-text);
-    box-shadow: 0 1px 2px rgb(15 23 42 / 5%);
-    font-size: .75rem;
-    font-weight: 700;
-    line-height: 1.25;
-    text-align: left;
     cursor: pointer;
     transition: background 150ms, border-color 150ms, box-shadow 150ms;
 }
-.filter-select__toggle:hover { background: var(--select-panel); border-color: #cbd5e1; }
+.filter-select__toggle:hover:not(:disabled) { border-color: #cbd5e1; }
 .filter-select__toggle:focus-visible, .filter-select.is-open .filter-select__toggle {
     outline: none;
     border-color: #3b82f6;
-    background: var(--select-panel);
     box-shadow: 0 0 0 4px rgb(59 130 246 / 10%);
 }
+.filter-select__toggle[aria-invalid="true"] { border-color: #ef4444; }
 .filter-select__toggle:disabled { opacity: .5; cursor: not-allowed; }
-.filter-select__label { flex: 1; min-width: 0; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
+.filter-select__error { margin-top: .3rem; color: #b91c1c; font-size: .75rem; }
 .filter-select__icon { flex: 0 0 1rem; width: 1rem; text-align: center; font-size: .75rem; }
 .filter-select__icon--blue { color: var(--select-blue); }
 .filter-select__icon--muted { color: var(--select-muted); }
@@ -53,10 +62,8 @@
 .filter-select__arrow { font-size: .625rem; transition: transform 150ms; }
 .filter-select.is-open .filter-select__arrow { transform: rotate(180deg); }
 .filter-select__menu {
-    position: absolute;
-    z-index: 70;
-    width: max(100%, 200px);
-    max-width: calc(100vw - 24px);
+    position: fixed;
+    z-index: 10000;
     margin: 0;
     padding: 6px;
     border: 1px solid var(--select-border);
@@ -87,6 +94,8 @@
 .filter-select__option[aria-selected="true"] { background: var(--select-active); color: var(--select-blue); }
 .filter-select__option:disabled { opacity: .45; cursor: not-allowed; }
 .filter-select__option-label { flex: 1; min-width: 0; overflow-wrap: anywhere; }
+.filter-select__group:not(:has(.filter-select__option:not([hidden]))) { display: none; }
+.filter-select__group-heading { padding: .5rem .75rem .25rem; color: var(--select-muted); font-size: .675rem; font-weight: 800; }
 .filter-select__check { visibility: hidden; font-size: .625rem; }
 .filter-select__option[aria-selected="true"] .filter-select__check { visibility: visible; }
 .filter-select__search { position: relative; margin: 2px 2px 6px; }
@@ -105,8 +114,7 @@
 .filter-select__search input::placeholder { color: var(--select-muted); }
 .filter-select__search input:focus { border-color: #3b82f6; box-shadow: 0 0 0 3px rgb(59 130 246 / 12%); }
 .filter-select__empty { padding: 1rem .75rem; font-size: .75rem; text-align: center; color: var(--select-muted); }
-html.dark .filter-select {
-    --select-bg: #1e293b;
+html.dark :is(.filter-select, .filter-select__menu) {
     --select-panel: #1e293b;
     --select-text: #f1f5f9;
     --select-muted: #94a3b8;
@@ -115,3 +123,4 @@ html.dark .filter-select {
     --select-active: #172554;
     --select-blue: #93c5fd;
 }
+html.dark .filter-select__error { color: #fca5a5; }

@@ -326,6 +326,7 @@
                         <select 
                             id="metodo_pago" 
                             name="metodo_pago" 
+                            data-select-icon="fa-wallet"
                             x-model="metodoPago"
                             class="w-full rounded-xl border border-slate-300 bg-white px-3.5 py-2.5 text-xs font-semibold text-slate-700 focus:border-emerald-500 focus:outline-none focus:ring-4 focus:ring-emerald-500/10 transition-all cursor-pointer"
                         >
