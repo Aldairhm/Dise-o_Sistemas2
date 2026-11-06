@@ -116,7 +116,9 @@ Route::middleware('auth')->group(function () {
         Route::get('/compras/buscar-variantes', [CompraController::class, 'buscarVariantes'])->name('compras.buscar-variantes');
         Route::post('/compras', [CompraController::class, 'store'])->name('compras.store');
         Route::get('/compras/historial', [CompraController::class, 'historial'])->name('compras.historial');
+        Route::get('/compras/{id}', [CompraController::class, 'show'])->name('compras.show')->whereNumber('id');
         Route::get('/compras/movimientos', [CompraController::class, 'movimientos'])->name('compras.movimientos');
+        Route::get('/compras/movimientos/{id}', [CompraController::class, 'detalleMovimiento'])->name('compras.movimientos.show')->whereNumber('id');
         Route::post('/movimientos-bodega/transferencia-tienda', [MovimientoBodegaController::class, 'transferirATienda'])->name('movimientos-bodega.transferencia-tienda');
 
         // ── Módulo de Ventas (Solo Administradores: Dashboard general, Pedidos y Despacho) ──

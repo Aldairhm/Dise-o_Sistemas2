@@ -53,8 +53,8 @@
 
         <!-- 1. SECCIÓN SUPERIOR: FILTROS GLOBALES -->
         <section class="bg-white border border-slate-200 rounded-2xl p-4 sm:p-5 shadow-sm">
-            <form method="GET" action="{{ route('ventas.index') }}" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-12 gap-3.5 items-end">
-                <input type="hidden" name="tab" value="{{ $estadoTab }}">
+            <form method="GET" action="{{ route('ventas.index') }}" @submit.prevent="filtrarVentasIndex()" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-12 gap-3.5 items-end">
+                <input type="hidden" name="tab" :value="estadoTabActual">
 
                 <!-- BÚSQUEDA RÁPIDA -->
                 <div class="sm:col-span-2 md:col-span-3 lg:col-span-3">
@@ -66,7 +66,7 @@
                             type="text"
                             name="q"
                             id="q"
-                            value="{{ $busqueda ?? '' }}"
+                            x-model="filtroBusqueda"
                             placeholder="Ej: 00004 o 7123-4567..."
                             class="w-full rounded-xl border border-slate-300 bg-slate-50 pl-9 pr-3 py-2 text-xs font-semibold text-slate-700 focus:border-blue-500 focus:bg-white focus:outline-none focus:ring-4 focus:ring-blue-500/10 transition-all">
                         <i class="fas fa-search absolute left-3 top-2.5 text-slate-400 text-xs"></i>
@@ -82,7 +82,7 @@
                         type="date"
                         name="desde"
                         id="desde"
-                        value="{{ $desde }}"
+                        x-model="filtroDesde"
                         class="w-full rounded-xl border border-slate-300 bg-slate-50 px-3 py-2 text-xs font-semibold text-slate-700 focus:border-blue-500 focus:bg-white focus:outline-none focus:ring-4 focus:ring-blue-500/10 transition-all">
                 </div>
 
@@ -95,7 +95,7 @@
                         type="date"
                         name="hasta"
                         id="hasta"
-                        value="{{ $hasta }}"
+                        x-model="filtroHasta"
                         class="w-full rounded-xl border border-slate-300 bg-slate-50 px-3 py-2 text-xs font-semibold text-slate-700 focus:border-blue-500 focus:bg-white focus:outline-none focus:ring-4 focus:ring-blue-500/10 transition-all">
                 </div>
 
@@ -107,10 +107,11 @@
                     <select
                         name="vendedor_id"
                         id="vendedor_id"
+                        x-model="filtroVendedor"
                         class="w-full rounded-xl border border-slate-300 bg-slate-50 px-3 py-2 text-xs font-semibold text-slate-700 focus:border-blue-500 focus:bg-white focus:outline-none focus:ring-4 focus:ring-blue-500/10 transition-all">
                         <option value="">Todos</option>
                         @foreach($vendedores as $v)
-                        <option value="{{ $v->id }}" {{ (string)$vendedorId === (string)$v->id ? 'selected' : '' }}>
+                        <option value="{{ $v->id }}">
                             {{ $v->nombre_real ?: $v->username }}
                         </option>
                         @endforeach
@@ -125,10 +126,11 @@
                     <select
                         name="producto_id"
                         id="producto_id"
+                        x-model="filtroProducto"
                         class="w-full rounded-xl border border-slate-300 bg-slate-50 px-3 py-2 text-xs font-semibold text-slate-700 focus:border-blue-500 focus:bg-white focus:outline-none focus:ring-4 focus:ring-blue-500/10 transition-all">
                         <option value="">Todos</option>
                         @foreach($productos as $p)
-                        <option value="{{ $p->id }}" {{ (string)$productoId === (string)$p->id ? 'selected' : '' }}>
+                        <option value="{{ $p->id }}">
                             {{ $p->nombre }}
                         </option>
                         @endforeach
@@ -139,19 +141,19 @@
                 <div class="lg:col-span-1 flex items-center gap-1.5">
                     <button
                         type="submit"
-                        class="w-full rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-bold py-2 px-2.5 text-xs transition-all shadow-md shadow-blue-600/15 flex items-center justify-center gap-1 cursor-pointer"
+                        class="w-full rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-bold py-2 px-2.5 text-xs transition-all shadow-md shadow-blue-600/15 flex items-center justify-center gap-1.5 cursor-pointer"
                         title="Aplicar filtros">
-                        <i class="fas fa-filter text-[11px]"></i>
-                        <span class="hidden sm:inline lg:hidden xl:inline">Filtrar</span>
+                        <i :class="cargandoTabla ? 'fas fa-spinner fa-spin' : 'fas fa-filter'"></i>
+                        <span class="hidden sm:inline lg:hidden xl:inline" x-text="cargandoTabla ? 'Filtrando...' : 'Filtrar'"></span>
                     </button>
-                    @if(request()->hasAny(['desde', 'hasta', 'vendedor_id', 'producto_id', 'q']))
-                    <a
-                        href="{{ route('ventas.index', $estadoTab !== 'todos' ? ['tab' => $estadoTab] : []) }}"
-                        class="rounded-xl border border-slate-200 bg-slate-50 hover:bg-slate-100 text-slate-600 font-bold py-2 px-2.5 text-xs transition-colors flex items-center justify-center shrink-0"
+                    <button
+                        type="button"
+                        x-show="filtroBusqueda || filtroVendedor || filtroProducto"
+                        @click="limpiarFiltrosIndex()"
+                        class="rounded-xl border border-slate-200 bg-slate-50 hover:bg-slate-100 text-slate-600 font-bold py-2 px-2.5 text-xs transition-colors flex items-center justify-center shrink-0 cursor-pointer"
                         title="Limpiar filtros">
                         <i class="fas fa-rotate-left text-[11px]"></i>
-                    </a>
-                    @endif
+                    </button>
                 </div>
 
             </form>
@@ -336,52 +338,60 @@
             <div class="flex flex-wrap items-center justify-between gap-3">
                 <div class="flex flex-wrap items-center gap-1.5 rounded-2xl border border-slate-200 bg-white p-1.5 shadow-sm" aria-label="Apartados de estado del historial">
                     <!-- 1. TODAS LAS TRANSACCIONES -->
-                    <a 
-                        href="{{ route('ventas.index', array_merge(request()->except('page'), ['tab' => 'todos'])) }}"
-                        class="rounded-xl px-3.5 py-2 text-xs font-bold transition-all flex items-center gap-2 cursor-pointer {{ $estadoTab === 'todos' ? 'bg-blue-600 text-white shadow-xs' : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900' }}"
+                    <button 
+                        type="button"
+                        @click="cambiarTab('todos')"
+                        class="rounded-xl px-3.5 py-2 text-xs font-bold transition-all flex items-center gap-2 cursor-pointer"
+                        :class="estadoTabActual === 'todos' ? 'bg-blue-600 text-white shadow-xs' : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900'"
                     >
-                        <i class="fas fa-layer-group text-[11px] {{ $estadoTab === 'todos' ? 'text-white' : 'text-slate-400' }}"></i>
+                        <i class="fas fa-layer-group text-[11px]" :class="estadoTabActual === 'todos' ? 'text-white' : 'text-slate-400'"></i>
                         <span>Todas</span>
-                        <span class="px-1.5 py-0.5 rounded-md text-[10px] font-black {{ $estadoTab === 'todos' ? 'bg-white/20 text-white' : 'bg-slate-100 text-slate-600' }}">
+                        <span class="px-1.5 py-0.5 rounded-md text-[10px] font-black" :class="estadoTabActual === 'todos' ? 'bg-white/20 text-white' : 'bg-slate-100 text-slate-600'" x-text="conteos.todos ?? {{ $conteoEstados['todos'] ?? 0 }}">
                             {{ $conteoEstados['todos'] ?? 0 }}
                         </span>
-                    </a>
+                    </button>
 
                     <!-- 2. VENTAS ENTREGADAS -->
-                    <a 
-                        href="{{ route('ventas.index', array_merge(request()->except('page'), ['tab' => 'Entregada'])) }}"
-                        class="rounded-xl px-3.5 py-2 text-xs font-bold transition-all flex items-center gap-2 cursor-pointer {{ $estadoTab === 'Entregada' ? 'bg-emerald-600 text-white shadow-xs' : 'text-slate-600 hover:bg-emerald-50 hover:text-emerald-700' }}"
+                    <button 
+                        type="button"
+                        @click="cambiarTab('Entregada')"
+                        class="rounded-xl px-3.5 py-2 text-xs font-bold transition-all flex items-center gap-2 cursor-pointer"
+                        :class="estadoTabActual === 'Entregada' ? 'bg-emerald-600 text-white shadow-xs' : 'text-slate-600 hover:bg-emerald-50 hover:text-emerald-700'"
                     >
-                        <i class="fas fa-box-open text-[11px] {{ $estadoTab === 'Entregada' ? 'text-white' : 'text-emerald-500' }}"></i>
+                        <i class="fas fa-box-open text-[11px]" :class="estadoTabActual === 'Entregada' ? 'text-white' : 'text-emerald-500'"></i>
                         <span>Entregadas</span>
-                        <span class="px-1.5 py-0.5 rounded-md text-[10px] font-black {{ $estadoTab === 'Entregada' ? 'bg-white/20 text-white' : 'bg-emerald-100 text-emerald-800' }}">
+                        <span class="px-1.5 py-0.5 rounded-md text-[10px] font-black" :class="estadoTabActual === 'Entregada' ? 'bg-white/20 text-white' : 'bg-emerald-100 text-emerald-800'" x-text="conteos.Entregada ?? {{ $conteoEstados['Entregada'] ?? 0 }}">
                             {{ $conteoEstados['Entregada'] ?? 0 }}
                         </span>
-                    </a>
+                    </button>
 
                     <!-- 3. DEVOLUCIONES -->
-                    <a 
-                        href="{{ route('ventas.index', array_merge(request()->except('page'), ['tab' => 'Devolución'])) }}"
-                        class="rounded-xl px-3.5 py-2 text-xs font-bold transition-all flex items-center gap-2 cursor-pointer {{ $estadoTab === 'Devolución' ? 'bg-purple-600 text-white shadow-xs' : 'text-slate-600 hover:bg-purple-50 hover:text-purple-700' }}"
+                    <button 
+                        type="button"
+                        @click="cambiarTab('Devolución')"
+                        class="rounded-xl px-3.5 py-2 text-xs font-bold transition-all flex items-center gap-2 cursor-pointer"
+                        :class="estadoTabActual === 'Devolución' ? 'bg-purple-600 text-white shadow-xs' : 'text-slate-600 hover:bg-purple-50 hover:text-purple-700'"
                     >
-                        <i class="fas fa-rotate-left text-[11px] {{ $estadoTab === 'Devolución' ? 'text-white' : 'text-purple-500' }}"></i>
+                        <i class="fas fa-rotate-left text-[11px]" :class="estadoTabActual === 'Devolución' ? 'text-white' : 'text-purple-500'"></i>
                         <span>Devoluciones</span>
-                        <span class="px-1.5 py-0.5 rounded-md text-[10px] font-black {{ $estadoTab === 'Devolución' ? 'bg-white/20 text-white' : 'bg-purple-100 text-purple-800' }}">
+                        <span class="px-1.5 py-0.5 rounded-md text-[10px] font-black" :class="estadoTabActual === 'Devolución' ? 'bg-white/20 text-white' : 'bg-purple-100 text-purple-800'" x-text="conteos['Devolución'] ?? {{ $conteoEstados['Devolución'] ?? 0 }}">
                             {{ $conteoEstados['Devolución'] ?? 0 }}
                         </span>
-                    </a>
+                    </button>
 
                     <!-- 4. CAMBIOS -->
-                    <a 
-                        href="{{ route('ventas.index', array_merge(request()->except('page'), ['tab' => 'Cambio'])) }}"
-                        class="rounded-xl px-3.5 py-2 text-xs font-bold transition-all flex items-center gap-2 cursor-pointer {{ $estadoTab === 'Cambio' ? 'bg-teal-600 text-white shadow-xs' : 'text-slate-600 hover:bg-teal-50 hover:text-teal-700' }}"
+                    <button 
+                        type="button"
+                        @click="cambiarTab('Cambio')"
+                        class="rounded-xl px-3.5 py-2 text-xs font-bold transition-all flex items-center gap-2 cursor-pointer"
+                        :class="estadoTabActual === 'Cambio' ? 'bg-teal-600 text-white shadow-xs' : 'text-slate-600 hover:bg-teal-50 hover:text-teal-700'"
                     >
-                        <i class="fas fa-arrow-right-arrow-left text-[11px] {{ $estadoTab === 'Cambio' ? 'text-white' : 'text-teal-500' }}"></i>
+                        <i class="fas fa-arrow-right-arrow-left text-[11px]" :class="estadoTabActual === 'Cambio' ? 'text-white' : 'text-teal-500'"></i>
                         <span>Cambios</span>
-                        <span class="px-1.5 py-0.5 rounded-md text-[10px] font-black {{ $estadoTab === 'Cambio' ? 'bg-white/20 text-white' : 'bg-teal-100 text-teal-800' }}">
+                        <span class="px-1.5 py-0.5 rounded-md text-[10px] font-black" :class="estadoTabActual === 'Cambio' ? 'bg-white/20 text-white' : 'bg-teal-100 text-teal-800'" x-text="conteos.Cambio ?? {{ $conteoEstados['Cambio'] ?? 0 }}">
                             {{ $conteoEstados['Cambio'] ?? 0 }}
                         </span>
-                    </a>
+                    </button>
                 </div>
 
                 <div class="flex items-center gap-2">
@@ -453,290 +463,13 @@
                 </div>
 
             <!-- TABLA -->
-            <div class="overflow-x-auto">
-                <table class="w-full text-left text-xs min-w-[1020px]">
-                    <thead class="bg-slate-50/80 text-[10px] uppercase font-bold tracking-wider text-slate-400 border-b border-slate-200">
-                        <tr>
-                            <th class="px-5 py-3.5 w-24 whitespace-nowrap">Folio</th>
-                            <th class="px-4 py-3.5 whitespace-nowrap">Fecha y Hora</th>
-                            <th class="px-4 py-3.5 whitespace-nowrap">Vendedor</th>
-                            <th class="px-4 py-3.5 whitespace-nowrap">Tipo y Destino</th>
-                            <th class="px-4 py-3.5 whitespace-nowrap">Método de Pago</th>
-                            <th class="px-4 py-3.5 text-center whitespace-nowrap">Estado Actual</th>
-                            <th class="px-4 py-3.5 text-right whitespace-nowrap w-24">Total</th>
-                            <th class="px-5 py-3.5 text-right whitespace-nowrap">Acciones</th>
-                        </tr>
-                    </thead>
-                    <tbody class="divide-y divide-slate-100">
-                        @forelse($ventas as $venta)
-                        @php
-                        $estado = $venta->estado ?? 'Pendiente';
-                        $tipo = $venta->tipo_venta ?? 'Tienda';
-                        $bloqueado = $venta->estado_bloqueado;
-                        $permitidos = $venta->estados_permitidos;
-                        $puedeDevolver = $venta->puede_devolver;
-                        $diasRestantes = $venta->dias_restantes_devolucion;
-                        $diasGarantia = $venta->dias_garantia;
-                        $textoGarantia = $venta->texto_garantia_devolucion;
-                        $fechaLimite = $venta->fecha_limite_devolucion;
-                        $limiteFechaFormatted = $fechaLimite ? $fechaLimite->format('d/m/Y') : '';
-
-                        $badgeClasses = match($estado) {
-                        'Pendiente' => 'bg-amber-50 text-amber-700 border-amber-200',
-                        'Confirmada' => 'bg-blue-50 text-blue-700 border-blue-200',
-                        'En ruta' => 'bg-indigo-50 text-indigo-700 border-indigo-200',
-                        'Entregada' => 'bg-emerald-50 text-emerald-700 border-emerald-200',
-                        'Cancelada' => 'bg-rose-50 text-rose-700 border-rose-200',
-                        'Devolución' => 'bg-purple-50 text-purple-700 border-purple-200',
-                        'Cambio' => 'bg-teal-50 text-teal-700 border-teal-200',
-                        default => 'bg-slate-50 text-slate-700 border-slate-200'
-                        };
-
-                        $badgeIcon = match($estado) {
-                        'Pendiente' => 'fa-clock',
-                        'Confirmada' => 'fa-circle-check',
-                        'En ruta' => 'fa-truck-fast',
-                        'Entregada' => 'fa-box-open',
-                        'Cancelada' => 'fa-ban',
-                        'Devolución' => 'fa-rotate-left',
-                        'Cambio' => 'fa-arrow-right-arrow-left',
-                        default => 'fa-info-circle'
-                        };
-
-                        $garantiaBadgeText = $diasRestantes > 1
-                        ? "Garantía: {$diasRestantes} días"
-                        : ($diasRestantes === 1 ? "Garantía: 1 día" : "Garantía: Hoy último día");
-                        @endphp
-
-                        <tr class="hover:bg-slate-50/70 transition-colors">
-                            <!-- FOLIO -->
-                            <td class="px-5 py-3.5 font-bold text-slate-900">
-                                <span class="bg-slate-100 text-slate-700 px-2 py-0.5 rounded text-[11px] font-mono">
-                                    #VNT-{{ str_pad($venta->id, 5, '0', STR_PAD_LEFT) }}
-                                </span>
-                            </td>
-
-                            <!-- FECHA Y HORA -->
-                            <td class="px-4 py-3.5 text-slate-600">
-                                <p class="font-bold text-slate-800">
-                                    {{ \Carbon\Carbon::parse($venta->fecha)->format('d/m/Y') }}
-                                </p>
-                                <span class="text-[10px] text-slate-400">
-                                    {{ \Carbon\Carbon::parse($venta->fecha)->format('h:i A') }}
-                                </span>
-                            </td>
-
-                            <!-- VENDEDOR -->
-                            <td class="px-4 py-3.5">
-                                <div class="flex items-center gap-2">
-                                    <div class="w-6 h-6 rounded-full bg-blue-100 text-blue-600 font-bold text-[10px] flex items-center justify-center shrink-0">
-                                        {{ strtoupper(substr($venta->usuario?->nombre_real ?? $venta->usuario?->username ?? 'U', 0, 1)) }}
-                                    </div>
-                                    <span class="font-bold text-slate-800 truncate max-w-[150px]" title="{{ $venta->usuario?->nombre_real ?? $venta->usuario?->username }}">
-                                        {{ $venta->usuario?->nombre_real ?? $venta->usuario?->username ?? 'Usuario no asignado' }}
-                                    </span>
-                                </div>
-                            </td>
-
-                            <!-- TIPO Y DESTINO -->
-                            <td class="px-4 py-3.5">
-                                <div class="space-y-1">
-                                    @if($tipo === 'Envio')
-                                        <div class="flex items-center gap-1.5 flex-wrap">
-                                            <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-bold bg-indigo-50 text-indigo-700 border border-indigo-200">
-                                                <i class="fas fa-truck text-[9px]"></i> Entrega a Domicilio
-                                            </span>
-                                            @if(!empty($venta->nombre_cliente))
-                                                <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-extrabold bg-blue-50 text-blue-800 border border-blue-200" title="Cliente">
-                                                    <i class="fas fa-user text-[8px] text-blue-600"></i> {{ $venta->nombre_cliente }}
-                                                </span>
-                                            @endif
-                                        </div>
-                                        @if($venta->direccion_entrega)
-                                            <p class="text-[11px] text-slate-700 font-medium truncate max-w-[220px]" title="{{ $venta->direccion_entrega }}">
-                                                {{ $venta->direccion_entrega }}
-                                            </p>
-                                        @endif
-                                        @if($venta->telefono_entrega)
-                                            <p class="text-[10px] text-slate-400 flex items-center gap-1 font-mono">
-                                                <i class="fas fa-phone text-[8px]"></i> {{ $venta->telefono_entrega }}
-                                            </p>
-                                        @endif
-                                    @else
-                                        <div class="flex items-center gap-1.5 flex-wrap">
-                                            @if($venta->metodo_pago === 'Cambio Físico')
-                                                <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-bold bg-teal-50 text-teal-800 border border-teal-200" title="Venta de reposición por cambio físico">
-                                                    <i class="fas fa-arrow-right-arrow-left text-[9px] text-teal-600"></i> Cambio en Tienda
-                                                </span>
-                                            @else
-                                                <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
-                                                    <i class="fas fa-store text-[9px]"></i> Venta en Tienda
-                                                </span>
-                                            @endif
-                                            @if(!empty($venta->nombre_cliente))
-                                                <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-bold bg-slate-100 text-slate-700 border border-slate-200" title="Cliente">
-                                                    <i class="fas fa-user text-[8px]"></i> {{ $venta->nombre_cliente }}
-                                                </span>
-                                            @endif
-                                        </div>
-                                    @endif
-                                </div>
-                            </td>
-
-                            <!-- MÉTODO DE PAGO -->
-                            <td class="px-4 py-3.5">
-                                <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[11px] font-bold border {{ $venta->metodo_pago === 'Cambio Físico' ? 'bg-teal-50 text-teal-800 border-teal-200' : ($venta->metodo_pago === 'Efectivo' ? 'bg-emerald-50 text-emerald-700 border-emerald-200' : ($venta->metodo_pago === 'Transferencia Bancaria' ? 'bg-purple-50 text-purple-700 border-purple-200' : 'bg-blue-50 text-blue-700 border-blue-200')) }}">
-                                    <i class="fas {{ $venta->metodo_pago === 'Cambio Físico' ? 'fa-arrow-right-arrow-left text-teal-600' : ($venta->metodo_pago === 'Efectivo' ? 'fa-money-bill-wave' : ($venta->metodo_pago === 'Transferencia Bancaria' ? 'fa-building-columns' : 'fa-credit-card')) }} text-[10px]"></i>
-                                    <span>{{ $venta->metodo_pago }}</span>
-                                </span>
-                            </td>
-
-                            <!-- ESTADO ACTUAL (SOLO INFORMATIVO) -->
-                            <td class="px-4 py-3.5 text-center">
-                                <div class="inline-flex flex-col items-center">
-                                    <span
-                                        class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[11px] font-bold border shadow-2xs {{ $badgeClasses }}">
-                                        <i class="fas {{ $badgeIcon }} text-[10px]"></i>
-                                        <span>{{ $estado }}</span>
-                                    </span>
-
-                                    @if($estado === 'Entregada' && $puedeDevolver)
-                                    <span class="text-[9px] font-bold text-amber-600 mt-1 flex items-center gap-0.5" title="Garantía de devolución activa hasta el {{ $limiteFechaFormatted }} a las 23:59 ({{ $diasGarantia }} días en {{ $tipo === 'Envio' ? 'envío' : 'tienda' }})">
-                                        <i class="fas fa-shield-halved text-[8px]"></i>
-                                        <span>{{ $garantiaBadgeText }}</span>
-                                    </span>
-                                    @elseif($estado === 'Entregada' && !$puedeDevolver)
-                                    <span class="text-[9px] font-medium text-slate-400 mt-0.5" title="Garantía de devolución expirada (plazo de {{ $diasGarantia }} días)">
-                                        Garantía expirada
-                                    </span>
-                                    @elseif($tipo === 'Envio')
-                                    <span class="text-[9px] font-medium text-slate-400 mt-0.5">Envío</span>
-                                    @elseif($tipo === 'Tienda')
-                                    <span class="text-[9px] font-medium text-slate-400 mt-0.5">Tienda</span>
-                                    @endif
-                                </div>
-                            </td>
-
-                            <!-- TOTAL -->
-                            <td class="px-4 py-3.5 text-right font-black text-slate-900 text-sm whitespace-nowrap">
-                                ${{ number_format($venta->total, 2) }}
-                            </td>
-
-                            <!-- ACCIONES -->
-                            <td class="px-5 py-3.5 text-right whitespace-nowrap">
-                                <div class="flex items-center justify-end gap-1.5 flex-nowrap">
-                                    <!-- COMPROBANTE DE PAGO (TRANSFERENCIA) -->
-                                    @if($venta->comprobante_pago)
-                                    <button
-                                        type="button"
-                                        @click="verImagenAmpliada('{{ asset('storage/' . $venta->comprobante_pago) }}', 'VNT-{{ str_pad($venta->id, 5, '0', STR_PAD_LEFT) }}_{{ \Carbon\Carbon::parse($venta->fecha)->format('Y-m-d') }}_comprobante_pago', 'Comprobante de Pago por Transferencia')"
-                                        class="rounded-lg border border-purple-200 bg-purple-50 hover:bg-purple-600 hover:text-white text-purple-700 px-2 py-1 text-[11px] font-bold transition-all shadow-2xs flex items-center gap-1 cursor-pointer shrink-0"
-                                        title="Ver Comprobante de Pago por Transferencia">
-                                        <i class="fas fa-file-invoice-dollar text-[10px]"></i>
-                                        <span>Comprobante</span>
-                                    </button>
-                                    @endif
-
-                                    <!-- COMPROBANTE DE PAQUETE (EN RUTA) -->
-                                    @if($venta->comprobante_paquete)
-                                    <button
-                                        type="button"
-                                        @click="verImagenAmpliada('{{ asset('storage/' . $venta->comprobante_paquete) }}', 'VNT-{{ str_pad($venta->id, 5, '0', STR_PAD_LEFT) }}_{{ \Carbon\Carbon::parse($venta->fecha)->format('Y-m-d') }}_paquete', 'Comprobante de Paquetería')"
-                                        class="rounded-lg border border-indigo-200 bg-indigo-50 hover:bg-indigo-600 hover:text-white text-indigo-700 px-2 py-1 text-[11px] font-bold transition-all shadow-2xs flex items-center gap-1 cursor-pointer shrink-0"
-                                        title="Ver Comprobante de Paquetería">
-                                        <i class="fas fa-truck-ramp-box text-[10px]"></i>
-                                        <span>Paquete</span>
-                                    </button>
-                                    @endif
-
-                                    <!-- COMPROBANTE DE DEVOLUCIÓN -->
-                                    @if($venta->comprobante_devolucion)
-                                    <button
-                                        type="button"
-                                        @click="verImagenAmpliada('{{ asset('storage/' . $venta->comprobante_devolucion) }}', 'VNT-{{ str_pad($venta->id, 5, '0', STR_PAD_LEFT) }}_{{ \Carbon\Carbon::parse($venta->fecha)->format('Y-m-d') }}_devolucion', 'Comprobante de Devolución')"
-                                        class="rounded-lg border border-rose-200 bg-rose-50 hover:bg-rose-600 hover:text-white text-rose-700 px-2 py-1 text-[11px] font-bold transition-all shadow-2xs flex items-center gap-1 cursor-pointer shrink-0"
-                                        title="Ver Comprobante de Devolución">
-                                        <i class="fas fa-box-archive text-[10px]"></i>
-                                        <span>Devolución</span>
-                                    </button>
-                                    @endif
-
-                                    <!-- BOTÓN VER DETALLE -->
-                                    <button
-                                        type="button"
-                                        @click="abrirDetalle({{ $venta->id }})"
-                                        class="rounded-lg border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 px-2 py-1 text-[11px] font-bold transition-all shadow-2xs flex items-center gap-1 cursor-pointer shrink-0"
-                                        title="Ver detalle completo de la venta">
-                                        <i class="fas fa-eye text-slate-400 text-[10px]"></i>
-                                        <span>Detalle</span>
-                                    </button>
-
-                                    <!-- BOTÓN IMPRIMIR COMPROBANTE -->
-                                    <button
-                                        type="button"
-                                        @click="abrirModalImpresion({{ $venta->id }}, '{{ $venta->metodo_pago }}', {{ (float) $venta->total }})"
-                                        class="rounded-lg border border-emerald-200 bg-emerald-50 hover:bg-emerald-600 hover:text-white text-emerald-700 px-2 py-1 text-[11px] font-bold transition-all shadow-2xs flex items-center gap-1 cursor-pointer shrink-0"
-                                        title="Imprimir ticket o factura comercial/tributaria">
-                                        <i class="fas fa-print text-[10px]"></i>
-                                        <span>Imprimir</span>
-                                    </button>
-                                </div>
-                            </td>
-                        </tr>
-                        @empty
-                            <tr>
-                                <td colspan="8" class="py-16 text-center text-slate-400">
-                                    <div class="w-14 h-14 rounded-full bg-slate-50 text-slate-300 flex items-center justify-center mx-auto mb-3 border border-slate-100">
-                                        <i class="fas {{ $estadoTab === 'Devolución' ? 'fa-rotate-left' : ($estadoTab === 'Cambio' ? 'fa-arrow-right-arrow-left' : ($estadoTab === 'Entregada' ? 'fa-box-open' : 'fa-folder-open')) }} text-2xl"></i>
-                                    </div>
-                                    <p class="text-sm font-bold text-slate-600">
-                                        @if($estadoTab === 'Entregada')
-                                            No se encontraron ventas entregadas en este periodo
-                                        @elseif($estadoTab === 'Devolución')
-                                            No se encontraron devoluciones de clientes en este periodo
-                                        @elseif($estadoTab === 'Cambio')
-                                            No se encontraron cambios de producto en este periodo
-                                        @else
-                                            No se encontraron transacciones en este periodo
-                                        @endif
-                                    </p>
-                                    <p class="text-xs text-slate-400 mt-1 max-w-md mx-auto">
-                                        @if($estadoTab === 'Devolución')
-                                            No existen ventas con estado <i>Devolución</i> para los filtros y fechas seleccionadas.
-                                        @elseif($estadoTab === 'Cambio')
-                                            No existen ventas con estado <i>Cambio</i> para los filtros y fechas seleccionadas.
-                                        @elseif($estadoTab === 'Entregada')
-                                            No existen ventas con estado <i>Entregada</i> para los filtros y fechas seleccionadas.
-                                        @else
-                                            Este dashboard muestra exclusivamente ventas entregadas, devoluciones y cambios liquidados. Si tus pedidos están en proceso, consúltalos en el apartado logístico.
-                                        @endif
-                                    </p>
-                                    <div class="mt-4 flex items-center justify-center gap-2 flex-wrap">
-                                        @if($estadoTab !== 'todos')
-                                            <a href="{{ route('ventas.index', array_merge(request()->except('page'), ['tab' => 'todos'])) }}" class="inline-flex items-center gap-2 rounded-xl bg-slate-700 hover:bg-slate-800 text-white px-4 py-2 text-xs font-bold transition-all shadow-sm">
-                                                <i class="fas fa-layer-group"></i> Ver Todas las Transacciones
-                                            </a>
-                                        @endif
-                                        <a href="{{ route('ventas.pedidos') }}" class="inline-flex items-center gap-2 rounded-xl bg-amber-500 hover:bg-amber-600 text-white px-4 py-2 text-xs font-bold transition-all shadow-sm">
-                                            <i class="fas fa-boxes-packing"></i> Ver Envíos y Pedidos en Proceso
-                                        </a>
-                                        <a href="{{ route('ventas.create') }}" class="inline-flex items-center gap-2 rounded-xl bg-blue-600 hover:bg-blue-500 text-white px-4 py-2 text-xs font-bold transition-all shadow-sm">
-                                            <i class="fas fa-plus"></i> Registrar Nueva Venta
-                                        </a>
-                                    </div>
-                                </td>
-                            </tr>
-                        @endforelse
-                    </tbody>
-                </table>
+            <div x-show="cargandoTabla" style="display: none;" class="p-4">
+                <x-skeleton-table :rows="6" :cols="8" />
             </div>
 
-            <!-- PAGINACIÓN -->
-            @if($ventas->hasPages())
-            <div class="p-4 border-t border-slate-100 bg-slate-50/50">
-                {{ $ventas->links() }}
+            <div x-show="!cargandoTabla" id="contenedorTablaVentasIndex">
+                @include('ventas.tabla-index')
             </div>
-            @endif
         </section>
         </div>
 
@@ -802,13 +535,12 @@
                         </button>
                     </div>
 
-                    <!-- CUERPO DEL MODAL (SPINNER O DATOS) -->
+                    <!-- CUERPO DEL MODAL (SKELETON O DATOS) -->
                     <div class="p-6 sm:p-8 overflow-y-auto space-y-6 flex-1 custom-scrollbar">
 
-                        <!-- ESTADO CARGANDO -->
-                        <div x-show="cargandoDetalle" class="py-16 text-center text-slate-400 space-y-3">
-                            <i class="fas fa-spinner fa-spin text-3xl text-blue-600"></i>
-                            <p class="text-xs font-bold text-slate-600">Cargando desglose de la venta...</p>
+                        <!-- ESTADO CARGANDO (SKELETON ESTRUCTURAL) -->
+                        <div x-show="cargandoDetalle">
+                            <x-skeleton-modal-detalle />
                         </div>
 
                         <!-- CONTENIDO DE LA VENTA -->
@@ -2416,11 +2148,92 @@
             return {
                 modalDetalleAbierto: false,
                 cargandoDetalle: false,
+                cargandoTabla: false,
                 ventaSeleccionada: null,
                 comprobanteZoomUrl: null,
                 comprobanteZoomNombre: '',
                 comprobanteZoomTitulo: '',
                 openDevolucionModal: false,
+
+                // --- ESTADO REACTIVO DE FILTROS Y PESTAÑAS ---
+                estadoTabActual: '{{ $estadoTab }}',
+                filtroBusqueda: '{{ $busqueda ?? '' }}',
+                filtroDesde: '{{ $desde }}',
+                filtroHasta: '{{ $hasta }}',
+                filtroVendedor: '{{ $vendedorId ?? '' }}',
+                filtroProducto: '{{ $productoId ?? '' }}',
+                conteos: {
+                    todos: {{ $conteoEstados['todos'] ?? 0 }},
+                    Entregada: {{ $conteoEstados['Entregada'] ?? 0 }},
+                    'Devolución': {{ $conteoEstados['Devolución'] ?? 0 }},
+                    Cambio: {{ $conteoEstados['Cambio'] ?? 0 }}
+                },
+
+                async cambiarTab(tab) {
+                    if (this.estadoTabActual === tab && !this.cargandoTabla) return;
+                    this.estadoTabActual = tab;
+                    await this.recargarTablaIndex();
+                },
+
+                async filtrarVentasIndex() {
+                    await this.recargarTablaIndex();
+                },
+
+                async limpiarFiltrosIndex() {
+                    this.filtroBusqueda = '';
+                    this.filtroVendedor = '';
+                    this.filtroProducto = '';
+                    await this.recargarTablaIndex();
+                },
+
+                async recargarTablaIndex(paginaUrl = null) {
+                    this.cargandoTabla = true;
+                    try {
+                        let url;
+                        if (paginaUrl) {
+                            url = new URL(paginaUrl, window.location.origin);
+                        } else {
+                            url = new URL('{{ route('ventas.index') }}', window.location.origin);
+                            if (this.filtroBusqueda) url.searchParams.set('q', this.filtroBusqueda);
+                            if (this.filtroDesde) url.searchParams.set('desde', this.filtroDesde);
+                            if (this.filtroHasta) url.searchParams.set('hasta', this.filtroHasta);
+                            if (this.filtroVendedor) url.searchParams.set('vendedor_id', this.filtroVendedor);
+                            if (this.filtroProducto) url.searchParams.set('producto_id', this.filtroProducto);
+                            if (this.estadoTabActual) url.searchParams.set('tab', this.estadoTabActual);
+                        }
+
+                        const res = await fetch(url.toString(), {
+                            headers: {
+                                'X-Requested-With': 'XMLHttpRequest',
+                                'Accept': 'application/json'
+                            }
+                        });
+
+                        if (res.ok) {
+                            const data = await res.json();
+                            if (data.html) {
+                                const contenedor = document.getElementById('contenedorTablaVentasIndex');
+                                if (contenedor) {
+                                    contenedor.innerHTML = data.html;
+                                    // Interceptar clics en enlaces de paginación para recargar vía AJAX sin refrescar toda la pantalla
+                                    contenedor.querySelectorAll('a[href*="page="]').forEach(enlace => {
+                                        enlace.addEventListener('click', (e) => {
+                                            e.preventDefault();
+                                            this.recargarTablaIndex(enlace.getAttribute('href'));
+                                        });
+                                    });
+                                }
+                            }
+                            if (data.conteos) {
+                                this.conteos = data.conteos;
+                            }
+                        }
+                    } catch (err) {
+                        console.error('Error al recargar tabla de ventas:', err);
+                    } finally {
+                        this.cargandoTabla = false;
+                    }
+                },
 
                 // --- MODAL DE CAMBIO DE ESTADO (MÁQUINA DE ESTADOS) ---
                 modalCambiarEstadoAbierto: false,
@@ -2746,12 +2559,10 @@
                                 text: data.message,
                                 timer: 1600,
                                 showConfirmButton: false
-                            }).then(() => {
-                                window.location.reload();
                             });
-                        } else {
-                            window.location.reload();
                         }
+
+                        await this.recargarTablaIndex();
 
                     } catch (err) {
                         console.error('Error al actualizar estado:', err);

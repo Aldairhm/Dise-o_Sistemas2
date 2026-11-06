@@ -120,6 +120,18 @@ class AdminDashboardController extends Controller
         $fechaGeneracion = now()->format('d/m/Y H:i:s');
         $usuarioEmisor = Auth::user()?->nombre_real ?? Auth::user()?->username ?? 'Administrador';
 
+        // Petición AJAX (filtros y paginación en vivo sin recargar pantalla)
+        if ($request->ajax() || $request->wantsJson()) {
+            return response()->json([
+                'success' => true,
+                'html' => view('admin.reportes.tabla-reportes-movimientos', compact('movimientos', 'todosMovimientos', 'totales'))->render(),
+                'kpis' => $kpis,
+                'graficoComparativa' => $graficoComparativa,
+                'graficoMovimientos' => $graficoMovimientos,
+                'totales' => $totales,
+            ]);
+        }
+
         // ── Registro en Bitácora ──
         if ($request->query('modo') === 'imprimir') {
             ActivityLogger::log(

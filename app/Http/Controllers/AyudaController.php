@@ -213,7 +213,7 @@ class AyudaController extends Controller
     /**
      * Muestra el panel de control y seguimiento de dudas según la jerarquía del usuario.
      */
-    public function tickets(Request $request): View
+    public function tickets(Request $request): View|\Illuminate\Http\JsonResponse
     {
         $user = $request->user();
         // Orden cronológico: de más antigua a más nueva (las recientes al final, las más antiguas al principio)
@@ -295,6 +295,15 @@ class AyudaController extends Controller
 
         $tickets = $query->paginate(15)->withQueryString();
         $modulos = config('ayuda');
+
+        if ($request->ajax() || $request->wantsJson()) {
+            return response()->json([
+                'success' => true,
+                'html' => view('ayuda.tabla-tickets', compact('tickets'))->render(),
+                'conteoEstados' => $conteoEstados,
+                'misDudasCount' => $misDudasCount,
+            ]);
+        }
 
         return view('ayuda.tickets', compact('tickets', 'conteoEstados', 'estadoTab', 'modulos', 'soloMisDudas', 'misDudasCount'));
     }

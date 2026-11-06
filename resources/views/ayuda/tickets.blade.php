@@ -1,5 +1,10 @@
 <x-app title="Control de Dudas y Tickets de Soporte | AXStore">
-    <div class="mx-auto max-w-7xl space-y-6">
+    <div class="mx-auto max-w-7xl space-y-6" x-data="gestionTicketsAyuda({
+        estadoTab: @js($estadoTab),
+        soloMisDudas: @js($soloMisDudas),
+        misDudasCount: @js($misDudasCount),
+        conteoEstados: @js($conteoEstados)
+    })">
         
         <!-- Encabezado -->
         <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
@@ -45,68 +50,74 @@
                 @endphp
 
                 @foreach ($tabs as $key => $t)
-                    <a href="{{ route('ayuda.tickets.index', array_merge(request()->query(), ['estado' => $key, 'page' => 1])) }}"
-                       class="inline-flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-bold transition-all {{ $estadoTab === $key ? 'bg-slate-800 text-white shadow-sm' : 'bg-white text-slate-600 hover:bg-slate-100 border border-slate-200' }}">
+                    <button type="button"
+                       @click="cambiarEstado('{{ $key }}')"
+                       :class="estadoTab === '{{ $key }}' ? 'bg-slate-800 text-white shadow-sm' : 'bg-white text-slate-600 hover:bg-slate-100 border border-slate-200'"
+                       class="inline-flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer">
                         <span>{{ $t['label'] }}</span>
-                        <span class="px-2 py-0.5 rounded-full text-[10px] font-black {{ $estadoTab === $key ? 'bg-white/20 text-white' : $t['badge_bg'] . ' ' . $t['badge_fg'] }}">
+                        <span :class="estadoTab === '{{ $key }}' ? 'bg-white/20 text-white' : '{{ $t['badge_bg'] }} {{ $t['badge_fg'] }}'"
+                              class="px-2 py-0.5 rounded-full text-[10px] font-black"
+                              x-text="conteoEstados['{{ $key }}'] ?? 0">
                             {{ $conteoEstados[$key] ?? 0 }}
                         </span>
-                    </a>
+                    </button>
                 @endforeach
             </div>
 
             <!-- Selector de Ámbito (Mis Dudas vs Bandeja de Equipo) para roles con permisos administrativos -->
             @if(auth()->user()->isAdmin())
                 <div class="inline-flex items-center p-1 rounded-xl bg-slate-100 border border-slate-200 shrink-0">
-                    <a href="{{ route('ayuda.tickets.index', request()->except(['mis_dudas', 'page'])) }}"
-                       class="px-3 py-1.5 rounded-lg text-xs font-bold transition-all {{ !$soloMisDudas ? 'bg-white text-slate-800 shadow-sm' : 'text-slate-500 hover:text-slate-800' }}">
+                    <button type="button"
+                       @click="cambiarAmbito(false)"
+                       :class="!soloMisDudas ? 'bg-white text-slate-800 shadow-sm' : 'text-slate-500 hover:text-slate-800'"
+                       class="px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer">
                         <i class="fas fa-inbox mr-1 text-[11px]"></i>
                         <span>Bandeja de Equipo</span>
-                    </a>
-                    <a href="{{ route('ayuda.tickets.index', array_merge(request()->query(), ['mis_dudas' => 1, 'page' => 1])) }}"
-                       class="px-3 py-1.5 rounded-lg text-xs font-bold transition-all {{ $soloMisDudas ? 'bg-blue-600 text-white shadow-sm' : 'text-slate-500 hover:text-slate-800' }}">
+                    </button>
+                    <button type="button"
+                       @click="cambiarAmbito(true)"
+                       :class="soloMisDudas ? 'bg-blue-600 text-white shadow-sm' : 'text-slate-500 hover:text-slate-800'"
+                       class="px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer">
                         <i class="fas fa-user mr-1 text-[11px]"></i>
                         <span>Mis Dudas</span>
-                        <span class="ml-1 px-1.5 py-0.2 rounded-full text-[10px] font-black {{ $soloMisDudas ? 'bg-white/25 text-white' : 'bg-slate-200 text-slate-700' }}">
+                        <span class="ml-1 px-1.5 py-0.2 rounded-full text-[10px] font-black"
+                              :class="soloMisDudas ? 'bg-white/25 text-white' : 'bg-slate-200 text-slate-700'"
+                              x-text="misDudasCount">
                             {{ $misDudasCount }}
                         </span>
-                    </a>
+                    </button>
                 </div>
             @endif
         </div>
 
-        @if($soloMisDudas)
+        <template x-if="soloMisDudas">
             <div class="p-3.5 rounded-xl bg-blue-50/80 border border-blue-200 text-blue-900 flex items-center justify-between text-xs">
                 <div class="flex items-center gap-2.5">
                     <i class="fas fa-filter text-blue-600 text-sm"></i>
                     <span>Mostrando <strong>exclusivamente tus dudas personales</strong> registradas en el sistema.</span>
                 </div>
-                <a href="{{ route('ayuda.tickets.index', request()->except(['mis_dudas', 'page'])) }}" class="font-bold underline hover:text-blue-700">
+                <button type="button" @click="cambiarAmbito(false)" class="font-bold underline hover:text-blue-700 cursor-pointer">
                     Ver todas las dudas asignadas
-                </a>
+                </button>
             </div>
-        @endif
+        </template>
 
         <!-- Filtros y Búsqueda -->
-        <form action="{{ route('ayuda.tickets.index') }}" method="GET" class="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm flex flex-col sm:flex-row items-center gap-3">
-            <input type="hidden" name="estado" value="{{ $estadoTab }}">
-            @if($soloMisDudas)
-                <input type="hidden" name="mis_dudas" value="1">
-            @endif
+        <form @submit.prevent="ejecutarFiltro()" class="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm flex flex-col sm:flex-row items-center gap-3">
             <div class="relative flex-1 w-full">
                 <i class="fas fa-search absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 text-xs"></i>
                 <input type="text"
-                       name="q"
-                       value="{{ request('q') }}"
+                       x-model="filtroQ"
+                       @input.debounce.400ms="ejecutarFiltro()"
                        placeholder="Buscar por código (#TK-...), usuario, módulo o texto de la duda..."
                        class="w-full pl-9 pr-3 py-2 text-xs rounded-xl border border-slate-200 bg-slate-50 focus:bg-white focus:outline-none focus:ring-2 focus:ring-slate-300">
             </div>
 
             <div class="w-full sm:w-56 shrink-0">
-                <select name="modulo" class="w-full text-xs rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-slate-700 focus:outline-none focus:ring-2 focus:ring-slate-300">
+                <select x-model="filtroModulo" @change="ejecutarFiltro()" class="w-full text-xs rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-slate-700 focus:outline-none focus:ring-2 focus:ring-slate-300">
                     <option value="">Todos los módulos</option>
                     @foreach ($modulos as $k => $m)
-                        <option value="{{ $m['module'] }}" {{ request('modulo') === $m['module'] ? 'selected' : '' }}>
+                        <option value="{{ $m['module'] }}">
                             {{ $m['module'] }}
                         </option>
                     @endforeach
@@ -114,146 +125,56 @@
             </div>
 
             <div class="flex items-center gap-2 w-full sm:w-auto shrink-0">
-                <button type="submit" class="w-full sm:w-auto px-4 py-2 rounded-xl text-xs font-bold text-white bg-slate-800 hover:bg-slate-900 transition-colors shadow-sm">
-                    Filtrar
+                <button type="submit" 
+                        class="w-full sm:w-auto rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-bold py-2 px-3 text-xs transition-all shadow-md shadow-blue-600/15 flex items-center justify-center gap-1.5 cursor-pointer">
+                    <i :class="cargandoTickets ? 'fas fa-spinner fa-spin' : 'fas fa-filter'"></i>
+                    <span x-text="cargandoTickets ? 'Filtrando...' : 'Filtrar'"></span>
                 </button>
-                @if (request()->hasAny(['q', 'modulo']) || $estadoTab !== 'todos')
-                    <a href="{{ route('ayuda.tickets.index') }}" class="px-3 py-2 rounded-xl text-xs font-semibold text-slate-600 hover:bg-slate-100 transition-colors" title="Limpiar filtros">
-                        <i class="fas fa-rotate-left"></i>
-                    </a>
-                @endif
+                <button type="button" 
+                        @click="limpiarFiltros()"
+                        x-show="filtroQ || filtroModulo || estadoTab !== 'todos'"
+                        style="display: none;"
+                        class="rounded-xl border border-slate-200 bg-slate-50 hover:bg-slate-100 text-slate-600 font-bold py-2 px-3 text-xs transition-colors flex items-center justify-center cursor-pointer" 
+                        title="Limpiar filtros">
+                    <i class="fas fa-rotate-left"></i>
+                </button>
             </div>
         </form>
 
-        <!-- Listado de Tickets en Formato Tarjeta Flotante -->
-        <div class="space-y-4">
-            @forelse ($tickets as $ticket)
-                @php
-                    $badgeStyles = [
-                        'Pendiente'  => 'bg-amber-100 text-amber-800',
-                        'En proceso' => 'bg-blue-100 text-blue-800',
-                        'Escalada'   => 'bg-purple-100 text-purple-800',
-                        'Resuelta'   => 'bg-emerald-100 text-emerald-800',
-                        'Cancelada'  => 'bg-rose-100 text-rose-800',
-                    ];
-
-                    $esMio = ($ticket->id_usuario === auth()->id());
-                    $puedeGestionar = (auth()->user()->isSuperAdmin() || (auth()->user()->isAdmin() && !$esMio))
-                        && (!in_array($ticket->estado, ['Resuelta', 'Cancelada']) || auth()->user()->isSuperAdmin());
-                    $puedeCancelarPropio = $esMio && in_array($ticket->estado, ['Pendiente', 'En proceso']);
-                @endphp
-
-                <div class="bg-white rounded-3xl border border-slate-200/90 shadow-sm p-6 hover:border-blue-200 hover:shadow-md transition-all flex flex-col md:flex-row md:items-start justify-between gap-6">
+        <!-- Skeleton Loading Dinámico (Refleja exactamente las tarjetas de Tickets) -->
+        <div x-show="cargandoTickets" style="display: none;" class="space-y-4 select-none" role="status" aria-label="Cargando tickets...">
+            @for($i = 0; $i < 3; $i++)
+                <div class="bg-white rounded-3xl border border-slate-200/90 shadow-sm p-6 flex flex-col md:flex-row md:items-start justify-between gap-6">
                     <div class="space-y-3 flex-1">
-                        <!-- Badges Superiores -->
-                        <div class="flex flex-wrap items-center gap-2">
-                            <span class="font-mono text-xs font-black text-blue-900 bg-blue-50 px-2.5 py-1 rounded-lg border border-blue-100">
-                                #{{ $ticket->codigo_ticket }}
-                            </span>
-                            <span class="px-2.5 py-1 rounded-md text-[10px] font-bold {{ $badgeStyles[$ticket->estado] ?? 'bg-slate-100 text-slate-700' }}">
-                                {{ $ticket->estado }}
-                            </span>
-                            <span class="text-xs text-slate-400">&bull;</span>
-                            <span class="text-xs font-bold text-slate-600 bg-slate-50 px-2 py-0.5 rounded-md border border-slate-100">
-                                {{ $ticket->modulo }}
-                            </span>
-                            @if($ticket->tipo_consulta)
-                                <span class="text-[11px] text-slate-400">({{ $ticket->tipo_consulta }})</span>
-                            @endif
+                        <div class="flex items-center gap-2">
+                            <div class="h-6 w-20 rounded-lg ax-skeleton-shimmer"></div>
+                            <div class="h-6 w-20 rounded-md ax-skeleton-shimmer"></div>
+                            <div class="h-6 w-24 rounded-md ax-skeleton-shimmer"></div>
                         </div>
-
-                        <!-- Título y Detalle de la Duda -->
-                        <div>
-                            <h2 class="text-base font-black text-slate-900 leading-snug">
-                                {{ $ticket->titulo ?? 'Consulta sobre ' . $ticket->modulo }}
-                            </h2>
-                            <p class="text-xs text-slate-600 mt-1.5 leading-relaxed whitespace-pre-line">
-                                {{ $ticket->duda }}
-                            </p>
+                        <div class="space-y-2">
+                            <div class="h-5 w-72 rounded-md ax-skeleton-shimmer"></div>
+                            <div class="h-4 w-full rounded ax-skeleton-shimmer"></div>
+                            <div class="h-4 w-3/4 rounded ax-skeleton-shimmer"></div>
                         </div>
-
-                        <!-- Resolución si ya existe -->
-                        @if ($ticket->resolucion)
-                            <div class="p-3 bg-emerald-50 rounded-2xl border border-emerald-200 text-xs text-emerald-900">
-                                <span class="font-bold flex items-center gap-1.5 text-emerald-800 mb-0.5">
-                                    <i class="fas fa-check-circle"></i> Resolución:
-                                </span>
-                                {{ $ticket->resolucion }}
-                                @if ($ticket->resolvedor)
-                                    <span class="block text-[10px] text-emerald-700 mt-1">
-                                        Atendido por: {{ $ticket->resolvedor->nombre_real }}
-                                    </span>
-                                @endif
-                            </div>
-                        @endif
-
-                        <!-- Metadata Inferior: Creador, Fecha, Evidencia -->
-                        <div class="flex flex-wrap items-center gap-4 text-[11px] text-slate-400 pt-2 border-t border-slate-100">
-                            <span class="flex items-center gap-1.5">
-                                <i class="fas fa-user text-slate-300"></i>
-                                Creador: <strong class="text-slate-700 font-semibold">{{ $ticket->nombre_usuario }}</strong> ({{ $ticket->rol_usuario ?? 'usuario' }})
-                            </span>
-                            <span>&bull;</span>
-                            <span class="flex items-center gap-1">
-                                <i class="fas fa-calendar-day text-slate-300"></i>
-                                Fecha: {{ $ticket->created_at->format('d/m/Y H:i') }} ({{ $ticket->created_at->diffForHumans() }})
-                            </span>
-
-                            @if ($ticket->evidencia_url)
-                                <span>&bull;</span>
-                                <a href="{{ $ticket->evidencia_url }}" target="_blank" class="inline-flex items-center gap-1 text-blue-600 font-bold hover:underline">
-                                    <i class="fas fa-paperclip"></i>
-                                    <span>Ver Evidencia Adjunta</span>
-                                </a>
-                            @endif
+                        <div class="flex items-center gap-4 pt-2">
+                            <div class="h-4 w-28 rounded ax-skeleton-shimmer"></div>
+                            <div class="h-4 w-36 rounded ax-skeleton-shimmer"></div>
                         </div>
                     </div>
-
-                    <!-- Botones de Acción Laterales -->
-                    <div class="flex flex-row md:flex-col items-center sm:items-end md:items-stretch gap-2 shrink-0">
-                        <a href="{{ route('ayuda.tickets.show', $ticket->id) }}"
-                           class="inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl text-xs font-bold text-white bg-blue-600 hover:bg-blue-700 transition-all shadow-sm hover:scale-[1.02] active:scale-[0.98]">
-                            <i class="fas fa-comments text-xs"></i>
-                            <span>Ver Conversación</span>
-                        </a>
-
-                        @if ($puedeGestionar)
-                            <button type="button"
-                                    onclick='abrirModalGestion(@json($ticket))'
-                                    class="inline-flex items-center justify-center gap-1.5 px-4 py-2 rounded-xl text-xs font-bold text-slate-700 bg-slate-100 hover:bg-slate-200 transition-colors cursor-pointer">
-                                <i class="fas fa-sliders text-slate-400"></i>
-                                <span>Gestionar</span>
-                            </button>
-                        @elseif ($puedeCancelarPropio)
-                            <button type="button"
-                                    onclick='abrirModalGestion(@json($ticket))'
-                                    class="inline-flex items-center justify-center gap-1.5 px-4 py-2 rounded-xl text-xs font-bold text-rose-600 bg-rose-50 hover:bg-rose-100 transition-colors cursor-pointer">
-                                <i class="fas fa-ban text-rose-400"></i>
-                                <span>Cancelar Duda</span>
-                            </button>
-                        @else
-                            <span class="inline-flex items-center justify-center gap-1 px-3 py-1.5 rounded-xl text-[10px] font-bold text-slate-400 bg-slate-50 border border-slate-100">
-                                <i class="fas fa-lock"></i>
-                                <span>Cerrado</span>
-                            </span>
-                        @endif
+                    <div class="flex flex-row md:flex-col items-center gap-2 shrink-0">
+                        <div class="h-10 w-36 rounded-xl ax-skeleton-shimmer"></div>
+                        <div class="h-9 w-28 rounded-xl ax-skeleton-shimmer"></div>
                     </div>
                 </div>
-            @empty
-                <div class="bg-white rounded-3xl border border-slate-200 p-12 text-center text-slate-400 shadow-sm">
-                    <i class="fas fa-inbox text-4xl mb-2 text-slate-300 block"></i>
-                    <p class="font-bold text-sm text-slate-700">No se encontraron tickets registrados</p>
-                    <p class="text-xs text-slate-400 mt-1">Las dudas enviadas por los usuarios se listarán en este panel automáticamente.</p>
-                </div>
-            @endforelse
-
-            <!-- Paginación -->
-            @if ($tickets->hasPages())
-                <div class="p-4 bg-white rounded-2xl border border-slate-200 shadow-sm">
-                    {{ $tickets->links() }}
-                </div>
-            @endif
+            @endfor
+            <span class="sr-only">Cargando tickets...</span>
         </div>
+
+        <!-- Contenedor Asíncrono de Tickets -->
+        <div id="contenedorListaTickets" x-show="!cargandoTickets">
+            @include('ayuda.tabla-tickets', ['tickets' => $tickets])
+        </div>
+    </div>
     </div>
 
     <!-- ─── MODAL DE GESTIÓN Y RESOLUCIÓN DE TICKET (ADMIN) ─── -->
@@ -437,6 +358,114 @@
                 btn.disabled = false;
                 btn.innerHTML = 'Guardar Cambios';
             }
+        }
+
+        function gestionTicketsAyuda(config) {
+            return {
+                estadoTab: config.estadoTab || 'todos',
+                soloMisDudas: Boolean(config.soloMisDudas),
+                misDudasCount: config.misDudasCount || 0,
+                conteoEstados: config.conteoEstados || {},
+                filtroQ: '{{ request('q') }}',
+                filtroModulo: '{{ request('modulo') }}',
+                cargandoTickets: false,
+
+                async cambiarEstado(estado) {
+                    if (this.estadoTab === estado && !this.cargandoTickets) return;
+                    this.estadoTab = estado;
+                    await this.cargarTickets();
+                },
+
+                async cambiarAmbito(soloMias) {
+                    if (this.soloMisDudas === soloMias && !this.cargandoTickets) return;
+                    this.soloMisDudas = soloMias;
+                    await this.cargarTickets();
+                },
+
+                async ejecutarFiltro() {
+                    await this.cargarTickets();
+                },
+
+                async limpiarFiltros() {
+                    this.filtroQ = '';
+                    this.filtroModulo = '';
+                    this.estadoTab = 'todos';
+                    await this.cargarTickets();
+                },
+
+                construirUrl(pagina = 1) {
+                    const params = new URLSearchParams();
+                    if (this.estadoTab && this.estadoTab !== 'todos') {
+                        params.set('estado', this.estadoTab);
+                    }
+                    if (this.soloMisDudas) {
+                        params.set('mis_dudas', '1');
+                    }
+                    if (this.filtroQ && this.filtroQ.trim() !== '') {
+                        params.set('q', this.filtroQ.trim());
+                    }
+                    if (this.filtroModulo && this.filtroModulo !== '') {
+                        params.set('modulo', this.filtroModulo);
+                    }
+                    if (pagina > 1) {
+                        params.set('page', pagina);
+                    }
+
+                    const queryString = params.toString();
+                    return `{{ route('ayuda.tickets.index') }}${queryString ? '?' + queryString : ''}`;
+                },
+
+                async cargarTickets(urlDestino = null) {
+                    this.cargandoTickets = true;
+                    const url = urlDestino || this.construirUrl(1);
+                    window.history.pushState({}, '', url);
+
+                    try {
+                        const res = await fetch(url, {
+                            headers: {
+                                'Accept': 'application/json',
+                                'X-Requested-With': 'XMLHttpRequest'
+                            }
+                        });
+                        const data = await res.json();
+                        if (data.success && data.html) {
+                            const contenedor = document.getElementById('contenedorListaTickets');
+                            if (contenedor) {
+                                contenedor.innerHTML = data.html;
+                                this.atarPaginacionTickets();
+                            }
+                            if (data.conteoEstados) {
+                                this.conteoEstados = data.conteoEstados;
+                            }
+                            if (data.misDudasCount !== undefined) {
+                                this.misDudasCount = data.misDudasCount;
+                            }
+                        }
+                    } catch (err) {
+                        console.error('Error al cargar tickets:', err);
+                    } finally {
+                        this.cargandoTickets = false;
+                    }
+                },
+
+                atarPaginacionTickets() {
+                    const contenedor = document.getElementById('contenedorListaTickets');
+                    if (!contenedor) return;
+                    const links = contenedor.querySelectorAll('a[href*="page="]');
+                    links.forEach(link => {
+                        link.addEventListener('click', async (e) => {
+                            e.preventDefault();
+                            const href = link.getAttribute('href');
+                            if (!href) return;
+                            await this.cargarTickets(href);
+                        });
+                    });
+                },
+
+                init() {
+                    this.atarPaginacionTickets();
+                }
+            };
         }
     </script>
 </x-app>

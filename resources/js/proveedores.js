@@ -26,10 +26,15 @@ document.addEventListener("alpine:init", () => {
         vista: "cards", // 'cards' | 'table'
         paginaActual: 1,
         porPagina: 6,
+        loadingLista: false,
 
         setEstado(estado) {
+            this.loadingLista = true;
             this.estadoFiltro = estado;
             this.paginaActual = 1;
+            setTimeout(() => {
+                this.loadingLista = false;
+            }, 300);
         },
 
         setVista(vista) {
@@ -37,8 +42,12 @@ document.addEventListener("alpine:init", () => {
         },
 
         clearSearch() {
+            this.loadingLista = true;
             this.busqueda = "";
             this.paginaActual = 1;
+            setTimeout(() => {
+                this.loadingLista = false;
+            }, 300);
         },
 
         // ---------- KPIs (igual que las tarjetas de métricas de Categorías) ----------

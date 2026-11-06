@@ -549,11 +549,9 @@
             </div>
         </div>
 
-        {{-- Loading Skeleton --}}
-        <div id="detLoadingSkeleton" class="p-8 space-y-4 animate-pulse">
-            <div class="h-24 bg-slate-100 rounded-2xl"></div>
-            <div class="h-36 bg-slate-100 rounded-2xl"></div>
-            <div class="h-28 bg-slate-100 rounded-2xl"></div>
+        {{-- Loading Skeleton Inteligente con Shimmer --}}
+        <div id="detLoadingSkeleton" class="p-6">
+            <x-skeleton-modal-detalle />
         </div>
 
         {{-- Content Container (scrollable) --}}

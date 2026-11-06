@@ -169,6 +169,11 @@
 
         {{-- CONTENEDOR DE PRODUCTOS --}}
         <div class="bg-white rounded-2xl border border-slate-200/80 shadow-xs overflow-hidden relative" id="productsContainer">
+            <!-- Skeleton Shimmer de Tabla de Productos -->
+            <div id="tableSkeletonProductos" class="hidden p-5">
+                <x-skeleton-table :rows="6" :cols="7" :avatarCol="1" />
+            </div>
+
             <!-- Vista Tabla -->
             <div id="productsTableWrapper">
                 @include('productos.partials.table', ['productos' => $productos])
@@ -228,11 +233,13 @@
         }
     }
 
+    let filterDebounceTimer = null;
+
     function applyFilters() {
         const searchInput = document.getElementById('searchInput');
         const clearBtn = document.getElementById('clearSearchBtn');
-        const query = searchInput.value.toLowerCase().trim();
-        const categoria = document.getElementById('categoriaFilter').value;
+        const query = (searchInput.value || '').trim().toLowerCase();
+        const categoria = document.getElementById('categoriaFilter').value.trim().toLowerCase();
         const status = document.getElementById('statusFilter').value;
 
         // Mostrar/ocultar boton X
@@ -242,12 +249,39 @@
             clearBtn.classList.add('hidden');
         }
 
+        // Mostrar skeleton sutil de transición
+        const skeleton = document.getElementById('tableSkeletonProductos');
+        const tableWrapper = document.getElementById('productsTableWrapper');
+        const cardsWrapper = document.getElementById('productsCardsWrapper');
+
+        if (skeleton) {
+            skeleton.classList.remove('hidden');
+            if (tableWrapper) tableWrapper.classList.add('hidden');
+            if (cardsWrapper) cardsWrapper.classList.add('hidden');
+        }
+
+        clearTimeout(filterDebounceTimer);
+        filterDebounceTimer = setTimeout(() => {
+            filtrarLocalmente(query, categoria, status);
+
+            if (skeleton) {
+                skeleton.classList.add('hidden');
+                setView(currentView, false);
+            }
+        }, 120);
+    }
+
+    function filtrarLocalmente(query, categoria, status) {
         // Filtrar tabla
         let visibleRows = 0;
         document.querySelectorAll('.producto-row').forEach(row => {
-            const matchName = row.dataset.nombre.includes(query);
-            const matchCat = categoria === 'todos' || row.dataset.categoria === categoria;
-            const matchStatus = status === 'todos' || row.dataset.estado === status;
+            const rowNombre = (row.dataset.nombre || '').toLowerCase();
+            const rowCat = (row.dataset.categoria || '').toLowerCase().trim();
+            const rowEstado = String(row.dataset.estado);
+
+            const matchName = !query || rowNombre.includes(query);
+            const matchCat = categoria === 'todos' || rowCat === categoria || rowCat.includes(categoria);
+            const matchStatus = status === 'todos' || rowEstado === String(status);
 
             if (matchName && matchCat && matchStatus) {
                 row.style.display = '';
@@ -266,9 +300,13 @@
         // Filtrar tarjetas
         let visibleCards = 0;
         document.querySelectorAll('.producto-card').forEach(card => {
-            const matchName = card.dataset.nombre.includes(query);
-            const matchCat = categoria === 'todos' || card.dataset.categoria === categoria;
-            const matchStatus = status === 'todos' || card.dataset.estado === status;
+            const cardNombre = (card.dataset.nombre || '').toLowerCase();
+            const cardCat = (card.dataset.categoria || '').toLowerCase().trim();
+            const cardEstado = String(card.dataset.estado);
+
+            const matchName = !query || cardNombre.includes(query);
+            const matchCat = categoria === 'todos' || cardCat === categoria || cardCat.includes(categoria);
+            const matchStatus = status === 'todos' || cardEstado === String(status);
 
             if (matchName && matchCat && matchStatus) {
                 card.style.display = '';

@@ -89,17 +89,22 @@
             </tr>
             @empty
             <tr id="rowNoVariantes">
-                <td colspan="8" class="text-center py-12 text-slate-400">
-                    <i class="fas fa-layer-group text-3xl mb-3 block opacity-30"></i>
-                    <p class="font-semibold text-sm">Este producto aún no tiene variantes.</p>
-                    <p class="text-xs mt-1">Usa el botón <strong>"Agregar Variante"</strong> para comenzar.</p>
+                <td colspan="8" class="py-6">
+                    <x-empty-state 
+                        title="Este producto aún no tiene variantes" 
+                        description="Usa el botón 'Agregar Variante' para comenzar a registrar opciones de stock y precio."
+                        icon="folder-open" 
+                    />
                 </td>
             </tr>
             @endforelse
             <tr id="table-no-results-variantes" class="hidden">
-                <td colspan="8" class="text-center py-12 text-slate-400">
-                    <i class="fas fa-search text-3xl mb-3 block opacity-30"></i>
-                    <p class="font-semibold text-sm">No se encontraron variantes con estos filtros.</p>
+                <td colspan="8" class="py-6">
+                    <x-empty-state 
+                        title="No se encontraron variantes" 
+                        description="Intenta ajustar el término de búsqueda o el filtro de estado."
+                        icon="search" 
+                    />
                 </td>
             </tr>
         </tbody>

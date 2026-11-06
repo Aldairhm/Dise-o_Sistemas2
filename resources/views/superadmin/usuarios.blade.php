@@ -1,5 +1,95 @@
 <x-app title="Gestión de Cuentas y Auditorías | AXStore Super Admin">
-    <div class="mx-auto max-w-7xl space-y-6 pb-12">
+    <script>
+        function gestionSuperAdminUsuarios(config) {
+            return {
+                filtroSearch: config.search || '',
+                filtroRol: config.rol || 'todos',
+                filtroEstado: config.estado || 'todos',
+                cargandoUsuarios: false,
+
+                async ejecutarFiltro() {
+                    await this.cargarUsuarios();
+                },
+
+                async limpiarFiltros() {
+                    this.filtroSearch = '';
+                    this.filtroRol = 'todos';
+                    this.filtroEstado = 'todos';
+                    await this.cargarUsuarios();
+                },
+
+                construirUrl(pagina = 1) {
+                    const params = new URLSearchParams();
+                    if (this.filtroSearch && this.filtroSearch.trim() !== '') {
+                        params.set('search', this.filtroSearch.trim());
+                    }
+                    if (this.filtroRol && this.filtroRol !== 'todos') {
+                        params.set('rol', this.filtroRol);
+                    }
+                    if (this.filtroEstado && this.filtroEstado !== 'todos') {
+                        params.set('estado', this.filtroEstado);
+                    }
+                    if (pagina > 1) {
+                        params.set('page', pagina);
+                    }
+
+                    const queryString = params.toString();
+                    return `{{ route('superadmin.usuarios') }}${queryString ? '?' + queryString : ''}`;
+                },
+
+                async cargarUsuarios(urlDestino = null) {
+                    this.cargandoUsuarios = true;
+                    const url = urlDestino || this.construirUrl(1);
+                    window.history.pushState({}, '', url);
+
+                    try {
+                        const res = await fetch(url, {
+                            headers: {
+                                'Accept': 'application/json',
+                                'X-Requested-With': 'XMLHttpRequest'
+                            }
+                        });
+                        const data = await res.json();
+                        if (data.success && data.html) {
+                            const contenedor = document.getElementById('contenedorTablaSuperAdminUsuarios');
+                            if (contenedor) {
+                                contenedor.innerHTML = data.html;
+                                this.atarPaginacionUsuarios();
+                            }
+                        }
+                    } catch (err) {
+                        console.error('Error al cargar usuarios super admin:', err);
+                    } finally {
+                        this.cargandoUsuarios = false;
+                    }
+                },
+
+                atarPaginacionUsuarios() {
+                    const contenedor = document.getElementById('contenedorTablaSuperAdminUsuarios');
+                    if (!contenedor) return;
+                    const links = contenedor.querySelectorAll('a[href*="page="]');
+                    links.forEach(link => {
+                        link.addEventListener('click', async (e) => {
+                            e.preventDefault();
+                            const href = link.getAttribute('href');
+                            if (!href) return;
+                            await this.cargarUsuarios(href);
+                        });
+                    });
+                },
+
+                init() {
+                    this.atarPaginacionUsuarios();
+                }
+            };
+        }
+    </script>
+
+    <div class="mx-auto max-w-7xl space-y-6 pb-12" x-data="gestionSuperAdminUsuarios({
+        search: @js(request('search', '')),
+        rol: @js(request('rol', 'todos')),
+        estado: @js(request('estado', 'todos'))
+    })">
         
         <!-- Header -->
         <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
@@ -20,7 +110,7 @@
             </div>
             
             <div class="flex items-center gap-2">
-                <button type="button" onclick="document.getElementById('modalNuevoSuperAdmin').classList.remove('hidden')" class="px-4 py-2 rounded-xl text-xs font-bold text-white bg-indigo-600 hover:bg-indigo-700 transition-colors shadow-sm">
+                <button type="button" onclick="document.getElementById('modalNuevoSuperAdmin').classList.remove('hidden')" class="px-4 py-2 rounded-xl text-xs font-bold text-white bg-indigo-600 hover:bg-indigo-700 transition-colors shadow-sm cursor-pointer">
                     <i class="fas fa-user-shield mr-1.5"></i>
                     Crear Super Admin
                 </button>
@@ -28,126 +118,60 @@
         </div>
 
         <!-- Filtros y Búsqueda -->
-        <form method="GET" action="{{ route('superadmin.usuarios') }}" class="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm flex flex-wrap items-center gap-3">
+        <form @submit.prevent="ejecutarFiltro()" class="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm flex flex-wrap items-center gap-3">
             <div class="flex-1 min-w-[240px]">
                 <div class="relative">
                     <i class="fas fa-search absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 text-xs"></i>
-                    <input type="text" name="search" value="{{ request('search') }}" placeholder="Buscar por nombre o correo electrónico..." class="w-full pl-9 pr-4 py-2 rounded-xl border border-slate-200 text-xs text-slate-700 focus:outline-none focus:border-indigo-500">
+                    <input type="text"
+                           x-model="filtroSearch"
+                           @input.debounce.400ms="ejecutarFiltro()"
+                           placeholder="Buscar por nombre o correo electrónico..."
+                           class="w-full pl-9 pr-4 py-2 rounded-xl border border-slate-200 text-xs text-slate-700 focus:outline-none focus:border-indigo-500">
                 </div>
             </div>
 
             <div>
-                <select name="rol" class="px-3 py-2 rounded-xl border border-slate-200 text-xs text-slate-700 focus:outline-none focus:border-indigo-500">
+                <select x-model="filtroRol" @change="ejecutarFiltro()" class="px-3 py-2 rounded-xl border border-slate-200 text-xs text-slate-700 focus:outline-none focus:border-indigo-500 bg-white cursor-pointer">
                     <option value="todos">Todos los roles</option>
-                    <option value="super_admin" {{ request('rol') === 'super_admin' ? 'selected' : '' }}>Super Admin</option>
-                    <option value="admin" {{ request('rol') === 'admin' ? 'selected' : '' }}>Admin</option>
-                    <option value="vendedor" {{ request('rol') === 'vendedor' ? 'selected' : '' }}>Vendedor</option>
+                    <option value="super_admin">Super Admin</option>
+                    <option value="admin">Admin</option>
+                    <option value="vendedor">Vendedor</option>
                 </select>
             </div>
 
             <div>
-                <select name="estado" class="px-3 py-2 rounded-xl border border-slate-200 text-xs text-slate-700 focus:outline-none focus:border-indigo-500">
+                <select x-model="filtroEstado" @change="ejecutarFiltro()" class="px-3 py-2 rounded-xl border border-slate-200 text-xs text-slate-700 focus:outline-none focus:border-indigo-500 bg-white cursor-pointer">
                     <option value="todos">Todos los estados</option>
-                    <option value="1" {{ request('estado') === '1' ? 'selected' : '' }}>Activos</option>
-                    <option value="0" {{ request('estado') === '0' ? 'selected' : '' }}>Inactivos</option>
+                    <option value="1">Activos</option>
+                    <option value="0">Inactivos</option>
                 </select>
             </div>
 
-            <button type="submit" class="px-4 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-white text-xs font-bold transition-colors">
-                Filtrar
-            </button>
+            <div class="flex items-center gap-2">
+                <button type="submit" 
+                        class="rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-bold py-2 px-3 text-xs transition-all shadow-md shadow-blue-600/15 flex items-center justify-center gap-1.5 cursor-pointer">
+                    <i :class="cargandoUsuarios ? 'fas fa-spinner fa-spin' : 'fas fa-filter'"></i>
+                    <span x-text="cargandoUsuarios ? 'Filtrando...' : 'Filtrar'"></span>
+                </button>
+                <button type="button" 
+                        @click="limpiarFiltros()"
+                        x-show="filtroSearch || filtroRol !== 'todos' || filtroEstado !== 'todos'"
+                        style="display: none;"
+                        class="rounded-xl border border-slate-200 bg-slate-50 hover:bg-slate-100 text-slate-600 font-bold py-2 px-3 text-xs transition-colors flex items-center justify-center cursor-pointer" 
+                        title="Restablecer filtros">
+                    <i class="fas fa-rotate-left"></i>
+                </button>
+            </div>
         </form>
 
-        <!-- Tabla de Usuarios -->
-        <div class="bg-white rounded-3xl border border-slate-200 shadow-sm overflow-hidden">
-            <div class="overflow-x-auto">
-                <table class="w-full text-left text-xs">
-                    <thead>
-                        <tr class="bg-slate-50 border-b border-slate-200 text-slate-400 font-semibold uppercase text-[10px]">
-                            <th class="py-3 px-4">Usuario</th>
-                            <th class="py-3 px-4">Rol en Sistema</th>
-                            <th class="py-3 px-4">Teléfono</th>
-                            <th class="py-3 px-4">Estado</th>
-                            <th class="py-3 px-4">Fecha Registro</th>
-                            <th class="py-3 px-4 text-right">Acciones de Auditoría</th>
-                        </tr>
-                    </thead>
-                    <tbody class="divide-y divide-slate-100 text-slate-700">
-                        @forelse($users as $u)
-                            <tr class="hover:bg-slate-50/60">
-                                <td class="py-3 px-4">
-                                    <div class="flex items-center gap-2.5">
-                                        <div class="w-8 h-8 rounded-full bg-slate-100 text-slate-600 font-bold flex items-center justify-center shrink-0 uppercase text-xs">
-                                            {{ substr($u->nombre_real, 0, 2) }}
-                                        </div>
-                                        <div>
-                                            <span class="font-bold text-slate-900 block leading-tight">{{ $u->nombre_real }}</span>
-                                            <span class="text-[11px] text-slate-400 font-mono">{{ $u->username }}</span>
-                                        </div>
-                                    </div>
-                                </td>
-                                <td class="py-3 px-4">
-                                    @if($u->rol === 'super_admin')
-                                        <span class="px-2.5 py-1 rounded-full text-[10px] font-black bg-indigo-100 text-indigo-700">
-                                            SUPER ADMIN
-                                        </span>
-                                    @elseif($u->rol === 'admin')
-                                        <span class="px-2.5 py-1 rounded-full text-[10px] font-black bg-blue-100 text-blue-700">
-                                            ADMIN
-                                        </span>
-                                    @else
-                                        <span class="px-2.5 py-1 rounded-full text-[10px] font-black bg-slate-100 text-slate-700">
-                                            VENDEDOR
-                                        </span>
-                                    @endif
-                                </td>
-                                <td class="py-3 px-4 text-slate-500 font-mono">
-                                    {{ $u->telefono ?: '—' }}
-                                </td>
-                                <td class="py-3 px-4">
-                                    @if($u->estado == 1)
-                                        <span class="inline-flex items-center gap-1 text-[11px] font-bold text-emerald-600">
-                                            <span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span> Activo
-                                        </span>
-                                    @else
-                                        <span class="inline-flex items-center gap-1 text-[11px] font-bold text-rose-500">
-                                            <span class="w-1.5 h-1.5 rounded-full bg-rose-400"></span> Inactivo
-                                        </span>
-                                    @endif
-                                </td>
-                                <td class="py-3 px-4 text-slate-400 font-mono text-[11px]">
-                                    {{ $u->created_at->format('d/m/Y') }}
-                                </td>
-                                <td class="py-3 px-4 text-right">
-                                    @if($u->isSuperAdmin())
-                                        <button type="button"
-                                                onclick="abrirModalEditarSuperAdmin({{ $u->id }}, '{{ addslashes($u->nombre_real) }}', '{{ $u->username }}', '{{ $u->telefono ?? '' }}', {{ $u->estado }})"
-                                                class="px-3 py-1.5 rounded-xl text-xs font-bold bg-indigo-50 hover:bg-indigo-100 text-indigo-700 transition-colors inline-flex items-center gap-1.5 cursor-pointer shadow-xs">
-                                            <i class="fas fa-user-pen text-[11px]"></i>
-                                            <span>Editar Super Admin</span>
-                                        </button>
-                                    @else
-                                        <button type="button" onclick="abrirModalAuditoria({{ $u->id }}, '{{ addslashes($u->nombre_real) }}', '{{ $u->username }}')" class="px-3 py-1.5 rounded-xl text-xs font-bold bg-purple-50 hover:bg-purple-100 text-purple-700 transition-colors inline-flex items-center gap-1.5 cursor-pointer">
-                                            <i class="fas fa-user-secret"></i>
-                                            <span>Auditar Cuenta</span>
-                                        </button>
-                                    @endif
-                                </td>
-                            </tr>
-                        @empty
-                            <tr>
-                                <td colspan="6" class="py-8 text-center text-xs text-slate-400">
-                                    No se encontraron usuarios con los criterios de búsqueda.
-                                </td>
-                            </tr>
-                        @endforelse
-                    </tbody>
-                </table>
-            </div>
+        <!-- Skeleton Loading Inteligente para Tabla de Usuarios Super Admin -->
+        <div x-show="cargandoUsuarios" style="display: none;" class="bg-white rounded-3xl border border-slate-200 shadow-sm overflow-hidden p-2">
+            <x-skeleton-table :rows="5" :cols="6" :avatarCol="0" />
+        </div>
 
-            <div class="p-4 border-t border-slate-100">
-                {{ $users->links() }}
-            </div>
+        <!-- Tabla de Usuarios -->
+        <div id="contenedorTablaSuperAdminUsuarios" x-show="!cargandoUsuarios" class="bg-white rounded-3xl border border-slate-200 shadow-sm overflow-hidden">
+            @include('superadmin.tabla-usuarios', ['users' => $users])
         </div>
 
     </div>
@@ -216,8 +240,14 @@
                     <button type="button" onclick="document.getElementById('modalAuditoria').classList.add('hidden')" class="px-4 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold transition-colors">
                         Cancelar
                     </button>
-                    <button type="submit" class="px-4 py-2 rounded-xl bg-purple-600 hover:bg-purple-700 text-white font-bold transition-colors">
-                        Iniciar Sesión de Auditoría
+                    <button type="submit" 
+                            onclick="const b = this; setTimeout(() => { b.disabled = true; b.querySelector('.btn-text').classList.add('invisible'); b.querySelector('.btn-spinner').style.display = 'flex'; }, 10);"
+                            class="relative inline-flex items-center justify-center px-4 py-2 rounded-xl bg-purple-600 hover:bg-purple-700 text-white font-bold transition-colors shadow-sm cursor-pointer disabled:opacity-60 disabled:cursor-not-allowed">
+                        <span class="btn-text">Iniciar Sesión de Auditoría</span>
+                        <span class="btn-spinner absolute inset-0 flex items-center justify-center gap-1.5" style="display: none;">
+                            <i class="fas fa-spinner fa-spin"></i>
+                            <span>Iniciando...</span>
+                        </span>
                     </button>
                 </div>
             </form>

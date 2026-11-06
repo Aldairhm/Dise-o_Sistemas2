@@ -1,5 +1,9 @@
 @import 'tailwindcss';
 
+[x-cloak] {
+    display: none !important;
+}
+
 @source '../../vendor/laravel/framework/src/Illuminate/Pagination/resources/views/*.blade.php';
 @source '../../storage/framework/views/*.php';
 @source '../**/*.blade.php';
@@ -210,4 +214,58 @@ html.dark .swal2-popup .swal2-html-container strong {
 .swal2-container,
 .swal2-topmost {
     z-index: 100000 !important;
+}
+
+/* ==========================================================================
+   SKELETON SHIMMER & LOADING STATES (UX / UI System)
+   ========================================================================== */
+@keyframes ax-shimmer {
+    0% {
+        transform: translateX(-100%);
+    }
+    100% {
+        transform: translateX(100%);
+    }
+}
+
+.ax-skeleton-shimmer {
+    position: relative;
+    overflow: hidden;
+    background-color: #cbd5e1; /* slate-300: contraste nítido y visible */
+}
+
+.ax-skeleton-shimmer::after {
+    position: absolute;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    left: 0;
+    transform: translateX(-100%);
+    background-image: linear-gradient(
+        90deg,
+        rgba(255, 255, 255, 0) 0%,
+        rgba(255, 255, 255, 0.85) 50%,
+        rgba(255, 255, 255, 0) 100%
+    );
+    animation: ax-shimmer 1.5s infinite ease-in-out;
+    content: '';
+}
+
+html.dark .ax-skeleton-shimmer {
+    background-color: #475569 !important; /* slate-600 */
+}
+
+html.dark .ax-skeleton-shimmer::after {
+    background-image: linear-gradient(
+        90deg,
+        rgba(255, 255, 255, 0) 0%,
+        rgba(255, 255, 255, 0.2) 50%,
+        rgba(255, 255, 255, 0) 100%
+    );
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .ax-skeleton-shimmer::after {
+        animation: none !important;
+    }
 }

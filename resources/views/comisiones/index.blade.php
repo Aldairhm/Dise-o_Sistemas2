@@ -65,7 +65,7 @@
 
         <!-- FILTROS GLOBALES -->
         <section class="bg-white border border-slate-200 rounded-2xl p-4 sm:p-5 shadow-sm">
-            <form id="filtrosForm" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-12 gap-3.5 items-end">
+            <form id="filtrosForm" onsubmit="event.preventDefault(); aplicarFiltros();" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-12 gap-3.5 items-end">
 
                 @if($isAdmin)
                 {{-- SELECT VENDEDOR --}}
@@ -108,7 +108,8 @@
                             class="w-full rounded-xl border border-slate-300 bg-slate-50 px-3 py-2 text-xs font-semibold text-slate-700 focus:border-blue-500 focus:bg-white focus:outline-none focus:ring-4 focus:ring-blue-500/10 transition-all">
                         <option value="todos">Todos los métodos</option>
                         <option value="Efectivo" {{ request('metodo_pago') === 'Efectivo' ? 'selected' : '' }}>Efectivo</option>
-                        <option value="Transferencia Bancaria" {{ request('metodo_pago') === 'Transferencia Bancaria' ? 'selected' : '' }}>Transferencia Bancaria</option>
+                        <option value="Transferencia Bancaria" {{ in_array(request('metodo_pago'), ['Transferencia Bancaria', 'Transferencia']) ? 'selected' : '' }}>Transferencia Bancaria</option>
+                        <option value="Compensación de Saldo" {{ request('metodo_pago') === 'Compensación de Saldo' ? 'selected' : '' }}>Compensación de Saldo</option>
                     </select>
                 </div>
 
@@ -134,7 +135,7 @@
 
                 {{-- BOTONES DE FILTRADO --}}
                 <div class="lg:col-span-1 flex items-center gap-1.5">
-                    <button type="button" onclick="aplicarFiltros()"
+                    <button type="button" id="btnFiltrarComisiones" onclick="aplicarFiltros()"
                             class="w-full rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-bold py-2 px-2.5 text-xs transition-all shadow-md shadow-blue-600/15 flex items-center justify-center gap-1 cursor-pointer"
                             title="Aplicar filtros">
                         <i class="fas fa-filter text-[11px]"></i>
@@ -213,12 +214,9 @@
 
         <!-- TABLA PRINCIPAL DE COMISIONES -->
         <div class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden relative" id="tableContainer">
-            {{-- Loader --}}
-            <div id="tableLoading" class="absolute inset-0 bg-white/70 backdrop-blur-xs flex items-center justify-center z-20 hidden">
-                <div class="flex items-center gap-3 bg-white px-5 py-3 rounded-2xl shadow-xl border border-slate-100 text-blue-600 text-sm font-bold">
-                    <i class="fas fa-spinner fa-spin text-lg"></i>
-                    <span>Cargando comisiones...</span>
-                </div>
+            {{-- Skeleton Loader para transiciones suaves --}}
+            <div id="tableSkeletonComisiones" class="hidden">
+                <x-skeleton-table :rows="5" :cols="7" />
             </div>
 
             <div id="tableWrapper">
@@ -254,8 +252,17 @@
             return;
         }
 
-        const loading = document.getElementById('tableLoading');
-        loading.classList.remove('hidden');
+        const skeleton = document.getElementById('tableSkeletonComisiones');
+        const wrapper = document.getElementById('tableWrapper');
+        const btnFiltrar = document.getElementById('btnFiltrarComisiones');
+        if (btnFiltrar) {
+            btnFiltrar.disabled = true;
+            btnFiltrar.innerHTML = '<i class="fas fa-spinner fa-spin text-[11px]"></i> <span>Filtrando...</span>';
+        }
+        if (skeleton && wrapper) {
+            skeleton.classList.remove('hidden');
+            wrapper.classList.add('hidden');
+        }
 
         const params = new URLSearchParams();
         @if($isAdmin)
@@ -278,6 +285,7 @@
             const data = await res.json();
             if (data.success) {
                 document.getElementById('tableWrapper').innerHTML = data.table;
+                atarPaginacionComisiones();
                 if (data.stats) {
                     document.getElementById('kpiTotal').textContent     = '$' + formatNum(data.stats.total);
                     document.getElementById('kpiPendiente').textContent = '$' + formatNum(data.stats.pendiente);
@@ -288,7 +296,60 @@
         } catch(e) {
             console.error(e);
         } finally {
-            loading.classList.add('hidden');
+            if (btnFiltrar) {
+                btnFiltrar.disabled = false;
+                btnFiltrar.innerHTML = '<i class="fas fa-filter text-[11px]"></i> <span>Filtrar</span>';
+            }
+            if (skeleton && wrapper) {
+                skeleton.classList.add('hidden');
+                wrapper.classList.remove('hidden');
+            }
+        }
+    }
+
+    function atarPaginacionComisiones() {
+        const wrapper = document.getElementById('tableWrapper');
+        if (!wrapper) return;
+        const links = wrapper.querySelectorAll('a[href*="page="]');
+        links.forEach(link => {
+            link.addEventListener('click', async (e) => {
+                e.preventDefault();
+                const url = link.getAttribute('href');
+                if (!url) return;
+                await cargarPaginaComisiones(url);
+            });
+        });
+    }
+
+    async function cargarPaginaComisiones(url) {
+        const skeleton = document.getElementById('tableSkeletonComisiones');
+        const wrapper = document.getElementById('tableWrapper');
+        if (skeleton && wrapper) {
+            skeleton.classList.remove('hidden');
+            wrapper.classList.add('hidden');
+        }
+        try {
+            const res = await fetch(url, {
+                headers: { 'X-Requested-With': 'XMLHttpRequest' }
+            });
+            const data = await res.json();
+            if (data.success) {
+                wrapper.innerHTML = data.table;
+                atarPaginacionComisiones();
+                if (data.stats) {
+                    document.getElementById('kpiTotal').textContent     = '$' + formatNum(data.stats.total);
+                    document.getElementById('kpiPendiente').textContent = '$' + formatNum(data.stats.pendiente);
+                    document.getElementById('kpiPagada').textContent    = '$' + formatNum(data.stats.pagada);
+                    document.getElementById('kpiCancelada').textContent = '$' + formatNum(data.stats.cancelada);
+                }
+            }
+        } catch(e) {
+            console.error('Error al paginar comisiones:', e);
+        } finally {
+            if (skeleton && wrapper) {
+                skeleton.classList.add('hidden');
+                wrapper.classList.remove('hidden');
+            }
         }
     }
 
@@ -911,6 +972,11 @@
             closeLiquidarModal();
             closeCreateModal();
         }
+    });
+
+    // ── Inicializar paginación AJAX en carga inicial ───────────────────────
+    document.addEventListener('DOMContentLoaded', () => {
+        atarPaginacionComisiones();
     });
     </script>
     @if($isAdmin)

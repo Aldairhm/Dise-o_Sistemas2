@@ -321,11 +321,18 @@
                     Cancelar
                 </button>
                 <button type="button"
+                        id="btnEnviarWhatsappModal"
                         onclick="enviarAWhatsapp()"
-                        class="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-lg text-xs font-bold text-white shadow-md hover:shadow-lg transition-all cursor-pointer"
+                        class="relative w-full sm:w-auto inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-lg text-xs font-bold text-white shadow-md hover:shadow-lg transition-all cursor-pointer overflow-hidden disabled:opacity-60 disabled:cursor-not-allowed"
                         style="background: linear-gradient(135deg, #25D366 0%, #128C7E 100%);">
-                    <i class="fab fa-whatsapp text-sm"></i>
-                    <span>Abrir WhatsApp con este mensaje</span>
+                    <span id="btnEnviarWhatsappText" class="inline-flex items-center gap-2">
+                        <i class="fab fa-whatsapp text-sm"></i>
+                        <span>Abrir WhatsApp con este mensaje</span>
+                    </span>
+                    <span id="btnEnviarWhatsappSpinner" class="absolute inset-0 flex items-center justify-center gap-2" style="display: none;">
+                        <i class="fas fa-spinner fa-spin"></i>
+                        <span>Registrando ticket...</span>
+                    </span>
                 </button>
             </div>
         </div>
@@ -511,11 +518,14 @@
 
             const mensaje = construirMensajeWhatsapp();
 
-            const btnEnviar = document.querySelector("button[onclick='enviarAWhatsapp()']");
-            const originalContent = btnEnviar ? btnEnviar.innerHTML : '';
-            if (btnEnviar) {
+            const btnEnviar = document.getElementById('btnEnviarWhatsappModal');
+            const btnText = document.getElementById('btnEnviarWhatsappText');
+            const btnSpinner = document.getElementById('btnEnviarWhatsappSpinner');
+
+            if (btnEnviar && btnText && btnSpinner) {
                 btnEnviar.disabled = true;
-                btnEnviar.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Registrando ticket...';
+                btnText.classList.add('invisible');
+                btnSpinner.style.display = 'flex';
             }
 
             try {
@@ -538,9 +548,10 @@
             } catch (err) {
                 console.error('No se pudo registrar en la bitacora de tickets:', err);
             } finally {
-                if (btnEnviar) {
+                if (btnEnviar && btnText && btnSpinner) {
                     btnEnviar.disabled = false;
-                    btnEnviar.innerHTML = originalContent;
+                    btnText.classList.remove('invisible');
+                    btnSpinner.style.display = 'none';
                 }
             }
 

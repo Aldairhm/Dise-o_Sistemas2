@@ -25,6 +25,57 @@ class CompraController extends Controller
         return view('compras.historial', compact('compras'));
     }
 
+    public function show(string|int $id)
+    {
+        if (!is_numeric($id)) {
+            abort(404, 'Compra no encontrada');
+        }
+
+        $compra = Compra::with([
+            'proveedor',
+            'detalles.variante.producto',
+            'detalles.variante.imagenes',
+            'movimientos.variante.producto',
+        ])->findOrFail($id);
+
+        if (request()->ajax() || request()->wantsJson()) {
+            return response()->json([
+                'success' => true,
+                'compra' => [
+                    'id' => $compra->id,
+                    'fecha_compra' => $compra->fecha_compra?->format('d/m/Y'),
+                    'proveedor_nombre' => $compra->proveedor?->nombre ?? 'Sin proveedor',
+                    'referencia' => $compra->referencia ?: 'Sin referencia',
+                    'estado' => $compra->estado,
+                    'total' => (float) $compra->total,
+                    'observaciones' => $compra->observaciones ?: 'Sin observaciones',
+                    'detalles' => $compra->detalles->map(function ($det) {
+                        return [
+                            'id' => $det->id,
+                            'producto' => $det->variante?->producto?->nombre ?? 'Producto',
+                            'variante' => $det->variante?->nombre_variante ?? '',
+                            'sku' => $det->variante?->sku ?: 'Sin SKU',
+                            'imagen_url' => $det->variante?->imagen_url,
+                            'cantidad' => $det->cantidad,
+                            'precio_unitario' => (float) $det->precio_unitario,
+                            'subtotal' => (float) $det->subtotal,
+                        ];
+                    }),
+                    'movimientos' => $compra->movimientos->map(function ($mov) {
+                        return [
+                            'id' => $mov->id,
+                            'tipo' => $mov->tipo === 'compra_recibida' ? 'Entrada a bodega' : 'Transferencia a tienda',
+                            'cantidad' => $mov->cantidad,
+                            'fecha' => $mov->created_at?->format('d/m/Y H:i'),
+                        ];
+                    }),
+                ],
+            ]);
+        }
+
+        return redirect()->route('compras.historial');
+    }
+
     public function movimientos()
     {
         $variantes = Variante::with(['producto:id,nombre', 'imagenes'])
@@ -72,7 +123,64 @@ class CompraController extends Controller
             ->paginate(20)
             ->withQueryString();
 
+        if (request()->ajax() || request()->wantsJson()) {
+            return response()->json([
+                'success' => true,
+                'html' => view('compras.tabla-movimientos', compact('movimientos'))->render(),
+            ]);
+        }
+
         return view('compras.movimientos', compact('movimientos', 'variantes', 'filtroMovimiento'));
+    }
+
+    public function detalleMovimiento(string|int $id)
+    {
+        if (!is_numeric($id)) {
+            abort(404, 'Movimiento no encontrado');
+        }
+
+        $movimiento = MovimientoBodega::with([
+            'variante.producto',
+            'variante.imagenes',
+            'compra',
+            'devolucion'
+        ])->findOrFail($id);
+
+        $etiquetaTipo = match ($movimiento->tipo) {
+            'transferencia_tienda' => 'Transferencia a tienda',
+            'compra_recibida' => 'Compra recibida',
+            'devolucion_cliente' => 'Devolución cliente',
+            'devolucion_proveedor' => 'Devolución proveedor',
+            'Entrada', 'entrada' => 'Entrada',
+            'Salida', 'salida' => 'Salida',
+            default => $movimiento->tipo,
+        };
+
+        $origen = $movimiento->devolucion 
+            ? 'DEV-' . str_pad($movimiento->devolucion_id, 5, '0', STR_PAD_LEFT) 
+            : ($movimiento->compra ? 'Compra #' . $movimiento->id_compra : 'Inventario');
+
+        return response()->json([
+            'success' => true,
+            'movimiento' => [
+                'id' => $movimiento->id,
+                'fecha' => $movimiento->created_at?->format('d/m/Y H:i'),
+                'tipo' => $etiquetaTipo,
+                'cantidad' => $movimiento->cantidad,
+                'producto' => $movimiento->variante?->producto?->nombre ?? 'Producto',
+                'variante' => $movimiento->variante?->nombre_variante ?? 'Variante',
+                'sku' => $movimiento->variante?->sku ?: 'Sin SKU',
+                'imagen_url' => $movimiento->variante?->imagen_url,
+                'origen' => $origen,
+                'reserva_anterior' => $movimiento->reserva_anterior,
+                'reserva_nueva' => $movimiento->reserva_nueva,
+                'stock_anterior' => $movimiento->stock_anterior,
+                'stock_nuevo' => $movimiento->stock_nuevo,
+                'stock_cuarentena_anterior' => $movimiento->stock_cuarentena_anterior ?? 0,
+                'stock_cuarentena_nuevo' => $movimiento->stock_cuarentena_nuevo ?? 0,
+                'observacion' => $movimiento->observacion ?: 'Sin observación',
+            ]
+        ]);
     }
 
     public function create()
@@ -81,7 +189,7 @@ class CompraController extends Controller
             ->orderBy('nombre')
             ->get(['id', 'nombre', 'correo']);
 
-        $variantes = Variante::with(['producto:id,nombre', 'imagenes'])
+        $variantes = Variante::with(['producto:id,nombre,imagen_principal', 'imagenes'])
             ->where('estado', 1)
             ->orderBy('id')
             ->limit(10)
@@ -91,9 +199,7 @@ class CompraController extends Controller
                 'producto' => $variante->producto?->nombre ?? 'Producto sin nombre',
                 'variante' => $variante->nombre_variante,
                 'sku' => $variante->sku,
-                'imagen' => ($imagen = $variante->imagenes->firstWhere('es_principal', 1) ?? $variante->imagenes->first())
-                    ? asset('storage/' . $imagen->ruta_imagen)
-                    : null,
+                'imagen' => $variante->imagen_url,
                 'unidad' => 'unidad',
                 'precio_venta' => $variante->precio_venta,
             ])
@@ -106,7 +212,7 @@ class CompraController extends Controller
     {
         $busqueda = $request->query('q', '');
 
-        $query = Variante::with(['producto:id,nombre', 'imagenes'])
+        $query = Variante::with(['producto:id,nombre,imagen_principal', 'imagenes'])
             ->where('estado', 1);
 
         if (!empty($busqueda)) {
@@ -127,9 +233,7 @@ class CompraController extends Controller
             'producto' => $variante->producto?->nombre ?? 'Producto sin nombre',
             'variante' => $variante->nombre_variante,
             'sku' => $variante->sku,
-            'imagen' => ($imagen = $variante->imagenes->firstWhere('es_principal', 1) ?? $variante->imagenes->first())
-                ? asset('storage/' . $imagen->ruta_imagen)
-                : null,
+            'imagen' => $variante->imagen_url,
             'unidad' => 'unidad',
             'precio_venta' => $variante->precio_venta,
             'stock' => $variante->stock,

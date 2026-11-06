@@ -50,4 +50,27 @@ class Variante extends Model
     {
         return $this->hasMany(Salida::class, 'id_variante');
     }
+
+    /**
+     * Accesor para obtener la URL de imagen de la variante.
+     * Cascada: 1) Imagen principal en variante_imagen -> 2) Cualquier imagen en variante_imagen ->
+     *          3) Columna imagen propia -> 4) Imagen principal del producto padre -> null.
+     */
+    public function getImagenUrlAttribute(): ?string
+    {
+        $img = $this->imagenes?->firstWhere('es_principal', 1) ?? $this->imagenes?->first();
+        if ($img && !empty($img->ruta_imagen)) {
+            return asset('storage/' . $img->ruta_imagen);
+        }
+
+        if (!empty($this->imagen)) {
+            return asset('storage/' . $this->imagen);
+        }
+
+        if ($this->producto && !empty($this->producto->imagen_principal)) {
+            return asset('storage/' . $this->producto->imagen_principal);
+        }
+
+        return null;
+    }
 }

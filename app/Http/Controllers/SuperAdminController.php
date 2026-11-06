@@ -86,6 +86,13 @@ class SuperAdminController extends Controller
 
         $users = $query->orderBy('id', 'desc')->paginate(10)->withQueryString();
 
+        if ($request->ajax() || $request->wantsJson()) {
+            return response()->json([
+                'success' => true,
+                'html' => view('superadmin.tabla-usuarios', compact('users'))->render(),
+            ]);
+        }
+
         return view('superadmin.usuarios', compact('users'));
     }
 
@@ -151,11 +158,18 @@ class SuperAdminController extends Controller
     /**
      * Historial global de auditorías
      */
-    public function historialAuditorias()
+    public function historialAuditorias(Request $request)
     {
         $auditorias = AuditoriaSesion::with(['superAdmin', 'usuarioAuditado'])
             ->latest('id')
             ->paginate(15);
+
+        if ($request->ajax() || $request->wantsJson()) {
+            return response()->json([
+                'success' => true,
+                'html' => view('superadmin.tabla-historial-auditorias', compact('auditorias'))->render(),
+            ]);
+        }
 
         return view('superadmin.historial-auditorias', compact('auditorias'));
     }
@@ -307,6 +321,14 @@ class SuperAdminController extends Controller
             ->orderBy('id', 'asc')
             ->paginate(10)
             ->withQueryString();
+
+        if ($request->ajax() || $request->wantsJson()) {
+            return response()->json([
+                'success' => true,
+                'html' => view('superadmin.tabla-tickets', compact('tickets'))->render(),
+                'conteoEstados' => $conteoEstados,
+            ]);
+        }
 
         return view('superadmin.tickets', compact('tickets', 'conteoEstados', 'estadoTab'));
     }

@@ -146,10 +146,12 @@
                             </tr>
                         @empty
                             <tr>
-                                <td colspan="8" class="px-5 py-16 text-center">
-                                    <i class="fas fa-ticket mb-3 block text-2xl text-slate-300"></i>
-                                    <p class="text-sm font-bold text-slate-700">No hay tickets de proveedores</p>
-                                    <p class="mt-1 text-xs text-slate-400">Créalo desde Historial de compras con el botón Devolver.</p>
+                                <td colspan="8" class="py-8">
+                                    <x-empty-state 
+                                        title="No hay tickets de devoluciones a proveedores" 
+                                        description="Puedes registrar una nueva devolución desde el Historial de compras usando la opción Devolver."
+                                        icon="folder-open" 
+                                    />
                                 </td>
                             </tr>
                         @endforelse

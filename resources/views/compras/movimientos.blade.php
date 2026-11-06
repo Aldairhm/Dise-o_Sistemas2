@@ -1,7 +1,7 @@
 <x-app title="Manejo de inventario | AXStore">
     <meta name="transferencia-tienda-url" content="{{ route('movimientos-bodega.transferencia-tienda') }}">
 
-    <div class="max-w-[1440px] mx-auto space-y-6" x-data="{ inventarioTab: @js($filtroMovimiento !== 'todos' ? 'kardex' : 'transferir') }">
+    <div class="max-w-[1440px] mx-auto space-y-6" x-data="gestionMovimientosKardex()">
         <div>
             <a href="{{ route('home') }}" class="inline-flex items-center gap-2 text-xs font-bold uppercase tracking-widest text-slate-400 hover:text-blue-600 mb-4"><i class="fas fa-arrow-left"></i> Volver al inicio</a>
             <p class="text-xs font-black uppercase tracking-[0.18em] text-blue-600 mb-1">Inventario</p>
@@ -39,10 +39,13 @@
                     ];
                 @endphp
                 @foreach($filtros as $valor => $data)
-                    <a href="{{ route('compras.movimientos', ['tipo' => $valor]) }}" 
-                       class="inline-flex items-center gap-2 rounded-xl border {{ $filtroMovimiento === $valor ? 'border-blue-600 bg-blue-600 text-white' : 'border-slate-200 bg-slate-50 text-slate-600 hover:bg-blue-50 hover:text-blue-600 hover:border-blue-200' }} px-4 py-2.5 text-xs font-bold shadow-sm transition-all duration-200">
-                        <i class="fas {{ $data['icon'] }} {{ $filtroMovimiento === $valor ? 'text-white' : 'text-slate-400' }}"></i> {{ $data['label'] }}
-                    </a>
+                    <button type="button" @click="filtrarKardex('{{ $valor }}')" 
+                       :class="filtroMovimiento === '{{ $valor }}' ? 'border-blue-600 bg-blue-600 text-white' : 'border-slate-200 bg-slate-50 text-slate-600 hover:bg-blue-50 hover:text-blue-600 hover:border-blue-200'"
+                       class="inline-flex items-center gap-2 rounded-xl border px-4 py-2.5 text-xs font-bold shadow-sm transition-all duration-200 cursor-pointer"
+                       :disabled="cargandoKardex">
+                        <i :class="cargandoKardex && filtroMovimiento === '{{ $valor }}' ? 'fas fa-spinner fa-spin text-white' : 'fas {{ $data['icon'] }} ' + (filtroMovimiento === '{{ $valor }}' ? 'text-white' : 'text-slate-400')"></i>
+                        <span x-text="cargandoKardex && filtroMovimiento === '{{ $valor }}' ? 'Filtrando...' : '{{ $data['label'] }}'"></span>
+                    </button>
                 @endforeach
             </div>
         </section>
@@ -136,8 +139,15 @@
                                    class="w-full rounded-xl border border-slate-300 bg-slate-50 px-4 py-2.5 text-sm focus:border-blue-500 focus:bg-white focus:ring-4 focus:ring-blue-500/10">
                         </label>
                         <button type="submit" :disabled="enviando || cantidad > varianteSeleccionada.reserva || cantidad < 1"
-                                class="rounded-xl bg-amber-500 px-5 py-2.5 text-sm font-black text-white shadow-lg shadow-amber-500/20 hover:bg-amber-600 disabled:cursor-not-allowed disabled:opacity-60">
-                            <i class="fas fa-arrow-right mr-2"></i><span x-text="enviando ? 'Procesando...' : 'Transferir'"></span>
+                                class="relative inline-flex items-center justify-center rounded-xl bg-amber-500 px-5 py-2.5 text-sm font-black text-white shadow-lg shadow-amber-500/20 hover:bg-amber-600 disabled:cursor-not-allowed disabled:opacity-60 transition-all">
+                            <span class="inline-flex items-center gap-2" :class="{ 'invisible': enviando }">
+                                <i class="fas fa-arrow-right"></i>
+                                <span>Transferir</span>
+                            </span>
+                            <span class="absolute inset-0 flex items-center justify-center gap-2" x-show="enviando" style="display: none;">
+                                <i class="fas fa-spinner fa-spin"></i>
+                                <span>Procesando...</span>
+                            </span>
                         </button>
                     </div>
                     <p x-show="cantidad > varianteSeleccionada.reserva" class="text-xs font-bold text-red-600" style="display:none">
@@ -153,98 +163,245 @@
                     <h2 class="text-lg font-black text-slate-900">Movimientos registrados</h2>
                     <p class="mt-1 text-xs text-slate-500">Kardex físico de existencias por variante.</p>
                 </div>
-                <i class="fas fa-clock-rotate-left text-xl text-amber-500"></i>
+                <div class="flex items-center gap-2">
+                    <i class="fas fa-clock-rotate-left text-xl text-amber-500"></i>
+                </div>
             </div>
-            <div class="overflow-x-auto">
-                <table class="w-full min-w-[760px] text-left text-sm">
-                    <thead class="border-b border-slate-200 bg-slate-50 text-[10px] uppercase tracking-widest text-slate-500">
-                        <tr>
-                            <th class="px-5 py-4">Fecha</th>
-                            <th class="px-5 py-4">Tipo</th>
-                            <th class="px-5 py-4">Producto / variante</th>
-                            <th class="px-5 py-4 text-center">Cantidad</th>
-                            <th class="px-5 py-4">Origen</th>
-                            <th class="px-5 py-4 text-right">Detalle</th>
-                        </tr>
-                    </thead>
-                    <tbody class="divide-y divide-slate-100">
-                        @forelse ($movimientos as $movimiento)
-                            @php
-                                $imagenMovimiento = $movimiento->variante?->imagenes?->firstWhere('es_principal', 1) ?? $movimiento->variante?->imagenes?->first();
-                                $esDevolucion = $movimiento->devolucion_id || in_array($movimiento->tipo, ['devolucion_cliente', 'devolucion_proveedor']) || str_contains(strtolower($movimiento->observacion ?? ''), 'devolu');
-                                $etiquetaTipo = match ($movimiento->tipo) {
-                                    'transferencia_tienda' => 'Transferencia',
-                                    'compra_recibida' => 'Compra recibida',
-                                    'devolucion_cliente' => 'Devolución cliente',
-                                    'devolucion_proveedor' => 'Devolución proveedor',
-                                    'Entrada', 'entrada' => 'Entrada',
-                                    'Salida', 'salida' => 'Salida',
-                                    default => $movimiento->tipo,
-                                };
-                            @endphp
-                            <tr class="hover:bg-slate-50/60">
-                                <td class="px-5 py-4 whitespace-nowrap text-xs text-slate-500">{{ $movimiento->created_at?->format('d/m/Y H:i') }}</td>
-                                <td class="px-5 py-4">
-                                    <span class="inline-flex whitespace-nowrap rounded-lg border px-2.5 py-1 text-[11px] font-bold {{ $esDevolucion ? 'border-red-200 bg-red-50 text-red-700' : 'border-slate-200 bg-slate-50 text-slate-700' }}">
-                                        {{ $etiquetaTipo }}
-                                    </span>
-                                </td>
-                                <td class="px-5 py-4">
-                                    <div class="flex items-center gap-3">
-                                        <div class="h-10 w-10 shrink-0 overflow-hidden rounded-lg border border-slate-200 bg-slate-50">
-                                            @if ($imagenMovimiento)
-                                                <img src="{{ asset('storage/' . $imagenMovimiento->ruta_imagen) }}" alt="{{ $movimiento->variante?->nombre_variante ?? 'Producto' }}" class="h-full w-full object-cover">
-                                            @else
-                                                <div class="flex h-full items-center justify-center text-slate-300"><i class="fas fa-image text-xs"></i></div>
-                                            @endif
-                                        </div>
-                                        <div class="min-w-0">
-                                            <p class="font-bold text-slate-800">{{ $movimiento->variante?->producto?->nombre ?? 'Producto' }}</p>
-                                            <p class="text-xs text-slate-500">{{ $movimiento->variante?->nombre_variante ?? 'Variante sin nombre' }}</p>
-                                        </div>
-                                    </div>
-                                </td>
-                                <td class="px-5 py-4 text-center font-black text-amber-700">{{ $movimiento->cantidad }}</td>
-                                <td class="px-5 py-4 whitespace-nowrap text-slate-600">
-                                    @if ($movimiento->devolucion)
-                                        <span class="font-bold text-blue-600">DEV-{{ str_pad($movimiento->devolucion_id, 5, '0', STR_PAD_LEFT) }}</span>
-                                    @elseif ($movimiento->compra)
-                                        <span>Compra #{{ $movimiento->id_compra }}</span>
-                                    @else
-                                        <span class="text-slate-400">Inventario</span>
-                                    @endif
-                                </td>
-                                <td class="px-5 py-4 text-right">
-                                    <button type="button" onclick="document.getElementById('movimiento-detalle-{{ $movimiento->id }}').showModal()" class="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-xs font-bold text-blue-600 shadow-sm hover:bg-blue-50">
-                                        <i class="fas fa-eye"></i> Ver detalle
-                                    </button>
-                                </td>
-                            </tr>
-                            <dialog id="movimiento-detalle-{{ $movimiento->id }}" class="m-auto w-[min(620px,calc(100vw-2rem))] max-w-none rounded-2xl border border-slate-200 bg-white p-0 text-left shadow-2xl backdrop:bg-slate-900/50">
-                                <div class="p-5">
-                                    <div class="mb-5 flex items-start justify-between gap-4 border-b border-slate-100 pb-4">
-                                        <div><p class="text-xs font-black uppercase tracking-widest text-blue-600">Movimiento #{{ $movimiento->id }}</p><h3 class="mt-1 text-lg font-black text-slate-900">{{ $movimiento->variante?->producto?->nombre ?? 'Producto' }}</h3><p class="text-sm text-slate-500">{{ $movimiento->variante?->nombre_variante ?? 'Variante' }} · {{ $movimiento->created_at?->format('d/m/Y H:i') }}</p></div>
-                                        <button type="button" onclick="this.closest('dialog').close()" class="h-8 w-8 rounded-lg text-slate-400 hover:bg-slate-100 hover:text-slate-700" title="Cerrar"><i class="fas fa-xmark"></i></button>
-                                    </div>
-                                    <div class="mb-5 grid grid-cols-2 gap-3 sm:grid-cols-4">
-                                        <div class="rounded-xl bg-slate-50 p-3"><p class="text-[10px] font-bold uppercase tracking-wider text-slate-400">Tipo</p><p class="mt-1 text-sm font-black text-slate-800">{{ $etiquetaTipo }}</p></div>
-                                        <div class="rounded-xl bg-slate-50 p-3"><p class="text-[10px] font-bold uppercase tracking-wider text-slate-400">Cantidad</p><p class="mt-1 text-sm font-black text-amber-700">{{ $movimiento->cantidad }}</p></div>
-                                        <div class="rounded-xl bg-slate-50 p-3"><p class="text-[10px] font-bold uppercase tracking-wider text-slate-400">SKU</p><p class="mt-1 truncate text-sm font-black text-slate-800">{{ $movimiento->variante?->sku ?: 'Sin SKU' }}</p></div>
-                                        <div class="rounded-xl bg-slate-50 p-3"><p class="text-[10px] font-bold uppercase tracking-wider text-slate-400">Origen</p><p class="mt-1 text-sm font-black text-slate-800">{{ $movimiento->devolucion ? 'DEV-' . str_pad($movimiento->devolucion_id, 5, '0', STR_PAD_LEFT) : ($movimiento->compra ? 'Compra #' . $movimiento->id_compra : 'Inventario') }}</p></div>
-                                    </div>
-                                    <div class="overflow-hidden rounded-xl border border-slate-200"><div class="grid grid-cols-3 border-b border-slate-200 bg-slate-50 px-4 py-3 text-[10px] font-black uppercase tracking-wider text-slate-500"><span>Ubicación</span><span class="text-center">Antes</span><span class="text-center">Después</span></div><div class="grid grid-cols-3 border-b border-slate-100 px-4 py-3 text-sm"><span class="font-bold text-slate-700">Reserva</span><span class="text-center text-slate-600">{{ $movimiento->reserva_anterior }}</span><span class="text-center font-bold text-slate-800">{{ $movimiento->reserva_nueva }}</span></div><div class="grid grid-cols-3 border-b border-slate-100 px-4 py-3 text-sm"><span class="font-bold text-slate-700">Tienda</span><span class="text-center text-slate-600">{{ $movimiento->stock_anterior }}</span><span class="text-center font-bold text-slate-800">{{ $movimiento->stock_nuevo }}</span></div><div class="grid grid-cols-3 px-4 py-3 text-sm"><span class="font-bold text-slate-700">Cuarentena</span><span class="text-center text-slate-600">{{ $movimiento->stock_cuarentena_anterior ?? 0 }}</span><span class="text-center font-bold text-slate-800">{{ $movimiento->stock_cuarentena_nuevo ?? 0 }}</span></div></div>
-                                    <div class="mt-4 rounded-xl border border-slate-100 bg-slate-50 p-4"><p class="text-[10px] font-black uppercase tracking-wider text-slate-400">Observación</p><p class="mt-1 text-sm text-slate-600">{{ $movimiento->observacion ?: 'Sin observación' }}</p></div>
-                                </div>
-                            </dialog>
-                        @empty
-                            <tr><td colspan="6" class="px-5 py-16 text-center text-sm text-slate-400"><i class="fas fa-boxes-stacked mb-3 block text-2xl"></i>No hay movimientos para el filtro seleccionado.</td></tr>
-                        @endforelse
-                    </tbody>
-                </table>
+
+            <!-- Skeleton Table idéntica en dimensiones al contenido real -->
+            <div x-show="cargandoKardex" class="p-5">
+                <x-skeleton-table :rows="8" :cols="6" :avatarCol="2" />
             </div>
-            @if ($movimientos->hasPages())
-                <div class="border-t border-slate-100 p-4">{{ $movimientos->links() }}</div>
-            @endif
+
+            <!-- Contenedor real de la tabla -->
+            <div id="contenedorTablaKardex" x-show="!cargandoKardex">
+                @include('compras.tabla-movimientos')
+            </div>
         </section>
+
+        <!-- MODAL ÚNICO DE DETALLE DE MOVIMIENTO CON SKELETON INTELIGENTE -->
+        <div x-show="modalMovimientoAbierto" x-cloak 
+             class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs"
+             x-transition:enter="transition ease-out duration-200"
+             x-transition:enter-start="opacity-0"
+             x-transition:enter-end="opacity-100"
+             x-transition:leave="transition ease-in duration-150"
+             x-transition:leave-start="opacity-100"
+             x-transition:leave-end="opacity-0">
+            
+            <div class="relative w-full max-w-xl rounded-2xl border border-slate-200 bg-white shadow-2xl overflow-hidden"
+                 @click.away="cerrarDetalleMovimiento()">
+                
+                <!-- Encabezado del modal -->
+                <div class="flex items-start justify-between gap-4 border-b border-slate-100 p-5">
+                    <div>
+                        <span class="text-xs font-black uppercase tracking-widest text-blue-600">Detalle de Kardex</span>
+                        <template x-if="movimientoSeleccionado">
+                            <div>
+                                <h3 class="mt-1 text-lg font-black text-slate-900" x-text="movimientoSeleccionado.producto"></h3>
+                                <p class="text-xs text-slate-500" x-text="movimientoSeleccionado.variante + ' · ' + movimientoSeleccionado.fecha"></p>
+                            </div>
+                        </template>
+                        <template x-if="!movimientoSeleccionado">
+                            <div class="mt-2 space-y-2">
+                                <div class="h-5 w-48 rounded-md ax-skeleton-shimmer"></div>
+                                <div class="h-3.5 w-32 rounded ax-skeleton-shimmer"></div>
+                            </div>
+                        </template>
+                    </div>
+                    <button type="button" @click="cerrarDetalleMovimiento()" class="h-8 w-8 rounded-lg text-slate-400 hover:bg-slate-100 hover:text-slate-700 flex items-center justify-center transition-colors cursor-pointer" title="Cerrar">
+                        <i class="fas fa-xmark"></i>
+                    </button>
+                </div>
+
+                <!-- Skeleton de Carga del Modal -->
+                <div x-show="cargandoDetalleMovimiento" class="p-6 space-y-5">
+                    <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                        <div class="rounded-xl border border-slate-100 bg-slate-50 p-3 space-y-2"><div class="h-3 w-12 rounded ax-skeleton-shimmer"></div><div class="h-4 w-16 rounded ax-skeleton-shimmer"></div></div>
+                        <div class="rounded-xl border border-slate-100 bg-slate-50 p-3 space-y-2"><div class="h-3 w-14 rounded ax-skeleton-shimmer"></div><div class="h-4 w-10 rounded ax-skeleton-shimmer"></div></div>
+                        <div class="rounded-xl border border-slate-100 bg-slate-50 p-3 space-y-2"><div class="h-3 w-10 rounded ax-skeleton-shimmer"></div><div class="h-4 w-16 rounded ax-skeleton-shimmer"></div></div>
+                        <div class="rounded-xl border border-slate-100 bg-slate-50 p-3 space-y-2"><div class="h-3 w-12 rounded ax-skeleton-shimmer"></div><div class="h-4 w-16 rounded ax-skeleton-shimmer"></div></div>
+                    </div>
+                    <div class="rounded-xl border border-slate-100 overflow-hidden space-y-2 p-4">
+                        <div class="h-4 w-36 rounded ax-skeleton-shimmer mb-3"></div>
+                        <div class="h-8 w-full rounded ax-skeleton-shimmer"></div>
+                        <div class="h-8 w-full rounded ax-skeleton-shimmer"></div>
+                        <div class="h-8 w-full rounded ax-skeleton-shimmer"></div>
+                    </div>
+                </div>
+
+                <!-- Contenido Real del Movimiento -->
+                <template x-if="!cargandoDetalleMovimiento && movimientoSeleccionado">
+                    <div class="p-5 space-y-5">
+                        <div class="grid grid-cols-2 gap-3 sm:grid-cols-4">
+                            <div class="rounded-xl bg-slate-50 p-3">
+                                <p class="text-[10px] font-bold uppercase tracking-wider text-slate-400">Tipo</p>
+                                <p class="mt-1 text-xs font-black text-slate-800" x-text="movimientoSeleccionado.tipo"></p>
+                            </div>
+                            <div class="rounded-xl bg-slate-50 p-3">
+                                <p class="text-[10px] font-bold uppercase tracking-wider text-slate-400">Cantidad</p>
+                                <p class="mt-1 text-sm font-black text-amber-700" x-text="movimientoSeleccionado.cantidad"></p>
+                            </div>
+                            <div class="rounded-xl bg-slate-50 p-3">
+                                <p class="text-[10px] font-bold uppercase tracking-wider text-slate-400">SKU</p>
+                                <p class="mt-1 truncate text-xs font-black text-slate-800" x-text="movimientoSeleccionado.sku"></p>
+                            </div>
+                            <div class="rounded-xl bg-slate-50 p-3">
+                                <p class="text-[10px] font-bold uppercase tracking-wider text-slate-400">Origen</p>
+                                <p class="mt-1 text-xs font-black text-slate-800" x-text="movimientoSeleccionado.origen"></p>
+                            </div>
+                        </div>
+
+                        <div class="overflow-hidden rounded-xl border border-slate-200">
+                            <div class="grid grid-cols-3 border-b border-slate-200 bg-slate-50 px-4 py-2.5 text-[10px] font-black uppercase tracking-wider text-slate-500">
+                                <span>Ubicación</span>
+                                <span class="text-center">Antes</span>
+                                <span class="text-center">Después</span>
+                            </div>
+                            <div class="grid grid-cols-3 border-b border-slate-100 px-4 py-2.5 text-xs">
+                                <span class="font-bold text-slate-700">Reserva</span>
+                                <span class="text-center text-slate-600" x-text="movimientoSeleccionado.reserva_anterior"></span>
+                                <span class="text-center font-bold text-slate-800" x-text="movimientoSeleccionado.reserva_nueva"></span>
+                            </div>
+                            <div class="grid grid-cols-3 border-b border-slate-100 px-4 py-2.5 text-xs">
+                                <span class="font-bold text-slate-700">Tienda</span>
+                                <span class="text-center text-slate-600" x-text="movimientoSeleccionado.stock_anterior"></span>
+                                <span class="text-center font-bold text-slate-800" x-text="movimientoSeleccionado.stock_nuevo"></span>
+                            </div>
+                            <div class="grid grid-cols-3 px-4 py-2.5 text-xs">
+                                <span class="font-bold text-slate-700">Cuarentena</span>
+                                <span class="text-center text-slate-600" x-text="movimientoSeleccionado.stock_cuarentena_anterior"></span>
+                                <span class="text-center font-bold text-slate-800" x-text="movimientoSeleccionado.stock_cuarentena_nuevo"></span>
+                            </div>
+                        </div>
+
+                        <div class="rounded-xl border border-slate-100 bg-slate-50 p-4">
+                            <p class="text-[10px] font-black uppercase tracking-wider text-slate-400">Observación</p>
+                            <p class="mt-1 text-xs text-slate-600" x-text="movimientoSeleccionado.observacion"></p>
+                        </div>
+                    </div>
+                </template>
+            </div>
+        </div>
     </div>
+
+    <script>
+        function gestionMovimientosKardex() {
+            return {
+                inventarioTab: @js($filtroMovimiento !== 'todos' ? 'kardex' : 'transferir'),
+                filtroMovimiento: @js($filtroMovimiento),
+                cargandoKardex: false,
+
+                // Modal detalle
+                modalMovimientoAbierto: false,
+                cargandoDetalleMovimiento: false,
+                movimientoSeleccionado: null,
+
+                async abrirDetalleMovimiento(id) {
+                    this.modalMovimientoAbierto = true;
+                    this.cargandoDetalleMovimiento = true;
+                    this.movimientoSeleccionado = null;
+
+                    try {
+                        const res = await fetch(`{{ url('compras/movimientos') }}/${id}`, {
+                            headers: {
+                                'Accept': 'application/json',
+                                'X-Requested-With': 'XMLHttpRequest'
+                            }
+                        });
+                        const data = await res.json();
+                        if (data.success && data.movimiento) {
+                            this.movimientoSeleccionado = data.movimiento;
+                        } else {
+                            Swal.fire({
+                                icon: 'error',
+                                title: 'Error',
+                                text: 'No se pudo cargar la información del movimiento.'
+                            });
+                            this.modalMovimientoAbierto = false;
+                        }
+                    } catch (err) {
+                        console.error('Error al cargar detalle movimiento:', err);
+                        Swal.fire({
+                            icon: 'error',
+                            title: 'Error de red',
+                            text: 'No fue posible conectar con el servidor.'
+                        });
+                        this.modalMovimientoAbierto = false;
+                    } finally {
+                        this.cargandoDetalleMovimiento = false;
+                    }
+                },
+
+                cerrarDetalleMovimiento() {
+                    this.modalMovimientoAbierto = false;
+                    this.movimientoSeleccionado = null;
+                },
+
+                async filtrarKardex(tipo) {
+                    this.filtroMovimiento = tipo;
+                    this.cargandoKardex = true;
+                    const url = `{{ route('compras.movimientos') }}?tipo=${tipo}`;
+                    window.history.pushState({}, '', url);
+
+                    try {
+                        const res = await fetch(url, {
+                            headers: {
+                                'Accept': 'application/json',
+                                'X-Requested-With': 'XMLHttpRequest'
+                            }
+                        });
+                        const data = await res.json();
+                        if (data.success && data.html) {
+                            const contenedor = document.getElementById('contenedorTablaKardex');
+                            if (contenedor) {
+                                contenedor.innerHTML = data.html;
+                                this.atarPaginacionKardex();
+                            }
+                        }
+                    } catch (err) {
+                        console.error('Error al filtrar kardex:', err);
+                    } finally {
+                        this.cargandoKardex = false;
+                    }
+                },
+
+                atarPaginacionKardex() {
+                    const contenedor = document.getElementById('contenedorTablaKardex');
+                    if (!contenedor) return;
+                    const links = contenedor.querySelectorAll('a[href*="page="]');
+                    links.forEach(link => {
+                        link.addEventListener('click', async (e) => {
+                            e.preventDefault();
+                            const href = link.getAttribute('href');
+                            if (!href) return;
+                            this.cargandoKardex = true;
+                            window.history.pushState({}, '', href);
+                            try {
+                                const res = await fetch(href, {
+                                    headers: {
+                                        'Accept': 'application/json',
+                                        'X-Requested-With': 'XMLHttpRequest'
+                                    }
+                                });
+                                const data = await res.json();
+                                if (data.success && data.html) {
+                                    contenedor.innerHTML = data.html;
+                                    this.atarPaginacionKardex();
+                                }
+                            } catch (err) {
+                                console.error('Error en paginación kardex:', err);
+                            } finally {
+                                this.cargandoKardex = false;
+                            }
+                        });
+                    });
+                },
+
+                init() {
+                    this.atarPaginacionKardex();
+                }
+            };
+        }
+    </script>
 </x-app>

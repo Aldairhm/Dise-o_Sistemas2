@@ -294,6 +294,11 @@
 
             <!-- Contenedor Principal (Tabla o Tarjetas) -->
             <div id="variantsContainer" class="relative">
+                <!-- Skeleton Loader para Variantes -->
+                <div id="tableSkeletonVariantes" class="hidden p-5">
+                    <x-skeleton-table :rows="4" :cols="6" :avatarCol="0" />
+                </div>
+
                 <!-- Vista Tabla -->
                 <div id="variantsTableWrapper">
                     @include('productos.partials.table_variantes', ['producto' => $producto])
@@ -430,10 +435,12 @@
             }
         }
 
+        let filterDebounceTimerVar = null;
+
         function applyFiltersVar() {
             const searchInput = document.getElementById('searchVarInput');
             const clearBtn = document.getElementById('clearSearchVarBtn');
-            const query = searchInput.value.toLowerCase().trim();
+            const query = (searchInput.value || '').trim().toLowerCase();
             const status = document.getElementById('statusVarFilter').value;
 
             // Mostrar/ocultar boton X
@@ -443,11 +450,38 @@
                 clearBtn.classList.add('hidden');
             }
 
+            // Mostrar skeleton sutil de transición
+            const skeleton = document.getElementById('tableSkeletonVariantes');
+            const tableWrapper = document.getElementById('variantsTableWrapper');
+            const cardsWrapper = document.getElementById('variantsCardsWrapper');
+
+            if (skeleton) {
+                skeleton.classList.remove('hidden');
+                if (tableWrapper) tableWrapper.classList.add('hidden');
+                if (cardsWrapper) cardsWrapper.classList.add('hidden');
+            }
+
+            clearTimeout(filterDebounceTimerVar);
+            filterDebounceTimerVar = setTimeout(() => {
+                filtrarVariantesLocalmente(query, status);
+
+                if (skeleton) {
+                    skeleton.classList.add('hidden');
+                    setViewVar(currentViewVar, false);
+                }
+            }, 120);
+        }
+
+        function filtrarVariantesLocalmente(query, status) {
             // Filtrar tabla
             let visibleRows = 0;
             document.querySelectorAll('.variante-row').forEach(row => {
-                const matchQuery = row.dataset.nombre.includes(query) || row.dataset.sku.includes(query);
-                const matchStatus = status === 'todos' || row.dataset.estado === status;
+                const rowNombre = (row.dataset.nombre || '').toLowerCase();
+                const rowSku = (row.dataset.sku || '').toLowerCase();
+                const rowEstado = String(row.dataset.estado);
+
+                const matchQuery = !query || rowNombre.includes(query) || rowSku.includes(query);
+                const matchStatus = status === 'todos' || rowEstado === String(status);
 
                 if (matchQuery && matchStatus) {
                     row.style.display = '';
@@ -458,7 +492,7 @@
             });
             
             const noResultsTable = document.getElementById('table-no-results-variantes');
-            const emptyRowTable = document.getElementById('rowNoVariantes'); // El mensaje original si no hay ninguna variante
+            const emptyRowTable = document.getElementById('rowNoVariantes');
             if (noResultsTable) {
                 noResultsTable.style.display = (visibleRows === 0 && !emptyRowTable) ? '' : 'none';
             }
@@ -466,8 +500,12 @@
             // Filtrar tarjetas
             let visibleCards = 0;
             document.querySelectorAll('.variante-card').forEach(card => {
-                const matchQuery = card.dataset.nombre.includes(query) || card.dataset.sku.includes(query);
-                const matchStatus = status === 'todos' || card.dataset.estado === status;
+                const cardNombre = (card.dataset.nombre || '').toLowerCase();
+                const cardSku = (card.dataset.sku || '').toLowerCase();
+                const cardEstado = String(card.dataset.estado);
+
+                const matchQuery = !query || cardNombre.includes(query) || cardSku.includes(query);
+                const matchStatus = status === 'todos' || cardEstado === String(status);
 
                 if (matchQuery && matchStatus) {
                     card.style.display = '';

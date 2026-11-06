@@ -41,7 +41,8 @@
             </a>
         </nav>
 
-        <form method="GET" action="{{ route('comisiones.ajustes') }}" class="grid grid-cols-1 items-end gap-3 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm sm:grid-cols-2 lg:grid-cols-12 lg:p-5">
+        <form method="GET" action="{{ route('comisiones.ajustes') }}" class="grid grid-cols-1 items-end gap-3 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm sm:grid-cols-2 lg:grid-cols-12 lg:p-5"
+              onsubmit="const btn = this.querySelector('button[type=submit]'); if(btn) { btn.disabled = true; btn.innerHTML = '<i class=\'fas fa-spinner fa-spin mr-1\'></i> Filtrando...'; }">
             @if($isAdmin)
                 <div class="lg:col-span-4">
                     <label for="vendedor_id" class="mb-1.5 block text-[10px] font-black uppercase tracking-wider text-slate-500"><i class="fas fa-user-tie mr-1 text-blue-500"></i>Vendedor</label>
@@ -64,11 +65,12 @@
                 <input id="fecha_hasta" name="fecha_hasta" type="date" value="{{ request('fecha_hasta') }}" class="w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5 text-xs font-semibold text-slate-700 transition focus:border-blue-500 focus:bg-white focus:outline-none focus:ring-4 focus:ring-blue-500/10">
             </div>
             <div class="lg:col-span-2 flex gap-2">
-                <button type="submit" class="flex-1 rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 px-3 py-2.5 text-xs font-extrabold text-white shadow-md shadow-blue-600/20 transition hover:-translate-y-0.5 hover:shadow-lg">
-                    <i class="fas fa-filter mr-1"></i> Filtrar
+                <button type="submit" class="flex-1 rounded-xl bg-blue-600 hover:bg-blue-500 px-3 py-2.5 text-xs font-bold text-white shadow-md shadow-blue-600/15 transition hover:-translate-y-0.5 cursor-pointer flex items-center justify-center gap-1">
+                    <i class="fas fa-filter text-[11px]"></i>
+                    <span>Filtrar</span>
                 </button>
                 @if(request()->hasAny(['vendedor_id', 'fecha_desde', 'fecha_hasta']))
-                    <a href="{{ route('comisiones.ajustes') }}" class="flex items-center justify-center rounded-xl border border-slate-200 px-3 py-2.5 text-xs font-bold text-slate-500 transition hover:border-rose-200 hover:bg-rose-50 hover:text-rose-600" title="Limpiar filtros">
+                    <a href="{{ route('comisiones.ajustes') }}" class="flex items-center justify-center rounded-xl border border-slate-200 px-3 py-2.5 text-xs font-bold text-slate-500 transition hover:bg-slate-100" title="Restablecer filtros">
                         <i class="fas fa-rotate-left"></i>
                     </a>
                 @endif

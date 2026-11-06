@@ -131,24 +131,29 @@
         <!-- CONTENEDOR TABLA / CARDS -->
         <div class="bg-white rounded-2xl border border-slate-200/80 shadow-xs overflow-hidden relative">
 
-            <!-- Loader -->
-            <div x-show="loadingLista" style="display:none;"
-                class="absolute inset-0 bg-white/70 backdrop-blur-xs flex items-center justify-center z-20">
-                <div class="flex items-center gap-3 bg-white px-5 py-3 rounded-2xl shadow-xl border border-slate-100 text-blue-600 text-sm font-bold">
-                    <i class="fas fa-spinner fa-spin text-lg"></i>
-                    <span>Buscando proveedores...</span>
-                </div>
+            <!-- Skeleton Loader Inteligente para Tabla y Cards -->
+            <div x-show="loadingLista" style="display:none;" class="p-5">
+                <template x-if="vista === 'table'">
+                    <x-skeleton-table :rows="4" :cols="5" />
+                </template>
+                <template x-if="vista === 'cards'">
+                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                        @for($i = 0; $i < 6; $i++)
+                            <x-skeleton-card :lines="3" />
+                        @endfor
+                    </div>
+                </template>
             </div>
 
             <!-- Mensaje sin datos -->
-            <div x-show="proveedoresFiltrados.length === 0" style="display:none;"
+            <div x-show="!loadingLista && proveedoresFiltrados.length === 0" style="display:none;"
                 class="text-center py-12 text-gray-500">
                 <i class="fas fa-folder-open text-3xl mb-3 text-gray-400"></i>
                 <p>No hay proveedores que coincidan con la búsqueda.</p>
             </div>
 
             <!-- ===================== VISTA TABLA ===================== -->
-            <div x-show="vista === 'table' && proveedoresFiltrados.length > 0" style="display:none;">
+            <div x-show="!loadingLista && vista === 'table' && proveedoresFiltrados.length > 0" style="display:none;">
                 <div class="overflow-x-auto w-full">
                     <table class="w-full text-sm min-w-[600px]">
                         <thead>
@@ -225,7 +230,7 @@
             </div>
 
             <!-- ===================== VISTA CARDS ===================== -->
-            <div x-show="vista === 'cards' && proveedoresFiltrados.length > 0" style="display:none;" class="p-4 sm:p-5">
+            <div x-show="!loadingLista && vista === 'cards' && proveedoresFiltrados.length > 0" style="display:none;" class="p-4 sm:p-5">
                 <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                     <template x-for="proveedor in proveedoresPaginados" :key="proveedor.id">
                         <div class="group bg-white rounded-xl shadow-sm hover:shadow-md transition-all duration-300 relative flex flex-col border border-slate-200/60"
