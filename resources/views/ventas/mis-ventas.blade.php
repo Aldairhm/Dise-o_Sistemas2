@@ -4,6 +4,9 @@
         <!-- ENCABEZADO PRINCIPAL -->
         <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
             <div>
+                <a href="{{ route('home') }}" class="inline-flex items-center gap-2 text-xs font-bold uppercase tracking-widest text-slate-400 hover:text-blue-600 transition-colors mb-3">
+                    <i class="fas fa-arrow-left"></i> Volver al inicio
+                </a>
                 <div class="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-slate-400 mb-1">
                     <a href="/home" class="hover:text-blue-600 transition-colors">Inicio</a>
                     <span>/</span>
@@ -582,7 +585,7 @@
                                         </div>
                                         <h4 class="text-sm font-bold text-slate-700">Aún no tienes ventas registradas</h4>
                                         <p class="text-xs text-slate-400 mt-1">Tus ventas y pedidos realizados se mostrarán en este módulo.</p>
-                                        <a href="{{ route('ventas.create') }}" class="mt-4 px-4 py-2 bg-blue-600 hover:bg-blue-500 text-white rounded-xl text-xs font-bold transition-all shadow-md shadow-blue-600/20">
+                                        <a href="{{ route('home') }}#productos" class="mt-4 px-4 py-2 bg-blue-600 hover:bg-blue-500 text-white rounded-xl text-xs font-bold transition-all shadow-md shadow-blue-600/20">
                                             Crear mi primera venta
                                         </a>
                                     </div>

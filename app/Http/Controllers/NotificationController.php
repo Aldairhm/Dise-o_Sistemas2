@@ -29,7 +29,7 @@ class NotificationController extends Controller
                         if (!$user->isSuperAdmin()) {
                             $q->where('id_usuario', $user->id);
                             if ($user->rol === 'admin') {
-                                $q->orWhere('nivel_escalamiento', 'admin');
+                                $q->orWhere(fn ($q) => $q->where('nivel_escalamiento', 'admin')->where('rol_usuario', 'vendedor'));
                             }
                         }
                     }));

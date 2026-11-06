@@ -115,6 +115,13 @@
                                             </form>
                                         @endif
 
+                                        <a href="{{ route('superadmin.auditorias.informe', $aud->id) }}"
+                                           title="Ver informe completo de auditoría #AUD-{{ str_pad($aud->id, 4, '0', STR_PAD_LEFT) }}"
+                                           class="px-2.5 py-1 rounded-lg text-xs font-bold text-indigo-700 bg-indigo-50 hover:bg-indigo-100 transition-colors inline-flex items-center gap-1">
+                                            <i class="fas fa-file-shield text-indigo-500"></i>
+                                            <span>Informe</span>
+                                        </a>
+
                                         <a href="{{ route('bitacora.index', ['auditoria_id' => $aud->id]) }}"
                                            title="Ver trazabilidad de eventos de la sesión #AUD-{{ str_pad($aud->id, 4, '0', STR_PAD_LEFT) }}"
                                            class="px-2.5 py-1 rounded-lg text-xs font-bold text-blue-700 bg-blue-50 hover:bg-blue-100 transition-colors inline-flex items-center gap-1">

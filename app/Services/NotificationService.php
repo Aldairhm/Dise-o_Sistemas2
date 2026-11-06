@@ -98,7 +98,7 @@ class NotificationService
     public function canSeeTicket(User $user, SoporteTicket $ticket): bool
     {
         return $user->isSuperAdmin() || (int) $ticket->id_usuario === (int) $user->id
-            || ($user->rol === 'admin' && $ticket->nivel_escalamiento === 'admin');
+            || ($user->rol === 'admin' && $ticket->nivel_escalamiento === 'admin' && $ticket->rol_usuario === 'vendedor');
     }
 
     public function ticketRecipients(SoporteTicket $ticket, bool $internal = false): array

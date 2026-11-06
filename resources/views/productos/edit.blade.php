@@ -30,6 +30,10 @@
 
     <main class="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8">
 
+        <a href="{{ route('productos.index') }}" class="inline-flex items-center gap-2 text-xs font-bold uppercase tracking-widest text-slate-400 hover:text-blue-600 transition-colors mb-4">
+            <i class="fas fa-arrow-left"></i> Volver a productos
+        </a>
+
         {{-- BREADCRUMB --}}
         <div class="flex items-center gap-2 text-xs font-bold text-blue-600 uppercase tracking-widest mb-6">
             <i class="fas fa-boxes-stacked"></i>

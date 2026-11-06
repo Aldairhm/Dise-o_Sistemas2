@@ -4,6 +4,9 @@
         <!-- ENCABEZADO PRINCIPAL -->
         <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
             <div>
+                <a href="{{ route('home') }}" class="inline-flex items-center gap-2 text-xs font-bold uppercase tracking-widest text-slate-400 hover:text-blue-600 transition-colors mb-3">
+                    <i class="fas fa-arrow-left"></i> Volver al inicio
+                </a>
                 <div class="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-slate-400 mb-1">
                     <a href="{{ route('ventas.index') }}" class="hover:text-blue-600 transition-colors">Ventas</a>
                     <span>/</span>
@@ -832,14 +835,14 @@
                             </template>
                         </div>
 
-                        <!-- ALERTA INFORMATIVA: EN RUTA NO PUEDE CANCELARSE -->
+                        <!-- ALERTA INFORMATIVA: EN RUTA -->
                         <template x-if="estadoModalData.estadoActual === 'En ruta'">
                             <div class="p-3.5 bg-amber-50 border border-amber-200 rounded-xl text-xs text-amber-900 flex items-start gap-2.5 shadow-2xs">
                                 <i class="fas fa-truck-fast text-amber-600 mt-0.5 text-base shrink-0"></i>
                                 <div>
-                                    <p class="font-bold text-amber-950 leading-snug">Envío actualmente en camino</p>
+                                    <p class="font-bold text-amber-950 leading-snug">Envío en camino con paquetería</p>
                                     <p class="text-[11px] text-amber-800 mt-0.5 leading-relaxed">
-                                        Este paquete ya fue entregado a la paquetería y se encuentra en ruta hacia el cliente. Por políticas de despacho y logística, <strong>este pedido ya no puede ser cancelado</strong>; únicamente puede avanzar a <strong>Entregada</strong> una vez completada la entrega al cliente.
+                                        Este paquete está en tránsito hacia el cliente. No se puede cancelar de forma directa; si el cliente <strong>no lo recibió o rechazó la entrega</strong>, selecciona <strong>Devolución</strong> para reingresar los artículos al stock de tienda y registrar la evidencia física del paquete.
                                     </p>
                                 </div>
                             </div>
@@ -1100,8 +1103,7 @@
                             <i class="fas fa-circle-exclamation text-amber-600 text-sm mt-0.5 shrink-0"></i>
                             <div class="text-[11px]">
                                 <span class="font-bold block">Acción con impacto en inventario y comisiones:</span>
-                                <span class="text-amber-800">
-                                    Si cancelas la venta, el stock de las variantes se devolverá automáticamente a la bodega y se anularán las comisiones asociadas.
+                                <span class="text-amber-800" x-text="nuevoEstadoSeleccionado === 'Devolución' ? 'Si procesas la devolución por paquete no recibido, los productos retornarán al stock activo de tienda y se anularán las comisiones del pedido (deduciendo el 50% del costo de envío al vendedor).' : 'Si cancelas la venta, el stock de las variantes se devolverá automáticamente a la tienda y se anularán las comisiones asociadas.'">
                                 </span>
                             </div>
                         </div>
@@ -2473,8 +2475,8 @@
                         'Pendiente': 'Pedidos recién registrados que requieren confirmación para empaque.',
                         'Confirmada': 'Órdenes listas para ser empaquetadas o despachadas a mensajería.',
                         'En ruta': 'Envíos en tránsito con fotografía de comprobante de paquetería registrada.',
-                        'Cancelada': 'Transacciones que han sido anuladas, con stock retornado a bodega.',
-                        'Devolución': 'Paquetes de envío no recibidos por el cliente, devueltos a la tienda.',
+                        'Cancelada': 'Transacciones que han sido anuladas, con stock retornado a la tienda.',
+                        'Devolución': 'Paquetes de envío no recibidos por el cliente, devueltos al stock de tienda.',
                         'Cambio': 'Producto entregado al cliente que regresa a la tienda para un cambio.'
                     };
                     return descripciones[this.tabActiva] || '';
@@ -2516,7 +2518,13 @@
 
                 abrirModalCambiarEstado(id, estadoActual, tipoVenta, puedeDevolver, estadosPermitidos, diasRestantes, textoGarantia, fechaLimite) {
                     let permitidosFiltrados = Array.isArray(estadosPermitidos) 
-                        ? estadosPermitidos.filter(s => s !== 'Devolución' && s !== 'Cambio') 
+                        ? estadosPermitidos.filter(s => {
+                            // Si está en ruta, permitir Devolución (paquete no recibido)
+                            if (estadoActual === 'En ruta') {
+                                return s !== 'Cambio' && s !== 'Cancelada';
+                            }
+                            return s !== 'Devolución' && s !== 'Cambio';
+                        }) 
                         : [];
 
                     // Regla de despacho: un envío en ruta nunca puede cancelarse
@@ -2584,9 +2592,9 @@
                         case 'Entregada':
                             return 'Entregado al cliente exitosamente.';
                         case 'Cancelada':
-                            return 'Cancela la venta. Reintegra stock a bodega y anula comisiones.';
+                            return 'Cancela la venta. Reintegra stock a la tienda y anula comisiones.';
                         case 'Devolución':
-                            return 'Paquete no recibido por el cliente en ruta. Requiere motivo y foto del paquete.';
+                            return 'Paquete no recibido por el cliente en ruta. Retorna stock a tienda.';
                         case 'Cambio':
                             return 'Retorno por garantía. Requiere justificación y foto del paquete.';
                         default:

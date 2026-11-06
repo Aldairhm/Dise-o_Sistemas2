@@ -203,9 +203,9 @@ class Venta extends Model
             return [];
         }
 
-        // Si ya está en ruta, únicamente puede avanzar a Entregada (estrictamente no se puede cancelar)
+        // Si ya está en ruta: puede avanzar a Entregada o a Devolución (cuando el cliente no recibe/rechaza el paquete)
         if ($this->estado === 'En ruta') {
-            return ['Entregada'];
+            return ['Entregada', 'Devolución'];
         }
 
         // Flujo para envíos:
@@ -213,7 +213,7 @@ class Venta extends Model
             return match ($this->estado) {
                 'Pendiente' => ['Confirmada', 'Cancelada'],
                 'Confirmada' => ['En ruta', 'Cancelada'],
-                'En ruta' => ['Entregada'],
+                'En ruta' => ['Entregada', 'Devolución'],
                 'Cambio' => ['En ruta'],
                 default => [],
             };

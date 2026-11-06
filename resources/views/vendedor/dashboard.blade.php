@@ -47,7 +47,7 @@
                 </div>
 
                 {{-- Botones de acción rápida --}}
-                <a href="{{ route('ventas.create') }}"
+                <a href="{{ route('home') }}#productos"
                    class="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-extrabold text-xs shadow-md shadow-blue-500/20 transition-all hover:scale-[1.02] active:scale-[0.98]">
                     <i class="fas fa-shopping-cart text-[11px]"></i>
                     <span>NUEVA VENTA</span>
@@ -77,7 +77,7 @@
                 <p class="text-sm text-slate-400 mb-6 max-w-md mx-auto">
                     Registra tu primera venta y cada comisión se calculará y visualizará aquí de forma automática.
                 </p>
-                <a href="{{ route('ventas.create') }}"
+                <a href="{{ route('home') }}#productos"
                    class="inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold text-sm shadow-md shadow-blue-500/20 transition-all hover:scale-[1.02]">
                     <i class="fas fa-plus"></i> Registrar mi primera venta
                 </a>

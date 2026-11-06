@@ -121,18 +121,22 @@ class SoporteTicket extends Model
             return true;
         }
 
-        // Si es vendedor: solo puede cancelar su propio ticket si está en Pendiente o En proceso
-        if ($usuario->isVendedor()) {
-            if ($this->id_usuario !== $usuario->id) {
-                return false;
-            }
+        // Si el usuario es el creador de la duda (incluso si es Admin, cuando la duda fue enviada al Super Admin):
+        // El creador NO puede auto-resolverse ni gestionar el estado técnico de su propia consulta,
+        // únicamente puede Cancelarla si la duda aún está abierta ('Pendiente' o 'En proceso').
+        if ($this->id_usuario === $usuario->id) {
             if ($nuevoEstado === 'Cancelada' && in_array($this->estado, ['Pendiente', 'En proceso'])) {
                 return true;
             }
             return false;
         }
 
-        // Si es admin: gestiona el ciclo de vida de tickets activos
+        // Si es vendedor atendiendo ticket ajeno (no permitido):
+        if ($usuario->isVendedor()) {
+            return false;
+        }
+
+        // Si es admin gestionando tickets de terceros (ej. dudas enviadas por vendedores):
         $transicionesValidas = [
             'Pendiente'  => ['En proceso', 'Escalada', 'Resuelta', 'Cancelada'],
             'En proceso' => ['Escalada', 'Resuelta', 'Cancelada'],

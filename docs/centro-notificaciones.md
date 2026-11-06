@@ -75,7 +75,7 @@ Feed y operaciones requieren `auth`, cuenta activa, CSRF en mutaciones y límite
 
 Cada ID se consulta dentro de `user_id = usuario autenticado`; IDs ajenos dan 404. Eventos exclusivos del SUPER_ADMIN y notas internas se filtran también con el rol actual. Los enlaces se construyen desde una lista cerrada de tipos y rutas, sin aceptar URLs del cliente. Se comprueban permisos y existencia al abrir; si ya no están disponibles, se regresa al centro con un aviso. No se conceden permisos por recibir una notificación. Las vistas Blade escapan texto y JavaScript utiliza textContent.
 
-En AyudaController se refuerza el control jerárquico antes de responder, escalar o cambiar estado, además de consultar. Se conserva la política existente de acceso global de administradores a tickets del nivel admin. Un ticket asignado reduce destinatarios, sin inventar nuevas restricciones de negocio para el módulo.
+En AyudaController se aplica el control jerárquico al consultar, responder, escalar o cambiar el estado. La bandeja de equipo de un administrador incluye las dudas de vendedores del nivel admin y las propias se consultan en Mis Dudas. Los avisos respetan ese mismo acceso. Durante una auditoría activa, la sesión ordinaria del titular se cierra y los avisos privados quedan disponibles al recuperar el acceso.
 
 ## Instalación en el servidor del proyecto
 
@@ -87,7 +87,7 @@ En AyudaController se refuerza el control jerárquico antes de responder, escala
 
 ## Validación y límites
 
-- Suite `NotificationCenterTest`: **27 pruebas y 196 comprobaciones**. Incluye destinatarios por rol, aviso de entrega y comisión de envío al administrador, avisos de Kardex y perfil, aviso inmediato de bono, liquidación agrupada tras la garantía, ajuste de comisión en devoluciones, privacidad, deduplicación, filtros y enlaces.
+- Suite `NotificationCenterTest`: **27 pruebas y 204 comprobaciones**. Incluye destinatarios por rol, aviso de entrega y comisión de envío al administrador, avisos de Kardex y perfil, aviso inmediato de bono, liquidación agrupada tras la garantía, ajuste de comisión en devoluciones, privacidad, deduplicación, filtros y enlaces.
 - La suite usa SQLite **en memoria y aislado**. Reutiliza migraciones de usuarios, ventas, bitácora y soporte; emplea fixtures mínimos en las tablas heredadas con ALTER CHECK de PostgreSQL no compatible con SQLite. Sí ejecuta la migración nueva completa. No accede a la base `axstore2026` de la configuración de pruebas antigua.
 - `npm run build`: correcto. `node --check public/js/notification-center.js`: correcto. Rutas nuevas registradas correctamente.
 - Navegador integrado sobre base local descartable: centro y campana renderizados, contador 4→3 al leer y 3→0 al marcar todas, persistencia al recargar, cierre Escape y desplegable móvil de 390 px dentro de pantalla. Se creó una comisión mediante el modelo real en la base aislada y se verificó la llegada automática del aviso (contador 0→1) sin recargar la página. Las capturas contienen datos de prueba; no se agregan seeds demostrativos al producto.

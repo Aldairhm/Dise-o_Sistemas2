@@ -8,6 +8,11 @@
     @endphp
     <style>@media (min-width: 768px) { .ayuda-modulos { grid-template-columns: minmax(235px, 285px) minmax(0, 1fr); } }</style>
     <div class="mx-auto max-w-6xl space-y-6">
+        <div>
+            <a href="{{ route('home') }}" class="inline-flex items-center gap-2 text-xs font-bold uppercase tracking-widest text-slate-400 hover:text-blue-600 transition-colors">
+                <i class="fas fa-arrow-left"></i> Volver al inicio
+            </a>
+        </div>
         <header class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
             <div class="space-y-1">
                 <p class="text-xs font-bold uppercase tracking-wider text-slate-400">AXStore · Centro de Ayuda</p>
@@ -153,9 +158,9 @@
                 </div>
             </div>
             <div class="flex items-center gap-2 shrink-0 w-full sm:w-auto">
-                <a href="{{ route('ayuda.tickets.index') }}"
-                   class="inline-flex items-center justify-center gap-1.5 rounded-lg px-3.5 py-2 text-xs font-bold text-slate-600 bg-white border border-slate-200 hover:bg-slate-50 transition-all shadow-sm">
-                    <i class="fas fa-list-check text-slate-400"></i>
+                <a href="{{ route('ayuda.tickets.index', ['mis_dudas' => 1]) }}"
+                   class="inline-flex items-center justify-center gap-1.5 rounded-lg px-3.5 py-2 text-xs font-bold text-slate-700 bg-white border border-slate-300 hover:bg-slate-50 transition-all shadow-sm">
+                    <i class="fas fa-user-circle text-blue-600"></i>
                     <span>Mis Dudas</span>
                 </a>
                 <button type="button"
@@ -208,7 +213,7 @@
                     <!-- Selector de Módulo -->
                     <div>
                         <label for="waModuloSelect" class="block text-xs font-bold text-slate-700 mb-1">
-                            Módulo de la consulta
+                            Módulo de la consulta <span class="text-rose-500">*</span>
                         </label>
                         <select id="waModuloSelect" onchange="actualizarPreviewWhatsapp()" class="w-full text-xs rounded-lg border border-slate-300 bg-white px-2.5 py-2 text-slate-700 focus:outline-none focus:ring-2 focus:ring-emerald-500">
                             @foreach ($guides as $key => $item)
@@ -222,7 +227,7 @@
                     <!-- Tipo de consulta -->
                     <div>
                         <label for="waTipoSelect" class="block text-xs font-bold text-slate-700 mb-1">
-                            Tipo de consulta
+                            Tipo de consulta <span class="text-rose-500">*</span>
                         </label>
                         <select id="waTipoSelect" onchange="actualizarPreviewWhatsapp()" class="w-full text-xs rounded-lg border border-slate-300 bg-white px-2.5 py-2 text-slate-700 focus:outline-none focus:ring-2 focus:ring-emerald-500">
                             <option value="Duda de funcionamiento">Duda de funcionamiento</option>
@@ -238,7 +243,7 @@
                 <div>
                     <div class="flex items-center justify-between mb-1">
                         <label for="waDudaTexto" class="block text-xs font-bold text-slate-700">
-                            Describe tu duda o problema
+                            Describe tu duda o problema <span class="text-rose-500">*</span>
                         </label>
                         <span class="text-[10px] text-slate-400 font-mono" id="waCharCount">0 / 300</span>
                     </div>
@@ -247,7 +252,11 @@
                               maxlength="300"
                               oninput="actualizarPreviewWhatsapp()"
                               placeholder="Describe brevemente qué estás intentando hacer o qué inconveniente tienes..."
-                              class="w-full text-xs rounded-lg border border-slate-300 px-3 py-2 text-slate-700 focus:outline-none focus:ring-2 focus:ring-emerald-500 resize-none"></textarea>
+                              class="w-full text-xs rounded-lg border border-slate-300 px-3 py-2 text-slate-700 focus:outline-none focus:ring-2 focus:ring-emerald-500 transition-all resize-none"></textarea>
+                    <p id="errorWaDuda" class="hidden text-[11px] font-bold text-rose-600 flex items-center gap-1 mt-1 pl-1">
+                        <i class="fas fa-circle-exclamation text-[10px]"></i>
+                        <span>Debes ingresar el detalle de tu duda o consulta (mínimo 5 caracteres).</span>
+                    </p>
                 </div>
 
                 <!-- Adjuntar Foto / Evidencia (Opcional) -->
@@ -345,7 +354,22 @@
 
         function cerrarModalWhatsapp() {
             document.getElementById('modalWhatsappAyuda').classList.add('hidden');
+            const txt = document.getElementById('waDudaTexto');
+            const errP = document.getElementById('errorWaDuda');
+            if (txt && errP) {
+                txt.classList.remove('border-rose-500', 'bg-rose-50/40', 'ring-1', 'ring-rose-400');
+                txt.classList.add('border-slate-300');
+                errP.classList.add('hidden');
+            }
         }
+
+        document.getElementById('waDudaTexto')?.addEventListener('input', function() {
+            if (this.value.trim().length >= 5) {
+                this.classList.remove('border-rose-500', 'bg-rose-50/40', 'ring-1', 'ring-rose-400');
+                this.classList.add('border-slate-300');
+                document.getElementById('errorWaDuda')?.classList.add('hidden');
+            }
+        });
 
         async function procesarFotoEvidencia(e) {
             const file = e.target.files[0];
@@ -473,7 +497,18 @@
 
             const modulo = document.getElementById('waModuloSelect').value;
             const tipo = document.getElementById('waTipoSelect').value;
-            const duda = document.getElementById('waDudaTexto').value.trim();
+            const dudaInput = document.getElementById('waDudaTexto');
+            const duda = dudaInput.value.trim();
+            const errP = document.getElementById('errorWaDuda');
+
+            if (!duda || duda.length < 5) {
+                dudaInput.classList.remove('border-slate-300');
+                dudaInput.classList.add('border-rose-500', 'bg-rose-50/40', 'ring-1', 'ring-rose-400');
+                if (errP) errP.classList.remove('hidden');
+                dudaInput.focus();
+                return;
+            }
+
             const mensaje = construirMensajeWhatsapp();
 
             const btnEnviar = document.querySelector("button[onclick='enviarAWhatsapp()']");

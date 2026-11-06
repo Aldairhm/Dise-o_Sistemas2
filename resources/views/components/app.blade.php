@@ -55,11 +55,12 @@
                     @endif
                 </div>
 
-                <form method="POST" action="{{ route('superadmin.auditorias.finalizar') }}" class="shrink-0 w-full sm:w-auto">
+                <form id="formFinalizarAuditoria" method="POST" action="{{ route('superadmin.auditorias.finalizar') }}" class="shrink-0 w-full sm:w-auto">
                     @csrf
-                    <button type="submit" class="w-full sm:w-auto justify-center inline-flex items-center gap-1.5 px-3 py-1 rounded-lg bg-slate-800 hover:bg-rose-600 hover:text-white text-slate-300 border border-slate-700 hover:border-rose-600 font-bold text-xs transition-all shadow-sm cursor-pointer">
+                    <input type="hidden" name="notas_cierre" id="inputNotasCierreAuditoria" value="Auditoría completada exitosamente.">
+                    <button type="button" onclick="confirmarSalidaAuditoria()" class="w-full sm:w-auto justify-center inline-flex items-center gap-1.5 px-3 py-1 rounded-lg bg-slate-800 hover:bg-rose-600 hover:text-white text-slate-300 border border-slate-700 hover:border-rose-600 font-bold text-xs transition-all shadow-sm cursor-pointer">
                         <i class="fas fa-arrow-right-from-bracket text-[11px]"></i>
-                        <span>Salir de Auditoría</span>
+                        <span>Finalizar Auditoría & Ver Informe</span>
                     </button>
                 </form>
             </div>
@@ -113,6 +114,33 @@
                 });
             @endif
         });
+
+        function confirmarSalidaAuditoria() {
+            Swal.fire({
+                title: '¿Finalizar Sesión de Auditoría?',
+                text: 'Ingresa un breve dictamen o notas de cierre de lo revisado para anexarlo al informe completo:',
+                input: 'textarea',
+                inputPlaceholder: 'Ej: Se revisaron los módulos de ventas y comisiones. No se hallaron inconsistencias en las fechas auditadas...',
+                inputValue: 'Auditoría completada exitosamente sin novedades críticas.',
+                icon: 'question',
+                showCancelButton: true,
+                confirmButtonColor: '#1e293b',
+                cancelButtonColor: '#64748b',
+                confirmButtonText: '<i class="fas fa-file-shield mr-1"></i> Cerrar y Generar Informe',
+                cancelButtonText: 'Continuar Auditando',
+                reverseButtons: true,
+                inputValidator: (value) => {
+                    if (!value || value.trim().length < 5) {
+                        return 'Debes escribir una nota o dictamen de cierre (mínimo 5 caracteres).';
+                    }
+                }
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    document.getElementById('inputNotasCierreAuditoria').value = result.value.trim();
+                    document.getElementById('formFinalizarAuditoria').submit();
+                }
+            });
+        }
     </script>
 
     <main class="flex-grow p-6 w-full max-w-7xl mx-auto mt-4">

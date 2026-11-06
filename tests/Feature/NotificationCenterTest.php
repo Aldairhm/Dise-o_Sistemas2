@@ -369,12 +369,15 @@ class NotificationCenterTest extends TestCase
     {
         $audit = AuditoriaSesion::create(['token_sesion' => str_repeat('t',64), 'id_super_admin' => $this->super->id, 'id_usuario_auditado' => $this->seller->id,
             'justificacion' => 'Revisión autorizada', 'solo_lectura' => true, 'estado' => 'activa', 'iniciada_en' => now(), 'expira_en' => now()->addMinutes(15)]);
-        $this->feed($this->seller)->assertJsonFragment(['title' => 'Auditoría administrativa de cuenta']);
+        $this->assertSame(1, NotificationDelivery::where('user_id', $this->seller->id)
+            ->whereHas('event', fn ($query) => $query->where('type', 'auditoria_activa'))->count());
+        $this->feed($this->seller)->assertForbidden();
         $this->actingAs($this->seller)->withSession(['auditoria_token' => $audit->token_sesion, 'auditoria_actor_real_id' => $this->super->id])->getJson(route('notifications.feed'))->assertForbidden();
         session()->forget(['auditoria_token','auditoria_actor_real_id']);
         $audit->update(['estado' => 'revocada']);
         $this->feed($this->super)->assertJsonFragment(['title' => 'Auditoría #'.$audit->id.': revocada']);
-        $this->feed($this->seller)->assertJsonFragment(['message' => 'La revisión administrativa de tu cuenta está revocada.']);
+        $this->feed($this->seller)->assertJsonPath('unread', 2)
+            ->assertJsonFragment(['message' => 'La revisión administrativa de tu cuenta está revocada.']);
     }
 
     public function test_disabled_or_unauthenticated_session_cannot_poll(): void
@@ -397,11 +400,15 @@ class NotificationCenterTest extends TestCase
 
     public function test_private_administrative_ticket_cannot_be_answered_or_changed_by_other_admin(): void
     {
-        $ticket = $this->ticket($this->admin, 'super_admin');
         $otherAdmin = $this->user('admin', 'other-admin');
-        $this->actingAs($otherAdmin)->post(route('ayuda.tickets.responder', $ticket), ['mensaje' => 'No autorizado'])->assertForbidden();
-        $this->patchJson(route('ayuda.tickets.estado', $ticket), ['estado' => 'Resuelta'])->assertForbidden();
-        $this->post(route('ayuda.tickets.escalar', $ticket), ['justificacion' => 'Sin acceso a este ticket'])->assertForbidden();
+        foreach (['super_admin', 'admin'] as $level) {
+            $ticket = $this->ticket($this->admin, $level);
+            $this->actingAs($otherAdmin)->get(route('ayuda.tickets.show', $ticket))->assertForbidden();
+            $this->post(route('ayuda.tickets.responder', $ticket), ['mensaje' => 'No autorizado'])->assertForbidden();
+            $this->patchJson(route('ayuda.tickets.estado', $ticket), ['estado' => 'Resuelta', 'resolucion' => 'Sin autorización'])->assertForbidden();
+            $this->post(route('ayuda.tickets.escalar', $ticket), ['justificacion' => 'Sin acceso a este ticket'])->assertForbidden();
+        }
+        $this->feed($otherAdmin)->assertJsonPath('unread', 0);
     }
 
     #[\PHPUnit\Framework\Attributes\RunInSeparateProcess]
