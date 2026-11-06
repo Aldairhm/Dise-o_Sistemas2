@@ -1817,7 +1817,18 @@
                             </span>
                         </div>
 
-                        <!-- SECCIÓN DINÁMICA: EVIDENCIA PAQUETERÍA (EN RUTA) -->
+                        <!-- ALERTA INFORMATIVA: EN RUTA -->
+                        <template x-if="estadoModalData.estadoActual === 'En ruta'">
+                            <div class="p-3.5 bg-amber-50 border border-amber-200 rounded-xl text-xs text-amber-900 flex items-start gap-2.5 shadow-2xs">
+                                <i class="fas fa-truck-fast text-amber-600 mt-0.5 text-base shrink-0"></i>
+                                <div>
+                                    <p class="font-bold text-amber-950 leading-snug">Envío en camino con paquetería</p>
+                                    <p class="text-[11px] text-amber-800 mt-0.5 leading-relaxed">
+                                        Este paquete está en tránsito hacia el cliente. No se puede cancelar de forma directa; si el cliente <strong>no lo recibió o rechazó la entrega</strong>, selecciona <strong>Devolución</strong> para reingresar los artículos al stock de tienda y registrar la evidencia física del paquete.
+                                    </p>
+                                </div>
+                            </div>
+                        </template>
                         <div
                             id="seccion-foto-paquete"
                             x-show="nuevoEstadoSeleccionado === 'En ruta'"
@@ -1992,13 +2003,13 @@
                             </span>
                         </div>
 
+                        <!-- SECCIÓN DINÁMICA: EVIDENCIA PAQUETERÍA (EN RUTA) -->
                         <!-- ADVERTENCIA DE SEGURIDAD / IMPACTO -->
                         <div class="p-3 bg-amber-50 border border-amber-200 rounded-xl flex items-start gap-2.5 text-amber-900">
                             <i class="fas fa-circle-exclamation text-amber-600 text-sm mt-0.5 shrink-0"></i>
                             <div class="text-[11px]">
                                 <span class="font-bold block">Acción con impacto en inventario y comisiones:</span>
-                                <span class="text-amber-800">
-                                    Si cancelas la venta, el stock de las variantes se devolverá automáticamente a la bodega y se anularán las comisiones asociadas.
+                                <span class="text-amber-800" x-text="nuevoEstadoSeleccionado === 'Devolución' ? 'Si procesas la devolución por paquete no recibido, los productos retornarán al stock activo de tienda y se anularán las comisiones del pedido (deduciendo el 50% del costo de envío al vendedor).' : 'Si cancelas la venta, el stock de las variantes se devolverá automáticamente a la tienda y se anularán las comisiones asociadas.'">
                                 </span>
                             </div>
                         </div>
@@ -2443,13 +2454,27 @@
                 errorObservacionesEstadoMensaje: '',
 
                 abrirModalCambiarEstado(id, estadoActual, tipoVenta, puedeDevolver, estadosPermitidos, diasRestantes, textoGarantia, fechaLimite) {
+                    let permitidosFiltrados = Array.isArray(estadosPermitidos) 
+                        ? estadosPermitidos.filter(s => {
+                            if (estadoActual === 'En ruta') {
+                                return s !== 'Cambio' && s !== 'Cancelada';
+                            }
+                            return s !== 'Devolución' && s !== 'Cambio';
+                        }) 
+                        : [];
+
+                    // Regla de despacho: un envío en ruta nunca puede cancelarse
+                    if (estadoActual === 'En ruta') {
+                        permitidosFiltrados = permitidosFiltrados.filter(s => s !== 'Cancelada');
+                    }
+
                     this.estadoModalData = {
                         id: id,
                         folio: '#VNT-' + String(id).padStart(5, '0'),
                         estadoActual: estadoActual,
                         tipoVenta: tipoVenta,
                         puedeDevolver: puedeDevolver,
-                        estadosPermitidos: Array.isArray(estadosPermitidos) ? estadosPermitidos.filter(s => s !== 'Devolución' && s !== 'Cambio') : [],
+                        estadosPermitidos: permitidosFiltrados,
                         diasRestantes: diasRestantes || 0,
                         textoGarantia: textoGarantia || '',
                         fechaLimite: fechaLimite || ''
@@ -2510,9 +2535,9 @@
                         case 'Entregada':
                             return 'Entregado al cliente exitosamente.';
                         case 'Cancelada':
-                            return 'Cancela la venta. Reintegra stock a bodega y anula comisiones.';
+                            return 'Cancela la venta. Reintegra stock a la tienda y anula comisiones.';
                         case 'Devolución':
-                            return 'Paquete no recibido por el cliente en ruta. Requiere motivo y foto del paquete.';
+                            return 'Paquete no recibido por el cliente en ruta. Retorna stock a tienda.';
                         case 'Cambio':
                             return 'Retorno por garantía. Requiere justificación y foto del paquete.';
                         default:
