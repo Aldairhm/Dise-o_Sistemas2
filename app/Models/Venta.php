@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Support\CloudStorage;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
@@ -57,17 +58,17 @@ class Venta extends Model
 
     public function getComprobanteUrlAttribute(): ?string
     {
-        return $this->comprobante_pago ? asset('storage/' . $this->comprobante_pago) : null;
+        return CloudStorage::url($this->comprobante_pago);
     }
 
     public function getComprobantePaqueteUrlAttribute(): ?string
     {
-        return $this->comprobante_paquete ? asset('storage/' . $this->comprobante_paquete) : null;
+        return CloudStorage::url($this->comprobante_paquete);
     }
 
     public function getComprobanteDevolucionUrlAttribute(): ?string
     {
-        return $this->comprobante_devolucion ? asset('storage/' . $this->comprobante_devolucion) : null;
+        return CloudStorage::url($this->comprobante_devolucion);
     }
 
     /**

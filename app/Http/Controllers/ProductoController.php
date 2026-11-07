@@ -48,7 +48,7 @@ class ProductoController extends Controller
         }
 
         if ($request->hasFile('imagen_principal')) {
-            $path = $request->file('imagen_principal')->store('productos', 'public');
+            $path = $request->file('imagen_principal')->store('productos', 's3');
             $validated['imagen_principal'] = $path;
         }
 
@@ -104,9 +104,9 @@ class ProductoController extends Controller
 
         if ($request->hasFile('imagen_principal')) {
             if ($producto->imagen_principal) {
-                Storage::disk('public')->delete($producto->imagen_principal);
+                Storage::disk('s3')->delete($producto->imagen_principal);
             }
-            $path = $request->file('imagen_principal')->store('productos', 'public');
+            $path = $request->file('imagen_principal')->store('productos', 's3');
             $validated['imagen_principal'] = $path;
         }
 
@@ -195,12 +195,12 @@ class ProductoController extends Controller
         $producto->load('variantes.imagenes');
 
         if ($producto->imagen_principal) {
-            Storage::disk('public')->delete($producto->imagen_principal);
+            Storage::disk('s3')->delete($producto->imagen_principal);
         }
 
         foreach ($producto->variantes as $variante) {
             foreach ($variante->imagenes as $imagen) {
-                Storage::disk('public')->delete($imagen->ruta_imagen);
+                Storage::disk('s3')->delete($imagen->ruta_imagen);
             }
         }
 

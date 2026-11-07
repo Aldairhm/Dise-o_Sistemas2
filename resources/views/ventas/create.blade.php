@@ -124,6 +124,7 @@
                                         <i class="fas fa-box text-xl"></i>
                                     </template>
                                 </div>
+                                
                                 <div class="min-w-0 flex-1">
                                     <span class="inline-block text-[10px] font-black uppercase tracking-wider text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded mb-1" x-text="variante.sku || 'Sin SKU'"></span>
                                     <h3 class="text-sm font-bold text-slate-800 truncate group-hover:text-emerald-700 transition-colors" x-text="variante.producto"></h3>

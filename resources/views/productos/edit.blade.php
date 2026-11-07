@@ -118,13 +118,12 @@
                     <label for="imagen_principal" class="block text-xs font-bold text-slate-500 uppercase tracking-widest mb-1.5">Imagen Principal (Opcional)</label>
                     <div class="flex items-center gap-4">
                         @if($producto->imagen_principal)
-                            <img src="{{ asset('storage/' . $producto->imagen_principal) }}" alt="Imagen actual" class="w-16 h-16 rounded-lg object-cover border border-slate-200 shadow-sm">
+                            <img src="{{ str_starts_with($producto->imagen_principal, 'http') ? $producto->imagen_principal : \Illuminate\Support\Facades\Storage::disk('s3')->url($producto->imagen_principal) }}" alt="Imagen actual" class="w-16 h-16 rounded-lg object-cover border border-slate-200 shadow-sm">
                         @endif
                         <input type="file" name="imagen_principal" id="imagen_principal" accept="image/*"
                                class="w-full rounded-xl border border-slate-200 px-4 py-2.5 text-sm text-slate-800 bg-white focus:outline-none focus:ring-2 focus:ring-blue-500/30 focus:border-blue-500 transition-all file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100">
                     </div>
                 </div>
-
                 <div class="mb-6">
                     <label for="descripcion" class="block text-xs font-bold text-slate-500 uppercase tracking-widest mb-1.5">Descripción</label>
                     <textarea name="descripcion" id="descripcion" rows="3"

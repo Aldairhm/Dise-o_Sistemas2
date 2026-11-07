@@ -211,3 +211,50 @@ html.dark .swal2-popup .swal2-html-container strong {
 .swal2-topmost {
     z-index: 100000 !important;
 }
+
+.backup-restore-modal {
+    max-height: calc(100vh - 2rem);
+}
+
+.backup-restore-modal form {
+    max-height: calc(100vh - 2rem);
+    overflow-y: auto;
+}
+
+.backup-restore-modal form::-webkit-scrollbar {
+    width: 6px;
+}
+
+.backup-restore-modal form::-webkit-scrollbar-thumb {
+    background: #cbd5e1;
+    border-radius: 999px;
+}
+
+.backup-toast {
+    width: min(390px, calc(100vw - 2rem)) !important;
+    padding: 0.9rem 1rem !important;
+    border: 1px solid #e2e8f0 !important;
+    border-radius: 1rem !important;
+    box-shadow: 0 18px 45px rgba(15, 23, 42, 0.18) !important;
+}
+
+.backup-toast .swal2-title {
+    font-size: 0.85rem !important;
+    margin: 0 0 0.2rem !important;
+}
+
+.backup-toast .swal2-html-container {
+    margin: 0 !important;
+    font-size: 0.75rem !important;
+    line-height: 1.45 !important;
+    text-align: left !important;
+}
+
+html.dark .backup-restore-modal {
+    background: #0f172a !important;
+    border-color: #334155 !important;
+}
+
+html.dark .backup-restore-modal .bg-slate-50\/70 {
+    background: rgba(30, 41, 59, 0.7) !important;
+}

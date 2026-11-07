@@ -35,7 +35,7 @@ class VarianteController extends Controller
         if ($request->hasFile('imagenes')) {
             $principalIndex = (int) $request->input('imagen_principal_index', 0);
             foreach (array_values($request->file('imagenes')) as $index => $file) {
-                $path = $file->store('variantes', 'public');
+                $path = $file->store('variantes', 's3');
                 VarianteImagen::create([
                     'id_variante' => $variante->id,
                     'ruta_imagen' => $path,
@@ -109,7 +109,7 @@ class VarianteController extends Controller
                                      ->where('id_variante', $variante->id)
                                      ->first();
                 if ($img) {
-                    Storage::disk('public')->delete($img->ruta_imagen);
+                    Storage::disk('s3')->delete($img->ruta_imagen);
                     $img->delete();
                 }
             }
@@ -133,7 +133,7 @@ class VarianteController extends Controller
             }
 
             foreach (array_values($request->file('imagenes')) as $index => $file) {
-                $path = $file->store('variantes', 'public');
+                $path = $file->store('variantes', 's3');
                 VarianteImagen::create([
                     'id_variante'  => $variante->id,
                     'ruta_imagen'  => $path,
@@ -176,7 +176,7 @@ class VarianteController extends Controller
 
         try {
             foreach ($variante->imagenes as $img) {
-                Storage::disk('public')->delete($img->ruta_imagen);
+                Storage::disk('s3')->delete($img->ruta_imagen);
             }
 
             $variante->delete();

@@ -536,7 +536,7 @@
                                         @if($venta->comprobante_pago)
                                             <button 
                                                 type="button" 
-                                                @click="verImagenAmpliada('{{ asset('storage/' . $venta->comprobante_pago) }}', 'VNT-{{ str_pad($venta->id, 5, '0', STR_PAD_LEFT) }}_{{ \Carbon\Carbon::parse($venta->fecha)->format('Y-m-d') }}_comprobante_pago', 'Comprobante de Pago por Transferencia')"
+                                                @click="verImagenAmpliada('{{ str_starts_with($venta->comprobante_pago, 'http') ? $venta->comprobante_pago : \Illuminate\Support\Facades\Storage::disk('s3')->url($venta->comprobante_pago) }}', 'VNT-{{ str_pad($venta->id, 5, '0', STR_PAD_LEFT) }}_{{ \Carbon\Carbon::parse($venta->fecha)->format('Y-m-d') }}_comprobante_pago', 'Comprobante de Pago por Transferencia')"
                                                 class="rounded-lg border border-purple-200 bg-purple-50 hover:bg-purple-600 hover:text-white text-purple-700 px-2 py-1 text-[11px] font-bold transition-all shadow-2xs flex items-center gap-1 cursor-pointer shrink-0"
                                                 title="Ver Comprobante de Pago por Transferencia"
                                             >
@@ -549,7 +549,7 @@
                                         @if($venta->comprobante_paquete)
                                             <button 
                                                 type="button" 
-                                                @click="verImagenAmpliada('{{ asset('storage/' . $venta->comprobante_paquete) }}', 'VNT-{{ str_pad($venta->id, 5, '0', STR_PAD_LEFT) }}_{{ \Carbon\Carbon::parse($venta->fecha)->format('Y-m-d') }}_paquete', 'Comprobante de Paquetería')"
+                                                @click="verImagenAmpliada('{{ str_starts_with($venta->comprobante_paquete, 'http') ? $venta->comprobante_paquete : \Illuminate\Support\Facades\Storage::disk('s3')->url($venta->comprobante_paquete) }}', 'VNT-{{ str_pad($venta->id, 5, '0', STR_PAD_LEFT) }}_{{ \Carbon\Carbon::parse($venta->fecha)->format('Y-m-d') }}_paquete', 'Comprobante de Paquetería')"
                                                 class="rounded-lg border border-indigo-200 bg-indigo-50 hover:bg-indigo-600 hover:text-white text-indigo-700 px-2 py-1 text-[11px] font-bold transition-all shadow-2xs flex items-center gap-1 cursor-pointer shrink-0"
                                                 title="Ver Comprobante de Paquetería"
                                             >
@@ -562,7 +562,7 @@
                                         @if($venta->comprobante_devolucion)
                                             <button 
                                                 type="button" 
-                                                @click="verImagenAmpliada('{{ asset('storage/' . $venta->comprobante_devolucion) }}', 'VNT-{{ str_pad($venta->id, 5, '0', STR_PAD_LEFT) }}_{{ \Carbon\Carbon::parse($venta->fecha)->format('Y-m-d') }}_devolucion', 'Comprobante de Devolución')"
+                                                @click="verImagenAmpliada('{{ str_starts_with($venta->comprobante_devolucion, 'http') ? $venta->comprobante_devolucion : \Illuminate\Support\Facades\Storage::disk('s3')->url($venta->comprobante_devolucion) }}', 'VNT-{{ str_pad($venta->id, 5, '0', STR_PAD_LEFT) }}_{{ \Carbon\Carbon::parse($venta->fecha)->format('Y-m-d') }}_devolucion', 'Comprobante de Devolución')"
                                                 class="rounded-lg border border-rose-200 bg-rose-50 hover:bg-rose-600 hover:text-white text-rose-700 px-2 py-1 text-[11px] font-bold transition-all shadow-2xs flex items-center gap-1 cursor-pointer shrink-0"
                                                 title="Ver Comprobante de Devolución"
                                             >

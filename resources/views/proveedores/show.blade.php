@@ -93,7 +93,7 @@
                                         </div>
                                     </div>
                                     <div class="flex gap-2 transition-opacity">
-                                        <a :href="item.tipo === 'enlace' ? item.ruta_destino : '/storage/' + item.ruta_destino" target="_blank" class="px-3 py-1.5 text-xs font-medium text-blue-700 bg-blue-50 hover:bg-blue-100 rounded-md transition-colors">
+                                        <a :href="item.tipo === 'enlace' ? item.ruta_destino : item.url" target="_blank" class="px-3 py-1.5 text-xs font-medium text-blue-700 bg-blue-50 hover:bg-blue-100 rounded-md transition-colors">
                                             <i class="fas fa-external-link-alt"></i> Ver
                                         </a>
                                         <button @click="eliminarCatalogo(item.id)" class="px-3 py-1.5 text-xs font-medium text-red-700 bg-red-50 hover:bg-red-100 rounded-md transition-colors">

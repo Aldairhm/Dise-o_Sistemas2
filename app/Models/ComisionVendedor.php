@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Support\CloudStorage;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -61,7 +62,7 @@ class ComisionVendedor extends Model
         if (!$this->comprobante_pago) {
             return null;
         }
-        return asset('storage/' . $this->comprobante_pago);
+        return CloudStorage::url($this->comprobante_pago);
     }
 
     public function getVentaAttribute(): ?Venta

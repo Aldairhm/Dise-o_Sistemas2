@@ -8,8 +8,10 @@ use App\Models\User;
 use App\Models\Venta;
 use App\Services\ActivityLogger;
 use App\Services\ComisionService;
+use App\Support\CloudStorage;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Storage;
 
 class ComisionVendedorController extends Controller
 {
@@ -550,7 +552,7 @@ class ComisionVendedorController extends Controller
         if ($isTransferencia && $request->hasFile('comprobante_pago')) {
             $archivo = $request->file('comprobante_pago');
             $nombreArchivo = 'liquidacion_vendedor_' . $validated['id_vendedor'] . '_' . now()->format('Ymd_His') . '.' . $archivo->getClientOriginalExtension();
-            $comprobantePath = $archivo->storeAs('comprobantes_liquidaciones', $nombreArchivo, 'public');
+            $comprobantePath = $archivo->storeAs('comprobantes_liquidaciones', $nombreArchivo, 's3');
         }
 
         $cantidad = $this->comisionService->liquidarComisiones(
@@ -629,6 +631,7 @@ class ComisionVendedorController extends Controller
         $comision = ComisionVendedor::with([
             'vendedor',
             'salida.variante.producto',
+            'salida.variante.imagenes',
             'liquidadoPor',
         ])->findOrFail($id);
 
@@ -716,7 +719,11 @@ class ComisionVendedorController extends Controller
                     'producto_nombre' => $comision->salida->variante?->producto?->nombre ?? 'Producto',
                     'variante_nombre' => $comision->salida->variante?->nombre_variante ?? '',
                     'sku' => $comision->salida->variante?->sku,
-                    'imagen' => $comision->salida->variante?->imagen ?: $comision->salida->variante?->producto?->imagen_principal,
+                    'imagen' => ($rawImg = $comision->salida->variante?->imagenes?->firstWhere('es_principal', 1)?->ruta_imagen
+                        ?? $comision->salida->variante?->imagenes?->first()?->ruta_imagen
+                        ?? $comision->salida->variante?->producto?->imagen_principal)
+                        ? CloudStorage::url($rawImg)
+                        : null,
                     'cantidad' => (int) $comision->salida->cantidad,
                     'precio_unitario' => (float) $comision->salida->precio_unitario,
                     'costo_extra' => (float) $comision->salida->costo_extra,

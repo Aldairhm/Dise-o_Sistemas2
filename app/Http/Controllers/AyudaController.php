@@ -8,6 +8,7 @@ use App\Models\SoporteTicketMensaje;
 use App\Services\ActivityLogger;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use Illuminate\View\View;
 
@@ -95,11 +96,11 @@ class AyudaController extends Controller
 
         $file = $request->file('evidencia');
         $nombre = 'soporte_' . time() . '_' . Str::random(8) . '.' . $file->getClientOriginalExtension();
-        $path = $file->storeAs('soporte/evidencias', $nombre, 'public');
+        $path = $file->storeAs('soporte/evidencias', $nombre, 's3');
 
         return response()->json([
             'success' => true,
-            'url' => asset('storage/' . $path),
+            'url' => Storage::disk('s3')->url($path),
             'filename' => $nombre,
         ]);
     }

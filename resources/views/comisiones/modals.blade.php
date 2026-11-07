@@ -1123,7 +1123,7 @@ async function verDetalleComision(id) {
             const imgBox = document.getElementById('detProductoImgBox');
             if (imgBox) {
                 if (salida.imagen) {
-                    const src = salida.imagen.startsWith('http') || salida.imagen.startsWith('/') ? salida.imagen : '/storage/' + salida.imagen;
+                    const src = salida.imagen;
                     imgBox.innerHTML = `<img src="${src}" class="w-full h-full object-cover">`;
                 } else {
                     imgBox.innerHTML = `<i class="fas fa-box text-slate-300 text-xl"></i>`;

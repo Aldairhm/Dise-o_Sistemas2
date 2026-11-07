@@ -10,6 +10,7 @@ use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\File;
 use ZipArchive;
 
 class BackupController extends Controller
@@ -60,22 +61,34 @@ class BackupController extends Controller
             // Aumentar el tiempo límite para permitir el volcado y la subida a Drive
             set_time_limit(300);
 
-            // --only-db → solo respaldo de base de datos (sin archivos)
+            // Generar respaldo (Base de datos - Stateless)
             // Desactivamos las notificaciones nativas de Spatie para usar nuestro MailService unificado
             $exitCode = Artisan::call('backup:run', [
-                '--only-db'               => true,
+                '--only-db' => true,
                 '--disable-notifications' => true,
             ]);
 
             $output = Artisan::output();
 
-            if ($exitCode !== 0) {
+            // Localizar el archivo generado en el almacenamiento local
+            $disk = Storage::disk('local');
+            $backupFolder = config('backup.backup.name', 'Axstore_Respaldos');
+            $latestFile = collect($disk->files($backupFolder))
+                ->filter(fn($f) => str_ends_with($f, '.zip'))
+                ->sortByDesc(fn($f) => $disk->lastModified($f))
+                ->first();
+
+            // Verificar si el archivo local fue creado en los últimos 2 minutos
+            $isRecentlyCreated = $latestFile && (time() - $disk->lastModified($latestFile)) < 120;
+
+            // Si Spatie devolvió código de error Y no se generó el archivo local, reportar fallo
+            if ($exitCode !== 0 && ! $isRecentlyCreated) {
                 Log::error("Spatie Backup fallo con código $exitCode: " . $output);
 
                 ActivityLogger::log(
                     'CANCELAR',
                     'Respaldos',
-                    'Intento fallido al generar respaldo manual de base de datos MySQL.'
+                    'Intento fallido al generar respaldo del sistema.'
                 );
 
                 // Notificar por correo a los administradores del fallo
@@ -91,33 +104,32 @@ class BackupController extends Controller
                     ->with('error', 'No se pudo completar el respaldo. Por favor revisa el log de Laravel.');
             }
 
-            // Localizar el último archivo generado para reportar nombre y tamaño exacto
-            $disk = Storage::disk('local');
-            $backupFolder = config('backup.backup.name', 'laravel-backup');
-            $latestFile = collect($disk->files($backupFolder))
-                ->filter(fn($f) => str_ends_with($f, '.zip'))
-                ->sortByDesc(fn($f) => $disk->lastModified($f))
-                ->first();
-
             $fileName = $latestFile ? basename($latestFile) : 'backup-' . date('Y-m-d-His') . '.zip';
             $fileSize = $latestFile ? $this->formatBytes($disk->size($latestFile)) : 'Desconocido';
+
+            $mensajeExito = 'Respaldo generado exitosamente.';
+            if ($exitCode !== 0) {
+                Log::warning("Respaldo creado con éxito en local pero falló sincronización a Google Drive: " . $output);
+                $mensajeExito = 'Respaldo guardado exitosamente en el servidor local. (Aviso: No se pudo subir a Google Drive).';
+            }
 
             ActivityLogger::log(
                 'CREAR',
                 'Respaldos',
-                "Generación exitosa de respaldo manual de base de datos MySQL: {$fileName} ({$fileSize})."
+                "Generación exitosa de respaldo del sistema (BD): {$fileName} ({$fileSize})."
             );
 
             // Notificación UNIFICADA por correo a los administradores
             MailService::sendBackupNotification(
                 isSuccess: true,
                 fileName: $fileName,
-                fileSize: $fileSize
+                fileSize: $fileSize,
+                errorMessage: $exitCode !== 0 ? 'Guardado en local. Hubo una advertencia en Google Drive.' : null
             );
 
             return redirect()
                 ->route('backups.index')
-                ->with('success', 'Respaldo generado exitosamente. Se ha notificado por correo a los administradores.');
+                ->with('success', $mensajeExito);
 
         } catch (\Exception $e) {
             ActivityLogger::log(
@@ -141,108 +153,84 @@ class BackupController extends Controller
 
     public function restoreDatabase(Request $request)
     {
-        // 1. Defensa: Validación estricta de credenciales y archivo
+        // 1. Defensa: Validación estricta exigiendo exclusivamente extensión .zip (hasta 100MB)
         $request->validate([
             'password'    => ['required', 'string', 'current_password'],
             'file_name'   => ['nullable', 'string'],
-            'backup_file' => ['nullable', 'file', 'extensions:sql,zip', 'max:51200'],
+            'backup_file' => ['nullable', 'file', 'extensions:zip', 'max:102400'],
         ], [
             'password.required'         => 'Debes ingresar tu contraseña para autorizar la restauración.',
             'password.current_password' => 'La contraseña de confirmación es incorrecta.',
-            'backup_file.extensions'    => 'El archivo debe ser un script SQL válido (.sql) o un respaldo comprimido (.zip).',
-            'backup_file.max'           => 'El archivo de respaldo no debe superar los 50MB.',
+            'backup_file.extensions'    => 'El archivo de respaldo debe tener estrictamente la extensión .zip.',
+            'backup_file.max'           => 'El archivo de respaldo no debe superar el límite de 100MB.',
         ]);
 
         if (! $request->hasFile('backup_file') && ! $request->filled('file_name')) {
-            return back()->withErrors('Debes seleccionar un respaldo existente o subir un archivo (.sql o .zip).');
+            return back()->withErrors('Debes seleccionar un respaldo existente o subir un archivo comprimido (.zip).');
         }
 
         $origen = '';
-        $sqlContent = '';
+        $tempExtractPath = storage_path('app/restore-temp-' . time());
 
         try {
-            // Aumentar tiempo límite y memoria para la importación
+            // Aumentar tiempo límite y memoria para la descompresión e importación
             set_time_limit(600);
             ini_set('memory_limit', '512M');
 
-            // 2. Extracción del contenido SQL según la fuente
+            // Determinar origen y ruta del archivo .zip a procesar
             if ($request->hasFile('backup_file')) {
                 $file = $request->file('backup_file');
-                $ext = strtolower($file->getClientOriginalExtension());
+                $zipPath = $file->getRealPath();
                 $origen = 'Archivo subido: ' . $file->getClientOriginalName();
-
-                if ($ext === 'zip') {
-                    $zip = new ZipArchive();
-                    if ($zip->open($file->getRealPath()) !== true) {
-                        throw new \Exception('No se pudo abrir el archivo .zip cargado.');
-                    }
-
-                    for ($i = 0; $i < $zip->numFiles; $i++) {
-                        $name = $zip->getNameIndex($i);
-                        if (str_ends_with(strtolower($name), '.sql')) {
-                            $stat = $zip->statIndex($i);
-                            if (($stat['size'] ?? 0) > 100 * 1024 * 1024) {
-                                $zip->close();
-                                throw new \Exception('El archivo SQL descomprimido supera el límite de seguridad permitido (100MB).');
-                            }
-                            $sqlContent = $zip->getFromIndex($i);
-                            break;
-                        }
-                    }
-                    $zip->close();
-
-                    if (! $sqlContent) {
-                        throw new \Exception('El archivo comprimido .zip no contiene ningún script .sql válido.');
-                    }
-                } else {
-                    $sqlContent = file_get_contents($file->getRealPath());
-                }
             } else {
-                // Restauración desde historial local existente
-                $backupFolder = config('backup.backup.name', 'laravel-backup');
+                $backupFolder = config('backup.backup.name', 'Axstore_Respaldos');
                 $fileName = basename($request->input('file_name'));
                 $filePath = $backupFolder . '/' . $fileName;
                 $disk = Storage::disk('local');
 
                 if (! $disk->exists($filePath)) {
-                    throw new \Exception("El archivo de respaldo seleccionado no existe en el almacenamiento: {$fileName}");
+                    return back()->withErrors("El archivo de respaldo seleccionado no existe en el almacenamiento: {$fileName}");
                 }
 
+                $zipPath = $disk->path($filePath);
                 $origen = "Historial local: {$fileName}";
-                $realPath = $disk->path($filePath);
-
-                $zip = new ZipArchive();
-                if ($zip->open($realPath) !== true) {
-                    throw new \Exception("No se pudo abrir el archivo de respaldo {$fileName}.");
-                }
-
-                for ($i = 0; $i < $zip->numFiles; $i++) {
-                    $name = $zip->getNameIndex($i);
-                    if (str_ends_with(strtolower($name), '.sql')) {
-                        $stat = $zip->statIndex($i);
-                        if (($stat['size'] ?? 0) > 100 * 1024 * 1024) {
-                            $zip->close();
-                            throw new \Exception('El archivo SQL descomprimido supera el límite de seguridad permitido (100MB).');
-                        }
-                        $sqlContent = $zip->getFromIndex($i);
-                        break;
-                    }
-                }
-                $zip->close();
-
-                if (! $sqlContent) {
-                    throw new \Exception("No se encontró ningún script .sql dentro del archivo {$fileName}.");
-                }
             }
+
+            // Crear directorio temporal único si no existe
+            if (! File::isDirectory($tempExtractPath)) {
+                File::makeDirectory($tempExtractPath, 0755, true);
+            }
+
+            // 2. Extraer archivo .zip con ZipArchive
+            $zip = new ZipArchive();
+            if ($zip->open($zipPath) !== true) {
+                throw new \Exception('No se pudo abrir el archivo .zip de respaldo.');
+            }
+
+            $zip->extractTo($tempExtractPath);
+            $zip->close();
+
+            // 3. Restauración de Base de Datos: Escanear archivo .sql (normalmente en db-dumps/)
+            $sqlFiles = collect(File::allFiles($tempExtractPath))
+                ->filter(fn($f) => strtolower($f->getExtension()) === 'sql')
+                ->values();
+
+            if ($sqlFiles->isEmpty()) {
+                throw new \Exception('El archivo comprimido .zip no contiene ningún script .sql para restaurar.');
+            }
+
+            // Seleccionar preferentemente el volcado en db-dumps o el primero encontrado
+            $sqlFile = $sqlFiles->first(fn($f) => str_contains($f->getPathname(), 'db-dumps')) ?? $sqlFiles->first();
+            $sqlContent = File::get($sqlFile->getRealPath());
 
             if (empty(trim($sqlContent))) {
-                throw new \Exception('El script SQL está vacío o no contiene instrucciones ejecutables.');
+                throw new \Exception('El script SQL extraído se encuentra vacío.');
             }
 
-            // 3. Inspección y Verificación de Seguridad Anti-Malware en el contenido SQL
+            // Inspección y verificación de seguridad anti-malware previa
             $this->validarSeguridadSql($sqlContent);
 
-            // 4. Ejecución segura en MySQL desactivando temporalmente llaves foráneas
+            // Desactivar temporalmente FOREIGN_KEY_CHECKS, ejecutar DB::unprepared() y reactivar inmediatamente
             DB::statement('SET FOREIGN_KEY_CHECKS=0;');
             try {
                 DB::unprepared($sqlContent);
@@ -250,14 +238,18 @@ class BackupController extends Controller
                 DB::statement('SET FOREIGN_KEY_CHECKS=1;');
             }
 
-            // 4. Registro en Bitácora de Auditoría
+            // 4. Limpieza: Destruir la carpeta temporal extraída
+            if (File::isDirectory($tempExtractPath)) {
+                File::deleteDirectory($tempExtractPath);
+            }
+
+            // 5. Auditoría y Notificaciones
             ActivityLogger::log(
                 'RESTAURAR',
                 'Respaldos',
-                "Restauración de base de datos completada exitosamente ({$origen})"
+                "Restauración completa de base de datos finalizada exitosamente ({$origen})"
             );
 
-            // 5. Notificar a todos los administradores activos mediante el MailService unificado
             MailService::sendDatabaseRestorationNotification(true, $origen, null, $request);
 
             // Renovar marca de confirmación de contraseña en sesión
@@ -267,21 +259,24 @@ class BackupController extends Controller
                 ->route('backups.index')
                 ->with('success', "Base de datos restaurada con éxito ({$origen}).");
 
-        } catch (\Exception $e) {
+        } catch (\Throwable $e) {
             DB::statement('SET FOREIGN_KEY_CHECKS=1;');
+
+            if (isset($tempExtractPath) && File::isDirectory($tempExtractPath)) {
+                File::deleteDirectory($tempExtractPath);
+            }
 
             ActivityLogger::log(
                 'CANCELAR',
                 'Respaldos',
-                "Error en restauración de base de datos ({$origen}): " . $e->getMessage()
+                "Error en restauración ({$origen}): " . $e->getMessage()
             );
 
-            Log::error('Error en restauración DB: ' . $e->getMessage(), ['exception' => $e]);
+            Log::error('Error en restauración del sistema: ' . $e->getMessage(), ['exception' => $e]);
 
-            // Notificar a los administradores del intento fallido de restauración
             MailService::sendDatabaseRestorationNotification(false, $origen, $e->getMessage(), $request);
 
-            return back()->withErrors('Error al restaurar la base de datos: ' . $e->getMessage());
+            return back()->withErrors('Error al restaurar el sistema: ' . $e->getMessage());
         }
     }
 

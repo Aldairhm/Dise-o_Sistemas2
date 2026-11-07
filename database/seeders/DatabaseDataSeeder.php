@@ -44,15 +44,23 @@ class DatabaseDataSeeder extends Seeder
         DB::table('compra')->truncate();
         DB::table('bitacora')->truncate();
 
-        Schema::enableForeignKeyConstraints();
-
         // 1. Sembrar Proveedores (≥ 15)
         $this->seedProveedores();
 
         // 2. Sembrar Usuarios (≥ 15)
         $this->seedUsuarios();
 
-        // 3. Sembrar Compras y Movimientos de Entrada (≥ 15)
+        // 3. Sembrar Catálogo base (Categorías, Atributos, Productos, Variantes)
+        $this->seedCategoria();
+        $this->seedAtributo();
+        $this->seedProducto();
+        $this->seedCatalogos();
+        $this->seedProductoatributo();
+        $this->seedVariante();
+        $this->seedVarianteImagen();
+        $this->seedVariantevalor();
+
+        // 4. Sembrar Compras y Movimientos de Entrada (≥ 15)
         $this->seedCompras();
 
         // 4. Sembrar Ventas con toda su lógica detallada (≥ 18)
@@ -66,6 +74,8 @@ class DatabaseDataSeeder extends Seeder
 
         // 7. Sincronizar secuencias de PostgreSQL
         $this->resetPostgresSequences();
+
+        Schema::enableForeignKeyConstraints();
 
         $this->command->info('DatabaseDataSeeder finalizado exitosamente con datos reales.');
     }
@@ -860,6 +870,874 @@ class DatabaseDataSeeder extends Seeder
         }
     }
 
+    protected function seedCategoria(): void
+    {
+        $data = [
+            [
+                'id' => 1,
+                'nombre' => 'Hogar',
+                'descripcion' => 'Accesorios para el hogar',
+                'color' => '#d946ef',
+                'estado' => true,
+                'icono' => 'fa-couch',
+                'orden' => 1,
+            ],
+            [
+                'id' => 2,
+                'nombre' => 'AutoParte',
+                'descripcion' => 'Repuesto de auto',
+                'color' => '#f97316',
+                'estado' => true,
+                'icono' => 'fa-car',
+                'orden' => 2,
+            ],
+            [
+                'id' => 3,
+                'nombre' => 'Tecnologia',
+                'descripcion' => 'Productos electrónicos',
+                'color' => '#10b981',
+                'estado' => false,
+                'icono' => 'fa-laptop',
+                'orden' => 5,
+            ],
+            [
+                'id' => 4,
+                'nombre' => 'Cocina',
+                'descripcion' => 'Todo para remodelar la cocina',
+                'color' => '#ef4444',
+                'estado' => true,
+                'icono' => 'fa-utensils',
+                'orden' => 3,
+            ],
+            [
+                'id' => 5,
+                'nombre' => 'Juguetes',
+                'descripcion' => 'Juguetes para niños',
+                'color' => '#f43f5e',
+                'estado' => true,
+                'icono' => 'fa-basketball',
+                'orden' => 4,
+            ],
+        ];
+
+        DB::table('categoria')->upsert($data, ['id'], ['nombre', 'descripcion', 'color', 'estado', 'icono', 'orden']);
+    }
+
+    protected function seedAtributo(): void
+    {
+        $data = [
+            [
+                'id' => 1,
+                'nombre' => 'Medidas',
+                'created_at' => '2026-09-21 22:34:23',
+                'updated_at' => '2026-09-21 22:34:23',
+            ],
+            [
+                'id' => 2,
+                'nombre' => 'Lumenes',
+                'created_at' => '2026-09-21 22:34:23',
+                'updated_at' => '2026-09-21 22:34:23',
+            ],
+            [
+                'id' => 3,
+                'nombre' => 'Distancia',
+                'created_at' => '2026-09-21 22:34:23',
+                'updated_at' => '2026-09-21 22:34:23',
+            ],
+            [
+                'id' => 4,
+                'nombre' => 'Capacidad (voltios)',
+                'created_at' => '2026-09-22 10:25:13',
+                'updated_at' => '2026-09-22 10:25:13',
+            ],
+            [
+                'id' => 5,
+                'nombre' => 'Angulo',
+                'created_at' => '2026-09-22 10:49:32',
+                'updated_at' => '2026-09-22 10:49:32',
+            ],
+            [
+                'id' => 6,
+                'nombre' => 'Medida',
+                'created_at' => '2026-09-23 08:56:55',
+                'updated_at' => '2026-09-23 08:56:55',
+            ],
+        ];
+
+        DB::table('atributo')->upsert($data, ['id'], ['nombre', 'created_at', 'updated_at']);
+    }
+
+    protected function seedProducto(): void
+    {
+        $data = [
+            [
+                'id' => 1,
+                'id_categoria' => 2,
+                'sku' => 'ALO-A-001',
+                'nombre' => 'ALOGENAS ESPLORADORA FUERTE ILUMINACIÓN CON SWITCH.',
+                'descripcion' => 'ALOGENAS ESPLORADORA FUERTE ILUMINACIÓN CON SWITCH.
+
+PRECIO DEL PAR $19
+
+ALOGENAS XPLORADORA PARA MOTOS Y AUTOMÓVIL🚗🏍️
+✅LUZ BLANCA, Y AMARILLA. 
+✅40mil lumines de potencia 
+Distancia 450 metros mejor alumbrado. 
+✅LO último en tecnología a pesar el tamaño q tiene maneja una intensidad de luz a gran distancia visible. 
+✅Material metálico resistente, interperie. 
+✅Swich de apagado 
+Manejo de luz alta y baja 
+✅TAMAÑO 5Cm ANCHO Y LARGO 5.5CM
+
+ENVIOS A TODO EL PAIS',
+                'comision' => '3.00',
+                'marca' => 'Angel',
+                'imagen_principal' => 'productos/qr7W1wJPgEFbzEoHgjRCJgWiKf3SUqwst2qYJihq.jpg',
+                'estado' => 1,
+                'created_at' => '2026-09-21 22:34:23',
+                'updated_at' => '2026-09-23 09:05:52',
+            ],
+            [
+                'id' => 3,
+                'id_categoria' => 2,
+                'sku' => 'LUC-A-001',
+                'nombre' => 'LUCES WATERMELON PARA AUTOMOVIL',
+                'descripcion' => 'LUCES WATERMELON PARA AUTOMOVIL 
+
+PRECIO PAR $8
+
+✅LUCES WATERMELON CON SISTEMA LUZ FIJA Y STROBERS LA MEJOR MANERA PARA DARLE UN DISEÑO ÚNICO.
+✅️12 voltios a 24 voltios 
+✅️Medida de 5cm de altura 
+Ancho de 4CM 
+✅️COLORES 
+🔷️AZUL HIELO 
+🔷️MORADO
+
+BUSCANOS metro galerías local 3.5A tercer nivel frente a metro san salvador',
+                'comision' => '2.00',
+                'marca' => 'MelonWater',
+                'imagen_principal' => 'productos/B3FG2ERyjZzyNBZSWmPXDBlQJiWgCV1tHfgqBAXy.jpg',
+                'estado' => 1,
+                'created_at' => '2026-09-22 10:23:45',
+                'updated_at' => '2026-09-22 10:23:45',
+            ],
+            [
+                'id' => 4,
+                'id_categoria' => 1,
+                'sku' => 'CAM-H-001',
+                'nombre' => 'CAMARA FOCO Giro 360°',
+                'descripcion' => 'CAMARA DE SEGURIDAD INTELIGENTE TIPO FOCO 2 CAMARAS 
+
+Precio $24
+
+✅ CAMARA INTELIGENTE YOOSSE PARA TU HOGAR O NEGOCIO GIRO 360° 
+Camara FULL HD: Sensor de 1080p de ultima generación.
+Seguimiento Automatico: Se activa automaticamente con los movimientos .
+Sistema de audio: El microfono con grabadora de audio detecta todos los sonidos ambientales.
+Compatibilidad: Todos los Smarphones Compatibles.
+✅Se abre con aplicacion YOOSSE 
+✅ Abre las dos camaras al mismo tiempo 
+✅RESOLUCIÓN NOCTURNA HD. 
+✅Pueden conectarse varios dispositivos ala ves. 
+
+✅CONTAMOS CON ENVIOS TODO EL PAIS 🚗',
+                'comision' => '4.00',
+                'marca' => 'Jordan',
+                'imagen_principal' => 'productos/mAGt1wqoh2oJHunOFmXlhFyZGLk8LR4kpPQCetQ0.jpg',
+                'estado' => 1,
+                'created_at' => '2026-09-22 10:49:32',
+                'updated_at' => '2026-09-22 10:49:32',
+            ],
+            [
+                'id' => 5,
+                'id_categoria' => 5,
+                'sku' => 'MOT-J-001',
+                'nombre' => 'MOTO COLECCIÓN DEPORTIVA S1000 RR',
+                'descripcion' => 'MOTO COLECCIÓN DEPORTIVA S1000 RR 
+
+✅️MOTITO COLECCION S1000 RR DISEÑO BMW
+CON SUSPENCION DE AMORTIGUACION FLEXIBLE Y LLANTAS RODABLES.
+✅️Tanque metálico 
+✅️Llantas de hule resistente 
+✅️Base de exhibición.
+✅Medida Largo 21CM
+Altura 13CM
+🔷️COLORES
+⏺️Blanco 
+⏺️Negro
+
+ENVIOS TODO EL PAIS',
+                'comision' => '3.00',
+                'marca' => 'S1000 RR',
+                'imagen_principal' => 'productos/TcPxauCfWnJBl8BfuuijymxQZvx9kDZYfQataxBP.jpg',
+                'estado' => 1,
+                'created_at' => '2026-09-22 21:50:28',
+                'updated_at' => '2026-09-22 21:50:28',
+            ],
+            [
+                'id' => 7,
+                'id_categoria' => 2,
+                'sku' => 'LUC-A-002',
+                'nombre' => 'LUCES TRASERAS CON EFECTO 3D',
+                'descripcion' => 'LUCES TRASERAS CON EFECTO 3D
+
+✅️LUCES TRASERAS LED redondas de 4 pulgadas con diseño de efecto de túnel infinito.
+✅️Luces redondas con efecto óptico 3D de profundidad tipo abismo o túnel infinito.Uso: Ideales para funciones de freno, parada, giro o posición en camiones y trailers.
+✅️COLORES 
+🔷️AMARILLO 
+🔷️ROJO
+🔷️MORADO 
+🚚ENVIOS A TODO EL PAIS',
+                'comision' => '3.00',
+                'marca' => NULL,
+                'imagen_principal' => 'productos/DWTCl2ADxJUA9eR70DPIckZ6L1Ol0e5LfFkBKKQ0.jpg',
+                'estado' => 1,
+                'created_at' => '2026-09-23 08:56:55',
+                'updated_at' => '2026-09-23 08:56:55',
+            ],
+        ];
+
+        DB::table('producto')->upsert($data, ['id'], ['id_categoria', 'sku', 'nombre', 'descripcion', 'comision', 'marca', 'imagen_principal', 'estado', 'created_at', 'updated_at']);
+    }
+
+    protected function seedCatalogos(): void
+    {
+        $data = [
+            [
+                'id' => 1,
+                'tipo' => 'pdf',
+                'ruta_destino' => 'catalogos_proveedores/Zh7eTlI5r1ui7u1itiY6ohz3KvIRpSY1KRshRGkG.pdf',
+                'nombre_referencia' => 'Catalogo Verano 2026',
+                'id_proveedor' => 1,
+                'created_at' => '2026-09-21 22:31:21',
+                'updated_at' => '2026-09-21 22:31:21',
+            ],
+        ];
+
+        DB::table('catalogos')->upsert($data, ['id'], ['tipo', 'ruta_destino', 'nombre_referencia', 'id_proveedor', 'created_at', 'updated_at']);
+    }
+
+    protected function seedProductoatributo(): void
+    {
+        $data = [
+            [
+                'id' => 1,
+                'id_producto' => 1,
+                'id_atributo' => 1,
+                'created_at' => NULL,
+                'updated_at' => NULL,
+            ],
+            [
+                'id' => 4,
+                'id_producto' => 3,
+                'id_atributo' => 4,
+                'created_at' => NULL,
+                'updated_at' => NULL,
+            ],
+            [
+                'id' => 5,
+                'id_producto' => 1,
+                'id_atributo' => 2,
+                'created_at' => NULL,
+                'updated_at' => NULL,
+            ],
+            [
+                'id' => 6,
+                'id_producto' => 1,
+                'id_atributo' => 3,
+                'created_at' => NULL,
+                'updated_at' => NULL,
+            ],
+            [
+                'id' => 7,
+                'id_producto' => 4,
+                'id_atributo' => 5,
+                'created_at' => NULL,
+                'updated_at' => NULL,
+            ],
+            [
+                'id' => 8,
+                'id_producto' => 5,
+                'id_atributo' => 1,
+                'created_at' => NULL,
+                'updated_at' => NULL,
+            ],
+            [
+                'id' => 9,
+                'id_producto' => 7,
+                'id_atributo' => 2,
+                'created_at' => NULL,
+                'updated_at' => NULL,
+            ],
+            [
+                'id' => 10,
+                'id_producto' => 7,
+                'id_atributo' => 6,
+                'created_at' => NULL,
+                'updated_at' => NULL,
+            ],
+        ];
+
+        DB::table('productoatributo')->upsert($data, ['id'], ['id_producto', 'id_atributo', 'created_at', 'updated_at']);
+    }
+
+    protected function seedVariante(): void
+    {
+        $data = [
+            [
+                'id' => 1,
+                'id_producto' => 1,
+                'estado' => 1,
+                'sku' => 'VAR-LUZ-001',
+                'hash_combinacion' => '20ce2348afb6724f378d959bcfc91c62',
+                'nombre_variante' => 'Luz Blanca',
+                'precio_venta' => '19.00',
+                'comision' => '0.00',
+                'stock' => 18,
+                'reserva' => 30,
+                'costo_promedio' => '8.00',
+                'porcentaje_ganancia' => '100.00',
+                'imagen' => '',
+                'created_at' => '2026-09-21 22:46:57',
+                'updated_at' => '2026-09-26 22:38:22',
+            ],
+            [
+                'id' => 2,
+                'id_producto' => 1,
+                'estado' => 1,
+                'sku' => 'VAR-LUZ-002',
+                'hash_combinacion' => 'a8d8fe3f876778a4457abdc056db2cb1',
+                'nombre_variante' => 'Luz Amarrilla',
+                'precio_venta' => '19.80',
+                'comision' => '0.00',
+                'stock' => 14,
+                'reserva' => 35,
+                'costo_promedio' => '8.40',
+                'porcentaje_ganancia' => '100.00',
+                'imagen' => '',
+                'created_at' => '2026-09-21 23:03:00',
+                'updated_at' => '2026-09-26 19:41:10',
+            ],
+            [
+                'id' => 6,
+                'id_producto' => 3,
+                'estado' => 1,
+                'sku' => 'VAR-MOR-001',
+                'hash_combinacion' => 'ed9ab28c836a3dc726f21b25fe8316c3',
+                'nombre_variante' => 'Morado',
+                'precio_venta' => '2.00',
+                'comision' => '0.00',
+                'stock' => 0,
+                'reserva' => 0,
+                'costo_promedio' => '0.00',
+                'porcentaje_ganancia' => '100.00',
+                'imagen' => '',
+                'created_at' => '2026-09-22 10:25:55',
+                'updated_at' => '2026-09-22 10:25:55',
+            ],
+            [
+                'id' => 7,
+                'id_producto' => 3,
+                'estado' => 1,
+                'sku' => 'VAR-AZU-001',
+                'hash_combinacion' => '2e113ea850bb3db498aa5d5734f88057',
+                'nombre_variante' => 'Azul',
+                'precio_venta' => '2.00',
+                'comision' => '0.00',
+                'stock' => 0,
+                'reserva' => 0,
+                'costo_promedio' => '0.00',
+                'porcentaje_ganancia' => '100.00',
+                'imagen' => '',
+                'created_at' => '2026-09-22 10:26:14',
+                'updated_at' => '2026-09-22 10:26:14',
+            ],
+            [
+                'id' => 9,
+                'id_producto' => 1,
+                'estado' => 1,
+                'sku' => 'VAR-COM-001',
+                'hash_combinacion' => '58c763ecab2290f0aecd0f2eb7803ae3',
+                'nombre_variante' => 'Combinada',
+                'precio_venta' => '29.67',
+                'comision' => '0.00',
+                'stock' => 0,
+                'reserva' => 30,
+                'costo_promedio' => '13.33',
+                'porcentaje_ganancia' => '100.00',
+                'imagen' => '',
+                'created_at' => '2026-09-22 10:35:20',
+                'updated_at' => '2026-09-22 10:37:49',
+            ],
+            [
+                'id' => 10,
+                'id_producto' => 4,
+                'estado' => 1,
+                'sku' => 'VAR-DOS-001',
+                'hash_combinacion' => '771d042fd96cad260f7cc956f4e98775',
+                'nombre_variante' => 'Dos focos',
+                'precio_venta' => '24.00',
+                'comision' => '0.00',
+                'stock' => 0,
+                'reserva' => 20,
+                'costo_promedio' => '10.00',
+                'porcentaje_ganancia' => '100.00',
+                'imagen' => '',
+                'created_at' => '2026-09-22 10:50:12',
+                'updated_at' => '2026-09-22 10:51:54',
+            ],
+            [
+                'id' => 11,
+                'id_producto' => 5,
+                'estado' => 1,
+                'sku' => 'VAR-BLA-001',
+                'hash_combinacion' => 'ed9dfc2a1a8f933e91f0d47f3e555db7',
+                'nombre_variante' => 'Blanca',
+                'precio_venta' => '17.00',
+                'comision' => '0.00',
+                'stock' => 0,
+                'reserva' => 30,
+                'costo_promedio' => '7.00',
+                'porcentaje_ganancia' => '100.00',
+                'imagen' => '',
+                'created_at' => '2026-09-22 21:52:58',
+                'updated_at' => '2026-09-22 22:05:39',
+            ],
+            [
+                'id' => 12,
+                'id_producto' => 5,
+                'estado' => 0,
+                'sku' => 'VAR-NEG-001',
+                'hash_combinacion' => 'b68892266432161695f27329aa80820d',
+                'nombre_variante' => 'Negro',
+                'precio_venta' => '3.00',
+                'comision' => '0.00',
+                'stock' => 0,
+                'reserva' => 0,
+                'costo_promedio' => '0.00',
+                'porcentaje_ganancia' => '100.00',
+                'imagen' => '',
+                'created_at' => '2026-09-22 21:54:10',
+                'updated_at' => '2026-09-22 22:13:20',
+            ],
+            [
+                'id' => 13,
+                'id_producto' => 7,
+                'estado' => 1,
+                'sku' => 'VAR-ROJ-001',
+                'hash_combinacion' => '8e92fb699b5c06058f9ae7993baaa1cf',
+                'nombre_variante' => 'Roja',
+                'precio_venta' => '3.00',
+                'comision' => '0.00',
+                'stock' => 0,
+                'reserva' => 0,
+                'costo_promedio' => '0.00',
+                'porcentaje_ganancia' => '100.00',
+                'imagen' => '',
+                'created_at' => '2026-09-23 09:01:27',
+                'updated_at' => '2026-09-23 09:01:27',
+            ],
+            [
+                'id' => 14,
+                'id_producto' => 7,
+                'estado' => 1,
+                'sku' => 'VAR-AMA-001',
+                'hash_combinacion' => '0904d1201bc211e624b1878ec55425df',
+                'nombre_variante' => 'Amarilla',
+                'precio_venta' => '63.00',
+                'comision' => '0.00',
+                'stock' => 12,
+                'reserva' => 7,
+                'costo_promedio' => '30.00',
+                'porcentaje_ganancia' => '100.00',
+                'imagen' => '',
+                'created_at' => '2026-09-23 09:02:13',
+                'updated_at' => '2026-09-27 14:03:45',
+            ],
+        ];
+
+        DB::table('variante')->upsert($data, ['id'], ['id_producto', 'estado', 'sku', 'hash_combinacion', 'nombre_variante', 'precio_venta', 'comision', 'stock', 'reserva', 'costo_promedio', 'porcentaje_ganancia', 'imagen', 'created_at', 'updated_at']);
+    }
+
+    protected function seedVarianteImagen(): void
+    {
+        $data = [
+            [
+                'id' => 4,
+                'id_variante' => 2,
+                'ruta_imagen' => 'variantes/B0XPX3OmBoDeb2Tmc9xZHCsVbYQqCuDuQiH6PAqo.jpg',
+                'es_principal' => 1,
+                'created_at' => '2026-09-21 23:03:00',
+                'updated_at' => '2026-09-21 23:03:00',
+            ],
+            [
+                'id' => 5,
+                'id_variante' => 2,
+                'ruta_imagen' => 'variantes/J9VPyl8EqJpRHuBWzouXDWHipdI9CeycZiq3VK4j.jpg',
+                'es_principal' => 0,
+                'created_at' => '2026-09-21 23:03:00',
+                'updated_at' => '2026-09-21 23:03:00',
+            ],
+            [
+                'id' => 6,
+                'id_variante' => 2,
+                'ruta_imagen' => 'variantes/bYL9LiUUVsZ6k6VFicTkycvDizZqTjW2SwIOjupJ.jpg',
+                'es_principal' => 0,
+                'created_at' => '2026-09-21 23:03:00',
+                'updated_at' => '2026-09-21 23:03:00',
+            ],
+            [
+                'id' => 13,
+                'id_variante' => 6,
+                'ruta_imagen' => 'variantes/qZfX5vlZBrZ3aONdweSeRbt7cntcHKcviUtgbYwS.jpg',
+                'es_principal' => 1,
+                'created_at' => '2026-09-22 10:25:55',
+                'updated_at' => '2026-09-22 10:25:55',
+            ],
+            [
+                'id' => 14,
+                'id_variante' => 6,
+                'ruta_imagen' => 'variantes/7hQNcdOsvwIWEgqBtRMWHBU5ouTevoboptOakvtl.jpg',
+                'es_principal' => 0,
+                'created_at' => '2026-09-22 10:25:55',
+                'updated_at' => '2026-09-22 10:25:55',
+            ],
+            [
+                'id' => 15,
+                'id_variante' => 7,
+                'ruta_imagen' => 'variantes/TUX2vD6XRSS4Dg1GICPnvaJCdUig7YwUv0FtVRE2.jpg',
+                'es_principal' => 1,
+                'created_at' => '2026-09-22 10:26:14',
+                'updated_at' => '2026-09-22 10:26:14',
+            ],
+            [
+                'id' => 16,
+                'id_variante' => 7,
+                'ruta_imagen' => 'variantes/FuCwRANQhKGeSvbOHBwiT8xm1ROkz3AvJu7NbWeT.jpg',
+                'es_principal' => 0,
+                'created_at' => '2026-09-22 10:26:14',
+                'updated_at' => '2026-09-22 10:26:14',
+            ],
+            [
+                'id' => 17,
+                'id_variante' => 1,
+                'ruta_imagen' => 'variantes/kNO3nARwL64Ra6SHy1vkjbewgs9OqFpil4c1RZaE.jpg',
+                'es_principal' => 1,
+                'created_at' => '2026-09-22 10:28:21',
+                'updated_at' => '2026-09-22 10:34:56',
+            ],
+            [
+                'id' => 18,
+                'id_variante' => 1,
+                'ruta_imagen' => 'variantes/5nO4xKefOrvrSTqXs2WhPFWyHFF4Ef6glZOSo7ij.jpg',
+                'es_principal' => 0,
+                'created_at' => '2026-09-22 10:28:21',
+                'updated_at' => '2026-09-22 10:34:56',
+            ],
+            [
+                'id' => 19,
+                'id_variante' => 1,
+                'ruta_imagen' => 'variantes/jm6ZtVARt4EjSI1JzZjswDrZom3o91syFnAKvFc7.jpg',
+                'es_principal' => 0,
+                'created_at' => '2026-09-22 10:28:21',
+                'updated_at' => '2026-09-22 10:34:56',
+            ],
+            [
+                'id' => 22,
+                'id_variante' => 9,
+                'ruta_imagen' => 'variantes/H8Jhjjf6mrW2ICNLo6XwaO5IyyZCpbmFXgvjlJVo.jpg',
+                'es_principal' => 1,
+                'created_at' => '2026-09-22 10:35:20',
+                'updated_at' => '2026-09-22 10:35:20',
+            ],
+            [
+                'id' => 23,
+                'id_variante' => 9,
+                'ruta_imagen' => 'variantes/6MomgLr6PSXfaGx0iGvjVdrEA7xrTziTLbBtOODv.jpg',
+                'es_principal' => 0,
+                'created_at' => '2026-09-22 10:35:20',
+                'updated_at' => '2026-09-22 10:35:20',
+            ],
+            [
+                'id' => 24,
+                'id_variante' => 10,
+                'ruta_imagen' => 'variantes/uqMHIzKVohoNXcwANgOawa55Ie64mxL05uIMenug.jpg',
+                'es_principal' => 1,
+                'created_at' => '2026-09-22 10:50:12',
+                'updated_at' => '2026-09-22 10:50:12',
+            ],
+            [
+                'id' => 25,
+                'id_variante' => 10,
+                'ruta_imagen' => 'variantes/vj1MtouiOVdTRq7Yb7KXQrzzoEactKT5YQ1IWK6Z.jpg',
+                'es_principal' => 0,
+                'created_at' => '2026-09-22 10:50:13',
+                'updated_at' => '2026-09-22 10:50:13',
+            ],
+            [
+                'id' => 26,
+                'id_variante' => 10,
+                'ruta_imagen' => 'variantes/awEgL0L00BxJLozQ0kyjIdHDreD5Nge5sKU76Wtp.jpg',
+                'es_principal' => 0,
+                'created_at' => '2026-09-22 10:50:13',
+                'updated_at' => '2026-09-22 10:50:13',
+            ],
+            [
+                'id' => 27,
+                'id_variante' => 11,
+                'ruta_imagen' => 'variantes/mVoAqLNdVMfpigrBgpWsiciqLSXu1xdj1iUAF3yI.jpg',
+                'es_principal' => 0,
+                'created_at' => '2026-09-22 21:52:59',
+                'updated_at' => '2026-09-22 21:52:59',
+            ],
+            [
+                'id' => 28,
+                'id_variante' => 11,
+                'ruta_imagen' => 'variantes/bdDcQpNz4aZqJuPZ2sfIv10BNFl7rGFVm9nPHQf1.jpg',
+                'es_principal' => 1,
+                'created_at' => '2026-09-22 21:52:59',
+                'updated_at' => '2026-09-22 21:52:59',
+            ],
+            [
+                'id' => 29,
+                'id_variante' => 11,
+                'ruta_imagen' => 'variantes/7a0bzQJRIdw67Ey9bfBYykcdxxH3QFQdogcuHQhs.jpg',
+                'es_principal' => 0,
+                'created_at' => '2026-09-22 21:52:59',
+                'updated_at' => '2026-09-22 21:52:59',
+            ],
+            [
+                'id' => 30,
+                'id_variante' => 11,
+                'ruta_imagen' => 'variantes/7HxObGQdLKJG1LhdVgQxxOljCIQMBAy3sT0CTc8L.jpg',
+                'es_principal' => 0,
+                'created_at' => '2026-09-22 21:52:59',
+                'updated_at' => '2026-09-22 21:52:59',
+            ],
+            [
+                'id' => 33,
+                'id_variante' => 12,
+                'ruta_imagen' => 'variantes/DhQm8icwtM457l5Nz9wNuE2E2GaFUmPp0SNpeJRc.jpg',
+                'es_principal' => 1,
+                'created_at' => '2026-09-22 21:54:10',
+                'updated_at' => '2026-09-22 21:57:00',
+            ],
+            [
+                'id' => 34,
+                'id_variante' => 12,
+                'ruta_imagen' => 'variantes/e6POemxoVzka1q1TZf8P1k0LWV1xiIT3X6GJdpY1.jpg',
+                'es_principal' => 0,
+                'created_at' => '2026-09-22 21:54:10',
+                'updated_at' => '2026-09-22 21:57:00',
+            ],
+            [
+                'id' => 35,
+                'id_variante' => 13,
+                'ruta_imagen' => 'variantes/zgIekJ0Ixr2BWbG3B6WDXgMQnyG3UhbFKS8ikv4z.jpg',
+                'es_principal' => 1,
+                'created_at' => '2026-09-23 09:01:27',
+                'updated_at' => '2026-09-23 09:01:27',
+            ],
+            [
+                'id' => 36,
+                'id_variante' => 13,
+                'ruta_imagen' => 'variantes/YwQ3APGHC6M2DE1HBdofZgFM2vpTgk2l7OGIYZRq.jpg',
+                'es_principal' => 0,
+                'created_at' => '2026-09-23 09:01:27',
+                'updated_at' => '2026-09-23 09:01:27',
+            ],
+            [
+                'id' => 37,
+                'id_variante' => 13,
+                'ruta_imagen' => 'variantes/bWW9axJESMcCmVdmaxdwFnUV5FpXF9K01vFM0Z1S.jpg',
+                'es_principal' => 0,
+                'created_at' => '2026-09-23 09:01:27',
+                'updated_at' => '2026-09-23 09:01:27',
+            ],
+            [
+                'id' => 38,
+                'id_variante' => 13,
+                'ruta_imagen' => 'variantes/DFX6ECZ6C7fsW8vToSN7xp1xXaX1kQJP9Lw2AIEb.jpg',
+                'es_principal' => 0,
+                'created_at' => '2026-09-23 09:01:27',
+                'updated_at' => '2026-09-23 09:01:27',
+            ],
+            [
+                'id' => 39,
+                'id_variante' => 14,
+                'ruta_imagen' => 'variantes/fqMRa4n3TonWI5Py04BGzA3eIZMA9Nw1evwXP2tB.jpg',
+                'es_principal' => 1,
+                'created_at' => '2026-09-23 09:02:13',
+                'updated_at' => '2026-09-23 09:02:13',
+            ],
+            [
+                'id' => 40,
+                'id_variante' => 14,
+                'ruta_imagen' => 'variantes/lHjtIEriNuNPpQIouBGVJTGlAAS9aWFwyHjk6WoO.jpg',
+                'es_principal' => 0,
+                'created_at' => '2026-09-23 09:02:13',
+                'updated_at' => '2026-09-23 09:02:13',
+            ],
+        ];
+
+        DB::table('variante_imagen')->upsert($data, ['id'], ['id_variante', 'ruta_imagen', 'es_principal', 'created_at', 'updated_at']);
+    }
+
+    protected function seedVariantevalor(): void
+    {
+        $data = [
+            [
+                'id' => 19,
+                'id_variante' => 2,
+                'id_atributo' => 1,
+                'valor' => '20cm ancho x 13 cm alto',
+                'created_at' => '2026-09-21 23:03:00',
+                'updated_at' => '2026-09-21 23:03:00',
+            ],
+            [
+                'id' => 20,
+                'id_variante' => 2,
+                'id_atributo' => 2,
+                'valor' => '40 mil',
+                'created_at' => '2026-09-21 23:03:00',
+                'updated_at' => '2026-09-21 23:03:00',
+            ],
+            [
+                'id' => 21,
+                'id_variante' => 2,
+                'id_atributo' => 3,
+                'valor' => '450 metros',
+                'created_at' => '2026-09-21 23:03:00',
+                'updated_at' => '2026-09-21 23:03:00',
+            ],
+            [
+                'id' => 25,
+                'id_variante' => 6,
+                'id_atributo' => 4,
+                'valor' => '12 a 24 volt',
+                'created_at' => '2026-09-22 10:25:55',
+                'updated_at' => '2026-09-22 10:25:55',
+            ],
+            [
+                'id' => 26,
+                'id_variante' => 7,
+                'id_atributo' => 4,
+                'valor' => '12 a 24 volt',
+                'created_at' => '2026-09-22 10:26:14',
+                'updated_at' => '2026-09-22 10:26:14',
+            ],
+            [
+                'id' => 29,
+                'id_variante' => 1,
+                'id_atributo' => 1,
+                'valor' => '20cm ancho x 13 cm alto',
+                'created_at' => '2026-09-22 10:34:56',
+                'updated_at' => '2026-09-22 10:34:56',
+            ],
+            [
+                'id' => 30,
+                'id_variante' => 1,
+                'id_atributo' => 2,
+                'valor' => '40 mil',
+                'created_at' => '2026-09-22 10:34:56',
+                'updated_at' => '2026-09-22 10:34:56',
+            ],
+            [
+                'id' => 31,
+                'id_variante' => 1,
+                'id_atributo' => 3,
+                'valor' => '450 metros',
+                'created_at' => '2026-09-22 10:34:56',
+                'updated_at' => '2026-09-22 10:34:56',
+            ],
+            [
+                'id' => 32,
+                'id_variante' => 9,
+                'id_atributo' => 1,
+                'valor' => '20cm ancho x 13 cm alto',
+                'created_at' => '2026-09-22 10:35:20',
+                'updated_at' => '2026-09-22 10:35:20',
+            ],
+            [
+                'id' => 33,
+                'id_variante' => 9,
+                'id_atributo' => 2,
+                'valor' => '40 mil',
+                'created_at' => '2026-09-22 10:35:20',
+                'updated_at' => '2026-09-22 10:35:20',
+            ],
+            [
+                'id' => 34,
+                'id_variante' => 9,
+                'id_atributo' => 3,
+                'valor' => '650 metros',
+                'created_at' => '2026-09-22 10:35:20',
+                'updated_at' => '2026-09-22 10:35:20',
+            ],
+            [
+                'id' => 35,
+                'id_variante' => 10,
+                'id_atributo' => 5,
+                'valor' => '360 °',
+                'created_at' => '2026-09-22 10:50:13',
+                'updated_at' => '2026-09-22 10:50:13',
+            ],
+            [
+                'id' => 36,
+                'id_variante' => 11,
+                'id_atributo' => 1,
+                'valor' => '21cm ancho x 13 cm alto',
+                'created_at' => '2026-09-22 21:52:59',
+                'updated_at' => '2026-09-22 21:52:59',
+            ],
+            [
+                'id' => 40,
+                'id_variante' => 12,
+                'id_atributo' => 1,
+                'valor' => '21cm ancho x 13 cm alto',
+                'created_at' => '2026-09-22 21:57:00',
+                'updated_at' => '2026-09-22 21:57:00',
+            ],
+            [
+                'id' => 41,
+                'id_variante' => 13,
+                'id_atributo' => 2,
+                'valor' => '25 mil',
+                'created_at' => '2026-09-23 09:01:27',
+                'updated_at' => '2026-09-23 09:01:27',
+            ],
+            [
+                'id' => 42,
+                'id_variante' => 13,
+                'id_atributo' => 6,
+                'valor' => '4 pulgadas',
+                'created_at' => '2026-09-23 09:01:27',
+                'updated_at' => '2026-09-23 09:01:27',
+            ],
+            [
+                'id' => 43,
+                'id_variante' => 14,
+                'id_atributo' => 2,
+                'valor' => '25 mil',
+                'created_at' => '2026-09-23 09:02:13',
+                'updated_at' => '2026-09-23 09:02:13',
+            ],
+            [
+                'id' => 44,
+                'id_variante' => 14,
+                'id_atributo' => 6,
+                'valor' => '4 pulgadas',
+                'created_at' => '2026-09-23 09:02:13',
+                'updated_at' => '2026-09-23 09:02:13',
+            ],
+        ];
+
+        DB::table('variantevalor')->upsert($data, ['id'], ['id_variante', 'id_atributo', 'valor', 'created_at', 'updated_at']);
+    }
+
+
+
     /**
      * 7. ACTUALIZACIÓN DE SECUENCIAS (PostgreSQL)
      */
@@ -882,6 +1760,14 @@ class DatabaseDataSeeder extends Seeder
             'devoluciones',
             'devolucion_detalles',
             'bitacora',
+            'categoria',
+            'atributo',
+            'producto',
+            'catalogos',
+            'productoatributo',
+            'variante',
+            'variante_imagen',
+            'variantevalor',
         ];
 
         foreach ($tables as $table) {

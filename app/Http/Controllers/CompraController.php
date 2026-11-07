@@ -8,6 +8,7 @@ use App\Models\MovimientoBodega;
 use App\Models\Proveedor;
 use App\Models\Variante;
 use App\Services\ActivityLogger;
+use App\Support\CloudStorage;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
@@ -92,7 +93,7 @@ class CompraController extends Controller
                 'variante' => $variante->nombre_variante,
                 'sku' => $variante->sku,
                 'imagen' => ($imagen = $variante->imagenes->firstWhere('es_principal', 1) ?? $variante->imagenes->first())
-                    ? asset('storage/' . $imagen->ruta_imagen)
+                    ? CloudStorage::url($imagen->ruta_imagen)
                     : null,
                 'unidad' => 'unidad',
                 'precio_venta' => $variante->precio_venta,
@@ -128,7 +129,7 @@ class CompraController extends Controller
             'variante' => $variante->nombre_variante,
             'sku' => $variante->sku,
             'imagen' => ($imagen = $variante->imagenes->firstWhere('es_principal', 1) ?? $variante->imagenes->first())
-                ? asset('storage/' . $imagen->ruta_imagen)
+                ? CloudStorage::url($imagen->ruta_imagen)
                 : null,
             'unidad' => 'unidad',
             'precio_venta' => $variante->precio_venta,

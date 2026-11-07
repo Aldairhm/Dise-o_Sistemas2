@@ -107,7 +107,7 @@ class DevolucionController extends Controller
                 if ($request->hasFile('comprobante')) {
                     $archivo = $request->file('comprobante');
                     $nombreArchivo = 'DEV-VNT-' . $venta->id . '_' . now()->format('Y-m-d_H-i-s') . '.' . $archivo->extension();
-                    $rutaComprobante = $archivo->storeAs('comprobantes_devolucion', $nombreArchivo, 'public');
+                    $rutaComprobante = $archivo->storeAs('comprobantes_devolucion', $nombreArchivo, 's3');
                 }
 
                 foreach ($productos as $producto) {
@@ -466,7 +466,7 @@ class DevolucionController extends Controller
             if ($request->hasFile('comprobante')) {
                 $archivo = $request->file('comprobante');
                 $nombre = 'DEV-CMP-' . $compra->id . '_' . now()->format('Y-m-d_H-i-s') . '.' . $archivo->extension();
-                $rutaComprobante = $archivo->storeAs('comprobantes_devolucion', $nombre, 'public');
+                $rutaComprobante = $archivo->storeAs('comprobantes_devolucion', $nombre, 's3');
             }
 
             $devolucion = Devolucion::create([

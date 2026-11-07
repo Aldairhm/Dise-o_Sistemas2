@@ -113,7 +113,7 @@
                                 </td>
                                 <td class="px-5 py-4 text-right">
                                     @if ($devolucion->comprobante)
-                                        <a href="{{ asset('storage/' . $devolucion->comprobante) }}" target="_blank" rel="noopener" class="inline-flex items-center gap-2 rounded-lg border border-blue-200 bg-blue-50 px-3 py-2 text-xs font-bold text-blue-700 transition-colors hover:bg-blue-600 hover:text-white">
+                                        <a href="{{ str_starts_with($devolucion->comprobante, 'http') ? $devolucion->comprobante : \Illuminate\Support\Facades\Storage::disk('s3')->url($devolucion->comprobante) }}" target="_blank" rel="noopener" class="inline-flex items-center gap-2 rounded-lg border border-blue-200 bg-blue-50 px-3 py-2 text-xs font-bold text-blue-700 transition-colors hover:bg-blue-600 hover:text-white">
                                             <i class="fas fa-paperclip"></i> Ver ticket / foto
                                         </a>
                                     @else

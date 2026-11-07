@@ -23,8 +23,8 @@ class CatalogoService
             $extension = strtolower($archivo->getClientOriginalExtension());
             $catalogo->tipo = $this->determinarTipoPorExtension($extension);
             
-            // Guardamos físicamente en storage/app/public/catalogos_proveedores
-            $ruta = $archivo->store('catalogos_proveedores', 'public');
+            // Guardamos directamente en la nube S3 (Supabase Storage)
+            $ruta = $archivo->store('catalogos_proveedores', 's3');
             $catalogo->ruta_destino = $ruta;
         }
 
@@ -54,9 +54,13 @@ class CatalogoService
     {
         $catalogo = Catalogo::findOrFail($id);
         
-        // Si no es un enlace, eliminamos el archivo físico del servidor
-        if ($catalogo->tipo !== 'enlace' && Storage::disk('public')->exists($catalogo->ruta_destino)) {
-            Storage::disk('public')->delete($catalogo->ruta_destino);
+        // Si no es un enlace, eliminamos el archivo físico del storage (S3 con fallback a public)
+        if ($catalogo->tipo !== 'enlace' && $catalogo->ruta_destino) {
+            if (Storage::disk('s3')->exists($catalogo->ruta_destino)) {
+                Storage::disk('s3')->delete($catalogo->ruta_destino);
+            } elseif (Storage::disk('public')->exists($catalogo->ruta_destino)) {
+                Storage::disk('public')->delete($catalogo->ruta_destino);
+            }
         }
 
         $catalogo->delete();

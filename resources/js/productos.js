@@ -244,7 +244,7 @@ document.addEventListener('DOMContentLoaded', () => {
         container.dataset.id = imgObj.id;
 
         const img = document.createElement('img');
-        img.src = '/storage/' + imgObj.ruta_imagen;
+        img.src = imgObj.url || imgObj.ruta_imagen;
         img.className = 'w-full h-full object-cover';
 
         // Botón eliminar

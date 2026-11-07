@@ -74,7 +74,11 @@ class ProveedorService
     private function borrarArchivoLocal(?string $ruta)
     {
         if ($ruta && !str_starts_with($ruta, 'http')) {
-            Storage::disk('public')->delete($ruta);
+            if (Storage::disk('s3')->exists($ruta)) {
+                Storage::disk('s3')->delete($ruta);
+            } elseif (Storage::disk('public')->exists($ruta)) {
+                Storage::disk('public')->delete($ruta);
+            }
         }
     }
 }

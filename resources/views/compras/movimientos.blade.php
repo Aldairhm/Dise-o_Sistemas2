@@ -56,7 +56,7 @@
                          'sku' => $v->sku,
                          'reserva' => $v->reserva,
                          'imagen' => ($imagen = $v->imagenes->firstWhere('es_principal', 1) ?? $v->imagenes->first())
-                             ? asset('storage/' . $imagen->ruta_imagen)
+                             ? (str_starts_with($imagen->ruta_imagen, 'http') ? $imagen->ruta_imagen : \Illuminate\Support\Facades\Storage::disk('s3')->url($imagen->ruta_imagen))
                              : null,
                      ])->values()
                  ) }})">
@@ -193,7 +193,7 @@
                                     <div class="flex items-center gap-3">
                                         <div class="h-10 w-10 shrink-0 overflow-hidden rounded-lg border border-slate-200 bg-slate-50">
                                             @if ($imagenMovimiento)
-                                                <img src="{{ asset('storage/' . $imagenMovimiento->ruta_imagen) }}" alt="{{ $movimiento->variante?->nombre_variante ?? 'Producto' }}" class="h-full w-full object-cover">
+                                                <img src="{{ str_starts_with($imagenMovimiento->ruta_imagen, 'http') ? $imagenMovimiento->ruta_imagen : \Illuminate\Support\Facades\Storage::disk('s3')->url($imagenMovimiento->ruta_imagen) }}" alt="{{ $movimiento->variante?->nombre_variante ?? 'Producto' }}" class="h-full w-full object-cover">
                                             @else
                                                 <div class="flex h-full items-center justify-center text-slate-300"><i class="fas fa-image text-xs"></i></div>
                                             @endif

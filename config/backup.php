@@ -15,12 +15,10 @@ return [
             'files' => [
 
                 /*
-                 * Carpetas/archivos a incluir en el respaldo.
-                 * Vacío = solo base de datos (lo que necesitamos).
+                 * Con arquitectura stateless (Supabase S3), las imágenes se guardan directamente
+                 * en la nube, por lo que el respaldo se enfoca exclusivamente en la base de datos.
                  */
-                'include' => [
-                    // base_path(),
-                ],
+                'include' => [],
 
                 'exclude' => [
                     base_path('vendor'),

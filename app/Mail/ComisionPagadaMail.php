@@ -69,13 +69,18 @@ class ComisionPagadaMail extends Mailable
      */
     public function attachments(): array
     {
-        if ($this->comprobantePath && Storage::disk('public')->exists($this->comprobantePath)) {
-            $fullPath = Storage::disk('public')->path($this->comprobantePath);
-            $ext = pathinfo($fullPath, PATHINFO_EXTENSION);
-            return [
-                Attachment::fromPath($fullPath)
-                    ->as('Comprobante_Pago_' . date('Ymd_His') . '.' . $ext)
-            ];
+        if ($this->comprobantePath) {
+            $disk = Storage::disk('s3')->exists($this->comprobantePath) 
+                ? 's3' 
+                : (Storage::disk('public')->exists($this->comprobantePath) ? 'public' : null);
+
+            if ($disk) {
+                $ext = pathinfo($this->comprobantePath, PATHINFO_EXTENSION);
+                return [
+                    Attachment::fromStorageDisk($disk, $this->comprobantePath)
+                        ->as('Comprobante_Pago_' . date('Ymd_His') . ($ext ? '.' . $ext : ''))
+                ];
+            }
         }
 
         return [];

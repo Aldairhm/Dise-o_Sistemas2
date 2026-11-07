@@ -1,13 +1,13 @@
 <x-app title="Respaldos de Base de Datos | AXStore">
 
     <div class="max-w-[1440px] mx-auto space-y-6"
-         x-data="backupManager()">
+        x-data="backupManager()">
 
         {{-- 1. ENCABEZADO --}}
         <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
             <div>
                 <a href="{{ route('home') }}"
-                   class="inline-flex items-center gap-2 text-xs font-bold uppercase tracking-widest text-slate-400 hover:text-blue-600 transition-colors mb-3">
+                    class="inline-flex items-center gap-2 text-xs font-bold uppercase tracking-widest text-slate-400 hover:text-blue-600 transition-colors mb-3">
                     <i class="fas fa-arrow-left"></i> Volver al inicio
                 </a>
                 <div class="flex items-center gap-3.5">
@@ -32,8 +32,8 @@
             <div class="flex flex-wrap items-center gap-3">
                 {{-- Botón Restaurar Base de Datos --}}
                 <button type="button"
-                        @click="openRestoreModal('upload')"
-                        class="inline-flex items-center gap-2.5 px-5 py-3 rounded-xl bg-amber-500 hover:bg-amber-600 text-white font-bold text-xs uppercase tracking-widest shadow-lg shadow-amber-500/20 transition-all duration-200 cursor-pointer">
+                    @click="openRestoreModal('upload')"
+                    class="inline-flex items-center gap-2.5 px-5 py-3 rounded-xl bg-amber-500 hover:bg-amber-600 text-white font-bold text-xs uppercase tracking-widest shadow-lg shadow-amber-500/20 transition-all duration-200 cursor-pointer">
                     <i class="fas fa-rotate-left text-sm"></i>
                     <span>Restaurar Base de Datos</span>
                 </button>
@@ -41,11 +41,11 @@
                 {{-- Botón Generar Respaldo --}}
                 <div x-data="{ loading: false }">
                     <form action="{{ route('backups.create') }}" method="POST"
-                          @submit="loading = true">
+                        @submit="loading = true">
                         @csrf
                         <button type="submit"
-                                :disabled="loading"
-                                class="inline-flex items-center gap-2.5 px-6 py-3 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs uppercase tracking-widest shadow-lg shadow-emerald-600/20 transition-all duration-200 disabled:opacity-60 disabled:cursor-not-allowed">
+                            :disabled="loading"
+                            class="inline-flex items-center gap-2.5 px-6 py-3 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs uppercase tracking-widest shadow-lg shadow-emerald-600/20 transition-all duration-200 cursor-pointer disabled:opacity-60 disabled:cursor-not-allowed">
                             <template x-if="!loading">
                                 <span class="flex items-center gap-2.5">
                                     <i class="fas fa-plus-circle text-sm"></i>
@@ -107,10 +107,10 @@
                         <p class="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Espacio Total</p>
                         <p class="text-2xl sm:text-3xl font-black text-slate-900 mt-1">
                             @php
-                                $totalBytes = collect($files)->sum('size_raw');
-                                $units = ['B', 'KB', 'MB', 'GB'];
-                                $pow = $totalBytes > 0 ? floor(log($totalBytes) / log(1024)) : 0;
-                                $pow = min($pow, count($units) - 1);
+                            $totalBytes = collect($files)->sum('size_raw');
+                            $units = ['B', 'KB', 'MB', 'GB'];
+                            $pow = $totalBytes > 0 ? floor(log($totalBytes) / log(1024)) : 0;
+                            $pow = min($pow, count($units) - 1);
                             @endphp
                             {{ round($totalBytes / pow(1024, $pow), 2) }} {{ $units[$pow] }}
                         </p>
@@ -139,83 +139,83 @@
             </div>
 
             @if(count($files) > 0)
-                <div class="overflow-x-auto">
-                    <table class="w-full">
-                        <thead>
-                            <tr class="bg-slate-50/80 border-b border-slate-200/80">
-                                <th class="px-5 py-3 text-left text-[11px] font-bold text-slate-500 uppercase tracking-wider">#</th>
-                                <th class="px-5 py-3 text-left text-[11px] font-bold text-slate-500 uppercase tracking-wider">Archivo</th>
-                                <th class="px-5 py-3 text-left text-[11px] font-bold text-slate-500 uppercase tracking-wider">Tamaño</th>
-                                <th class="px-5 py-3 text-left text-[11px] font-bold text-slate-500 uppercase tracking-wider">Fecha</th>
-                                <th class="px-5 py-3 text-center text-[11px] font-bold text-slate-500 uppercase tracking-wider">Acciones</th>
-                            </tr>
-                        </thead>
-                        <tbody class="divide-y divide-slate-100">
-                            @foreach($files as $index => $file)
-                                <tr class="hover:bg-slate-50/60 transition-colors text-xs text-slate-700">
-                                    <td class="px-5 py-3.5">
-                                        <span class="inline-flex items-center justify-center w-6 h-6 rounded-lg bg-slate-100 text-[10px] font-bold text-slate-500">
-                                            {{ $index + 1 }}
-                                        </span>
-                                    </td>
-                                    <td class="px-5 py-3.5">
-                                        <div class="flex items-center gap-2.5">
-                                            <div class="w-8 h-8 rounded-lg bg-emerald-50 flex items-center justify-center flex-shrink-0">
-                                                <i class="fas fa-file-zipper text-emerald-600 text-xs"></i>
-                                            </div>
-                                            <div>
-                                                <p class="font-bold text-slate-800 text-xs">{{ $file['name'] }}</p>
-                                                <p class="text-[10px] text-slate-400 mt-0.5">Base de datos MySQL (.zip)</p>
-                                            </div>
-                                        </div>
-                                    </td>
-                                    <td class="px-5 py-3.5">
-                                        <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-blue-50 text-blue-700 text-[11px] font-bold">
-                                            <i class="fas fa-weight-hanging text-[9px]"></i>
-                                            {{ $file['size'] }}
-                                        </span>
-                                    </td>
-                                    <td class="px-5 py-3.5">
-                                        <p class="font-semibold text-slate-700">{{ $file['date'] }}</p>
-                                        <p class="text-[10px] text-slate-400 mt-0.5">{{ $file['date_human'] }}</p>
-                                    </td>
-                                    <td class="px-5 py-3.5 text-center">
-                                        <div class="inline-flex items-center gap-1.5">
-                                            {{-- Descargar --}}
-                                            <a href="{{ route('backups.download', $file['name']) }}"
-                                               class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-[11px] font-bold shadow-sm transition-all duration-200"
-                                               title="Descargar archivo .zip">
-                                                <i class="fas fa-download text-[10px]"></i>
-                                                <span>Descargar</span>
-                                            </a>
+            <div class="overflow-x-auto">
+                <table class="w-full">
+                    <thead>
+                        <tr class="bg-slate-50/80 border-b border-slate-200/80">
+                            <th class="px-5 py-3 text-left text-[11px] font-bold text-slate-500 uppercase tracking-wider">#</th>
+                            <th class="px-5 py-3 text-left text-[11px] font-bold text-slate-500 uppercase tracking-wider">Archivo</th>
+                            <th class="px-5 py-3 text-left text-[11px] font-bold text-slate-500 uppercase tracking-wider">Tamaño</th>
+                            <th class="px-5 py-3 text-left text-[11px] font-bold text-slate-500 uppercase tracking-wider">Fecha</th>
+                            <th class="px-5 py-3 text-center text-[11px] font-bold text-slate-500 uppercase tracking-wider">Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-slate-100">
+                        @foreach($files as $index => $file)
+                        <tr class="hover:bg-slate-50/60 transition-colors text-xs text-slate-700">
+                            <td class="px-5 py-3.5">
+                                <span class="inline-flex items-center justify-center w-6 h-6 rounded-lg bg-slate-100 text-[10px] font-bold text-slate-500">
+                                    {{ $index + 1 }}
+                                </span>
+                            </td>
+                            <td class="px-5 py-3.5">
+                                <div class="flex items-center gap-2.5">
+                                    <div class="w-8 h-8 rounded-lg bg-emerald-50 flex items-center justify-center flex-shrink-0">
+                                        <i class="fas fa-file-zipper text-emerald-600 text-xs"></i>
+                                    </div>
+                                    <div>
+                                        <p class="font-bold text-slate-800 text-xs">{{ $file['name'] }}</p>
+                                        <p class="text-[10px] text-slate-400 mt-0.5">Base de datos MySQL (.zip)</p>
+                                    </div>
+                                </div>
+                            </td>
+                            <td class="px-5 py-3.5">
+                                <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-blue-50 text-blue-700 text-[11px] font-bold">
+                                    <i class="fas fa-weight-hanging text-[9px]"></i>
+                                    {{ $file['size'] }}
+                                </span>
+                            </td>
+                            <td class="px-5 py-3.5">
+                                <p class="font-semibold text-slate-700">{{ $file['date'] }}</p>
+                                <p class="text-[10px] text-slate-400 mt-0.5">{{ $file['date_human'] }}</p>
+                            </td>
+                            <td class="px-5 py-3.5 text-center">
+                                <div class="inline-flex items-center gap-1.5">
+                                    {{-- Descargar --}}
+                                    <a href="{{ route('backups.download', $file['name']) }}"
+                                        class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-[11px] font-bold shadow-sm transition-all duration-200"
+                                        title="Descargar archivo .zip">
+                                        <i class="fas fa-download text-[10px]"></i>
+                                        <span>Descargar</span>
+                                    </a>
 
-                                            {{-- Restaurar este respaldo --}}
-                                            <button type="button"
-                                                    @click="openRestoreModal('existing', '{{ $file['name'] }}')"
-                                                    class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-amber-500 hover:bg-amber-600 text-white text-[11px] font-bold shadow-sm transition-all duration-200 cursor-pointer"
-                                                    title="Restaurar este respaldo en la base de datos">
-                                                <i class="fas fa-rotate-left text-[10px]"></i>
-                                                <span>Restaurar</span>
-                                            </button>
-                                        </div>
-                                    </td>
-                                </tr>
-                            @endforeach
-                        </tbody>
-                    </table>
-                </div>
+                                    {{-- Restaurar este respaldo --}}
+                                    <button type="button"
+                                        @click="openRestoreModal('existing', '{{ $file['name'] }}')"
+                                        class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-amber-500 hover:bg-amber-600 text-white text-[11px] font-bold shadow-sm transition-all duration-200 cursor-pointer"
+                                        title="Restaurar este respaldo en la base de datos">
+                                        <i class="fas fa-rotate-left text-[10px]"></i>
+                                        <span>Restaurar</span>
+                                    </button>
+                                </div>
+                            </td>
+                        </tr>
+                        @endforeach
+                    </tbody>
+                </table>
+            </div>
             @else
-                {{-- Estado vacío --}}
-                <div class="px-5 py-16 text-center">
-                    <div class="w-16 h-16 rounded-2xl bg-slate-100 flex items-center justify-center mx-auto mb-4">
-                        <i class="fas fa-database text-2xl text-slate-300"></i>
-                    </div>
-                    <h3 class="text-sm font-bold text-slate-500 mb-1">No hay respaldos aún</h3>
-                    <p class="text-xs text-slate-400">
-                        Genera tu primer respaldo de base de datos haciendo clic en el botón
-                        <span class="font-bold text-emerald-600">"Generar Nuevo Respaldo"</span>.
-                    </p>
+            {{-- Estado vacío --}}
+            <div class="px-5 py-16 text-center">
+                <div class="w-16 h-16 rounded-2xl bg-slate-100 flex items-center justify-center mx-auto mb-4">
+                    <i class="fas fa-database text-2xl text-slate-300"></i>
                 </div>
+                <h3 class="text-sm font-bold text-slate-500 mb-1">No hay respaldos aún</h3>
+                <p class="text-xs text-slate-400">
+                    Genera tu primer respaldo de base de datos haciendo clic en el botón
+                    <span class="font-bold text-emerald-600">"Generar Nuevo Respaldo"</span>.
+                </p>
+            </div>
             @endif
         </div>
 
@@ -242,9 +242,9 @@
                         <i class="fas fa-shield-halved text-amber-600 text-xs"></i>
                     </div>
                     <div class="text-xs text-slate-500 space-y-1">
-                        <p class="font-bold text-slate-700">Restauración de Base de Datos</p>
+                        <p class="font-bold text-slate-700">Restauración de la Base de Datos</p>
                         <p>• Puedes restaurar cualquier respaldo del historial con un solo clic.</p>
-                        <p>• También puedes subir scripts directos <strong class="text-slate-700">.sql</strong> o respaldos <strong class="text-slate-700">.zip</strong>.</p>
+                        <p>• También puedes subir archivos comprimidos <strong class="text-slate-700">.zip</strong> de hasta 100MB.</p>
                         <p>• Se exige la confirmación con tu contraseña de administrador para prevenir accidentes.</p>
                         <p>• Cada operación queda registrada de forma auditable en la bitácora del sistema.</p>
                     </div>
@@ -256,84 +256,86 @@
              MODAL DE CONFIRMACIÓN Y RESTAURACIÓN DE BASE DE DATOS
         ═══════════════════════════════════════════════════════════════════ --}}
         <div x-show="restoreModalOpen"
-             x-cloak
-             class="fixed inset-0 z-50 overflow-y-auto"
-             style="display: none;"
-             aria-labelledby="modal-title" role="dialog" aria-modal="true">
+            x-cloak
+            class="fixed inset-0 z-[80] overflow-y-auto"
+            style="display: none;"
+            aria-labelledby="modal-title" role="dialog" aria-modal="true">
 
             {{-- Backdrop --}}
             <div x-show="restoreModalOpen"
-                 x-transition:enter="ease-out duration-200"
-                 x-transition:enter-start="opacity-0"
-                 x-transition:enter-end="opacity-100"
-                 x-transition:leave="ease-in duration-150"
-                 x-transition:leave-start="opacity-100"
-                 x-transition:leave-end="opacity-0"
-                 class="fixed inset-0 bg-slate-900/60 backdrop-blur-xs transition-opacity"
-                 @click="if(!restoreLoading) restoreModalOpen = false"></div>
+                x-transition:enter="ease-out duration-200"
+                x-transition:enter-start="opacity-0"
+                x-transition:enter-end="opacity-100"
+                x-transition:leave="ease-in duration-150"
+                x-transition:leave-start="opacity-100"
+                x-transition:leave-end="opacity-0"
+                class="fixed inset-0 bg-slate-900/60 backdrop-blur-xs transition-opacity"
+                @click="if(!restoreLoading) restoreModalOpen = false"></div>
 
             <div class="flex min-h-full items-center justify-center p-4 text-center sm:p-0">
                 <div x-show="restoreModalOpen"
-                     x-transition:enter="ease-out duration-200"
-                     x-transition:enter-start="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95"
-                     x-transition:enter-end="opacity-100 translate-y-0 sm:scale-100"
-                     x-transition:leave="ease-in duration-150"
-                     x-transition:leave-start="opacity-100 translate-y-0 sm:scale-100"
-                     x-transition:leave-end="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95"
-                     class="relative transform overflow-hidden rounded-3xl bg-white text-left shadow-2xl transition-all sm:my-8 sm:w-full sm:max-w-lg border border-slate-200/80 p-6 sm:p-7">
+                    x-transition:enter="ease-out duration-200"
+                    x-transition:enter-start="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95"
+                    x-transition:enter-end="opacity-100 translate-y-0 sm:scale-100"
+                    x-transition:leave="ease-in duration-150"
+                    x-transition:leave-start="opacity-100 translate-y-0 sm:scale-100"
+                    x-transition:leave-end="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95"
+                    class="backup-restore-modal relative transform overflow-hidden rounded-3xl bg-white text-left shadow-2xl transition-all sm:my-8 sm:w-full sm:max-w-xl border border-slate-200/80 p-0">
 
                     {{-- Formulario de Restauración --}}
-                    <form action="{{ route('backups.restore') }}"
-                          method="POST"
-                          enctype="multipart/form-data"
-                          @submit="restoreLoading = true">
+                    <form id="restoreForm"
+                        action="{{ route('backups.restore') }}"
+                        method="POST"
+                        enctype="multipart/form-data">
                         @csrf
 
                         {{-- Encabezado Modal --}}
-                        <div class="flex items-start justify-between gap-4 pb-4 border-b border-slate-100">
+                        <div class="px-6 pt-6 sm:px-7 sm:pt-7">
+                            <div class="flex items-start justify-between gap-4 pb-5 border-b border-slate-100">
                             <div class="flex items-center gap-3.5">
-                                <div class="w-12 h-12 rounded-2xl bg-amber-50 text-amber-600 flex items-center justify-center flex-shrink-0">
+                                <div class="w-12 h-12 rounded-2xl bg-gradient-to-br from-amber-100 to-orange-50 text-amber-600 flex items-center justify-center flex-shrink-0 shadow-sm">
                                     <i class="fas fa-triangle-exclamation text-xl"></i>
                                 </div>
                                 <div>
                                     <span class="text-[10px] font-black uppercase tracking-widest text-amber-600">Acción Crítica</span>
                                     <h3 class="text-lg font-black text-slate-900" id="modal-title">
-                                        Restaurar Base de Datos MySQL
+                                        Restaurar Base de Datos
                                     </h3>
                                 </div>
                             </div>
                             <button type="button"
-                                    :disabled="restoreLoading"
-                                    @click="restoreModalOpen = false"
-                                    class="text-slate-400 hover:text-slate-600 p-1 rounded-lg transition-colors">
+                                :disabled="restoreLoading"
+                                @click="restoreModalOpen = false"
+                                class="text-slate-400 hover:text-slate-600 p-1 rounded-lg transition-colors">
                                 <i class="fas fa-times text-sm"></i>
                             </button>
                         </div>
+                        </div>
 
                         {{-- Banner de Advertencia --}}
-                        <div class="mt-4 p-3.5 rounded-xl bg-amber-50 border border-amber-200 text-xs text-amber-900 leading-relaxed">
+                        <div class="mx-6 mt-5 sm:mx-7 p-4 rounded-2xl bg-amber-50/80 border border-amber-200 text-xs text-amber-900 leading-relaxed shadow-sm">
                             <p class="font-bold mb-1 flex items-center gap-1.5">
                                 <i class="fas fa-triangle-exclamation text-amber-600"></i>
                                 ¡Advertencia importante!
                             </p>
-                            Esta operación sobrescribirá los datos actuales de la base de datos con la información del respaldo seleccionado. Cualquier cambio no respaldado se perderá de forma permanente.
+                            Esta operación sobrescribirá la base de datos con la información del respaldo seleccionado. Cualquier cambio no respaldado se perderá de forma permanente (las imágenes se encuentran protegidas en el almacenamiento de Supabase).
                         </div>
 
                         {{-- Selección del Origen del Respaldo --}}
-                        <div class="mt-5 space-y-4">
+                        <div class="px-6 mt-5 space-y-4 sm:px-7">
                             {{-- Pestañas de modo --}}
                             <div class="flex items-center p-1 rounded-xl bg-slate-100 text-xs font-bold">
                                 <button type="button"
-                                        @click="restoreMode = 'existing'"
-                                        :class="restoreMode === 'existing' ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-500 hover:text-slate-800'"
-                                        class="flex-1 py-1.5 px-3 rounded-lg transition-all text-center">
+                                    @click="restoreMode = 'existing'"
+                                    :class="restoreMode === 'existing' ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-500 hover:text-slate-800'"
+                                    class="flex-1 py-1.5 px-3 rounded-lg transition-all text-center">
                                     <i class="fas fa-server mr-1"></i> Respaldo del Historial
                                 </button>
                                 <button type="button"
-                                        @click="restoreMode = 'upload'"
-                                        :class="restoreMode === 'upload' ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-500 hover:text-slate-800'"
-                                        class="flex-1 py-1.5 px-3 rounded-lg transition-all text-center">
-                                    <i class="fas fa-upload mr-1"></i> Subir Archivo (.sql / .zip)
+                                    @click="restoreMode = 'upload'"
+                                    :class="restoreMode === 'upload' ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-500 hover:text-slate-800'"
+                                    class="flex-1 py-1.5 px-3 rounded-lg transition-all text-center">
+                                    <i class="fas fa-upload mr-1"></i> Subir Respaldo (.zip)
                                 </button>
                             </div>
 
@@ -345,36 +347,36 @@
                                     </label>
 
                                     @if(count($files) > 0)
-                                        <div class="p-3.5 rounded-xl bg-slate-50 border border-slate-200">
-                                            <div class="flex items-center gap-3">
-                                                <div class="w-9 h-9 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center flex-shrink-0">
-                                                    <i class="fas fa-file-zipper text-sm"></i>
-                                                </div>
-                                                <div class="min-w-0 flex-1">
-                                                    <p class="text-xs font-black text-slate-900 truncate" x-text="selectedFileName || '{{ $files[0]['name'] }}'"></p>
-                                                    <p class="text-[10px] text-slate-400 mt-0.5">Almacenado localmente en el servidor</p>
-                                                </div>
+                                    <div class="p-3.5 rounded-xl bg-slate-50 border border-slate-200">
+                                        <div class="flex items-center gap-3">
+                                            <div class="w-9 h-9 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center flex-shrink-0">
+                                                <i class="fas fa-file-zipper text-sm"></i>
+                                            </div>
+                                            <div class="min-w-0 flex-1">
+                                                <p class="text-xs font-black text-slate-900 truncate" x-text="selectedFileName || '{{ $files[0]['name'] }}'"></p>
+                                                <p class="text-[10px] text-slate-400 mt-0.5">Almacenado localmente en el servidor</p>
                                             </div>
                                         </div>
+                                    </div>
 
-                                        {{-- Selector si quiere cambiar de archivo del historial --}}
-                                        <div class="pt-1">
-                                            <label class="block text-[11px] font-semibold text-slate-500 mb-1">
-                                                Cambiar por otro respaldo del historial:
-                                            </label>
-                                            <select x-model="selectedFileName"
-                                                    class="w-full text-xs rounded-xl border border-slate-300 bg-white px-3 py-2 font-medium text-slate-700 focus:outline-none focus:border-amber-500 focus:ring-2 focus:ring-amber-500/20">
-                                                @foreach($files as $f)
-                                                    <option value="{{ $f['name'] }}">{{ $f['name'] }} ({{ $f['date'] }}) - {{ $f['size'] }}</option>
-                                                @endforeach
-                                            </select>
-                                        </div>
+                                    {{-- Selector si quiere cambiar de archivo del historial --}}
+                                    <div class="pt-1">
+                                        <label class="block text-[11px] font-semibold text-slate-500 mb-1">
+                                            Cambiar por otro respaldo del historial:
+                                        </label>
+                                        <select x-model="selectedFileName"
+                                            class="w-full text-xs rounded-xl border border-slate-300 bg-white px-3 py-2 font-medium text-slate-700 focus:outline-none focus:border-amber-500 focus:ring-2 focus:ring-amber-500/20">
+                                            @foreach($files as $f)
+                                            <option value="{{ $f['name'] }}">{{ $f['name'] }} ({{ $f['date'] }}) - {{ $f['size'] }}</option>
+                                            @endforeach
+                                        </select>
+                                    </div>
 
-                                        <input type="hidden" name="file_name" :value="selectedFileName || '{{ $files[0]['name'] }}'">
+                                    <input type="hidden" name="file_name" :value="selectedFileName || '{{ $files[0]['name'] }}'">
                                     @else
-                                        <div class="p-4 rounded-xl bg-slate-50 text-center text-xs text-slate-500">
-                                            No hay respaldos locales disponibles. Usa la opción de <strong>Subir Archivo</strong>.
-                                        </div>
+                                    <div class="p-4 rounded-xl bg-slate-50 text-center text-xs text-slate-500">
+                                        No hay respaldos locales disponibles. Usa la opción de <strong>Subir Archivo</strong>.
+                                    </div>
                                     @endif
                                 </div>
                             </template>
@@ -383,15 +385,16 @@
                             <template x-if="restoreMode === 'upload'">
                                 <div class="space-y-2">
                                     <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider">
-                                        Selecciona tu script .sql o respaldo .zip:
+                                        Selecciona tu respaldo comprimido (.zip):
                                     </label>
                                     <input type="file"
-                                           name="backup_file"
-                                           accept=".sql,.zip"
-                                           :required="restoreMode === 'upload'"
-                                           class="block w-full text-xs text-slate-500 file:mr-3 file:py-2.5 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-bold file:bg-amber-50 file:text-amber-700 hover:file:bg-amber-100 border border-slate-300 rounded-xl cursor-pointer bg-white">
+                                        id="backup_file_input"
+                                        name="backup_file"
+                                        accept=".zip"
+                                        :required="restoreMode === 'upload'"
+                                        class="block w-full text-xs text-slate-500 file:mr-3 file:py-2.5 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-bold file:bg-amber-50 file:text-amber-700 hover:file:bg-amber-100 border border-slate-300 rounded-xl cursor-pointer bg-white">
                                     <p class="text-[10px] text-slate-400">
-                                        Tamaño máximo admitido: 50MB. Admite .sql puros o archivos .zip exportados por AXStore.
+                                        Tamaño máximo admitido: 100MB. Debe ser un archivo .zip generado con Spatie Backup.
                                     </p>
                                 </div>
                             </template>
@@ -404,11 +407,11 @@
                                 <div class="relative">
                                     <i class="fas fa-lock absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 text-xs"></i>
                                     <input type="password"
-                                           name="password"
-                                           required
-                                           autocomplete="current-password"
-                                           placeholder="Ingresa tu contraseña para autorizar"
-                                           class="w-full pl-9 pr-3.5 py-2.5 rounded-xl border border-slate-300 text-xs font-semibold text-slate-800 placeholder-slate-400 focus:outline-none focus:border-amber-500 focus:ring-2 focus:ring-amber-500/20">
+                                        name="password"
+                                        required
+                                        autocomplete="current-password"
+                                        placeholder="Ingresa tu contraseña para autorizar"
+                                        class="w-full pl-9 pr-3.5 py-2.5 rounded-xl border border-slate-300 text-xs font-semibold text-slate-800 placeholder-slate-400 focus:outline-none focus:border-amber-500 focus:ring-2 focus:ring-amber-500/20">
                                 </div>
                                 <p class="text-[10px] text-slate-400">
                                     Por seguridad corporativa, debes confirmar tu identidad para aplicar la restauración.
@@ -417,17 +420,19 @@
                         </div>
 
                         {{-- Botones del Modal --}}
-                        <div class="mt-6 pt-4 border-t border-slate-100 flex items-center justify-end gap-3">
+                        <div class="mt-6 px-6 pb-6 pt-5 sm:px-7 sm:pb-7 border-t border-slate-100 bg-slate-50/70 flex items-center justify-end gap-3">
                             <button type="button"
-                                    :disabled="restoreLoading"
-                                    @click="restoreModalOpen = false"
-                                    class="px-4 py-2.5 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 font-bold text-xs transition-colors cursor-pointer">
+                                :disabled="restoreLoading"
+                                @click="restoreModalOpen = false"
+                                class="px-4 py-2.5 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 font-bold text-xs transition-colors cursor-pointer">
                                 Cancelar
                             </button>
 
-                            <button type="submit"
-                                    :disabled="restoreLoading"
-                                    class="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-amber-500 hover:bg-amber-600 text-white font-bold text-xs uppercase tracking-wider shadow-md shadow-amber-500/20 transition-all duration-200 disabled:opacity-60 disabled:cursor-not-allowed cursor-pointer">
+                            <button type="button"
+                                id="btnConfirmRestore"
+                                @click="confirmRestoreAction()"
+                                :disabled="restoreLoading"
+                                class="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-amber-500 hover:bg-amber-600 text-white font-bold text-xs uppercase tracking-wider shadow-md shadow-amber-500/20 transition-all duration-200 disabled:opacity-60 disabled:cursor-not-allowed cursor-pointer">
                                 <template x-if="!restoreLoading">
                                     <span class="flex items-center gap-2">
                                         <i class="fas fa-rotate-left"></i>
@@ -440,7 +445,7 @@
                                             <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
                                             <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
                                         </svg>
-                                        <span>Restaurando base de datos...</span>
+                                        <span>Restaurando sistema...</span>
                                     </span>
                                 </template>
                             </button>
@@ -452,6 +457,9 @@
         </div>
 
     </div>
+
+    {{-- SweetAlert2 CDN (Garantizado si el layout principal no lo tuviera) --}}
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
     {{-- Script Alpine del Gestor de Respaldos --}}
     <script>
@@ -468,6 +476,111 @@
                         this.selectedFileName = fileName;
                     }
                     this.restoreModalOpen = true;
+                },
+
+                confirmRestoreAction() {
+                    const form = document.getElementById('restoreForm');
+                    if (!form) return;
+
+                    const passwordInput = form.querySelector('input[name="password"]');
+                    if (!passwordInput || !passwordInput.value.trim()) {
+                        this.showRestoreToast({
+                            icon: 'warning',
+                            title: 'Contraseña requerida',
+                            text: 'Debes ingresar tu contraseña de administrador para autorizar la restauración.',
+                        });
+                        passwordInput?.focus();
+                        return;
+                    }
+
+                    if (this.restoreMode === 'upload') {
+                        const fileInput = document.getElementById('backup_file_input');
+                        if (!fileInput || !fileInput.files || fileInput.files.length === 0) {
+                            this.showRestoreToast({
+                                icon: 'warning',
+                                title: 'Archivo requerido',
+                                text: 'Por favor selecciona un archivo comprimido .zip de respaldo para restaurar.',
+                            });
+                            return;
+                        }
+
+                        const fileName = fileInput.files[0].name.toLowerCase();
+                        if (!fileName.endsWith('.zip')) {
+                            this.showRestoreToast({
+                                icon: 'error',
+                                title: 'Extensión no válida',
+                                text: 'El archivo debe tener estrictamente la extensión .zip.',
+                            });
+                            return;
+                        }
+
+                        if (fileInput.files[0].size > 100 * 1024 * 1024) {
+                            this.showRestoreToast({
+                                icon: 'error',
+                                title: 'Archivo demasiado grande',
+                                text: 'El archivo de respaldo no debe superar el límite de 100MB.',
+                            });
+                            return;
+                        }
+                    }
+
+                    this.restoreModalOpen = false;
+                    Swal.fire({
+                        title: '¿Confirmar Restauración de la Base de Datos?',
+                        html: `
+                            <div class="text-left text-xs text-slate-700 space-y-2.5 mt-2 leading-relaxed">
+                                <div class="p-3 rounded-xl bg-amber-50 border border-amber-200 text-amber-900 font-semibold flex items-start gap-2">
+                                    <i class="fas fa-triangle-exclamation text-amber-600 mt-0.5 text-sm flex-shrink-0"></i>
+                                    <span>¡Acción destructiva e irrecuperable! Se reemplazará de forma permanente la base de datos actual.</span>
+                                </div>
+                                <p>Al proceder con esta operación:</p>
+                                <ul class="list-disc list-inside space-y-1 font-semibold text-slate-800">
+                                    <li>La base de datos actual será sobrescrita en su totalidad con el volcado SQL.</li>
+                                    <li>Las imágenes y multimedia se mantienen intactas en Supabase S3.</li>
+                                </ul>
+                                <p class="text-slate-500 pt-1">¿Estás absolutamente seguro de continuar?</p>
+                            </div>
+                        `,
+                        icon: 'warning',
+                        showCancelButton: true,
+                        confirmButtonColor: '#d97706',
+                        cancelButtonColor: '#64748b',
+                        confirmButtonText: '<i class="fas fa-check mr-1.5"></i> Sí, restaurar base de datos',
+                        cancelButtonText: 'Cancelar',
+                        reverseButtons: true,
+                        focusCancel: true,
+                        allowOutsideClick: false,
+                    }).then((result) => {
+                        if (result.isConfirmed) {
+                            this.restoreLoading = true;
+                            Swal.fire({
+                                title: 'Restaurando base de datos...',
+                                html: '<p class="text-xs text-slate-500 mt-1">Por favor espera mientras se extrae el archivo y se ejecuta la restauración del script SQL.<br><strong class="text-amber-600">No recargues ni cierres la página.</strong></p>',
+                                allowOutsideClick: false,
+                                allowEscapeKey: false,
+                                didOpen: () => {
+                                    Swal.showLoading();
+                                }
+                            });
+                            form.submit();
+                        } else {
+                            this.restoreModalOpen = true;
+                        }
+                    });
+                },
+
+                showRestoreToast(options) {
+                    Swal.fire({
+                        ...options,
+                        toast: true,
+                        position: 'top-end',
+                        timer: 4200,
+                        timerProgressBar: true,
+                        showConfirmButton: false,
+                        customClass: {
+                            popup: 'backup-toast',
+                        },
+                    });
                 }
             };
         }

@@ -24,7 +24,7 @@
                         $imgP = $variante->imagenes->where('es_principal', 1)->first() ?? $variante->imagenes->first();
                     @endphp
                     @if($imgP)
-                        <img src="{{ asset('storage/' . $imgP->ruta_imagen) }}" alt="img"
+                        <img src="{{ str_starts_with($imgP->ruta_imagen, 'http') ? $imgP->ruta_imagen : \Illuminate\Support\Facades\Storage::disk('s3')->url($imgP->ruta_imagen) }}" alt="img"
                                 class="w-10 h-10 rounded-lg object-cover border border-slate-200">
                     @else
                         <div class="w-10 h-10 rounded-lg bg-slate-100 flex items-center justify-center text-slate-300">

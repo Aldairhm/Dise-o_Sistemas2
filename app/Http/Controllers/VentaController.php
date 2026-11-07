@@ -10,6 +10,7 @@ use App\Models\ComisionVendedor;
 use App\Models\Producto;
 use App\Models\User;
 use App\Services\ActivityLogger;
+use App\Support\CloudStorage;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Auth;
@@ -638,8 +639,8 @@ class VentaController extends Controller
                 'precio_venta' => (float) $variante->precio_venta,
                 'stock' => (int) $variante->stock,
                 'imagen' => ($img = $variante->imagenes->firstWhere('es_principal', 1) ?? $variante->imagenes->first())
-                    ? asset('storage/' . $img->ruta_imagen)
-                    : ($variante->imagen ? asset('storage/' . $variante->imagen) : null),
+                    ? CloudStorage::url($img->ruta_imagen)
+                    : CloudStorage::url($variante->imagen),
             ]);
 
         $vendedores = User::where('estado', 1)
@@ -814,7 +815,7 @@ class VentaController extends Controller
                     $extension = strtolower($archivo->getClientOriginalExtension() ?: $archivo->extension() ?: 'jpg');
                     $nombreArchivo = "{$folioVenta}_{$diaVenta}_comprobante_pago.{$extension}";
 
-                    $rutaComprobante = $archivo->storeAs('comprobantes_pago', $nombreArchivo, 'public');
+                    $rutaComprobante = $archivo->storeAs('comprobantes_pago', $nombreArchivo, 's3');
                     $venta->comprobante_pago = $rutaComprobante;
                     $venta->save();
                 }
@@ -1045,7 +1046,7 @@ class VentaController extends Controller
                 $archivo = $request->file('comprobante_paquete');
                 $extension = strtolower($archivo->getClientOriginalExtension() ?: $archivo->extension() ?: 'jpg');
                 $nombreArchivo = "{$folioVenta}_{$diaVenta}_paquete.{$extension}";
-                $rutaPaquete = $archivo->storeAs('comprobantes_paquete', $nombreArchivo, 'public');
+                $rutaPaquete = $archivo->storeAs('comprobantes_paquete', $nombreArchivo, 's3');
                 $venta->comprobante_paquete = $rutaPaquete;
             }
 
@@ -1055,7 +1056,7 @@ class VentaController extends Controller
                 $extension = strtolower($archivo->getClientOriginalExtension() ?: $archivo->extension() ?: 'jpg');
                 $sufijo = $nuevoEstado === 'Cambio' ? 'cambio' : 'devolucion';
                 $nombreArchivo = "{$folioVenta}_{$diaVenta}_{$sufijo}.{$extension}";
-                $rutaDevolucion = $archivo->storeAs('comprobantes_devolucion', $nombreArchivo, 'public');
+                $rutaDevolucion = $archivo->storeAs('comprobantes_devolucion', $nombreArchivo, 's3');
                 $venta->comprobante_devolucion = $rutaDevolucion;
             }
 

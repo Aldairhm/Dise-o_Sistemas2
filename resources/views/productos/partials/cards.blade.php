@@ -2,7 +2,9 @@
 @php
     $isActivo = $prod->estado == 1;
     $delay    = $loop->index * 50;
-    $imgUrl   = $prod->imagen_principal ? asset('storage/' . $prod->imagen_principal) : null;
+    $imgUrl   = $prod->imagen_principal 
+        ? (str_starts_with($prod->imagen_principal, 'http') ? $prod->imagen_principal : \Illuminate\Support\Facades\Storage::disk('s3')->url($prod->imagen_principal)) 
+        : null;
 @endphp
 
 <div class="producto-card group bg-white rounded-xl shadow-sm hover:shadow-md transition-all duration-300 relative flex flex-col border border-slate-200/60 {{ !$isActivo ? 'opacity-70' : '' }}"

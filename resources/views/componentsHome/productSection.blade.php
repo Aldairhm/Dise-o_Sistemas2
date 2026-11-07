@@ -51,14 +51,18 @@
             $imagenesUrls = [];
             $variantesData = [];
             
-            $prodImgUrl = $prod->imagen_principal ? asset('storage/' . $prod->imagen_principal) : null;
+            $prodImgUrl = $prod->imagen_principal 
+                ? (str_starts_with($prod->imagen_principal, 'http') ? $prod->imagen_principal : \Illuminate\Support\Facades\Storage::disk('s3')->url($prod->imagen_principal)) 
+                : null;
             
             foreach($variantesActivas as $v) {
                 $vImg = $v->imagenes->where('es_principal', 1)->first() ?? $v->imagenes->first();
-                $vImgUrl = $vImg ? asset('storage/' . $vImg->ruta_imagen) : $prodImgUrl;
+                $vImgUrl = $vImg 
+                    ? (str_starts_with($vImg->ruta_imagen, 'http') ? $vImg->ruta_imagen : \Illuminate\Support\Facades\Storage::disk('s3')->url($vImg->ruta_imagen)) 
+                    : $prodImgUrl;
                 $vImgsUrls = [];
                 foreach ($v->imagenes->sortByDesc('es_principal') as $img) {
-                    $vImgsUrls[] = asset('storage/' . $img->ruta_imagen);
+                    $vImgsUrls[] = str_starts_with($img->ruta_imagen, 'http') ? $img->ruta_imagen : \Illuminate\Support\Facades\Storage::disk('s3')->url($img->ruta_imagen);
                 }
                 if (empty($vImgsUrls) && $prodImgUrl) {
                     $vImgsUrls[] = $prodImgUrl;

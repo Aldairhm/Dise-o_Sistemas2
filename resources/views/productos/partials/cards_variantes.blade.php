@@ -3,7 +3,9 @@
     $isActivo = $variante->estado == 1;
     $delay    = $loop->index * 50;
     $imgP = $variante->imagenes->where('es_principal', 1)->first() ?? $variante->imagenes->first();
-    $imgUrl = $imgP ? asset('storage/' . $imgP->ruta_imagen) : null;
+    $imgUrl = $imgP 
+        ? (str_starts_with($imgP->ruta_imagen, 'http') ? $imgP->ruta_imagen : \Illuminate\Support\Facades\Storage::disk('s3')->url($imgP->ruta_imagen)) 
+        : null;
 @endphp
 
 <div class="variante-card group bg-white rounded-xl shadow-sm hover:shadow-md transition-all duration-300 relative flex flex-col border border-slate-200/60 {{ !$isActivo ? 'opacity-70' : '' }}"
