@@ -89,21 +89,29 @@
             </tr>
             @empty
             <tr class="empty-row">
-                <td colspan="{{ Auth::user()->rol === 'admin' ? 7 : 6 }}" class="text-center py-16 text-slate-400">
-                    <i class="fas fa-boxes-stacked text-4xl mb-3 block opacity-30"></i>
-                    <p class="font-semibold text-sm">No hay productos registrados.</p>
-                    @if(Auth::user()->rol === 'admin')
-                    <a href="{{ route('productos.create') }}" class="mt-3 inline-block text-sm font-bold text-blue-600 hover:underline">
-                        + Crear el primero
-                    </a>
-                    @endif
+                <td colspan="{{ Auth::user()->rol === 'admin' ? 7 : 6 }}" class="py-8">
+                    <x-empty-state 
+                        title="No hay productos registrados" 
+                        description="Comienza agregando un nuevo producto al catálogo general."
+                        icon="folder-open">
+                        @if(Auth::user()->rol === 'admin')
+                            <x-slot:action>
+                                <a href="{{ route('productos.create') }}" class="inline-flex items-center gap-2 rounded-xl bg-blue-600 px-4 py-2 text-xs font-bold text-white shadow-sm hover:bg-blue-700">
+                                    <i class="fas fa-plus"></i> Crear el primero
+                                </a>
+                            </x-slot:action>
+                        @endif
+                    </x-empty-state>
                 </td>
             </tr>
             @endforelse
             <tr id="table-no-results" class="hidden">
-                <td colspan="{{ Auth::user()->rol === 'admin' ? 7 : 6 }}" class="text-center py-16 text-slate-400">
-                    <i class="fas fa-search text-4xl mb-3 block opacity-30"></i>
-                    <p class="font-semibold text-sm">No se encontraron productos con estos filtros.</p>
+                <td colspan="{{ Auth::user()->rol === 'admin' ? 7 : 6 }}" class="py-8">
+                    <x-empty-state 
+                        title="No se encontraron productos" 
+                        description="Intenta ajustar el término de búsqueda, categoría o estado seleccionado."
+                        icon="search" 
+                    />
                 </td>
             </tr>
         </tbody>

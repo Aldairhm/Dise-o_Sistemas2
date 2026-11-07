@@ -81,7 +81,24 @@ document.addEventListener('alpine:init', () => {
                 }
 
                 this.mensaje = data.message;
-                window.setTimeout(() => window.location.reload(), 900);
+                // Actualizar existencias localmente sin recargar la página
+                if (data.movimiento && data.movimiento.reserva_nueva !== undefined) {
+                    this.varianteSeleccionada.reserva = data.movimiento.reserva_nueva;
+                    const vEnLista = this.variantes.find(v => v.id === this.varianteSeleccionada.id);
+                    if (vEnLista) {
+                        vEnLista.reserva = data.movimiento.reserva_nueva;
+                    }
+                }
+                this.limpiarSeleccion();
+                if (typeof Swal !== 'undefined') {
+                    Swal.fire({
+                        icon: 'success',
+                        title: '¡Transferencia Exitosa!',
+                        text: data.message,
+                        timer: 2000,
+                        showConfirmButton: false
+                    });
+                }
             } catch (err) {
                 this.error = err.message;
             } finally {

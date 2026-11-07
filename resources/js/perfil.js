@@ -17,13 +17,27 @@ function applyTheme(theme) {
 }
 
 function setTheme(theme) {
+    const indicator = document.getElementById('tema-spinner-indicator');
+    if (indicator) {
+        indicator.classList.remove('hidden');
+        indicator.classList.add('inline-flex');
+    }
+
     localStorage.setItem('ax_theme', theme);
     applyTheme(theme);
+
     // Actualizar botones
     document.querySelectorAll('.theme-option').forEach(btn => {
         btn.classList.toggle('selected', btn.dataset.theme === theme);
     });
-    Toast.fire({ icon: 'success', title: 'Tema actualizado' });
+
+    setTimeout(() => {
+        if (indicator) {
+            indicator.classList.add('hidden');
+            indicator.classList.remove('inline-flex');
+        }
+        Toast.fire({ icon: 'success', title: 'Tema actualizado' });
+    }, 250);
 }
 
 // Exponer para uso global 
@@ -32,10 +46,28 @@ window.setTheme = setTheme;
 
 
 function switchTab(tabId) {
-    document.querySelectorAll('.profile-tab').forEach(t => t.classList.remove('active'));
-    document.querySelectorAll('.profile-tab-content').forEach(c => c.classList.remove('active'));
-    document.getElementById(`tab-btn-${tabId}`).classList.add('active');
-    document.getElementById(`tab-${tabId}`).classList.add('active');
+    const tabs = document.querySelectorAll('.profile-tab');
+    const contents = document.querySelectorAll('.profile-tab-content');
+    const skeleton = document.getElementById('perfil-tab-skeleton');
+
+    tabs.forEach(t => t.classList.remove('active'));
+    contents.forEach(c => c.classList.remove('active'));
+
+    const btn = document.getElementById(`tab-btn-${tabId}`);
+    const targetContent = document.getElementById(`tab-${tabId}`);
+
+    if (btn) btn.classList.add('active');
+
+    // Mostrar skeleton brevemente (180ms) para dar feedback visual sin bloquear ni saltar de layout
+    if (skeleton && targetContent) {
+        skeleton.classList.remove('hidden');
+        setTimeout(() => {
+            skeleton.classList.add('hidden');
+            targetContent.classList.add('active');
+        }, 180);
+    } else if (targetContent) {
+        targetContent.classList.add('active');
+    }
 }
 
 // VALIDACION TELEFONO 
@@ -144,8 +176,15 @@ async function savePersonalInfo(event) {
     data.append('_method', 'PUT');
 
     const btn = document.getElementById('btn-save-personal');
+    const btnText = btn.querySelector('.btn-text');
+    const btnSpinner = btn.querySelector('.btn-spinner');
+
     btn.disabled = true;
-    btn.innerHTML = '<i class="fas fa-spinner fa-spin mr-1.5"></i> Guardando...';
+    if (btnText && btnSpinner) {
+        btnText.classList.add('hidden');
+        btnSpinner.classList.remove('hidden');
+        btnSpinner.classList.add('inline-flex');
+    }
 
     try {
         const res = await fetch('/perfil', { method: 'POST', headers: { 'X-CSRF-TOKEN': csrfToken, 'Accept': 'application/json' }, body: data });
@@ -153,9 +192,36 @@ async function savePersonalInfo(event) {
 
         if (json.success) {
             Toast.fire({ icon: 'success', title: json.message });
-            // Actualizar avatar/nombre 
-            const nameEl = document.getElementById('perfil-header-name');
-            if (nameEl) nameEl.textContent = document.getElementById('perfil_nombre').value;
+            
+            // Actualizar avatar/nombre en vivo en el header y la card lateral
+            const nuevoNombre = document.getElementById('perfil_nombre').value.trim();
+            const nuevoEmail = document.getElementById('perfil_email').value.trim();
+            const nuevoTel = document.getElementById('perfil_telefono').value.trim();
+
+            const nameHeader = document.getElementById('perfil-header-name');
+            if (nameHeader) nameHeader.textContent = nuevoNombre;
+
+            const nameCard = document.getElementById('perfil-card-name');
+            if (nameCard) nameCard.textContent = nuevoNombre;
+
+            const emailCard = document.getElementById('perfil-card-email');
+            if (emailCard) emailCard.textContent = nuevoEmail;
+
+            const avatarPreview = document.getElementById('perfil-avatar-preview');
+            if (avatarPreview && nuevoNombre) {
+                avatarPreview.textContent = nuevoNombre.charAt(0).toUpperCase();
+            }
+
+            const telRow = document.getElementById('perfil-card-tel-row');
+            const telCard = document.getElementById('perfil-card-telefono');
+            if (telRow && telCard) {
+                if (nuevoTel) {
+                    telCard.textContent = nuevoTel;
+                    telRow.style.display = 'flex';
+                } else {
+                    telRow.style.display = 'none';
+                }
+            }
         } else {
             const errors = json.errors ? Object.values(json.errors).flat().join('<br>') : json.message;
             Swal.fire({ customClass: { popup: 'swal-axstore' }, icon: 'error', title: 'Error al guardar', html: `<p style="font-size:0.9rem;color:#475569;">${errors}</p>`, confirmButtonColor: '#ef4444' });
@@ -164,7 +230,11 @@ async function savePersonalInfo(event) {
         Toast.fire({ icon: 'error', title: 'Error de conexión al guardar el perfil.' });
     } finally {
         btn.disabled = false;
-        btn.innerHTML = '<i class="fas fa-save mr-1.5"></i> Guardar Cambios';
+        if (btnText && btnSpinner) {
+            btnText.classList.remove('hidden');
+            btnSpinner.classList.add('hidden');
+            btnSpinner.classList.remove('inline-flex');
+        }
     }
 }
 
@@ -182,8 +252,15 @@ async function savePassword(event) {
     }
 
     const btn = document.getElementById('btn-save-password');
+    const btnText = btn.querySelector('.btn-text');
+    const btnSpinner = btn.querySelector('.btn-spinner');
+
     btn.disabled = true;
-    btn.innerHTML = '<i class="fas fa-spinner fa-spin mr-1.5"></i> Cambiando...';
+    if (btnText && btnSpinner) {
+        btnText.classList.add('hidden');
+        btnSpinner.classList.remove('hidden');
+        btnSpinner.classList.add('inline-flex');
+    }
 
     try {
         const form = document.getElementById('form-password');
@@ -206,7 +283,11 @@ async function savePassword(event) {
         Toast.fire({ icon: 'error', title: 'Error de conexión.' });
     } finally {
         btn.disabled = false;
-        btn.innerHTML = '<i class="fas fa-lock mr-1.5"></i> Cambiar Contraseña';
+        if (btnText && btnSpinner) {
+            btnText.classList.remove('hidden');
+            btnSpinner.classList.add('hidden');
+            btnSpinner.classList.remove('inline-flex');
+        }
     }
 }
 

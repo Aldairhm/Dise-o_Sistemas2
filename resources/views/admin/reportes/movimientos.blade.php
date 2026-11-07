@@ -2,7 +2,7 @@
     <!-- Chart.js CDN -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
 
-    <div class="max-w-[1440px] mx-auto space-y-6" id="reporte-container">
+    <div class="max-w-[1440px] mx-auto space-y-6" id="reporte-container" x-data="gestionReporteMovimientos()">
 
         <!-- 1. BARRA DE ACCIÓN Y NAVEGACIÓN SUPERIOR (SOLO PANTALLA) -->
         <div class="no-print flex flex-col sm:flex-row sm:items-center justify-between gap-4">
@@ -81,8 +81,8 @@
 
         <!-- 3. BARRA DE FILTROS INTERACTIVA (SOLO PANTALLA) -->
         <section class="no-print bg-white border border-slate-200 rounded-2xl p-4 sm:p-5 shadow-sm">
-            <form method="GET" action="{{ route('admin.reportes.movimientos') }}" class="space-y-4">
-                <input type="hidden" name="modo" value="{{ $filtros['modo'] ?? 'normal' }}">
+            <form @submit.prevent="aplicarFiltros(1)" class="space-y-4">
+                <input type="hidden" name="modo" :value="filtros.modo">
 
                 <div class="flex flex-wrap items-center justify-between gap-3 pb-3 border-b border-slate-100">
                     <div class="flex items-center gap-2">
@@ -90,32 +90,36 @@
                             <i class="fas fa-clock text-slate-400 mr-1"></i> Periodo:
                         </span>
                         <div class="flex flex-wrap gap-1.5">
-                            @php $pActual = $filtros['preset'] ?? 'este_mes'; @endphp
-                            <a href="{{ route('admin.reportes.movimientos', array_merge(request()->except('page'), ['preset' => 'hoy', 'desde' => '', 'hasta' => ''])) }}"
-                                class="px-3 py-1 rounded-lg text-xs font-bold transition-all {{ $pActual === 'hoy' ? 'bg-blue-600 text-white shadow-sm' : 'bg-slate-50 text-slate-600 hover:bg-slate-100' }}">
+                            <button type="button" @click="cambiarPreset('hoy')"
+                                :class="filtros.preset === 'hoy' ? 'bg-blue-600 text-white shadow-sm' : 'bg-slate-50 text-slate-600 hover:bg-slate-100'"
+                                class="px-3 py-1 rounded-lg text-xs font-bold transition-all cursor-pointer">
                                 Hoy
-                            </a>
-                            <a href="{{ route('admin.reportes.movimientos', array_merge(request()->except('page'), ['preset' => 'ultimos_7_dias', 'desde' => '', 'hasta' => ''])) }}"
-                                class="px-3 py-1 rounded-lg text-xs font-bold transition-all {{ $pActual === 'ultimos_7_dias' ? 'bg-blue-600 text-white shadow-sm' : 'bg-slate-50 text-slate-600 hover:bg-slate-100' }}">
+                            </button>
+                            <button type="button" @click="cambiarPreset('ultimos_7_dias')"
+                                :class="filtros.preset === 'ultimos_7_dias' ? 'bg-blue-600 text-white shadow-sm' : 'bg-slate-50 text-slate-600 hover:bg-slate-100'"
+                                class="px-3 py-1 rounded-lg text-xs font-bold transition-all cursor-pointer">
                                 7 Días
-                            </a>
-                            <a href="{{ route('admin.reportes.movimientos', array_merge(request()->except('page'), ['preset' => 'este_mes', 'desde' => '', 'hasta' => ''])) }}"
-                                class="px-3 py-1 rounded-lg text-xs font-bold transition-all {{ $pActual === 'este_mes' ? 'bg-blue-600 text-white shadow-sm' : 'bg-slate-50 text-slate-600 hover:bg-slate-100' }}">
+                            </button>
+                            <button type="button" @click="cambiarPreset('este_mes')"
+                                :class="filtros.preset === 'este_mes' ? 'bg-blue-600 text-white shadow-sm' : 'bg-slate-50 text-slate-600 hover:bg-slate-100'"
+                                class="px-3 py-1 rounded-lg text-xs font-bold transition-all cursor-pointer">
                                 Este mes
-                            </a>
-                            <a href="{{ route('admin.reportes.movimientos', array_merge(request()->except('page'), ['preset' => 'mes_anterior', 'desde' => '', 'hasta' => ''])) }}"
-                                class="px-3 py-1 rounded-lg text-xs font-bold transition-all {{ $pActual === 'mes_anterior' ? 'bg-blue-600 text-white shadow-sm' : 'bg-slate-50 text-slate-600 hover:bg-slate-100' }}">
+                            </button>
+                            <button type="button" @click="cambiarPreset('mes_anterior')"
+                                :class="filtros.preset === 'mes_anterior' ? 'bg-blue-600 text-white shadow-sm' : 'bg-slate-50 text-slate-600 hover:bg-slate-100'"
+                                class="px-3 py-1 rounded-lg text-xs font-bold transition-all cursor-pointer">
                                 Mes anterior
-                            </a>
-                            <a href="{{ route('admin.reportes.movimientos', array_merge(request()->except('page'), ['preset' => 'todo', 'desde' => '', 'hasta' => ''])) }}"
-                                class="px-3 py-1 rounded-lg text-xs font-bold transition-all {{ $pActual === 'todo' ? 'bg-blue-600 text-white shadow-sm' : 'bg-slate-50 text-slate-600 hover:bg-slate-100' }}">
+                            </button>
+                            <button type="button" @click="cambiarPreset('todo')"
+                                :class="filtros.preset === 'todo' ? 'bg-blue-600 text-white shadow-sm' : 'bg-slate-50 text-slate-600 hover:bg-slate-100'"
+                                class="px-3 py-1 rounded-lg text-xs font-bold transition-all cursor-pointer">
                                 Todo el historial
-                            </a>
+                            </button>
                         </div>
                     </div>
 
                     <div class="text-xs text-slate-500 font-medium">
-                        Periodo activo: <b class="text-slate-800">{{ \Carbon\Carbon::parse($filtros['desde'])->format('d/m/Y') }}</b> al <b class="text-slate-800">{{ \Carbon\Carbon::parse($filtros['hasta'])->format('d/m/Y') }}</b>
+                        Periodo activo: <b class="text-slate-800" x-text="formatearFechaVisual(filtros.desde)">{{ \Carbon\Carbon::parse($filtros['desde'])->format('d/m/Y') }}</b> al <b class="text-slate-800" x-text="formatearFechaVisual(filtros.hasta)">{{ \Carbon\Carbon::parse($filtros['hasta'])->format('d/m/Y') }}</b>
                     </div>
                 </div>
 
@@ -127,13 +131,14 @@
                         <select
                             name="tipo"
                             id="tipo"
+                            x-model="filtros.tipo"
                             class="w-full rounded-xl border border-slate-300 bg-slate-50 px-3 py-2 text-xs font-semibold text-slate-700 focus:border-blue-500 focus:bg-white focus:outline-none focus:ring-4 focus:ring-blue-500/10 transition-all">
-                            <option value="todos" {{ ($filtros['tipo'] ?? '') === 'todos' ? 'selected' : '' }}>Todos los movimientos</option>
-                            <option value="ventas" {{ ($filtros['tipo'] ?? '') === 'ventas' ? 'selected' : '' }}>Solo Ventas / Salidas</option>
-                            <option value="compras" {{ ($filtros['tipo'] ?? '') === 'compras' ? 'selected' : '' }}>Solo Compras / Entradas</option>
-                            <option value="transferencias" {{ ($filtros['tipo'] ?? '') === 'transferencias' ? 'selected' : '' }}>Transferencias a Tienda</option>
-                            <option value="devoluciones" {{ ($filtros['tipo'] ?? '') === 'devoluciones' ? 'selected' : '' }}>Devoluciones</option>
-                            <option value="comisiones" {{ ($filtros['tipo'] ?? '') === 'comisiones' ? 'selected' : '' }}>Comisiones de Vendedores</option>
+                            <option value="todos">Todos los movimientos</option>
+                            <option value="ventas">Solo Ventas / Salidas</option>
+                            <option value="compras">Solo Compras / Entradas</option>
+                            <option value="transferencias">Transferencias a Tienda</option>
+                            <option value="devoluciones">Devoluciones</option>
+                            <option value="comisiones">Comisiones de Vendedores</option>
                         </select>
                     </div>
 
@@ -143,7 +148,7 @@
                             type="date"
                             name="desde"
                             id="desde"
-                            value="{{ $filtros['desde'] }}"
+                            x-model="filtros.desde"
                             class="w-full rounded-xl border border-slate-300 bg-slate-50 px-3 py-2 text-xs font-semibold text-slate-700 focus:border-blue-500 focus:bg-white focus:outline-none focus:ring-4 focus:ring-blue-500/10 transition-all">
                     </div>
 
@@ -153,7 +158,7 @@
                             type="date"
                             name="hasta"
                             id="hasta"
-                            value="{{ $filtros['hasta'] }}"
+                            x-model="filtros.hasta"
                             class="w-full rounded-xl border border-slate-300 bg-slate-50 px-3 py-2 text-xs font-semibold text-slate-700 focus:border-blue-500 focus:bg-white focus:outline-none focus:ring-4 focus:ring-blue-500/10 transition-all">
                     </div>
 
@@ -163,7 +168,8 @@
                             type="text"
                             name="q"
                             id="q"
-                            value="{{ $filtros['q'] ?? '' }}"
+                            x-model="filtros.q"
+                            @input.debounce.400ms="aplicarFiltros(1)"
                             placeholder="Ej: Cámara, VNT-00036..."
                             class="w-full rounded-xl border border-slate-300 bg-slate-50 px-3 py-2 text-xs font-semibold text-slate-700 focus:border-blue-500 focus:bg-white focus:outline-none focus:ring-4 focus:ring-blue-500/10 transition-all">
                     </div>
@@ -171,16 +177,17 @@
                     <div class="lg:col-span-2 flex items-center gap-2">
                         <button
                             type="submit"
-                            class="flex-1 inline-flex items-center justify-center gap-1.5 px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs shadow-md shadow-blue-500/20 transition-all active:scale-95 cursor-pointer">
-                            <i class="fas fa-magnifying-glass"></i>
-                            <span>Filtrar</span>
+                            class="flex-1 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-bold py-2 px-3 text-xs transition-all shadow-md shadow-blue-600/15 flex items-center justify-center gap-1.5 cursor-pointer">
+                            <i :class="cargando ? 'fas fa-spinner fa-spin' : 'fas fa-filter'"></i>
+                            <span x-text="cargando ? 'Filtrando...' : 'Filtrar'"></span>
                         </button>
-                        <a
-                            href="{{ route('admin.reportes.movimientos') }}"
+                        <button
+                            type="button"
+                            @click="restablecerFiltros()"
                             title="Restablecer"
-                            class="inline-flex items-center justify-center px-3 py-2 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 text-slate-600 text-xs font-bold transition-all">
-                            <i class="fas fa-rotate-right"></i>
-                        </a>
+                            class="inline-flex items-center justify-center px-3 py-2 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 text-slate-600 text-xs font-bold transition-all cursor-pointer">
+                            <i class="fas fa-rotate-left"></i>
+                        </button>
                     </div>
                 </div>
             </form>
@@ -244,11 +251,14 @@
             <section class="bg-gradient-to-r from-slate-50 to-slate-100/60 rounded-2xl p-4 border border-slate-200 text-xs text-slate-700 grid grid-cols-2 sm:grid-cols-4 gap-4 print:bg-slate-50 print:border-slate-300">
                 <div class="border-l-2 border-blue-600 pl-3">
                     <span class="block text-[10px] uppercase font-bold text-slate-400 tracking-wider">Período Auditado</span>
-                    <span class="font-black text-slate-900 text-[12px]">{{ \Carbon\Carbon::parse($filtros['desde'])->format('d/m/Y') }} — {{ \Carbon\Carbon::parse($filtros['hasta'])->format('d/m/Y') }}</span>
+                    <span class="font-black text-slate-900 text-[12px]">
+                        <span x-text="formatearFechaVisual(filtros.desde)">{{ \Carbon\Carbon::parse($filtros['desde'])->format('d/m/Y') }}</span> — 
+                        <span x-text="formatearFechaVisual(filtros.hasta)">{{ \Carbon\Carbon::parse($filtros['hasta'])->format('d/m/Y') }}</span>
+                    </span>
                 </div>
                 <div class="border-l-2 border-emerald-500 pl-3">
                     <span class="block text-[10px] uppercase font-bold text-slate-400 tracking-wider">Tipo de Movimiento</span>
-                    <span class="font-bold text-slate-800 capitalize">{{ str_replace('_', ' ', $filtros['tipo'] ?? 'Todos') }}</span>
+                    <span class="font-bold text-slate-800 capitalize" x-text="filtros.tipo.replace('_', ' ')">{{ str_replace('_', ' ', $filtros['tipo'] ?? 'Todos') }}</span>
                 </div>
                 <div class="border-l-2 border-indigo-500 pl-3">
                     <span class="block text-[10px] uppercase font-bold text-slate-400 tracking-wider">Vendedor / Usuario</span>
@@ -262,11 +272,11 @@
                 </div>
                 <div class="border-l-2 border-amber-500 pl-3">
                     <span class="block text-[10px] uppercase font-bold text-slate-400 tracking-wider">Registros Procesados</span>
-                    <span class="font-black text-slate-900 text-[12px]">{{ $totales['cantidad_movimientos'] }} operaciones</span>
+                    <span class="font-black text-slate-900 text-[12px]" x-text="totales.cantidad_movimientos + ' operaciones'">{{ $totales['cantidad_movimientos'] }} operaciones</span>
                 </div>
             </section>
 
-            <!-- C. BLOQUE EJECUTIVO DE LOS 4 KPIS FINANCIEROS -->
+            <!-- C. BLOQUE EJECUTIVO DE LOS 4 KPIS FINANCIEROS (CON SKELETON EN CARGA) -->
             <section class="grid grid-cols-2 sm:grid-cols-4 gap-3.5 print:gap-2.5">
                 <!-- KPI 1: Ingresos -->
                 <div class="relative overflow-hidden rounded-2xl border-2 border-blue-100 bg-gradient-to-b from-blue-50/40 to-white p-4 print:border-blue-300 print:bg-white shadow-xs">
@@ -276,12 +286,20 @@
                             <i class="fas fa-dollar-sign"></i>
                         </div>
                     </div>
-                    <p class="mt-2 text-xl sm:text-2xl font-black text-slate-900 tabular-nums">
-                        ${{ number_format($kpis['ingresos']['total'], 2) }}
-                    </p>
-                    <p class="mt-1 text-[11px] text-slate-500 font-medium">
-                        <b class="text-slate-800">{{ $kpis['ingresos']['ventas_count'] }}</b> ventas concretadas
-                    </p>
+                    <template x-if="cargando">
+                        <div class="space-y-2 mt-2">
+                            <div class="h-7 w-28 rounded-md ax-skeleton-shimmer"></div>
+                            <div class="h-3 w-20 rounded ax-skeleton-shimmer"></div>
+                        </div>
+                    </template>
+                    <div x-show="!cargando">
+                        <p class="mt-2 text-xl sm:text-2xl font-black text-slate-900 tabular-nums">
+                            $<span x-text="formatearMoneda(kpis.ingresos.total)">{{ number_format($kpis['ingresos']['total'], 2) }}</span>
+                        </p>
+                        <p class="mt-1 text-[11px] text-slate-500 font-medium">
+                            <b class="text-slate-800" x-text="kpis.ingresos.ventas_count">{{ $kpis['ingresos']['ventas_count'] }}</b> ventas concretadas
+                        </p>
+                    </div>
                 </div>
 
                 <!-- KPI 2: Costos COGS -->
@@ -292,12 +310,20 @@
                             <i class="fas fa-boxes-stacked"></i>
                         </div>
                     </div>
-                    <p class="mt-2 text-xl sm:text-2xl font-black text-rose-600 tabular-nums">
-                        ${{ number_format($kpis['costos']['cogs_periodo'], 2) }}
-                    </p>
-                    <p class="mt-1 text-[11px] text-slate-500 font-medium">
-                        <b class="text-slate-800">{{ $kpis['costos']['unidades_vendidas'] }}</b> unidades despachadas
-                    </p>
+                    <template x-if="cargando">
+                        <div class="space-y-2 mt-2">
+                            <div class="h-7 w-28 rounded-md ax-skeleton-shimmer"></div>
+                            <div class="h-3 w-24 rounded ax-skeleton-shimmer"></div>
+                        </div>
+                    </template>
+                    <div x-show="!cargando">
+                        <p class="mt-2 text-xl sm:text-2xl font-black text-rose-600 tabular-nums">
+                            $<span x-text="formatearMoneda(kpis.costos.cogs_periodo)">{{ number_format($kpis['costos']['cogs_periodo'], 2) }}</span>
+                        </p>
+                        <p class="mt-1 text-[11px] text-slate-500 font-medium">
+                            <b class="text-slate-800" x-text="kpis.costos.unidades_vendidas">{{ $kpis['costos']['unidades_vendidas'] }}</b> unidades despachadas
+                        </p>
+                    </div>
                 </div>
 
                 <!-- KPI 3: Ganancia Neta -->
@@ -308,12 +334,20 @@
                             <i class="fas fa-arrow-trend-up"></i>
                         </div>
                     </div>
-                    <p class="mt-2 text-xl sm:text-2xl font-black text-emerald-600 tabular-nums">
-                        ${{ number_format($kpis['ganancias']['neta'], 2) }}
-                    </p>
-                    <p class="mt-1 text-[11px] text-emerald-700 font-bold">
-                        Margen real: {{ $kpis['ganancias']['margen_porcentaje'] }}%
-                    </p>
+                    <template x-if="cargando">
+                        <div class="space-y-2 mt-2">
+                            <div class="h-7 w-28 rounded-md ax-skeleton-shimmer"></div>
+                            <div class="h-3 w-20 rounded ax-skeleton-shimmer"></div>
+                        </div>
+                    </template>
+                    <div x-show="!cargando">
+                        <p class="mt-2 text-xl sm:text-2xl font-black text-emerald-600 tabular-nums">
+                            $<span x-text="formatearMoneda(kpis.ganancias.neta)">{{ number_format($kpis['ganancias']['neta'], 2) }}</span>
+                        </p>
+                        <p class="mt-1 text-[11px] text-emerald-700 font-bold">
+                            Margen real: <span x-text="kpis.ganancias.margen_porcentaje">{{ $kpis['ganancias']['margen_porcentaje'] }}</span>%
+                        </p>
+                    </div>
                 </div>
 
                 <!-- KPI 4: Comisiones -->
@@ -324,12 +358,20 @@
                             <i class="fas fa-hand-holding-dollar"></i>
                         </div>
                     </div>
-                    <p class="mt-2 text-xl sm:text-2xl font-black text-indigo-700 tabular-nums">
-                        ${{ number_format($kpis['ganancias']['comisiones_periodo'], 2) }}
-                    </p>
-                    <p class="mt-1 text-[11px] text-slate-500 font-medium">
-                        Pendiente: <b class="text-indigo-800">${{ number_format($kpis['comisiones_por_pagar']['total_pendiente'], 2) }}</b>
-                    </p>
+                    <template x-if="cargando">
+                        <div class="space-y-2 mt-2">
+                            <div class="h-7 w-28 rounded-md ax-skeleton-shimmer"></div>
+                            <div class="h-3 w-20 rounded ax-skeleton-shimmer"></div>
+                        </div>
+                    </template>
+                    <div x-show="!cargando">
+                        <p class="mt-2 text-xl sm:text-2xl font-black text-indigo-700 tabular-nums">
+                            $<span x-text="formatearMoneda(kpis.ganancias.comisiones_periodo)">{{ number_format($kpis['ganancias']['comisiones_periodo'], 2) }}</span>
+                        </p>
+                        <p class="mt-1 text-[11px] text-slate-500 font-medium">
+                            Pendiente: <b class="text-indigo-800">$<span x-text="formatearMoneda(kpis.comisiones_por_pagar.total_pendiente)">{{ number_format($kpis['comisiones_por_pagar']['total_pendiente'], 2) }}</span></b>
+                        </p>
+                    </div>
                 </div>
             </section>
 
@@ -358,7 +400,11 @@
                         </div>
                     </div>
                     <div class="relative h-[210px] w-full">
-                        <canvas id="chartReporteFinanciero"></canvas>
+                        <!-- Skeleton shimmer para gráfico financiero -->
+                        <div x-show="cargando" x-cloak class="absolute inset-0 z-10 bg-slate-50/80 rounded-xl">
+                            <x-skeleton-chart type="line" height="h-full" />
+                        </div>
+                        <canvas id="chartReporteFinanciero" :class="{'opacity-0': cargando}"></canvas>
                     </div>
                 </div>
 
@@ -382,214 +428,31 @@
                         </div>
                     </div>
                     <div class="relative h-[210px] w-full">
-                        <canvas id="chartReporteMovimientos"></canvas>
+                        <!-- Skeleton shimmer para gráfico de movimientos -->
+                        <div x-show="cargando" x-cloak class="absolute inset-0 z-10 bg-slate-50/80 rounded-xl">
+                            <x-skeleton-chart type="bar" height="h-full" />
+                        </div>
+                        <canvas id="chartReporteMovimientos" :class="{'opacity-0': cargando}"></canvas>
                     </div>
                 </div>
             </section>
 
-            <!-- E. TABLA DETALLADA DE MOVIMIENTOS -->
-            <div class="overflow-x-auto print:overflow-visible rounded-2xl border border-slate-200">
-                <table class="w-full text-left text-xs border-collapse">
-                    <colgroup>
-                        <col style="width: 3.5%;">   <!-- # -->
-                        <col style="width: 8.5%;">   <!-- Fecha -->
-                        <col style="width: 8%;">     <!-- Tipo -->
-                        <col style="width: 8%;">     <!-- Folio -->
-                        <col style="width: 23%;">    <!-- Producto / Descripción -->
-                        <col style="width: 5.5%;">   <!-- Cant. -->
-                        <col style="width: 7%;">     <!-- C. Unit. -->
-                        <col style="width: 7.5%;">   <!-- C. Total -->
-                        <col style="width: 8%;">     <!-- Ingreso -->
-                        <col style="width: 7%;">     <!-- Comisión -->
-                        <col style="width: 8%;">     <!-- Ganancia -->
-                        <col style="width: 14.5%;">  <!-- Responsable -->
-                    </colgroup>
-                    <thead>
-                        <tr class="bg-slate-100 text-slate-800 text-[10px] font-black uppercase tracking-wider border-b-2 border-blue-600 print:bg-slate-100 print:text-slate-800 print:border-b-2 print:border-blue-600">
-                            <th class="py-2.5 px-1 text-center">#</th>
-                            <th class="py-2.5 px-1.5 text-center">Fecha</th>
-                            <th class="py-2.5 px-1 text-center">Tipo</th>
-                            <th class="py-2.5 px-1 text-center">Folio</th>
-                            <th class="py-2.5 px-2 text-left">Producto / Descripción</th>
-                            <th class="py-2.5 px-1 text-right">Cant.</th>
-                            <th class="py-2.5 px-1 text-right">C. Unit.</th>
-                            <th class="py-2.5 px-1 text-right">C. Total</th>
-                            <th class="py-2.5 px-1 text-right">Ingreso</th>
-                            <th class="py-2.5 px-1 text-right">Comisión</th>
-                            <th class="py-2.5 px-1 text-right">Ganancia</th>
-                            <th class="py-2.5 px-2 text-left">Responsable</th>
-                        </tr>
-                    </thead>
-                    <tbody class="divide-y divide-slate-100 print:divide-slate-200 text-[11px]">
-                        @php
-                            $items = (request()->query('modo') === 'imprimir' || request()->has('imprimir')) ? $todosMovimientos : $movimientos;
-                        @endphp
-
-                        @forelse ($items as $indice => $mov)
-                            <tr class="hover:bg-blue-50/30 transition-colors {{ $loop->even ? 'bg-slate-50/50' : 'bg-white' }} print:break-inside-avoid">
-                                <!-- # -->
-                                <td class="py-2 px-1 text-center text-slate-400 font-mono text-[10px]">
-                                    {{ $indice + 1 }}
-                                </td>
-
-                                <!-- Fecha y hora -->
-                                <td class="py-2 px-1.5 text-center leading-tight">
-                                    <span class="font-bold text-slate-800 block text-[10px] sm:text-[11px]">{{ $mov['fecha_formateada'] }}</span>
-                                    <span class="block text-[9px] text-slate-400 font-mono">{{ $mov['hora_formateada'] }}</span>
-                                </td>
-
-                                <!-- Tipo Badge -->
-                                <td class="py-2 px-1 text-center">
-                                    @php
-                                        $badgeClasses = match($mov['tipo_badge']) {
-                                            'emerald' => 'bg-emerald-50 text-emerald-800 border-emerald-300 font-black',
-                                            'rose' => 'bg-rose-50 text-rose-800 border-rose-300 font-black',
-                                            'amber' => 'bg-amber-50 text-amber-800 border-amber-300 font-black',
-                                            'indigo' => 'bg-indigo-50 text-indigo-800 border-indigo-300 font-black',
-                                            'purple' => 'bg-purple-50 text-purple-800 border-purple-300 font-black',
-                                            default => 'bg-slate-100 text-slate-700 border-slate-300',
-                                        };
-                                    @endphp
-                                    <span class="inline-block px-1.5 py-0.5 rounded-full text-[8.5px] uppercase tracking-tight border leading-none {{ $badgeClasses }}">
-                                        {{ $mov['categoria'] }}
-                                    </span>
-                                </td>
-
-                                <!-- Folio -->
-                                <td class="py-2 px-1 text-center font-mono font-bold text-slate-800 text-[10px] sm:text-[11px]">
-                                    {{ $mov['folio'] }}
-                                </td>
-
-                                <!-- Producto / Descripción & SKU -->
-                                <td class="py-2 px-2 print:py-1.5 print:px-1.5 leading-snug">
-                                    <p class="font-bold text-slate-900 break-words whitespace-normal print:text-[8pt] print:leading-tight" title="{{ $mov['descripcion'] }}">
-                                        {{ $mov['descripcion'] }}
-                                    </p>
-                                    <p class="text-[9px] text-slate-400 uppercase tracking-wider font-mono print:text-[7pt] mt-0.5">
-                                        SKU: {{ $mov['sku'] }}
-                                    </p>
-                                </td>
-
-                                <!-- Cantidad con signo -->
-                                <td class="py-2 px-1 text-right font-black tabular-nums {{ $mov['signo_stock'] === '+' ? 'text-emerald-700' : ($mov['signo_stock'] === '-' ? 'text-rose-700' : 'text-slate-700') }}">
-                                    {{ $mov['signo_stock'] }}{{ $mov['cantidad'] }}
-                                </td>
-
-                                <!-- Costo Unitario -->
-                                <td class="py-2 px-1 text-right tabular-nums text-slate-600">
-                                    ${{ number_format($mov['costo_unitario'], 2) }}
-                                </td>
-
-                                <!-- Costo Total -->
-                                <td class="py-2 px-1 text-right tabular-nums font-semibold text-slate-800">
-                                    ${{ number_format($mov['costo_total'], 2) }}
-                                </td>
-
-                                <!-- Ingreso Total -->
-                                <td class="py-2 px-1 text-right tabular-nums font-black text-slate-900">
-                                    ${{ number_format($mov['ingreso_total'], 2) }}
-                                </td>
-
-                                <!-- Comisión -->
-                                <td class="py-2 px-1 text-right tabular-nums text-indigo-700 font-semibold">
-                                    {{ $mov['comision'] > 0 ? '$' . number_format($mov['comision'], 2) : '—' }}
-                                </td>
-
-                                <!-- Ganancia Neta -->
-                                <td class="py-2 px-1 text-right tabular-nums font-black {{ $mov['ganancia_neta'] > 0 ? 'text-emerald-700' : ($mov['ganancia_neta'] < 0 ? 'text-rose-700' : 'text-slate-400') }}">
-                                    {{ $mov['ganancia_neta'] != 0 ? '$' . number_format($mov['ganancia_neta'], 2) : '—' }}
-                                </td>
-
-                                <!-- Responsable / Origen -->
-                                <td class="py-2 px-2 text-slate-600 text-[10px] print:text-[7.5pt] print:py-1.5 print:px-1.5 leading-snug">
-                                    <span class="font-bold text-slate-800 block break-words whitespace-normal leading-tight">{{ $mov['usuario_responsable'] }}</span>
-                                    <span class="text-slate-500 block break-words whitespace-normal leading-tight mt-0.5 print:text-[7pt]" title="{{ $mov['origen_destino'] }}">{{ $mov['origen_destino'] }}</span>
-                                </td>
-                            </tr>
-                        @empty
-                            <tr>
-                                <td colspan="12" class="py-12 text-center text-slate-400">
-                                    <i class="fas fa-boxes-stacked text-3xl mb-3 block text-slate-300"></i>
-                                    <p class="font-bold text-sm">No se encontraron movimientos registrados para los filtros seleccionados.</p>
-                                    <p class="text-xs text-slate-400 mt-1">Intenta ampliar el rango de fechas o seleccionar "Todo el historial".</p>
-                                </td>
-                            </tr>
-                        @endforelse
-                    </tbody>
-
-                    <!-- FILA FINAL DE TOTALES / RESUMEN CON DESTACADO CORPORATIVO -->
-                    <tfoot>
-                        <tr class="bg-blue-50/70 text-slate-900 font-black text-xs border-t-2 border-blue-600 border-b-2 border-slate-300 print:bg-blue-50/70 print:text-slate-900 print:border-t-2 print:border-blue-600 print:border-b-2 print:border-slate-300">
-                            <td colspan="5" class="py-2.5 px-2 text-left uppercase tracking-wider text-[10px] sm:text-[11px] text-blue-950">
-                                <i class="fas fa-calculator text-blue-600 mr-1.5"></i> Totales Generales ({{ $totales['cantidad_movimientos'] }} reg.)
-                            </td>
-                            <td class="py-2.5 px-1 text-right tabular-nums text-slate-900 font-black">
-                                {{ $totales['total_unidades'] }}
-                            </td>
-                            <td class="py-2.5 px-1 text-right tabular-nums text-slate-400">—</td>
-                            <td class="py-2.5 px-1 text-right tabular-nums text-rose-600 font-black">
-                                ${{ number_format($totales['total_costos'], 2) }}
-                            </td>
-                            <td class="py-2.5 px-1 text-right tabular-nums text-blue-700 font-black">
-                                ${{ number_format($totales['total_ingresos'], 2) }}
-                            </td>
-                            <td class="py-2.5 px-1 text-right tabular-nums text-indigo-700 font-black">
-                                ${{ number_format($totales['total_comisiones'], 2) }}
-                            </td>
-                            <td class="py-2.5 px-1 text-right tabular-nums text-emerald-700 font-black">
-                                ${{ number_format($totales['total_ganancias'], 2) }}
-                            </td>
-                            <td class="py-2.5 px-2 text-slate-400 text-center">—</td>
-                        </tr>
-                    </tfoot>
-                </table>
-            </div>
-
-            <!-- PAGINACIÓN EN PANTALLA (SOLO PANTALLA) -->
-            @if (request()->query('modo') !== 'imprimir' && !request()->has('imprimir') && $movimientos instanceof \Illuminate\Pagination\LengthAwarePaginator && $movimientos->hasPages())
-                <div class="no-print mt-4 py-3 px-4 sm:px-6 rounded-2xl bg-white border border-slate-200/80 shadow-sm flex flex-col sm:flex-row items-center justify-between gap-3">
-                    <div class="text-xs text-slate-500 font-medium">
-                        Mostrando <b class="text-slate-800 font-bold">{{ $movimientos->firstItem() }}</b> a <b class="text-slate-800 font-bold">{{ $movimientos->lastItem() }}</b> de <b class="text-slate-800 font-bold">{{ $movimientos->total() }}</b> registros
-                    </div>
-
-                    <nav class="flex items-center gap-1.5" aria-label="Navegación de páginas">
-                        {{-- Botón Anterior --}}
-                        @if ($movimientos->onFirstPage())
-                            <span class="w-8 h-8 flex items-center justify-center rounded-xl bg-slate-100 text-slate-300 text-xs cursor-not-allowed select-none">
-                                <i class="fas fa-chevron-left"></i>
-                            </span>
-                        @else
-                            <a href="{{ $movimientos->previousPageUrl() }}" class="w-8 h-8 flex items-center justify-center rounded-xl bg-slate-100 hover:bg-blue-50 text-slate-600 hover:text-blue-600 text-xs transition-colors cursor-pointer shadow-sm">
-                                <i class="fas fa-chevron-left"></i>
-                            </a>
-                        @endif
-
-                        {{-- Números de Página --}}
-                        @foreach ($movimientos->getUrlRange(max(1, $movimientos->currentPage() - 2), min($movimientos->lastPage(), $movimientos->currentPage() + 2)) as $page => $url)
-                            @if ($page == $movimientos->currentPage())
-                                <span class="w-8 h-8 flex items-center justify-center rounded-xl bg-blue-600 text-white text-xs font-black shadow-md shadow-blue-500/25">
-                                    {{ $page }}
-                                </span>
-                            @else
-                                <a href="{{ $url }}" class="w-8 h-8 flex items-center justify-center rounded-xl bg-slate-100 hover:bg-blue-50 text-slate-700 hover:text-blue-600 text-xs font-bold transition-colors cursor-pointer">
-                                    {{ $page }}
-                                </a>
-                            @endif
-                        @endforeach
-
-                        {{-- Botón Siguiente --}}
-                        @if ($movimientos->hasMorePages())
-                            <a href="{{ $movimientos->nextPageUrl() }}" class="w-8 h-8 flex items-center justify-center rounded-xl bg-slate-100 hover:bg-blue-50 text-slate-600 hover:text-blue-600 text-xs transition-colors cursor-pointer shadow-sm">
-                                <i class="fas fa-chevron-right"></i>
-                            </a>
-                        @else
-                            <span class="w-8 h-8 flex items-center justify-center rounded-xl bg-slate-100 text-slate-300 text-xs cursor-not-allowed select-none">
-                                <i class="fas fa-chevron-right"></i>
-                            </span>
-                        @endif
-                    </nav>
+            <!-- E. TABLA DETALLADA DE MOVIMIENTOS Y SKELETON -->
+            <div>
+                <!-- Skeleton Shimmer de Tabla de Movimientos (12 columnas) -->
+                <div x-show="cargando" x-cloak class="border border-slate-200 rounded-2xl overflow-hidden bg-white shadow-sm p-4">
+                    <x-skeleton-table :rows="8" :cols="12" />
                 </div>
-            @endif
+
+                <!-- Contenedor de la Tabla AJAX Dinámica -->
+                <div id="contenedorTablaReporteMovimientos" x-show="!cargando">
+                    @include('admin.reportes.tabla-reportes-movimientos', [
+                        'movimientos' => $movimientos,
+                        'todosMovimientos' => $todosMovimientos,
+                        'totales' => $totales
+                    ])
+                </div>
+            </div>
 
             <!-- E. PIE DE PÁGINA FORMAL DEL INFORME CON SELLOS DE AUDITORÍA -->
             <footer id="report-footer" class="report-footer pt-6 border-t-2 border-slate-200 text-slate-500 text-[10px] space-y-4 print:pt-4">
@@ -799,6 +662,7 @@
                 page-break-inside: avoid !important;
                 border-top: 2px solid #e2e8f0 !important;
                 padding-top: 14px !important;
+                margin-top: auto !important;
                 margin-bottom: 24px !important;
             }
 
@@ -824,6 +688,146 @@
 
     <script>
         /**
+         * Componente reactivo Alpine.js para gestión del Informe de Movimientos
+         */
+        function gestionReporteMovimientos() {
+            return {
+                cargando: false,
+                filtros: {
+                    preset: '{{ $filtros['preset'] ?? 'este_mes' }}',
+                    desde: '{{ $filtros['desde'] }}',
+                    hasta: '{{ $filtros['hasta'] }}',
+                    tipo: '{{ $filtros['tipo'] ?? 'todos' }}',
+                    vendedor_id: '{{ $filtros['vendedor_id'] ?? '' }}',
+                    producto_id: '{{ $filtros['producto_id'] ?? '' }}',
+                    q: '{{ $filtros['q'] ?? '' }}',
+                    modo: '{{ $filtros['modo'] ?? 'normal' }}',
+                },
+                kpis: @js($kpis),
+                totales: @js($totales),
+
+                formatearMoneda(valor) {
+                    if (valor === null || valor === undefined) return '0.00';
+                    return Number(valor).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+                },
+
+                formatearFechaVisual(fechaIso) {
+                    if (!fechaIso) return '';
+                    const partes = fechaIso.split('-');
+                    if (partes.length === 3) {
+                        return `${partes[2]}/${partes[1]}/${partes[0]}`;
+                    }
+                    return fechaIso;
+                },
+
+                cambiarPreset(nuevoPreset) {
+                    this.filtros.preset = nuevoPreset;
+                    // Cuando se selecciona un preset predeterminado, limpiamos fechas fijas para que el backend las resuelva con precisión
+                    this.filtros.desde = '';
+                    this.filtros.hasta = '';
+                    this.aplicarFiltros(1);
+                },
+
+                restablecerFiltros() {
+                    this.filtros.preset = 'este_mes';
+                    this.filtros.desde = '';
+                    this.filtros.hasta = '';
+                    this.filtros.tipo = 'todos';
+                    this.filtros.vendedor_id = '';
+                    this.filtros.producto_id = '';
+                    this.filtros.q = '';
+                    this.aplicarFiltros(1);
+                },
+
+                aplicarFiltros(pagina = 1) {
+                    if (this.cargando) return;
+                    this.cargando = true;
+
+                    const params = new URLSearchParams();
+                    if (this.filtros.preset) params.append('preset', this.filtros.preset);
+                    if (this.filtros.desde) params.append('desde', this.filtros.desde);
+                    if (this.filtros.hasta) params.append('hasta', this.filtros.hasta);
+                    if (this.filtros.tipo) params.append('tipo', this.filtros.tipo);
+                    if (this.filtros.vendedor_id) params.append('vendedor_id', this.filtros.vendedor_id);
+                    if (this.filtros.producto_id) params.append('producto_id', this.filtros.producto_id);
+                    if (this.filtros.q) params.append('q', this.filtros.q);
+                    if (this.filtros.modo) params.append('modo', this.filtros.modo);
+                    if (pagina && pagina > 1) params.append('page', pagina);
+
+                    const urlDestino = `{{ route('admin.reportes.movimientos') }}?${params.toString()}`;
+
+                    fetch(urlDestino, {
+                        headers: {
+                            'X-Requested-With': 'XMLHttpRequest',
+                            'Accept': 'application/json'
+                        }
+                    })
+                    .then(response => {
+                        if (!response.ok) throw new Error('Error al consultar movimientos');
+                        return response.json();
+                    })
+                    .then(data => {
+                        if (data.success) {
+                            // 1. Reemplazar HTML de la tabla
+                            const contenedor = document.getElementById('contenedorTablaReporteMovimientos');
+                            if (contenedor) {
+                                contenedor.innerHTML = data.html;
+                                this.conectarPaginacionAjax(contenedor);
+                            }
+
+                            // 2. Actualizar KPIs y Totales
+                            if (data.kpis) this.kpis = data.kpis;
+                            if (data.totales) this.totales = data.totales;
+
+                            // 3. Si el backend resolvió las fechas del preset, actualizarlas reactivamente
+                            if (data.rango) {
+                                this.filtros.desde = data.rango.desde;
+                                this.filtros.hasta = data.rango.hasta;
+                            }
+
+                            // 4. Actualizar Gráficos Chart.js
+                            if (data.graficoComparativa || data.graficoMovimientos) {
+                                actualizarGraficosReporte(data.graficoComparativa, data.graficoMovimientos);
+                            }
+
+                            // 5. Reflejar en la barra de URL sin recargar
+                            window.history.pushState({}, '', urlDestino);
+                        }
+                    })
+                    .catch(err => {
+                        console.error('Error al filtrar movimientos:', err);
+                    })
+                    .finally(() => {
+                        this.cargando = false;
+                    });
+                },
+
+                conectarPaginacionAjax(contenedor) {
+                    const links = contenedor.querySelectorAll('nav a');
+                    links.forEach(link => {
+                        link.addEventListener('click', (e) => {
+                            e.preventDefault();
+                            try {
+                                const url = new URL(link.href);
+                                const page = url.searchParams.get('page') || 1;
+                                this.aplicarFiltros(page);
+                            } catch (error) {
+                                console.error('Error parseando link de página:', error);
+                            }
+                        });
+                    });
+                },
+
+                init() {
+                    const contenedor = document.getElementById('contenedorTablaReporteMovimientos');
+                    if (contenedor) {
+                        this.conectarPaginacionAjax(contenedor);
+                    }
+                }
+            };
+        }
+
+        /**
          * Calcula el espaciado dinámico necesario para que el bloque de firmas y certificación
          * se posicione exactamente al pie de la página impresa, tanto si queda en la misma hoja
          * como si salta a una nueva página.
@@ -834,30 +838,24 @@
             const table = paper ? paper.querySelector('table') : null;
             if (!footer || !table || !paper) return;
 
-            // Restablecer margen para medir con precisión
             footer.style.marginTop = '0px';
 
-            // Medir la distancia de la tabla respecto al documento impreso real (.report-paper)
             const paperRect = paper.getBoundingClientRect();
             const tableRect = table.getBoundingClientRect();
             const tableBottom = tableRect.bottom - paperRect.top;
-            const footerHeight = footer.offsetHeight || 130;
+            const footerHeight = footer.offsetHeight || 135;
 
-            // Altura útil de una página de impresión estándar en horizontal (A4 / Carta Landscape ~ 700px a 96 DPI)
-            const PAGE_HEIGHT = 680;
-            const SAFETY_PADDING = 25;
+            const PAGE_HEIGHT = 720;
+            const SAFETY_PADDING = 30;
 
-            // Posición vertical donde termina la tabla dentro de la página actual
             const posInCurrentPage = tableBottom % PAGE_HEIGHT;
 
-            // ¿Cabe el footer en la misma página donde termina la tabla?
             if (posInCurrentPage + footerHeight + SAFETY_PADDING <= PAGE_HEIGHT) {
-                // Caso 1: Cabe en la misma página, lo empujamos hacia el pie de esa hoja
                 const spaceToBottom = PAGE_HEIGHT - posInCurrentPage - footerHeight - SAFETY_PADDING;
-                footer.style.marginTop = Math.max(16, Math.floor(spaceToBottom)) + 'px';
+                footer.style.marginTop = Math.max(20, Math.floor(spaceToBottom)) + 'px';
             } else {
-                // Caso 2: Salta a la siguiente página. En la nueva hoja lo empujamos con margen moderado para no crear otra hoja vacía
-                footer.style.marginTop = '24px';
+                const spaceToBottomNewPage = PAGE_HEIGHT - footerHeight - SAFETY_PADDING;
+                footer.style.marginTop = Math.max(40, Math.floor(spaceToBottomNewPage)) + 'px';
             }
         }
 
@@ -874,6 +872,34 @@
             if (footer) footer.style.marginTop = '';
         });
 
+        // Actualización dinámica de gráficos sin destruir canvas
+        function actualizarGraficosReporte(compData, movData) {
+            if (window.chartFinancieroInstance && compData) {
+                window.chartFinancieroInstance.data.labels = compData.labels || [];
+                if (window.chartFinancieroInstance.data.datasets[0]) {
+                    window.chartFinancieroInstance.data.datasets[0].data = compData.ingresos || [];
+                }
+                if (window.chartFinancieroInstance.data.datasets[1]) {
+                    window.chartFinancieroInstance.data.datasets[1].data = compData.costos || [];
+                }
+                if (window.chartFinancieroInstance.data.datasets[2]) {
+                    window.chartFinancieroInstance.data.datasets[2].data = compData.ganancias || [];
+                }
+                window.chartFinancieroInstance.update();
+            }
+
+            if (window.chartMovimientosInstance && movData) {
+                window.chartMovimientosInstance.data.labels = movData.labels || [];
+                if (window.chartMovimientosInstance.data.datasets[0]) {
+                    window.chartMovimientosInstance.data.datasets[0].data = movData.entradas || [];
+                }
+                if (window.chartMovimientosInstance.data.datasets[1]) {
+                    window.chartMovimientosInstance.data.datasets[1].data = movData.salidas || [];
+                }
+                window.chartMovimientosInstance.update();
+            }
+        }
+
         // Inicialización de Gráficos Ejecutivos con Chart.js
         function inicializarGraficosReporte() {
             if (typeof Chart === 'undefined') return;
@@ -883,8 +909,7 @@
 
             // 1. Gráfico Financiero (Ingresos vs Costos vs Ganancias)
             const ctxFin = document.getElementById('chartReporteFinanciero');
-            if (ctxFin && compData.labels && compData.labels.length) {
-                // Destruir instancia previa si existe para evitar conflictos
+            if (ctxFin && compData.labels) {
                 if (window.chartFinancieroInstance) {
                     window.chartFinancieroInstance.destroy();
                 }
@@ -931,7 +956,7 @@
                     options: {
                         responsive: true,
                         maintainAspectRatio: false,
-                        animation: false, // Inmediato para que salga nítido al imprimir o visualizar
+                        animation: false,
                         interaction: { intersect: false, mode: 'index' },
                         plugins: {
                             legend: { display: false },
@@ -972,7 +997,7 @@
 
             // 2. Gráfico de Flujo de Stock y Operaciones
             const ctxMov = document.getElementById('chartReporteMovimientos');
-            if (ctxMov && movData.labels && movData.labels.length) {
+            if (ctxMov && movData.labels) {
                 if (window.chartMovimientosInstance) {
                     window.chartMovimientosInstance.destroy();
                 }

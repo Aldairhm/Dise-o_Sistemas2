@@ -366,9 +366,14 @@ document
         if (method === "PUT") body.append("_method", "PUT");
 
         const btn = document.getElementById("btnSubmitModal");
-        const span = document.getElementById("btnSubmitText");
-        btn.disabled = true;
-        span.textContent = "Guardando...";
+        const content = document.getElementById("btnSubmitContent");
+        const spinner = document.getElementById("btnSubmitSpinner");
+        if (btn) btn.disabled = true;
+        if (content) content.classList.add("invisible");
+        if (spinner) {
+            spinner.classList.remove("hidden");
+            spinner.classList.add("flex");
+        }
 
         try {
             const res = await fetch(url, { method: "POST", body });
@@ -386,8 +391,12 @@ document
         } catch {
             Toast.fire({ icon: "error", title: "No se pudo conectar al servidor." });
         } finally {
-            btn.disabled = false;
-            span.textContent = id ? "GUARDAR CAMBIOS" : "GUARDAR CATEGORÍA";
+            if (btn) btn.disabled = false;
+            if (content) content.classList.remove("invisible");
+            if (spinner) {
+                spinner.classList.add("hidden");
+                spinner.classList.remove("flex");
+            }
         }
     });
 
@@ -467,19 +476,21 @@ function clearSearch() {
 }
 
 async function refreshContent() {
-    document.getElementById("tableWrapper").classList.add("hidden");
-    document.getElementById("cardsWrapper").classList.add("hidden");
-    document.getElementById("tableLoading").classList.remove("hidden");
+    const tw = document.getElementById("tableWrapper");
+    const cw = document.getElementById("cardsWrapper");
+    const sk = document.getElementById("tableSkeletonCategorias");
+
+    if (tw) tw.classList.add("hidden");
+    if (cw) cw.classList.add("hidden");
+    if (sk) sk.classList.remove("hidden");
 
     try {
         const url = `${ROUTES.index}?estado=${currentEstado}`;
-        const res = await fetch(url, {
-            headers: { "X-Requested-With": "XMLHttpRequest" },
-        });
+        const res = await fetch(url, { headers: { "X-Requested-With": "XMLHttpRequest" } });
         const data = await res.json();
 
-        document.getElementById("tableWrapper").innerHTML = data.table;
-        document.getElementById("cardsWrapper").innerHTML = data.cards;
+        if (tw) tw.innerHTML = data.table;
+        if (cw) cw.innerHTML = data.cards;
 
         if (data.stats) {
             document.getElementById("kpiTotal").textContent = data.stats.total;
@@ -492,7 +503,7 @@ async function refreshContent() {
         // Re-inicializar drag&drop sobre los nuevos elementos del DOM
         initSortable();
     } finally {
-        document.getElementById("tableLoading").classList.add("hidden");
+        if (sk) sk.classList.add("hidden");
         setView(currentView);
     }
 }

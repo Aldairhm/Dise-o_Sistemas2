@@ -116,16 +116,19 @@ class AyudaController extends Controller
             'modulo'              => ['required', 'string', 'max:80'],
             'tipo_consulta'       => ['required', 'string', 'max:100'],
             'prioridad'           => ['nullable', 'string', 'in:Baja,Media,Alta,Urgente'],
-            'duda'                => ['nullable', 'string', 'max:2000'],
+            'duda'                => ['required', 'string', 'min:5', 'max:2000'],
             'evidencia_url'       => ['nullable', 'string', 'max:500'],
             'nivel_escalamiento'  => ['nullable', 'string', 'in:admin,super_admin'],
+        ], [
+            'modulo.required'        => 'El módulo es obligatorio.',
+            'tipo_consulta.required' => 'El tipo de consulta es obligatorio.',
+            'duda.required'          => 'Debes describir tu duda o problema.',
+            'duda.min'               => 'La descripción de la duda debe tener al menos 5 caracteres.',
         ]);
 
         $user = $request->user();
         $codigo = $validated['codigo_ticket'] ?: ('TK-' . rand(10000, 99999));
-        $dudaTexto = !empty(trim($validated['duda'] ?? ''))
-            ? trim($validated['duda'])
-            : 'Consulta general de asistencia técnica sobre el módulo.';
+        $dudaTexto = trim($validated['duda']);
 
         // Determinar destinatario jerárquico por rol
         // Si el usuario es ADMIN, su duda va por defecto a SUPER_ADMIN
@@ -211,24 +214,35 @@ class AyudaController extends Controller
     /**
      * Muestra el panel de control y seguimiento de dudas según la jerarquía del usuario.
      */
-    public function tickets(Request $request): View
+    public function tickets(Request $request): View|\Illuminate\Http\JsonResponse
     {
         $user = $request->user();
-        $query = SoporteTicket::with(['usuario', 'asignado', 'resolvedor'])->orderByDesc('created_at');
+        // Orden cronológico: de más antigua a más nueva (las recientes al final, las más antiguas al principio)
+        $query = SoporteTicket::with(['usuario', 'asignado', 'resolvedor'])->orderBy('created_at', 'asc')->orderBy('id', 'asc');
 
         // SEGURIDAD & PRIVACIDAD JERÁRQUICA:
-        // 1. Vendedor: SOLO ve sus propias dudas. No ve dudas ajenas ni internas.
-        if ($user->isVendedor()) {
+        // Si se activa la pestaña/filtro "mis_dudas", solo muestra las dudas creadas por el usuario autenticado
+        $soloMisDudas = $request->boolean('mis_dudas') || $request->input('scope') === 'mis_dudas';
+
+        if ($soloMisDudas) {
             $query->where('id_usuario', $user->id);
         }
-        // 2. Administrador convencional: ve dudas de vendedores + sus propias dudas enviadas al Super Admin
-        elseif ($user->rol === 'admin') {
-            $query->where(function ($q) use ($user) {
-                $q->where('nivel_escalamiento', 'admin')
-                  ->orWhere('id_usuario', $user->id);
-            });
+        // 1. Vendedor: SOLO ve sus propias dudas. No ve dudas ajenas ni internas.
+        elseif ($user->isVendedor()) {
+            $query->where('id_usuario', $user->id);
         }
-        // 3. Super Admin: ve todo el sistema (o redirige a su panel exclusivo)
+        // 2. Administrador convencional en Bandeja de Equipo:
+        // SOLO debe atender dudas provenientes de usuarios subordinados (vendedores),
+        // NUNCA dudas de otros administradores ni sus propias dudas (las suyas van en 'Mis Dudas').
+        elseif ($user->rol === 'admin') {
+            $query->where('nivel_escalamiento', 'admin')
+                  ->where('rol_usuario', 'vendedor')
+                  ->where('id_usuario', '!=', $user->id);
+        }
+        // 3. Super Admin: en esta vista de equipo ve dudas operativas (o usa su panel exclusivo de Gobernanza)
+        elseif ($user->isSuperAdmin()) {
+            // En bandeja general del Super Admin, ve todas o atiende desde el panel exclusivo
+        }
 
         // Filtro por estado
         $estadoTab = $request->query('estado', 'todos');
@@ -261,14 +275,15 @@ class AyudaController extends Controller
 
         // Conteos por estado para las pestañas
         $baseCounts = SoporteTicket::query();
-        if ($user->isVendedor()) {
+        if ($soloMisDudas || $user->isVendedor()) {
             $baseCounts->where('id_usuario', $user->id);
         } elseif ($user->rol === 'admin') {
-            $baseCounts->where(function ($q) use ($user) {
-                $q->where('nivel_escalamiento', 'admin')
-                  ->orWhere('id_usuario', $user->id);
-            });
+            $baseCounts->where('nivel_escalamiento', 'admin')
+                       ->where('rol_usuario', 'vendedor')
+                       ->where('id_usuario', '!=', $user->id);
         }
+
+        $misDudasCount = SoporteTicket::where('id_usuario', $user->id)->count();
 
         $conteoEstados = [
             'todos'      => (clone $baseCounts)->count(),
@@ -282,7 +297,16 @@ class AyudaController extends Controller
         $tickets = $query->paginate(15)->withQueryString();
         $modulos = config('ayuda');
 
-        return view('ayuda.tickets', compact('tickets', 'conteoEstados', 'estadoTab', 'modulos'));
+        if ($request->ajax() || $request->wantsJson()) {
+            return response()->json([
+                'success' => true,
+                'html' => view('ayuda.tabla-tickets', compact('tickets'))->render(),
+                'conteoEstados' => $conteoEstados,
+                'misDudasCount' => $misDudasCount,
+            ]);
+        }
+
+        return view('ayuda.tickets', compact('tickets', 'conteoEstados', 'estadoTab', 'modulos', 'soloMisDudas', 'misDudasCount'));
     }
 
     /**
@@ -391,6 +415,10 @@ class AyudaController extends Controller
             abort(403, 'Solo un administrador puede escalar dudas al Super Administrador.');
         }
 
+        if ($ticket->nivel_escalamiento === 'super_admin') {
+            return back()->with('error', 'Esta duda ya está dirigida directamente al nivel de Super Administrador.');
+        }
+
         $request->validate([
             'justificacion' => 'required|string|min:10|max:1000',
         ], [
@@ -454,8 +482,12 @@ class AyudaController extends Controller
 
         $validated = $request->validate([
             'estado'     => ['required', 'string', 'in:' . implode(',', SoporteTicket::ESTADOS)],
-            'resolucion' => ['nullable', 'string', 'max:2000'],
+            'resolucion' => ['required', 'string', 'min:5', 'max:2000'],
             'motivo'     => ['nullable', 'string', 'max:500'],
+        ], [
+            'estado.required'     => 'El nuevo estado es obligatorio.',
+            'resolucion.required' => 'La resolución o motivo del cambio de estado es obligatorio.',
+            'resolucion.min'      => 'La resolución o motivo debe tener al menos 5 caracteres.',
         ]);
 
         $nuevoEstado = $validated['estado'];

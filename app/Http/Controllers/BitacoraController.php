@@ -85,6 +85,14 @@ class BitacoraController extends Controller
 
         $registros = $query->paginate(25)->withQueryString();
 
+        if ($request->ajax() || $request->wantsJson()) {
+            return response()->json([
+                'success' => true,
+                'html' => view('bitacora.tabla-bitacora', compact('registros'))->render(),
+                'total' => $registros->total(),
+            ]);
+        }
+
         // ── Para el filtro de usuarios ───────────────────────────────────────
         $usuarios = User::orderBy('nombre_real')->get(['id', 'nombre_real', 'username']);
 

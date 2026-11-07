@@ -4,6 +4,9 @@
         <!-- ENCABEZADO PRINCIPAL -->
         <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
             <div>
+                <a href="{{ route('home') }}" class="inline-flex items-center gap-2 text-xs font-bold uppercase tracking-widest text-slate-400 hover:text-blue-600 transition-colors mb-3">
+                    <i class="fas fa-arrow-left"></i> Volver al inicio
+                </a>
                 <div class="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-slate-400 mb-1">
                     <a href="{{ route('ventas.index') }}" class="hover:text-blue-600 transition-colors">Ventas</a>
                     <span>/</span>
@@ -51,7 +54,8 @@
 
         <!-- 1. BARRA DE FILTROS Y BÚSQUEDA -->
         <section class="bg-white border border-slate-200 rounded-2xl p-4 sm:p-5 shadow-sm">
-            <form method="GET" action="{{ route('ventas.pedidos') }}" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-12 gap-3.5 items-end">
+            <form method="GET" action="{{ route('ventas.pedidos') }}" @submit="iniciarFiltrado($event)" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-12 gap-3.5 items-end">
+                <input type="hidden" name="tab" :value="tabActiva">
                 
                 <!-- BÚSQUEDA RÁPIDA -->
                 <div class="lg:col-span-4">
@@ -122,14 +126,16 @@
                 <div class="lg:col-span-2 flex items-center gap-2">
                     <button 
                         type="submit" 
+                        :class="cargandoFiltros ? 'opacity-70 pointer-events-none' : ''"
                         class="flex-1 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-bold py-2 px-3 text-xs transition-all shadow-md shadow-blue-600/15 flex items-center justify-center gap-1.5 cursor-pointer"
                     >
-                        <i class="fas fa-filter"></i>
-                        <span>Filtrar</span>
+                        <i :class="cargandoFiltros ? 'fas fa-spinner fa-spin' : 'fas fa-filter'"></i>
+                        <span x-text="cargandoFiltros ? 'Filtrando...' : 'Filtrar'"></span>
                     </button>
                     @if(request()->hasAny(['desde', 'hasta', 'vendedor_id', 'q']))
                         <a 
-                            href="{{ route('ventas.pedidos') }}" 
+                            href="{{ route('ventas.pedidos', ['tab' => $estadoTab ?? 'todos']) }}" 
+                            @click="cargandoFiltros = true"
                             class="rounded-xl border border-slate-200 bg-slate-50 hover:bg-slate-100 text-slate-600 font-bold py-2 px-3 text-xs transition-colors flex items-center justify-center"
                             title="Limpiar filtros"
                         >
@@ -250,8 +256,14 @@
         </div>
 
         <!-- 3. TABLA DEL APARTADO SELECCIONADO -->
-        <section class="bg-white border border-slate-200 rounded-2xl shadow-sm overflow-hidden">
+        <section class="bg-white border border-slate-200 rounded-2xl shadow-sm overflow-hidden relative">
             
+            <!-- SKELETON LOADER PARA TRANSICIÓN DE APARTADOS Y FILTRADO -->
+            <div x-show="cargandoFiltros" class="p-6">
+                <x-skeleton-table :rows="6" :cols="7" />
+            </div>
+
+            <div x-show="!cargandoFiltros">
             <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-5 border-b border-slate-100 bg-slate-50/60">
                 <div class="flex items-center gap-3">
                     <div class="w-9 h-9 rounded-xl flex items-center justify-center font-bold text-sm shadow-xs"
@@ -305,7 +317,7 @@
                     <!-- Opción 1: Todos los Pendientes -->
                     <button 
                         type="button" 
-                        @click="subFiltroPendiente = 'todos'"
+                        @click="cambiarSubFiltro('todos')"
                         class="px-3 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer"
                         :class="subFiltroPendiente === 'todos' ? 'bg-amber-500 text-white shadow-xs' : 'text-slate-600 hover:text-amber-800 hover:bg-amber-50'"
                     >
@@ -319,7 +331,7 @@
                     <!-- Opción 2: San Salvador -->
                     <button 
                         type="button" 
-                        @click="subFiltroPendiente = 'san_salvador'"
+                        @click="cambiarSubFiltro('san_salvador')"
                         class="px-3 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer"
                         :class="subFiltroPendiente === 'san_salvador' ? 'bg-blue-600 text-white shadow-xs' : 'text-slate-600 hover:text-blue-800 hover:bg-blue-50'"
                     >
@@ -334,7 +346,7 @@
                     <!-- Opción 3: Otros Departamentos -->
                     <button 
                         type="button" 
-                        @click="subFiltroPendiente = 'otros'"
+                        @click="cambiarSubFiltro('otros')"
                         class="px-3 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer"
                         :class="subFiltroPendiente === 'otros' ? 'bg-indigo-600 text-white shadow-xs' : 'text-slate-600 hover:text-indigo-800 hover:bg-indigo-50'"
                     >
@@ -631,7 +643,7 @@
                         <button 
                             type="button" 
                             x-show="tabActiva === 'Pendiente' && subFiltroPendiente !== 'todos'"
-                            @click="subFiltroPendiente = 'todos'"
+                            @click="cambiarSubFiltro('todos')"
                             class="text-xs font-bold text-amber-600 hover:underline cursor-pointer"
                         >
                             Ver todos los pendientes
@@ -647,6 +659,8 @@
                     </div>
                 </div>
             </div>
+
+            </div> <!-- FIN x-show="!cargandoFiltros" -->
 
         </section>
 
@@ -742,14 +756,14 @@
                             </template>
                         </div>
 
-                        <!-- ALERTA INFORMATIVA: EN RUTA NO PUEDE CANCELARSE -->
+                        <!-- ALERTA INFORMATIVA: EN RUTA -->
                         <template x-if="estadoModalData.estadoActual === 'En ruta'">
                             <div class="p-3.5 bg-amber-50 border border-amber-200 rounded-xl text-xs text-amber-900 flex items-start gap-2.5 shadow-2xs">
                                 <i class="fas fa-truck-fast text-amber-600 mt-0.5 text-base shrink-0"></i>
                                 <div>
-                                    <p class="font-bold text-amber-950 leading-snug">Envío actualmente en camino</p>
+                                    <p class="font-bold text-amber-950 leading-snug">Envío en camino con paquetería</p>
                                     <p class="text-[11px] text-amber-800 mt-0.5 leading-relaxed">
-                                        Este paquete ya fue entregado a la paquetería y se encuentra en ruta hacia el cliente. Por políticas de despacho y logística, <strong>este pedido ya no puede ser cancelado</strong>; únicamente puede avanzar a <strong>Entregada</strong> una vez completada la entrega al cliente.
+                                        Este paquete está en tránsito hacia el cliente. No se puede cancelar de forma directa; si el cliente <strong>no lo recibió o rechazó la entrega</strong>, selecciona <strong>Devolución</strong> para reingresar los artículos al stock de tienda y registrar la evidencia física del paquete.
                                     </p>
                                 </div>
                             </div>
@@ -1010,8 +1024,7 @@
                             <i class="fas fa-circle-exclamation text-amber-600 text-sm mt-0.5 shrink-0"></i>
                             <div class="text-[11px]">
                                 <span class="font-bold block">Acción con impacto en inventario y comisiones:</span>
-                                <span class="text-amber-800">
-                                    Si cancelas la venta, el stock de las variantes se devolverá automáticamente a la bodega y se anularán las comisiones asociadas.
+                                <span class="text-amber-800" x-text="nuevoEstadoSeleccionado === 'Devolución' ? 'Si procesas la devolución por paquete no recibido, los productos retornarán al stock activo de tienda y se anularán las comisiones del pedido (deduciendo el 50% del costo de envío al vendedor).' : 'Si cancelas la venta, el stock de las variantes se devolverá automáticamente a la tienda y se anularán las comisiones asociadas.'">
                                 </span>
                             </div>
                         </div>
@@ -2298,6 +2311,7 @@
             return {
                 tabActiva: '{{ $estadoTab ?? "todos" }}',
                 subFiltroPendiente: 'todos', // 'todos', 'san_salvador', 'otros'
+                cargandoFiltros: false,
 
                 // Conteos dinámicos
                 conteoEstados: @json($conteoEstados),
@@ -2360,8 +2374,28 @@
                 errorObservacionesEstado: false,
                 errorObservacionesEstadoMensaje: '',
 
+                iniciarFiltrado(event) {
+                    setTimeout(() => {
+                        this.cargandoFiltros = true;
+                    }, 50);
+                },
+
                 cambiarTab(tab) {
+                    if (this.tabActiva === tab) return;
+                    this.cargandoFiltros = true;
                     this.tabActiva = tab;
+                    setTimeout(() => {
+                        this.cargandoFiltros = false;
+                    }, 120);
+                },
+
+                cambiarSubFiltro(sub) {
+                    if (this.subFiltroPendiente === sub) return;
+                    this.cargandoFiltros = true;
+                    this.subFiltroPendiente = sub;
+                    setTimeout(() => {
+                        this.cargandoFiltros = false;
+                    }, 100);
                 },
 
                 nombreTabActual() {
@@ -2383,8 +2417,8 @@
                         'Pendiente': 'Pedidos recién registrados que requieren confirmación para empaque.',
                         'Confirmada': 'Órdenes listas para ser empaquetadas o despachadas a mensajería.',
                         'En ruta': 'Envíos en tránsito con fotografía de comprobante de paquetería registrada.',
-                        'Cancelada': 'Transacciones que han sido anuladas, con stock retornado a bodega.',
-                        'Devolución': 'Paquetes de envío no recibidos por el cliente, devueltos a la tienda.',
+                        'Cancelada': 'Transacciones que han sido anuladas, con stock retornado a la tienda.',
+                        'Devolución': 'Paquetes de envío no recibidos por el cliente, devueltos al stock de tienda.',
                         'Cambio': 'Producto entregado al cliente que regresa a la tienda para un cambio.'
                     };
                     return descripciones[this.tabActiva] || '';
@@ -2426,7 +2460,13 @@
 
                 abrirModalCambiarEstado(id, estadoActual, tipoVenta, puedeDevolver, estadosPermitidos, diasRestantes, textoGarantia, fechaLimite) {
                     let permitidosFiltrados = Array.isArray(estadosPermitidos) 
-                        ? estadosPermitidos.filter(s => s !== 'Devolución' && s !== 'Cambio') 
+                        ? estadosPermitidos.filter(s => {
+                            // Si está en ruta, permitir Devolución (paquete no recibido)
+                            if (estadoActual === 'En ruta') {
+                                return s !== 'Cambio' && s !== 'Cancelada';
+                            }
+                            return s !== 'Devolución' && s !== 'Cambio';
+                        }) 
                         : [];
 
                     // Regla de despacho: un envío en ruta nunca puede cancelarse
@@ -2494,9 +2534,9 @@
                         case 'Entregada':
                             return 'Entregado al cliente exitosamente.';
                         case 'Cancelada':
-                            return 'Cancela la venta. Reintegra stock a bodega y anula comisiones.';
+                            return 'Cancela la venta. Reintegra stock a la tienda y anula comisiones.';
                         case 'Devolución':
-                            return 'Paquete no recibido por el cliente en ruta. Requiere motivo y foto del paquete.';
+                            return 'Paquete no recibido por el cliente en ruta. Retorna stock a tienda.';
                         case 'Cambio':
                             return 'Retorno por garantía. Requiere justificación y foto del paquete.';
                         default:

@@ -22,6 +22,49 @@ document.addEventListener('DOMContentLoaded', () => {
     const ROUTES    = window.PRODUCTOS_ROUTES || {};
 
     // ─── Helpers: Swal unificados ──────────────────────────────────
+    async function recargarVariantesAjax() {
+        const skeleton = document.getElementById('tableSkeletonVariantes');
+        const wrapper = document.getElementById('variantsTableWrapper');
+        if (skeleton && wrapper) {
+            skeleton.classList.remove('hidden');
+            wrapper.classList.add('hidden');
+        }
+
+        try {
+            const res = await fetch(window.location.href, {
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest',
+                    'Accept': 'application/json'
+                }
+            });
+
+            if (res.ok) {
+                const data = await res.json();
+                if (data.table_html) {
+                    const tbody = document.getElementById('tablaVariantes')?.querySelector('tbody');
+                    if (tbody) {
+                        tbody.innerHTML = data.table_html;
+                    }
+                }
+                if (data.cards_html) {
+                    const grid = document.getElementById('variantsCardsGrid');
+                    if (grid) {
+                        grid.innerHTML = data.cards_html;
+                    }
+                }
+                if (typeof window.applyFiltersVar === 'function') {
+                    window.applyFiltersVar();
+                }
+            }
+        } catch (err) {
+            console.error('Error al recargar variantes:', err);
+        } finally {
+            if (skeleton && wrapper) {
+                skeleton.classList.add('hidden');
+                wrapper.classList.remove('hidden');
+            }
+        }
+    }
     const Toast = Swal.mixin({
         toast: true,
         position: 'top-end',
@@ -465,7 +508,7 @@ document.addEventListener('DOMContentLoaded', () => {
             if (res.ok && data.success) {
                 closeModal();
                 alertOk(data.message);
-                setTimeout(() => location.reload(), 1900);
+                recargarVariantesAjax();
             } else {
                 const msg = data.errors
                     ? Object.values(data.errors).flat().join(' · ')
@@ -628,7 +671,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     tr?.remove();
                     card?.remove();
                     Toast.fire({ icon: 'success', title: data.message });
-                    if (!document.querySelector('tr.variante-row[data-id]')) location.reload();
+                    recargarVariantesAjax();
                 } else {
                     alertErr(data.message || 'No se pudo eliminar.');
                 }

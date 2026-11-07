@@ -150,9 +150,9 @@
 
         <!-- FILTROS GLOBALES -->
         <section class="bg-white border border-slate-200 rounded-2xl p-4 sm:p-5 shadow-sm">
-            <form method="GET" action="{{ route('comisiones.porVendedor') }}"
+            <form id="formFiltroVendedor" method="GET" action="{{ route('comisiones.porVendedor') }}" onsubmit="event.preventDefault(); aplicarFiltroVendedoresAjax();"
                 class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-12 gap-3.5 items-end">
-                <input type="hidden" name="periodo" value="{{ $periodo }}">
+                <input type="hidden" name="periodo" id="filtroPeriodo" value="{{ $periodo }}">
 
                 @if($isAdmin)
                     {{-- Búsqueda rápida por nombre --}}
@@ -161,7 +161,7 @@
                             <i class="fas fa-magnifying-glass text-slate-400 mr-1"></i> Buscar Vendedor
                         </label>
                         <div class="relative">
-                            <input type="text" name="q" id="q" value="{{ $busqueda ?? '' }}"
+                            <input type="text" name="q" id="q" value="{{ $busqueda ?? '' }}" oninput="debounceFiltroVendedores()"
                                 placeholder="Nombre o correo del vendedor..."
                                 class="w-full rounded-xl border border-slate-300 bg-slate-50 pl-9 pr-3 py-2 text-xs font-semibold text-slate-700 focus:border-blue-500 focus:bg-white focus:outline-none focus:ring-4 focus:ring-blue-500/10 transition-all">
                             <i class="fas fa-search absolute left-3 top-2.5 text-slate-400 text-xs"></i>
@@ -175,7 +175,7 @@
                         <label for="mes" class="block text-[11px] font-bold uppercase tracking-wider text-slate-600 mb-1.5">
                             <i class="fas fa-calendar-alt text-slate-400 mr-1"></i> Mes
                         </label>
-                        <select name="mes" id="mes"
+                        <select name="mes" id="mes" onchange="aplicarFiltroVendedoresAjax()"
                             class="w-full rounded-xl border border-slate-300 bg-slate-50 px-3 py-2 text-xs font-semibold text-slate-700 focus:border-blue-500 focus:bg-white focus:outline-none focus:ring-4 focus:ring-blue-500/10 transition-all">
                             @foreach($nombresMeses as $mNum => $mNombre)
                                 <option value="{{ $mNum }}" {{ (int) $mes === $mNum ? 'selected' : '' }}>
@@ -192,7 +192,7 @@
                             class="block text-[11px] font-bold uppercase tracking-wider text-slate-600 mb-1.5">
                             <i class="fas fa-calendar text-slate-400 mr-1"></i> Año
                         </label>
-                        <select name="anio" id="anio"
+                        <select name="anio" id="anio" onchange="aplicarFiltroVendedoresAjax()"
                             class="w-full rounded-xl border border-slate-300 bg-slate-50 px-3 py-2 text-xs font-semibold text-slate-700 focus:border-blue-500 focus:bg-white focus:outline-none focus:ring-4 focus:ring-blue-500/10 transition-all">
                             @for($y = now()->year; $y >= now()->year - 3; $y--)
                                 <option value="{{ $y }}" {{ (int) $anio === $y ? 'selected' : '' }}>{{ $y }}</option>
@@ -207,7 +207,7 @@
                             class="block text-[11px] font-bold uppercase tracking-wider text-slate-600 mb-1.5">
                             <i class="fas fa-calendar-day text-slate-400 mr-1"></i> Desde
                         </label>
-                        <input type="date" name="fecha_desde" id="fecha_desde" value="{{ $desde }}"
+                        <input type="date" name="fecha_desde" id="fecha_desde" value="{{ $desde }}" onchange="aplicarFiltroVendedoresAjax()"
                             class="w-full rounded-xl border border-slate-300 bg-slate-50 px-3 py-2 text-xs font-semibold text-slate-700 focus:border-blue-500 focus:bg-white focus:outline-none focus:ring-4 focus:ring-blue-500/10 transition-all">
                     </div>
 
@@ -217,25 +217,25 @@
                             class="block text-[11px] font-bold uppercase tracking-wider text-slate-600 mb-1.5">
                             <i class="fas fa-calendar-check text-slate-400 mr-1"></i> Hasta
                         </label>
-                        <input type="date" name="fecha_hasta" id="fecha_hasta" value="{{ $hasta }}"
+                        <input type="date" name="fecha_hasta" id="fecha_hasta" value="{{ $hasta }}" onchange="aplicarFiltroVendedoresAjax()"
                             class="w-full rounded-xl border border-slate-300 bg-slate-50 px-3 py-2 text-xs font-semibold text-slate-700 focus:border-blue-500 focus:bg-white focus:outline-none focus:ring-4 focus:ring-blue-500/10 transition-all">
                     </div>
                 @endif
 
                 {{-- Botones --}}
                 <div class="md:col-span-2 flex items-center gap-1.5">
-                    <button type="submit"
+                    <button type="submit" id="btnFiltrarVendedores"
                         class="w-full rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-bold py-2 px-2.5 text-xs transition-all shadow-md shadow-blue-600/15 flex items-center justify-center gap-1 cursor-pointer">
                         <i class="fas fa-filter text-[11px]"></i>
                         <span>Filtrar</span>
                     </button>
-                    @if($desde || $hasta || $busqueda || ($periodo === 'mes' && (!$esMesActual || $anio != now()->year)))
-                        <a href="{{ route('comisiones.porVendedor', ['periodo' => $periodo]) }}"
-                            class="rounded-xl border border-slate-300 hover:bg-slate-100 text-slate-500 p-2 text-xs transition-all flex items-center justify-center"
-                            title="Restablecer filtros">
-                            <i class="fas fa-rotate-left"></i>
-                        </a>
-                    @endif
+                    <button type="button"
+                        id="btnResetVendedorFiltros"
+                        onclick="limpiarFiltrosVendedoresAjax()"
+                        class="{{ ($desde || $hasta || $busqueda || ($periodo === 'mes' && (!$esMesActual || $anio != now()->year))) ? '' : 'hidden' }} rounded-xl border border-slate-300 hover:bg-slate-100 text-slate-500 p-2 text-xs transition-all flex items-center justify-center cursor-pointer"
+                        title="Restablecer filtros">
+                        <i class="fas fa-rotate-left"></i>
+                    </button>
                 </div>
             </form>
         </section>
@@ -254,7 +254,7 @@
                     </div>
                 </div>
                 <div>
-                    <h3 class="text-3xl font-black text-slate-900 tracking-tight">
+                    <h3 id="kpiTotalGeneradoVendedores" class="text-3xl font-black text-slate-900 tracking-tight">
                         ${{ number_format($kpis['total'], 2) }}</h3>
                     <p class="text-xs font-semibold text-slate-500 mt-1 flex items-center gap-1.5">
                         <span class="w-2 h-2 rounded-full bg-blue-600"></span>
@@ -275,7 +275,7 @@
                     </div>
                 </div>
                 <div>
-                    <h3 class="text-3xl font-black text-amber-700 tracking-tight">
+                    <h3 id="kpiPorLiquidarVendedores" class="text-3xl font-black text-amber-700 tracking-tight">
                         ${{ number_format($kpis['pendiente'], 2) }}</h3>
                     <p class="text-xs font-semibold text-amber-600 mt-1">
                         {{ $periodo === 'mes' ? "Saldo pendiente de {$mesNombre}" : "Saldo pendiente acumulado" }}
@@ -296,7 +296,7 @@
                     </div>
                 </div>
                 <div>
-                    <h3 class="text-3xl font-black text-emerald-700 tracking-tight">
+                    <h3 id="kpiTotalPagadoVendedores" class="text-3xl font-black text-emerald-700 tracking-tight">
                         ${{ number_format($kpis['pagada'], 2) }}</h3>
                     <p class="text-xs font-semibold text-emerald-600 mt-1">Total transferido / entregado</p>
                 </div>
@@ -314,7 +314,7 @@
                     </div>
                 </div>
                 <div>
-                    <h3 class="text-3xl font-black text-slate-900 tracking-tight">
+                    <h3 id="kpiTotalCanceladasVendedores" class="text-3xl font-black text-slate-900 tracking-tight">
                         ${{ number_format($kpis['cancelada'], 2) }}</h3>
                     <p class="text-xs font-semibold text-slate-400 mt-1">Por ventas anuladas</p>
                 </div>
@@ -322,324 +322,14 @@
         </div>
 
         <!-- LISTA DE VENDEDORES CON HISTORIAL Y DESGLOSE -->
-        <div class="space-y-4">
-            @forelse($reporte as $item)
-                @php
-                    $vendedor = $item['vendedor'];
-                    $comisiones = $item['comisiones'];
-                    $hasPendiente = $item['total_pendiente'] > 0;
-                @endphp
-                <div class="bg-white border border-slate-200 rounded-2xl shadow-sm overflow-hidden transition-all duration-200 hover:border-slate-300"
-                    id="card-vendedor-{{ $vendedor->id }}">
-
-                    <!-- HEADER DE LA TARJETA DEL VENDEDOR -->
-                    <div
-                        class="p-5 sm:p-6 bg-white flex flex-col lg:flex-row lg:items-center justify-between gap-5 border-b border-slate-100">
-
-                        <!-- INFORMACIÓN DEL VENDEDOR -->
-                        <div class="flex items-center gap-4">
-                            <div
-                                class="w-14 h-14 rounded-2xl bg-gradient-to-tr from-blue-600 to-indigo-600 text-white font-black text-lg flex items-center justify-center shadow-md shadow-blue-500/20 flex-shrink-0">
-                                {{ strtoupper(substr($vendedor->nombre_real ?: $vendedor->username, 0, 2)) }}
-                            </div>
-                            <div>
-                                <div class="flex items-center gap-2 flex-wrap">
-                                    <h2 class="text-lg font-black text-slate-900 tracking-tight">
-                                        {{ $vendedor->nombre_real ?: $vendedor->username }}</h2>
-                                    <span
-                                        class="px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider {{ $vendedor->rol === 'admin' ? 'bg-purple-100 text-purple-700' : 'bg-blue-100 text-blue-700' }}">
-                                        {{ $vendedor->rol }}
-                                    </span>
-                                </div>
-                                <p class="text-xs text-slate-500 font-medium mt-0.5 flex items-center gap-2">
-                                    <span><i
-                                            class="fas fa-envelope text-slate-400 mr-1"></i>{{ $vendedor->username }}</span>
-                                    @if($vendedor->telefono)
-                                        <span><i class="fas fa-phone text-slate-400 mr-1"></i>{{ $vendedor->telefono }}</span>
-                                    @endif
-                                </p>
-                            </div>
-                        </div>
-
-                        <!-- RESUMEN DE CIFRAS DEL VENDEDOR -->
-                        <div
-                            class="grid grid-cols-2 sm:grid-cols-4 gap-3 bg-slate-50/80 p-3.5 rounded-2xl border border-slate-100 flex-1 max-w-2xl">
-                            <div>
-                                <span class="text-[10px] font-bold uppercase tracking-wider text-slate-400 block">
-                                    {{ $periodo === 'mes' ? "Ganado ({$mesNombre})" : "Total Ganado" }}
-                                </span>
-                                <span
-                                    class="text-base font-black text-slate-900">${{ number_format($item['total_comisiones'], 2) }}</span>
-                            </div>
-                            <div>
-                                <span class="text-[10px] font-bold uppercase tracking-wider text-amber-600 block">Por
-                                    Liquidar</span>
-                                <span
-                                    class="text-base font-black text-amber-700">${{ number_format($item['total_pendiente'], 2) }}</span>
-                                @if(($item['saldo_garantia_total'] ?? 0) > 0)
-                                    <span class="text-[9px] text-amber-800 font-semibold block leading-tight mt-0.5"
-                                        title="En período de garantía de devolución (aún no liquidable)">
-                                        <i class="fas fa-shield-halved text-[8px] text-amber-600"></i> En garantía: ${{ number_format($item['saldo_garantia_total'], 2) }}
-                                    </span>
-                                @endif
-                                @if($periodo === 'mes' && $item['saldo_pendiente_total'] > $item['total_pendiente'])
-                                    <span class="text-[9px] text-slate-500 font-semibold block leading-tight mt-0.5"
-                                        title="Incluye pendientes de meses anteriores">
-                                        Total acum: ${{ number_format($item['saldo_pendiente_total'], 2) }}
-                                    </span>
-                                @endif
-                            </div>
-                            <div>
-                                <span
-                                    class="text-[10px] font-bold uppercase tracking-wider text-emerald-600 block">Pagado</span>
-                                <span
-                                    class="text-base font-black text-emerald-700">${{ number_format($item['total_pagada'], 2) }}</span>
-                            </div>
-                            <div>
-                                <span class="text-[10px] font-bold uppercase tracking-wider text-slate-400 block">
-                                    {{ $periodo === 'mes' ? "Ventas en {$mesNombre}" : "Ventas/Registros" }}
-                                </span>
-                                <span class="text-base font-black text-slate-700">{{ $item['total_ventas'] }}</span>
-                            </div>
-                        </div>
-
-                        <!-- BOTONES DE ACCIÓN DE ESTE VENDEDOR -->
-                        <div class="flex items-center gap-2 flex-wrap justify-end">
-                            @if($isAdmin && ($hasPendiente || ($item['saldo_pendiente_total'] ?? 0) > 0))
-                                @php
-                                    if ($periodo === 'mes') {
-                                        $montoLiquidable = $item['saldo_liquidable'] ?? 0;
-                                        $montoGarantia   = $item['saldo_en_garantia'] ?? 0;
-                                    } else {
-                                        $montoLiquidable = $item['saldo_liquidable_total'] ?? 0;
-                                        $montoGarantia   = $item['saldo_garantia_total'] ?? 0;
-                                    }
-                                @endphp
-                                @if($montoLiquidable > 0)
-                                    <button type="button" onclick="liquidarDirectoVendedor({{ $vendedor->id }}, '{{ addslashes($vendedor->nombre_real) }}', '{{ addslashes($vendedor->username) }}', '{{ $fechaDesdeFiltro }}', '{{ $fechaHastaFiltro }}')"
-                                        class="px-3.5 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold shadow-md shadow-emerald-500/20 transition-all cursor-pointer flex items-center gap-1.5"
-                                        title="Liquidar comisiones elegibles para este vendedor en el período">
-                                        <i class="fas fa-circle-check"></i>
-                                        <span>Liquidar (${{ number_format($montoLiquidable, 2) }})</span>
-                                    </button>
-                                @elseif($montoGarantia > 0)
-                                    <button type="button" onclick="liquidarDirectoVendedor({{ $vendedor->id }}, '{{ addslashes($vendedor->nombre_real) }}', '{{ addslashes($vendedor->username) }}', '{{ $fechaDesdeFiltro }}', '{{ $fechaHastaFiltro }}')"
-                                        class="px-3.5 py-2 rounded-xl bg-amber-50 hover:bg-amber-100 text-amber-800 border border-amber-300 text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5"
-                                        title="Comisiones en período de garantía de devolución (aún no liquidables)">
-                                        <i class="fas fa-shield-halved text-amber-600"></i>
-                                        <span>En garantía (${{ number_format($montoGarantia, 2) }})</span>
-                                    </button>
-                                @elseif(($item['saldo_liquidable_total'] ?? 0) > 0)
-                                    <button type="button" onclick="liquidarDirectoVendedor({{ $vendedor->id }}, '{{ addslashes($vendedor->nombre_real) }}', '{{ addslashes($vendedor->username) }}', '', '')"
-                                        class="px-3.5 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5"
-                                        title="Ver y liquidar comisiones pendientes de otros periodos">
-                                        <i class="fas fa-clock-rotate-left text-slate-500"></i>
-                                        <span>Histórico (${{ number_format($item['saldo_liquidable_total'], 2) }})</span>
-                                    </button>
-                                @endif
-                            @endif
-
-                            <button type="button" onclick="toggleDesgloseVendedor({{ $vendedor->id }})"
-                                class="px-3.5 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5">
-                                <i class="fas fa-list-ul text-slate-500"></i>
-                                <span>Desglose
-                                    {{ $periodo === 'mes' ? "({$mesNombre}: {$comisiones->count()})" : "({$comisiones->count()})" }}</span>
-                                <i class="fas fa-chevron-down text-[10px] transition-transform duration-200"
-                                    id="icon-chevron-{{ $vendedor->id }}"></i>
-                            </button>
-                        </div>
-                    </div>
-
-                    <!-- DESGLOSE EXPANDIBLE DE TODAS LAS VENTAS / COMISIONES -->
-                    <div id="desglose-vendedor-{{ $vendedor->id }}"
-                        class="hidden bg-slate-50/40 p-4 sm:p-5 border-t border-slate-100">
-                        <div class="overflow-x-auto bg-white rounded-xl border border-slate-200 shadow-2xs">
-                            <table class="w-full text-xs">
-                                <thead>
-                                    <tr
-                                        class="bg-slate-50 border-b border-slate-200 text-slate-500 uppercase tracking-wider font-bold">
-                                        <th class="px-4 py-3 text-left">Fecha y Hora</th>
-                                        <th class="px-4 py-3 text-left">Concepto / Detalle de la Venta</th>
-                                        <th class="px-4 py-3 text-right">Comisión</th>
-                                        <th class="px-4 py-3 text-center">Estado</th>
-                                        <th class="px-4 py-3 text-left">Detalle de Pago</th>
-                                        <th class="px-4 py-3 text-left">Notas</th>
-                                        <th class="px-4 py-3 text-center">Acciones</th>
-                                    </tr>
-                                </thead>
-                                <tbody class="divide-y divide-slate-100">
-                                    @forelse($comisiones as $c)
-                                        <tr class="hover:bg-slate-50/60 transition-colors">
-
-                                            {{-- Fecha --}}
-                                            <td class="px-4 py-3 whitespace-nowrap text-slate-600">
-                                                <span
-                                                    class="font-bold text-slate-800 block">{{ $c->fecha_registro ? $c->fecha_registro->format('d/m/Y') : '—' }}</span>
-                                                <span
-                                                    class="text-[10px] text-slate-400">{{ $c->fecha_registro ? $c->fecha_registro->format('h:i A') : '' }}</span>
-                                            </td>
-
-                                            {{-- Concepto --}}
-                                            <td class="px-4 py-3 text-slate-700">
-                                                <div class="flex items-center gap-1.5 flex-wrap">
-                                                    @if($c->id_salida)
-                                                        <span
-                                                            class="inline-flex items-center gap-1 px-2 py-0.5 bg-blue-50 text-blue-700 rounded-md text-[10px] font-bold">
-                                                            <i class="fas fa-shopping-bag"></i> Salida #{{ $c->id_salida }}
-                                                        </span>
-                                                    @else
-                                                        <span
-                                                            class="inline-flex items-center gap-1 px-2 py-0.5 bg-purple-50 text-purple-700 rounded-md text-[10px] font-bold">
-                                                            <i class="fas fa-award"></i> Bono
-                                                        </span>
-                                                    @endif
-                                                    <span class="font-semibold text-slate-800">
-                                                        {{ $c->concepto ?? ($c->salida ? "Venta directa ({$c->salida->cantidad} uds)" : "Comisión directa") }}
-                                                    </span>
-                                                </div>
-                                                @if($c->salida && $c->salida->variante && $c->salida->variante->producto)
-                                                    <p class="text-[11px] text-slate-500 mt-0.5">
-                                                        {{ $c->salida->variante->producto->nombre }} -
-                                                        {{ $c->salida->variante->nombre_variante }} | Total salida:
-                                                        ${{ number_format($c->salida->total, 2) }}
-                                                    </p>
-                                                @endif
-                                            </td>
-
-                                            {{-- Comisión --}}
-                                            <td class="px-4 py-3 text-right whitespace-nowrap">
-                                                <span
-                                                    class="font-black text-sm text-slate-900 block">${{ number_format($c->monto, 2) }}</span>
-                                                @if($c->porcentaje && $c->porcentaje > 0)
-                                                    <span class="text-[10px] text-slate-400">Ref:
-                                                        ${{ number_format($c->porcentaje, 2) }}/ud</span>
-                                                @endif
-                                            </td>
-
-                                            {{-- Estado --}}
-                                            <td class="px-4 py-3 text-center whitespace-nowrap">
-                                                @if($c->estado === 'Pendiente')
-                                                    @if($c->es_liquidacion_bloqueada)
-                                                        <span
-                                                            class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-bold bg-amber-100 text-amber-800 border border-amber-300 shadow-2xs"
-                                                            title="{{ $c->motivo_bloqueo_liquidacion }}">
-                                                            <i class="fas fa-shield-halved text-[9px] text-amber-600"></i>
-                                                            En garantía
-                                                        </span>
-                                                    @else
-                                                        <span
-                                                            class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-bold bg-amber-50 text-amber-700 border border-amber-200">
-                                                            <span class="w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse"></span>
-                                                            Liquidación pendiente
-                                                        </span>
-                                                    @endif
-                                                @elseif($c->estado === 'Pagada')
-                                                    <span
-                                                        class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
-                                                        <i class="fas fa-check text-[9px]"></i>
-                                                        Pagada
-                                                    </span>
-                                                @else
-                                                    <span
-                                                        class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-bold bg-slate-100 text-slate-500 border border-slate-200">
-                                                        <i class="fas fa-ban text-[9px]"></i>
-                                                        Cancelada
-                                                    </span>
-                                                @endif
-                                            </td>
-
-                                            {{-- Método de Pago --}}
-                                            <td class="px-4 py-3 text-slate-600 text-[11px]">
-                                                @if($c->estado === 'Pagada')
-                                                    <div class="space-y-1.5">
-                                                        <span class="font-bold text-emerald-700 flex items-center gap-1.5 text-xs">
-                                                            @if($c->metodo_pago === 'Transferencia Bancaria')
-                                                                <i class="fas fa-university text-blue-600"></i>
-                                                            @elseif($c->metodo_pago === 'Efectivo')
-                                                                <i class="fas fa-money-bill-wave text-emerald-600"></i>
-                                                            @else
-                                                                <i class="fas fa-money-bill-transfer text-emerald-600"></i>
-                                                            @endif
-                                                            {{ $c->metodo_pago ?? 'Efectivo' }}
-                                                        </span>
-                                                        @if($c->referencia_pago)
-                                                            <span class="text-[10px] text-slate-500 font-mono block">Ref:
-                                                                {{ $c->referencia_pago }}</span>
-                                                        @endif
-                                                        @if($c->comprobante_url)
-                                                            <a href="{{ $c->comprobante_url }}" target="_blank"
-                                                                class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-indigo-50 hover:bg-indigo-100 text-indigo-700 font-bold border border-indigo-200 text-[11px] shadow-2xs transition-all hover:scale-[1.02] cursor-pointer w-fit">
-                                                                <i class="fas fa-file-invoice-dollar text-indigo-600"></i>
-                                                                <span>Ver Comprobante</span>
-                                                                <i class="fas fa-arrow-up-right-from-square text-[9px] opacity-70"></i>
-                                                            </a>
-                                                        @endif
-                                                    </div>
-                                                @else
-                                                    <span class="text-slate-400 italic">Por liquidar</span>
-                                                @endif
-                                            </td>
-
-                                            {{-- Notas --}}
-                                            <td class="px-4 py-3 text-slate-500 text-[11px] max-w-[150px] truncate"
-                                                title="{{ $c->notas }}">
-                                                {{ $c->notas ?? '—' }}
-                                            </td>
-
-                                            {{-- Acciones --}}
-                                            <td class="px-4 py-3 text-center whitespace-nowrap">
-                                                <div class="flex items-center justify-center gap-1">
-                                                    {{-- Ver Detalle Completo --}}
-                                                    <button type="button"
-                                                        onclick="verDetalleComision({{ $c->id }})"
-                                                        class="w-7 h-7 rounded-lg flex items-center justify-center text-indigo-600 hover:text-indigo-800 hover:bg-indigo-50 transition-colors cursor-pointer"
-                                                        title="Ver Detalle Completo">
-                                                        <i class="fas fa-eye text-[11px]"></i>
-                                                    </button>
-
-                                                    @if($isAdmin && $c->estado === 'Pendiente')
-                                                        <button type="button"
-                                                            onclick="openEditModal({{ $c->id }}, '{{ $c->monto }}', '{{ addslashes($c->concepto ?? '') }}', '{{ addslashes($c->notas ?? '') }}')"
-                                                            class="w-7 h-7 rounded-lg flex items-center justify-center text-blue-600 hover:bg-blue-50 transition-colors cursor-pointer"
-                                                            title="Editar">
-                                                            <i class="fas fa-pen text-[10px]"></i>
-                                                        </button>
-                                                        <button type="button" onclick="cancelarComision({{ $c->id }})"
-                                                            class="w-7 h-7 rounded-lg flex items-center justify-center text-red-500 hover:bg-red-50 transition-colors cursor-pointer"
-                                                            title="Cancelar">
-                                                            <i class="fas fa-ban text-[10px]"></i>
-                                                        </button>
-                                                    @endif
-                                                </div>
-                                            </td>
-                                        </tr>
-                                    @empty
-                                        <tr>
-                                            <td colspan="7" class="px-4 py-6 text-center text-slate-400">
-                                                No hay registros de comisiones para este vendedor en el rango seleccionado.
-                                            </td>
-                                        </tr>
-                                    @endforelse
-                                </tbody>
-                            </table>
-                        </div>
-                    </div>
-
-                </div>
-            @empty
-                <div class="bg-white rounded-2xl border border-slate-200 p-12 text-center text-slate-400 shadow-sm">
-                    <div
-                        class="w-16 h-16 rounded-2xl bg-slate-100 flex items-center justify-center text-2xl mx-auto mb-3 text-slate-400">
-                        <i class="fas fa-users-slash"></i>
-                    </div>
-                    <h3 class="text-base font-bold text-slate-700">No se encontraron vendedores</h3>
-                    <p class="text-xs text-slate-400 mt-1">Ajusta los filtros de búsqueda o fechas.</p>
-                </div>
-            @endforelse
+        <div id="skeletonVendedores" class="hidden">
+            <x-skeleton-table :rows="4" :cols="7" />
+        </div>
+        <div id="contenedorListaVendedores" class="space-y-4">
+            @include('comisiones.tabla-por-vendedor')
         </div>
 
     </div>
-
     {{-- MODALES --}}
     @include('comisiones.modals')
 
@@ -654,6 +344,90 @@
             cancelar: @if($isAdmin) "{{ url('comisiones') }}" @else"null" @endif,
         };
         const CSRF = document.querySelector('meta[name="csrf-token"]').content;
+
+        let debounceVendedorTimer = null;
+        function debounceFiltroVendedores() {
+            clearTimeout(debounceVendedorTimer);
+            debounceVendedorTimer = setTimeout(() => {
+                aplicarFiltroVendedoresAjax();
+            }, 300);
+        }
+
+        async function aplicarFiltroVendedoresAjax() {
+            const form = document.getElementById('formFiltroVendedor');
+            if (!form) return;
+            const formData = new FormData(form);
+            const params = new URLSearchParams(formData);
+
+            const skeleton = document.getElementById('skeletonVendedores');
+            const contenedor = document.getElementById('contenedorListaVendedores');
+            const btnFiltrar = document.getElementById('btnFiltrarVendedores');
+            if (btnFiltrar) {
+                btnFiltrar.disabled = true;
+                btnFiltrar.innerHTML = '<i class="fas fa-spinner fa-spin text-[11px]"></i> <span>Filtrando...</span>';
+            }
+            if (skeleton && contenedor) {
+                skeleton.classList.remove('hidden');
+                contenedor.classList.add('opacity-40');
+            }
+
+            try {
+                const url = `${form.action}?${params.toString()}`;
+                const res = await fetch(url, {
+                    headers: {
+                        'X-Requested-With': 'XMLHttpRequest',
+                        'Accept': 'application/json'
+                    }
+                });
+
+                if (res.ok) {
+                    const data = await res.json();
+                    if (data.html && contenedor) {
+                        contenedor.innerHTML = data.html;
+                    }
+                    if (data.kpis) {
+                        actualizarKpisVendedores(data.kpis);
+                    }
+                    const btnReset = document.getElementById('btnResetVendedorFiltros');
+                    if (btnReset) {
+                        const hayFiltros = (document.getElementById('q')?.value || document.getElementById('fecha_desde')?.value || document.getElementById('fecha_hasta')?.value);
+                        btnReset.classList.toggle('hidden', !hayFiltros);
+                    }
+                }
+            } catch (err) {
+                console.error('Error al filtrar vendedores:', err);
+            } finally {
+                if (btnFiltrar) {
+                    btnFiltrar.disabled = false;
+                    btnFiltrar.innerHTML = '<i class="fas fa-filter text-[11px]"></i> <span>Filtrar</span>';
+                }
+                if (skeleton && contenedor) {
+                    skeleton.classList.add('hidden');
+                    contenedor.classList.remove('opacity-40');
+                }
+            }
+        }
+
+        function limpiarFiltrosVendedoresAjax() {
+            const q = document.getElementById('q');
+            if (q) q.value = '';
+            const fDesde = document.getElementById('fecha_desde');
+            if (fDesde) fDesde.value = '';
+            const fHasta = document.getElementById('fecha_hasta');
+            if (fHasta) fHasta.value = '';
+            aplicarFiltroVendedoresAjax();
+        }
+
+        function actualizarKpisVendedores(kpis) {
+            const totalGen = document.getElementById('kpiTotalGeneradoVendedores');
+            if (totalGen) totalGen.textContent = `$${formatNum(kpis.total || 0)}`;
+            const porLiq = document.getElementById('kpiPorLiquidarVendedores');
+            if (porLiq) porLiq.textContent = `$${formatNum(kpis.pendiente || 0)}`;
+            const totalPag = document.getElementById('kpiTotalPagadoVendedores');
+            if (totalPag) totalPag.textContent = `$${formatNum(kpis.pagada || 0)}`;
+            const totalCanc = document.getElementById('kpiTotalCanceladasVendedores');
+            if (totalCanc) totalCanc.textContent = `$${formatNum(kpis.cancelada || 0)}`;
+        }
 
         function toggleDesgloseVendedor(id) {
             const desglose = document.getElementById(`desglose-vendedor-${id}`);
@@ -889,8 +663,8 @@
                 const data = await res.json();
                 if (data.success) {
                     closeEditModal();
-                    Swal.fire({ icon: 'success', title: '¡Actualizado!', text: data.message, timer: 2000, showConfirmButton: false });
-                    setTimeout(() => window.location.reload(), 1200);
+                    Swal.fire({ icon: 'success', title: '¡Actualizado!', text: data.message, timer: 1500, showConfirmButton: false });
+                    aplicarFiltroVendedoresAjax();
                 } else {
                     Swal.fire({ icon: 'error', title: 'Error', text: data.message });
                 }
@@ -922,8 +696,8 @@
                 });
                 const data = await res.json();
                 if (data.success) {
-                    Swal.fire({ icon: 'success', title: '¡Cancelada!', text: data.message, timer: 2000, showConfirmButton: false });
-                    setTimeout(() => window.location.reload(), 1200);
+                    Swal.fire({ icon: 'success', title: '¡Cancelada!', text: data.message, timer: 1500, showConfirmButton: false });
+                    aplicarFiltroVendedoresAjax();
                 } else {
                     Swal.fire({ icon: 'error', title: 'Error', text: data.message });
                 }
@@ -1154,8 +928,8 @@
                 const data = await res.json();
                 if (data.success) {
                     closeLiquidarModal();
-                    Swal.fire({ icon: 'success', title: '¡Liquidación Completada!', text: data.message, timer: 2500, showConfirmButton: false });
-                    setTimeout(() => window.location.reload(), 1200);
+                    Swal.fire({ icon: 'success', title: '¡Liquidación Completada!', text: data.message, timer: 2000, showConfirmButton: false });
+                    aplicarFiltroVendedoresAjax();
                 } else {
                     document.getElementById('btnFinalConfirmLiquidar').disabled = false;
                     document.getElementById('btnFinalConfirmLiquidar').innerHTML = '<i class="fas fa-check-circle"></i><span>Confirmar Pago</span>';
@@ -1229,8 +1003,8 @@
                 const data = await res.json();
                 if (data.success) {
                     closeCreateModal();
-                    Swal.fire({ icon: 'success', title: '¡Registrado!', text: data.message, timer: 2000, showConfirmButton: false });
-                    setTimeout(() => window.location.reload(), 1200);
+                    Swal.fire({ icon: 'success', title: '¡Registrado!', text: data.message, timer: 1500, showConfirmButton: false });
+                    aplicarFiltroVendedoresAjax();
                 } else {
                     Swal.fire({ icon: 'error', title: 'Error', text: data.message || 'Verifica los datos ingresados.' });
                 }

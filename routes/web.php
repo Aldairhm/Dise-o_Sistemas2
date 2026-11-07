@@ -116,7 +116,9 @@ Route::middleware('auth')->group(function () {
         Route::get('/compras/buscar-variantes', [CompraController::class, 'buscarVariantes'])->name('compras.buscar-variantes');
         Route::post('/compras', [CompraController::class, 'store'])->name('compras.store');
         Route::get('/compras/historial', [CompraController::class, 'historial'])->name('compras.historial');
+        Route::get('/compras/{id}', [CompraController::class, 'show'])->name('compras.show')->whereNumber('id');
         Route::get('/compras/movimientos', [CompraController::class, 'movimientos'])->name('compras.movimientos');
+        Route::get('/compras/movimientos/{id}', [CompraController::class, 'detalleMovimiento'])->name('compras.movimientos.show')->whereNumber('id');
         Route::post('/movimientos-bodega/transferencia-tienda', [MovimientoBodegaController::class, 'transferirATienda'])->name('movimientos-bodega.transferencia-tienda');
 
         // ── Módulo de Ventas (Solo Administradores: Dashboard general, Pedidos y Despacho) ──
@@ -183,9 +185,12 @@ Route::middleware('auth')->group(function () {
         Route::get('/usuarios', [SuperAdminController::class, 'usuarios'])->name('usuarios');
         Route::post('/usuarios/{user}/auditar', [SuperAdminController::class, 'iniciarAuditoria'])->name('auditorias.iniciar')->whereNumber('user');
         Route::get('/auditorias/historial', [SuperAdminController::class, 'historialAuditorias'])->name('auditorias.historial');
+        Route::get('/auditorias/{sesion}/informe', [SuperAdminController::class, 'informeAuditoria'])->name('auditorias.informe')->whereNumber('sesion');
+        Route::get('/auditorias/{sesion}/informe/pdf', [SuperAdminController::class, 'exportarInformePdf'])->name('auditorias.informe.pdf')->whereNumber('sesion');
         Route::post('/auditorias/{sesion}/revocar', [SuperAdminController::class, 'revocarAuditoria'])->name('auditorias.revocar')->whereNumber('sesion');
         Route::get('/tickets', [SuperAdminController::class, 'tickets'])->name('tickets');
         Route::post('/crear-superadmin', [SuperAdminController::class, 'guardarSuperAdmin'])->name('crear');
+        Route::put('/usuarios/{user}/superadmin', [SuperAdminController::class, 'actualizarSuperAdmin'])->name('superadmin.actualizar')->whereNumber('user');
     });
 
     // Ruta de finalización de auditoría (accesible durante una sesión de impersonation)

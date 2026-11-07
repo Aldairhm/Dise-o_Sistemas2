@@ -16,10 +16,6 @@
                         {{ $ticket->estado === 'Escalada' ? 'bg-amber-100 text-amber-800' : ($ticket->estado === 'Resuelta' ? 'bg-emerald-100 text-emerald-800' : 'bg-blue-100 text-blue-800') }}">
                         {{ $ticket->estado }}
                     </span>
-                    <span class="px-2.5 py-1 rounded-full text-xs font-bold 
-                        {{ $ticket->prioridad === 'Urgente' ? 'bg-rose-100 text-rose-800' : ($ticket->prioridad === 'Alta' ? 'bg-amber-100 text-amber-800' : 'bg-slate-100 text-slate-700') }}">
-                        {{ $ticket->prioridad }}
-                    </span>
                 </div>
                 <h1 class="text-base sm:text-lg font-bold text-slate-700 mt-1">
                     {{ $ticket->titulo ?? 'Consulta sobre ' . $ticket->modulo }}
@@ -28,17 +24,33 @@
 
             <!-- Acciones según Rol -->
             <div class="flex flex-wrap items-center gap-2">
-                @if(Auth::user()->isAdmin() && !in_array($ticket->estado, ['Escalada', 'Resuelta', 'Cancelada']))
+                @php
+                    $esCreador = ($ticket->id_usuario === Auth::id());
+                    $puedeGestionar = (Auth::user()->isSuperAdmin() || (Auth::user()->isAdmin() && !$esCreador))
+                        && (!in_array($ticket->estado, ['Resuelta', 'Cancelada']) || Auth::user()->isSuperAdmin());
+                    $puedeEscalar = Auth::user()->isAdmin() 
+                        && !$esCreador 
+                        && $ticket->nivel_escalamiento !== 'super_admin'
+                        && !in_array($ticket->estado, ['Escalada', 'Resuelta', 'Cancelada']);
+                    $puedeCancelarPropio = $esCreador && in_array($ticket->estado, ['Pendiente', 'En proceso']);
+                @endphp
+
+                @if($puedeEscalar)
                     <button type="button" onclick="document.getElementById('modalEscalar').classList.remove('hidden')" class="px-4 py-2 rounded-xl text-xs font-bold bg-amber-500 hover:bg-amber-600 text-white transition-colors shadow-sm flex items-center gap-1.5">
                         <i class="fas fa-arrow-up-right-from-square"></i>
                         <span>Escalar a Super Admin</span>
                     </button>
                 @endif
 
-                @if(!in_array($ticket->estado, ['Resuelta', 'Cancelada']) || Auth::user()->isSuperAdmin())
+                @if($puedeGestionar)
                     <button type="button" onclick="document.getElementById('modalCambiarEstado').classList.remove('hidden')" class="px-4 py-2 rounded-xl text-xs font-bold bg-slate-800 hover:bg-slate-700 text-white transition-colors shadow-sm flex items-center gap-1.5">
                         <i class="fas fa-sliders"></i>
                         <span>Cambiar Estado</span>
+                    </button>
+                @elseif($puedeCancelarPropio)
+                    <button type="button" onclick="document.getElementById('modalCambiarEstado').classList.remove('hidden')" class="px-4 py-2 rounded-xl text-xs font-bold bg-rose-600 hover:bg-rose-700 text-white transition-colors shadow-sm flex items-center gap-1.5">
+                        <i class="fas fa-ban"></i>
+                        <span>Cancelar Mi Duda</span>
                     </button>
                 @else
                     <span class="px-3 py-1.5 rounded-xl text-xs font-bold bg-slate-100 text-slate-500 border border-slate-200">
@@ -280,21 +292,32 @@
                 </button>
             </div>
 
-            <form method="POST" action="{{ route('ayuda.tickets.estado', $ticket->id) }}" class="p-6 space-y-4 text-xs">
+            <form id="formCambiarEstadoTicket" method="POST" action="{{ route('ayuda.tickets.estado', $ticket->id) }}" novalidate class="p-6 space-y-4 text-xs">
                 @csrf
                 @method('PATCH')
                 <div>
                     <label class="block font-bold text-slate-700 mb-1">Nuevo Estado <span class="text-rose-500">*</span></label>
-                    <select name="estado" required class="w-full p-2.5 rounded-xl border border-slate-200 focus:outline-none focus:border-blue-500 text-xs">
-                        @foreach(\App\Models\SoporteTicket::ESTADOS as $st)
-                            <option value="{{ $st }}" {{ $ticket->estado === $st ? 'selected' : '' }}>{{ $st }}</option>
-                        @endforeach
+                    <select name="estado" id="selectNuevoEstado" class="w-full p-2.5 rounded-xl border border-slate-200 focus:outline-none focus:border-blue-500 text-xs">
+                        @if($esCreador && !Auth::user()->isSuperAdmin())
+                            <option value="Cancelada">Cancelada (Cancelar mi propia duda)</option>
+                        @else
+                            @foreach(\App\Models\SoporteTicket::ESTADOS as $st)
+                                @if($st === 'Escalada' && $ticket->nivel_escalamiento === 'super_admin')
+                                    @continue
+                                @endif
+                                <option value="{{ $st }}" {{ $ticket->estado === $st ? 'selected' : '' }}>{{ $st }}</option>
+                            @endforeach
+                        @endif
                     </select>
                 </div>
 
                 <div>
-                    <label class="block font-bold text-slate-700 mb-1">Resolución o Motivo del Cambio</label>
-                    <textarea name="resolucion" rows="3" placeholder="Detalla la solución brindada o razón del cambio de estado..." class="w-full p-3 rounded-xl border border-slate-200 focus:outline-none focus:border-blue-500 text-xs">{{ $ticket->resolucion }}</textarea>
+                    <label class="block font-bold text-slate-700 mb-1">Resolución o Motivo del Cambio <span class="text-rose-500">*</span></label>
+                    <textarea name="resolucion" id="textareaResolucionModal" rows="3" placeholder="Detalla obligatoriamente la solución brindada o razón del cambio de estado..." class="w-full p-3 rounded-xl border border-slate-200 focus:outline-none focus:border-blue-500 text-xs transition-all resize-none">{{ $ticket->resolucion }}</textarea>
+                    <p id="errorResolucionModal" class="hidden text-[11px] font-bold text-rose-600 flex items-center gap-1 mt-1 pl-1">
+                        <i class="fas fa-circle-exclamation text-[10px]"></i>
+                        <span>Debes ingresar la resolución o motivo del cambio (mínimo 5 caracteres).</span>
+                    </p>
                 </div>
 
                 <div class="pt-2 flex items-center justify-end gap-2 border-t border-slate-100">
@@ -308,5 +331,34 @@
             </form>
         </div>
     </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            const form = document.getElementById('formCambiarEstadoTicket');
+            const textarea = document.getElementById('textareaResolucionModal');
+            const errorMsg = document.getElementById('errorResolucionModal');
+
+            if (form && textarea && errorMsg) {
+                textarea.addEventListener('input', function () {
+                    if (this.value.trim().length >= 5) {
+                        this.classList.remove('border-rose-500', 'bg-rose-50/40', 'ring-1', 'ring-rose-400');
+                        this.classList.add('border-slate-200');
+                        errorMsg.classList.add('hidden');
+                    }
+                });
+
+                form.addEventListener('submit', function (e) {
+                    const val = textarea.value.trim();
+                    if (val.length < 5) {
+                        e.preventDefault();
+                        textarea.classList.remove('border-slate-200');
+                        textarea.classList.add('border-rose-500', 'bg-rose-50/40', 'ring-1', 'ring-rose-400');
+                        errorMsg.classList.remove('hidden');
+                        textarea.focus();
+                    }
+                });
+            }
+        });
+    </script>
 </x-app>
 

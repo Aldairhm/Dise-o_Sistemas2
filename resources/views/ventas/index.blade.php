@@ -53,8 +53,8 @@
 
         <!-- 1. SECCIÓN SUPERIOR: FILTROS GLOBALES -->
         <section class="bg-white border border-slate-200 rounded-2xl p-4 sm:p-5 shadow-sm">
-            <form method="GET" action="{{ route('ventas.index') }}" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-12 gap-3.5 items-end">
-                <input type="hidden" name="tab" value="{{ $estadoTab }}">
+            <form method="GET" action="{{ route('ventas.index') }}" @submit.prevent="filtrarVentasIndex()" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-12 gap-3.5 items-end">
+                <input type="hidden" name="tab" :value="estadoTabActual">
 
                 <!-- BÚSQUEDA RÁPIDA -->
                 <div class="sm:col-span-2 md:col-span-3 lg:col-span-3">
@@ -66,7 +66,7 @@
                             type="text"
                             name="q"
                             id="q"
-                            value="{{ $busqueda ?? '' }}"
+                            x-model="filtroBusqueda"
                             placeholder="Ej: 00004 o 7123-4567..."
                             class="w-full rounded-xl border border-slate-300 bg-slate-50 pl-9 pr-3 py-2 text-xs font-semibold text-slate-700 focus:border-blue-500 focus:bg-white focus:outline-none focus:ring-4 focus:ring-blue-500/10 transition-all">
                         <i class="fas fa-search absolute left-3 top-2.5 text-slate-400 text-xs"></i>
@@ -82,7 +82,7 @@
                         type="date"
                         name="desde"
                         id="desde"
-                        value="{{ $desde }}"
+                        x-model="filtroDesde"
                         class="w-full rounded-xl border border-slate-300 bg-slate-50 px-3 py-2 text-xs font-semibold text-slate-700 focus:border-blue-500 focus:bg-white focus:outline-none focus:ring-4 focus:ring-blue-500/10 transition-all">
                 </div>
 
@@ -95,7 +95,7 @@
                         type="date"
                         name="hasta"
                         id="hasta"
-                        value="{{ $hasta }}"
+                        x-model="filtroHasta"
                         class="w-full rounded-xl border border-slate-300 bg-slate-50 px-3 py-2 text-xs font-semibold text-slate-700 focus:border-blue-500 focus:bg-white focus:outline-none focus:ring-4 focus:ring-blue-500/10 transition-all">
                 </div>
 
@@ -107,10 +107,11 @@
                     <select
                         name="vendedor_id"
                         id="vendedor_id"
+                        x-model="filtroVendedor"
                         class="w-full rounded-xl border border-slate-300 bg-slate-50 px-3 py-2 text-xs font-semibold text-slate-700 focus:border-blue-500 focus:bg-white focus:outline-none focus:ring-4 focus:ring-blue-500/10 transition-all">
                         <option value="">Todos</option>
                         @foreach($vendedores as $v)
-                        <option value="{{ $v->id }}" {{ (string)$vendedorId === (string)$v->id ? 'selected' : '' }}>
+                        <option value="{{ $v->id }}">
                             {{ $v->nombre_real ?: $v->username }}
                         </option>
                         @endforeach
@@ -125,10 +126,11 @@
                     <select
                         name="producto_id"
                         id="producto_id"
+                        x-model="filtroProducto"
                         class="w-full rounded-xl border border-slate-300 bg-slate-50 px-3 py-2 text-xs font-semibold text-slate-700 focus:border-blue-500 focus:bg-white focus:outline-none focus:ring-4 focus:ring-blue-500/10 transition-all">
                         <option value="">Todos</option>
                         @foreach($productos as $p)
-                        <option value="{{ $p->id }}" {{ (string)$productoId === (string)$p->id ? 'selected' : '' }}>
+                        <option value="{{ $p->id }}">
                             {{ $p->nombre }}
                         </option>
                         @endforeach
@@ -139,19 +141,19 @@
                 <div class="lg:col-span-1 flex items-center gap-1.5">
                     <button
                         type="submit"
-                        class="w-full rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-bold py-2 px-2.5 text-xs transition-all shadow-md shadow-blue-600/15 flex items-center justify-center gap-1 cursor-pointer"
+                        class="w-full rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-bold py-2 px-2.5 text-xs transition-all shadow-md shadow-blue-600/15 flex items-center justify-center gap-1.5 cursor-pointer"
                         title="Aplicar filtros">
-                        <i class="fas fa-filter text-[11px]"></i>
-                        <span class="hidden sm:inline lg:hidden xl:inline">Filtrar</span>
+                        <i :class="cargandoTabla ? 'fas fa-spinner fa-spin' : 'fas fa-filter'"></i>
+                        <span class="hidden sm:inline lg:hidden xl:inline" x-text="cargandoTabla ? 'Filtrando...' : 'Filtrar'"></span>
                     </button>
-                    @if(request()->hasAny(['desde', 'hasta', 'vendedor_id', 'producto_id', 'q']))
-                    <a
-                        href="{{ route('ventas.index', $estadoTab !== 'todos' ? ['tab' => $estadoTab] : []) }}"
-                        class="rounded-xl border border-slate-200 bg-slate-50 hover:bg-slate-100 text-slate-600 font-bold py-2 px-2.5 text-xs transition-colors flex items-center justify-center shrink-0"
+                    <button
+                        type="button"
+                        x-show="filtroBusqueda || filtroVendedor || filtroProducto"
+                        @click="limpiarFiltrosIndex()"
+                        class="rounded-xl border border-slate-200 bg-slate-50 hover:bg-slate-100 text-slate-600 font-bold py-2 px-2.5 text-xs transition-colors flex items-center justify-center shrink-0 cursor-pointer"
                         title="Limpiar filtros">
                         <i class="fas fa-rotate-left text-[11px]"></i>
-                    </a>
-                    @endif
+                    </button>
                 </div>
 
             </form>
@@ -336,52 +338,60 @@
             <div class="flex flex-wrap items-center justify-between gap-3">
                 <div class="flex flex-wrap items-center gap-1.5 rounded-2xl border border-slate-200 bg-white p-1.5 shadow-sm" aria-label="Apartados de estado del historial">
                     <!-- 1. TODAS LAS TRANSACCIONES -->
-                    <a 
-                        href="{{ route('ventas.index', array_merge(request()->except('page'), ['tab' => 'todos'])) }}"
-                        class="rounded-xl px-3.5 py-2 text-xs font-bold transition-all flex items-center gap-2 cursor-pointer {{ $estadoTab === 'todos' ? 'bg-blue-600 text-white shadow-xs' : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900' }}"
+                    <button 
+                        type="button"
+                        @click="cambiarTab('todos')"
+                        class="rounded-xl px-3.5 py-2 text-xs font-bold transition-all flex items-center gap-2 cursor-pointer"
+                        :class="estadoTabActual === 'todos' ? 'bg-blue-600 text-white shadow-xs' : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900'"
                     >
-                        <i class="fas fa-layer-group text-[11px] {{ $estadoTab === 'todos' ? 'text-white' : 'text-slate-400' }}"></i>
+                        <i class="fas fa-layer-group text-[11px]" :class="estadoTabActual === 'todos' ? 'text-white' : 'text-slate-400'"></i>
                         <span>Todas</span>
-                        <span class="px-1.5 py-0.5 rounded-md text-[10px] font-black {{ $estadoTab === 'todos' ? 'bg-white/20 text-white' : 'bg-slate-100 text-slate-600' }}">
+                        <span class="px-1.5 py-0.5 rounded-md text-[10px] font-black" :class="estadoTabActual === 'todos' ? 'bg-white/20 text-white' : 'bg-slate-100 text-slate-600'" x-text="conteos.todos ?? {{ $conteoEstados['todos'] ?? 0 }}">
                             {{ $conteoEstados['todos'] ?? 0 }}
                         </span>
-                    </a>
+                    </button>
 
                     <!-- 2. VENTAS ENTREGADAS -->
-                    <a 
-                        href="{{ route('ventas.index', array_merge(request()->except('page'), ['tab' => 'Entregada'])) }}"
-                        class="rounded-xl px-3.5 py-2 text-xs font-bold transition-all flex items-center gap-2 cursor-pointer {{ $estadoTab === 'Entregada' ? 'bg-emerald-600 text-white shadow-xs' : 'text-slate-600 hover:bg-emerald-50 hover:text-emerald-700' }}"
+                    <button 
+                        type="button"
+                        @click="cambiarTab('Entregada')"
+                        class="rounded-xl px-3.5 py-2 text-xs font-bold transition-all flex items-center gap-2 cursor-pointer"
+                        :class="estadoTabActual === 'Entregada' ? 'bg-emerald-600 text-white shadow-xs' : 'text-slate-600 hover:bg-emerald-50 hover:text-emerald-700'"
                     >
-                        <i class="fas fa-box-open text-[11px] {{ $estadoTab === 'Entregada' ? 'text-white' : 'text-emerald-500' }}"></i>
+                        <i class="fas fa-box-open text-[11px]" :class="estadoTabActual === 'Entregada' ? 'text-white' : 'text-emerald-500'"></i>
                         <span>Entregadas</span>
-                        <span class="px-1.5 py-0.5 rounded-md text-[10px] font-black {{ $estadoTab === 'Entregada' ? 'bg-white/20 text-white' : 'bg-emerald-100 text-emerald-800' }}">
+                        <span class="px-1.5 py-0.5 rounded-md text-[10px] font-black" :class="estadoTabActual === 'Entregada' ? 'bg-white/20 text-white' : 'bg-emerald-100 text-emerald-800'" x-text="conteos.Entregada ?? {{ $conteoEstados['Entregada'] ?? 0 }}">
                             {{ $conteoEstados['Entregada'] ?? 0 }}
                         </span>
-                    </a>
+                    </button>
 
                     <!-- 3. DEVOLUCIONES -->
-                    <a 
-                        href="{{ route('ventas.index', array_merge(request()->except('page'), ['tab' => 'Devolución'])) }}"
-                        class="rounded-xl px-3.5 py-2 text-xs font-bold transition-all flex items-center gap-2 cursor-pointer {{ $estadoTab === 'Devolución' ? 'bg-purple-600 text-white shadow-xs' : 'text-slate-600 hover:bg-purple-50 hover:text-purple-700' }}"
+                    <button 
+                        type="button"
+                        @click="cambiarTab('Devolución')"
+                        class="rounded-xl px-3.5 py-2 text-xs font-bold transition-all flex items-center gap-2 cursor-pointer"
+                        :class="estadoTabActual === 'Devolución' ? 'bg-purple-600 text-white shadow-xs' : 'text-slate-600 hover:bg-purple-50 hover:text-purple-700'"
                     >
-                        <i class="fas fa-rotate-left text-[11px] {{ $estadoTab === 'Devolución' ? 'text-white' : 'text-purple-500' }}"></i>
+                        <i class="fas fa-rotate-left text-[11px]" :class="estadoTabActual === 'Devolución' ? 'text-white' : 'text-purple-500'"></i>
                         <span>Devoluciones</span>
-                        <span class="px-1.5 py-0.5 rounded-md text-[10px] font-black {{ $estadoTab === 'Devolución' ? 'bg-white/20 text-white' : 'bg-purple-100 text-purple-800' }}">
+                        <span class="px-1.5 py-0.5 rounded-md text-[10px] font-black" :class="estadoTabActual === 'Devolución' ? 'bg-white/20 text-white' : 'bg-purple-100 text-purple-800'" x-text="conteos['Devolución'] ?? {{ $conteoEstados['Devolución'] ?? 0 }}">
                             {{ $conteoEstados['Devolución'] ?? 0 }}
                         </span>
-                    </a>
+                    </button>
 
                     <!-- 4. CAMBIOS -->
-                    <a 
-                        href="{{ route('ventas.index', array_merge(request()->except('page'), ['tab' => 'Cambio'])) }}"
-                        class="rounded-xl px-3.5 py-2 text-xs font-bold transition-all flex items-center gap-2 cursor-pointer {{ $estadoTab === 'Cambio' ? 'bg-teal-600 text-white shadow-xs' : 'text-slate-600 hover:bg-teal-50 hover:text-teal-700' }}"
+                    <button 
+                        type="button"
+                        @click="cambiarTab('Cambio')"
+                        class="rounded-xl px-3.5 py-2 text-xs font-bold transition-all flex items-center gap-2 cursor-pointer"
+                        :class="estadoTabActual === 'Cambio' ? 'bg-teal-600 text-white shadow-xs' : 'text-slate-600 hover:bg-teal-50 hover:text-teal-700'"
                     >
-                        <i class="fas fa-arrow-right-arrow-left text-[11px] {{ $estadoTab === 'Cambio' ? 'text-white' : 'text-teal-500' }}"></i>
+                        <i class="fas fa-arrow-right-arrow-left text-[11px]" :class="estadoTabActual === 'Cambio' ? 'text-white' : 'text-teal-500'"></i>
                         <span>Cambios</span>
-                        <span class="px-1.5 py-0.5 rounded-md text-[10px] font-black {{ $estadoTab === 'Cambio' ? 'bg-white/20 text-white' : 'bg-teal-100 text-teal-800' }}">
+                        <span class="px-1.5 py-0.5 rounded-md text-[10px] font-black" :class="estadoTabActual === 'Cambio' ? 'bg-white/20 text-white' : 'bg-teal-100 text-teal-800'" x-text="conteos.Cambio ?? {{ $conteoEstados['Cambio'] ?? 0 }}">
                             {{ $conteoEstados['Cambio'] ?? 0 }}
                         </span>
-                    </a>
+                    </button>
                 </div>
 
                 <div class="flex items-center gap-2">
@@ -731,12 +741,9 @@
                 </table>
             </div>
 
-            <!-- PAGINACIÓN -->
-            @if($ventas->hasPages())
-            <div class="p-4 border-t border-slate-100 bg-slate-50/50">
-                {{ $ventas->links() }}
+            <div x-show="!cargandoTabla" id="contenedorTablaVentasIndex">
+                @include('ventas.tabla-index')
             </div>
-            @endif
         </section>
         </div>
 
@@ -802,13 +809,12 @@
                         </button>
                     </div>
 
-                    <!-- CUERPO DEL MODAL (SPINNER O DATOS) -->
+                    <!-- CUERPO DEL MODAL (SKELETON O DATOS) -->
                     <div class="p-6 sm:p-8 overflow-y-auto space-y-6 flex-1 custom-scrollbar">
 
-                        <!-- ESTADO CARGANDO -->
-                        <div x-show="cargandoDetalle" class="py-16 text-center text-slate-400 space-y-3">
-                            <i class="fas fa-spinner fa-spin text-3xl text-blue-600"></i>
-                            <p class="text-xs font-bold text-slate-600">Cargando desglose de la venta...</p>
+                        <!-- ESTADO CARGANDO (SKELETON ESTRUCTURAL) -->
+                        <div x-show="cargandoDetalle">
+                            <x-skeleton-modal-detalle />
                         </div>
 
                         <!-- CONTENIDO DE LA VENTA -->
@@ -1817,7 +1823,18 @@
                             </span>
                         </div>
 
-                        <!-- SECCIÓN DINÁMICA: EVIDENCIA PAQUETERÍA (EN RUTA) -->
+                        <!-- ALERTA INFORMATIVA: EN RUTA -->
+                        <template x-if="estadoModalData.estadoActual === 'En ruta'">
+                            <div class="p-3.5 bg-amber-50 border border-amber-200 rounded-xl text-xs text-amber-900 flex items-start gap-2.5 shadow-2xs">
+                                <i class="fas fa-truck-fast text-amber-600 mt-0.5 text-base shrink-0"></i>
+                                <div>
+                                    <p class="font-bold text-amber-950 leading-snug">Envío en camino con paquetería</p>
+                                    <p class="text-[11px] text-amber-800 mt-0.5 leading-relaxed">
+                                        Este paquete está en tránsito hacia el cliente. No se puede cancelar de forma directa; si el cliente <strong>no lo recibió o rechazó la entrega</strong>, selecciona <strong>Devolución</strong> para reingresar los artículos al stock de tienda y registrar la evidencia física del paquete.
+                                    </p>
+                                </div>
+                            </div>
+                        </template>
                         <div
                             id="seccion-foto-paquete"
                             x-show="nuevoEstadoSeleccionado === 'En ruta'"
@@ -1992,13 +2009,13 @@
                             </span>
                         </div>
 
+                        <!-- SECCIÓN DINÁMICA: EVIDENCIA PAQUETERÍA (EN RUTA) -->
                         <!-- ADVERTENCIA DE SEGURIDAD / IMPACTO -->
                         <div class="p-3 bg-amber-50 border border-amber-200 rounded-xl flex items-start gap-2.5 text-amber-900">
                             <i class="fas fa-circle-exclamation text-amber-600 text-sm mt-0.5 shrink-0"></i>
                             <div class="text-[11px]">
                                 <span class="font-bold block">Acción con impacto en inventario y comisiones:</span>
-                                <span class="text-amber-800">
-                                    Si cancelas la venta, el stock de las variantes se devolverá automáticamente a la bodega y se anularán las comisiones asociadas.
+                                <span class="text-amber-800" x-text="nuevoEstadoSeleccionado === 'Devolución' ? 'Si procesas la devolución por paquete no recibido, los productos retornarán al stock activo de tienda y se anularán las comisiones del pedido (deduciendo el 50% del costo de envío al vendedor).' : 'Si cancelas la venta, el stock de las variantes se devolverá automáticamente a la tienda y se anularán las comisiones asociadas.'">
                                 </span>
                             </div>
                         </div>
@@ -2405,11 +2422,92 @@
             return {
                 modalDetalleAbierto: false,
                 cargandoDetalle: false,
+                cargandoTabla: false,
                 ventaSeleccionada: null,
                 comprobanteZoomUrl: null,
                 comprobanteZoomNombre: '',
                 comprobanteZoomTitulo: '',
                 openDevolucionModal: false,
+
+                // --- ESTADO REACTIVO DE FILTROS Y PESTAÑAS ---
+                estadoTabActual: '{{ $estadoTab }}',
+                filtroBusqueda: '{{ $busqueda ?? '' }}',
+                filtroDesde: '{{ $desde }}',
+                filtroHasta: '{{ $hasta }}',
+                filtroVendedor: '{{ $vendedorId ?? '' }}',
+                filtroProducto: '{{ $productoId ?? '' }}',
+                conteos: {
+                    todos: {{ $conteoEstados['todos'] ?? 0 }},
+                    Entregada: {{ $conteoEstados['Entregada'] ?? 0 }},
+                    'Devolución': {{ $conteoEstados['Devolución'] ?? 0 }},
+                    Cambio: {{ $conteoEstados['Cambio'] ?? 0 }}
+                },
+
+                async cambiarTab(tab) {
+                    if (this.estadoTabActual === tab && !this.cargandoTabla) return;
+                    this.estadoTabActual = tab;
+                    await this.recargarTablaIndex();
+                },
+
+                async filtrarVentasIndex() {
+                    await this.recargarTablaIndex();
+                },
+
+                async limpiarFiltrosIndex() {
+                    this.filtroBusqueda = '';
+                    this.filtroVendedor = '';
+                    this.filtroProducto = '';
+                    await this.recargarTablaIndex();
+                },
+
+                async recargarTablaIndex(paginaUrl = null) {
+                    this.cargandoTabla = true;
+                    try {
+                        let url;
+                        if (paginaUrl) {
+                            url = new URL(paginaUrl, window.location.origin);
+                        } else {
+                            url = new URL('{{ route('ventas.index') }}', window.location.origin);
+                            if (this.filtroBusqueda) url.searchParams.set('q', this.filtroBusqueda);
+                            if (this.filtroDesde) url.searchParams.set('desde', this.filtroDesde);
+                            if (this.filtroHasta) url.searchParams.set('hasta', this.filtroHasta);
+                            if (this.filtroVendedor) url.searchParams.set('vendedor_id', this.filtroVendedor);
+                            if (this.filtroProducto) url.searchParams.set('producto_id', this.filtroProducto);
+                            if (this.estadoTabActual) url.searchParams.set('tab', this.estadoTabActual);
+                        }
+
+                        const res = await fetch(url.toString(), {
+                            headers: {
+                                'X-Requested-With': 'XMLHttpRequest',
+                                'Accept': 'application/json'
+                            }
+                        });
+
+                        if (res.ok) {
+                            const data = await res.json();
+                            if (data.html) {
+                                const contenedor = document.getElementById('contenedorTablaVentasIndex');
+                                if (contenedor) {
+                                    contenedor.innerHTML = data.html;
+                                    // Interceptar clics en enlaces de paginación para recargar vía AJAX sin refrescar toda la pantalla
+                                    contenedor.querySelectorAll('a[href*="page="]').forEach(enlace => {
+                                        enlace.addEventListener('click', (e) => {
+                                            e.preventDefault();
+                                            this.recargarTablaIndex(enlace.getAttribute('href'));
+                                        });
+                                    });
+                                }
+                            }
+                            if (data.conteos) {
+                                this.conteos = data.conteos;
+                            }
+                        }
+                    } catch (err) {
+                        console.error('Error al recargar tabla de ventas:', err);
+                    } finally {
+                        this.cargandoTabla = false;
+                    }
+                },
 
                 // --- MODAL DE CAMBIO DE ESTADO (MÁQUINA DE ESTADOS) ---
                 modalCambiarEstadoAbierto: false,
@@ -2443,13 +2541,27 @@
                 errorObservacionesEstadoMensaje: '',
 
                 abrirModalCambiarEstado(id, estadoActual, tipoVenta, puedeDevolver, estadosPermitidos, diasRestantes, textoGarantia, fechaLimite) {
+                    let permitidosFiltrados = Array.isArray(estadosPermitidos) 
+                        ? estadosPermitidos.filter(s => {
+                            if (estadoActual === 'En ruta') {
+                                return s !== 'Cambio' && s !== 'Cancelada';
+                            }
+                            return s !== 'Devolución' && s !== 'Cambio';
+                        }) 
+                        : [];
+
+                    // Regla de despacho: un envío en ruta nunca puede cancelarse
+                    if (estadoActual === 'En ruta') {
+                        permitidosFiltrados = permitidosFiltrados.filter(s => s !== 'Cancelada');
+                    }
+
                     this.estadoModalData = {
                         id: id,
                         folio: '#VNT-' + String(id).padStart(5, '0'),
                         estadoActual: estadoActual,
                         tipoVenta: tipoVenta,
                         puedeDevolver: puedeDevolver,
-                        estadosPermitidos: Array.isArray(estadosPermitidos) ? estadosPermitidos.filter(s => s !== 'Devolución' && s !== 'Cambio') : [],
+                        estadosPermitidos: permitidosFiltrados,
                         diasRestantes: diasRestantes || 0,
                         textoGarantia: textoGarantia || '',
                         fechaLimite: fechaLimite || ''
@@ -2510,9 +2622,9 @@
                         case 'Entregada':
                             return 'Entregado al cliente exitosamente.';
                         case 'Cancelada':
-                            return 'Cancela la venta. Reintegra stock a bodega y anula comisiones.';
+                            return 'Cancela la venta. Reintegra stock a la tienda y anula comisiones.';
                         case 'Devolución':
-                            return 'Paquete no recibido por el cliente en ruta. Requiere motivo y foto del paquete.';
+                            return 'Paquete no recibido por el cliente en ruta. Retorna stock a tienda.';
                         case 'Cambio':
                             return 'Retorno por garantía. Requiere justificación y foto del paquete.';
                         default:
@@ -2721,12 +2833,10 @@
                                 text: data.message,
                                 timer: 1600,
                                 showConfirmButton: false
-                            }).then(() => {
-                                window.location.reload();
                             });
-                        } else {
-                            window.location.reload();
                         }
+
+                        await this.recargarTablaIndex();
 
                     } catch (err) {
                         console.error('Error al actualizar estado:', err);

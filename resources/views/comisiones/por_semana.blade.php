@@ -61,14 +61,14 @@
 
         <!-- FILTROS GLOBALES DE SEMANAS -->
         <section class="bg-white border border-slate-200 rounded-2xl p-4 sm:p-5 shadow-sm">
-            <form method="GET" action="{{ route('comisiones.porSemana') }}" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-12 gap-3.5 items-end">
+            <form id="formFiltroSemana" method="GET" action="{{ route('comisiones.porSemana') }}" onsubmit="event.preventDefault(); aplicarFiltroSemanasAjax();" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-12 gap-3.5 items-end">
 
                 {{-- Selector de Año --}}
                 <div class="sm:col-span-1 md:col-span-3">
                     <label for="anio" class="block text-[11px] font-bold uppercase tracking-wider text-slate-600 mb-1.5">
                         <i class="fas fa-calendar text-slate-400 mr-1"></i> Año
                     </label>
-                    <select id="anio" name="anio"
+                    <select id="anio" name="anio" onchange="aplicarFiltroSemanasAjax()"
                             class="w-full rounded-xl border border-slate-300 bg-slate-50 px-3 py-2 text-xs font-semibold text-slate-700 focus:border-blue-500 focus:bg-white focus:outline-none focus:ring-4 focus:ring-blue-500/10 transition-all">
                         @for($y = now()->year; $y >= now()->year - 3; $y--)
                             <option value="{{ $y }}" {{ (int)$anio === $y ? 'selected' : '' }}>Año {{ $y }}</option>
@@ -82,7 +82,7 @@
                     <label for="vendedor_id" class="block text-[11px] font-bold uppercase tracking-wider text-slate-600 mb-1.5">
                         <i class="fas fa-user-tie text-slate-400 mr-1"></i> Vendedor
                     </label>
-                    <select id="vendedor_id" name="vendedor_id" data-searchable-vendedor
+                    <select id="vendedor_id" name="vendedor_id" data-searchable-vendedor onchange="aplicarFiltroSemanasAjax()"
                             class="w-full rounded-xl border border-slate-300 bg-slate-50 px-3 py-2 text-xs font-semibold text-slate-700 focus:border-blue-500 focus:bg-white focus:outline-none focus:ring-4 focus:ring-blue-500/10 transition-all">
                         <option value="">Todos los vendedores</option>
                         @foreach($vendedores as $v)
@@ -96,18 +96,18 @@
 
                 {{-- Botones --}}
                 <div class="sm:col-span-2 md:col-span-3 flex items-center gap-1.5">
-                    <button type="submit"
+                    <button type="submit" id="btnFiltrarSemana"
                             class="w-full rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-bold py-2 px-2.5 text-xs transition-all shadow-md shadow-blue-600/15 flex items-center justify-center gap-1 cursor-pointer">
                         <i class="fas fa-filter text-[11px]"></i>
                         <span>Filtrar</span>
                     </button>
-                    @if($vendedorId || $anio != now()->year)
-                    <a href="{{ route('comisiones.porSemana') }}"
-                       class="rounded-xl border border-slate-300 hover:bg-slate-100 text-slate-500 p-2 text-xs transition-all flex items-center justify-center"
+                    <button type="button"
+                       id="btnResetSemanaFiltros"
+                       onclick="limpiarFiltrosSemanasAjax()"
+                       class="{{ ($vendedorId || $anio != now()->year) ? '' : 'hidden' }} rounded-xl border border-slate-300 hover:bg-slate-100 text-slate-500 p-2 text-xs transition-all flex items-center justify-center cursor-pointer"
                        title="Restablecer filtros">
                         <i class="fas fa-rotate-left"></i>
-                    </a>
-                    @endif
+                    </button>
                 </div>
             </form>
         </section>
@@ -251,355 +251,14 @@
         </div>
 
         <!-- LISTA DE SEMANAS CON CORTES Y DESGLOSE -->
+        <div id="skeletonSemanas" class="hidden">
+            <x-skeleton-table :rows="4" :cols="6" />
+        </div>
         <div id="listaSemanas" class="space-y-4 scroll-mt-6" aria-live="polite">
-            <div id="filtroKpiAnuncio" class="hidden rounded-xl border border-blue-100 bg-blue-50 px-4 py-2.5 text-xs font-bold text-blue-700 flex items-center justify-between gap-3" role="status">
-                <span id="filtroKpiAnuncioTexto"></span>
-                <button type="button" onclick="aplicarFiltroKpiSemanal('all')" class="text-[11px] underline font-extrabold hover:text-blue-900 cursor-pointer">
-                    Quitar enfoque
-                </button>
-            </div>
-
-            @forelse($reporteSemanas as $sem)
-            @php
-                $comisiones = $sem['comisiones'];
-                $vendedoresSemana = $sem['vendedores'];
-                $hasPendiente = $sem['total_pendiente'] > 0;
-                $fechaDesdeSemana = $sem['inicio_semana']->format('Y-m-d');
-                $fechaHastaSemana = $sem['fin_semana']->format('Y-m-d');
-
-                $nombresMeses = [
-                    1 => 'enero', 2 => 'febrero', 3 => 'marzo', 4 => 'abril',
-                    5 => 'mayo', 6 => 'junio', 7 => 'julio', 8 => 'agosto',
-                    9 => 'septiembre', 10 => 'octubre', 11 => 'noviembre', 12 => 'diciembre'
-                ];
-                $mesInicio = $nombresMeses[$sem['inicio_semana']->month] ?? '';
-                $mesFin = $nombresMeses[$sem['fin_semana']->month] ?? '';
-                $vendedoresTexto = strtolower($vendedoresSemana->map(fn($v) => ($v['vendedor']->nombre_real ?? '') . ' ' . ($v['vendedor']->username ?? ''))->implode(' '));
-                $searchableText = "semana {$sem['semana_numero']} sem {$sem['semana_numero']} {$sem['semana_numero']} {$sem['year']} {$sem['inicio_semana']->format('d/m/Y')} {$sem['fin_semana']->format('d/m/Y')} {$mesInicio} {$mesFin} {$vendedoresTexto}";
-            @endphp
-            <div id="semana-{{ $sem['key'] }}"
-                 data-week-card
-                 data-week-key="{{ $sem['key'] }}"
-                 data-week-number="{{ $sem['semana_numero'] }}"
-                 data-week-year="{{ $sem['year'] }}"
-                 data-week-searchable="{{ $searchableText }}"
-                 data-week-current="{{ $sem['es_semana_actual'] ? '1' : '0' }}"
-                 data-week-has-pending="{{ $sem['total_pendiente'] > 0 ? '1' : '0' }}"
-                 data-week-has-paid="{{ $comisiones->where('estado', 'Pagada')->isNotEmpty() ? '1' : '0' }}"
-                 class="bg-white border {{ $sem['es_semana_actual'] ? 'border-blue-400 ring-2 ring-blue-500/10' : 'border-slate-200' }} rounded-2xl shadow-sm overflow-hidden transition-all duration-200 hover:border-slate-300">
-                
-                <!-- HEADER DE LA TARJETA DE LA SEMANA (INTERACTIVO / CLICKABLE) -->
-                <div onclick="toggleSemana('{{ $sem['key'] }}')"
-                     role="button"
-                     tabindex="0"
-                     onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();toggleSemana('{{ $sem['key'] }}');}"
-                     class="p-4 sm:p-5 bg-white flex flex-col lg:flex-row lg:items-center justify-between gap-4 border-b border-slate-100 cursor-pointer select-none hover:bg-slate-50/70 transition-colors group">
-                    
-                    <!-- INFORMACIÓN DE LA SEMANA -->
-                    <div class="flex items-center gap-3.5 min-w-0">
-                        <div class="w-12 h-12 rounded-2xl {{ $sem['es_semana_actual'] ? 'bg-gradient-to-tr from-blue-600 to-indigo-600 text-white shadow-sm' : 'bg-slate-100 text-slate-700' }} font-black text-center flex flex-col items-center justify-center flex-shrink-0 transition-transform group-hover:scale-105">
-                            <span class="text-[9px] uppercase tracking-wider leading-none">Sem</span>
-                            <span class="text-lg leading-none mt-0.5">{{ $sem['semana_numero'] }}</span>
-                        </div>
-                        <div class="min-w-0">
-                            <div class="flex items-center gap-2 flex-wrap">
-                                <h2 class="text-base sm:text-lg font-black text-slate-900 tracking-tight group-hover:text-blue-600 transition-colors">
-                                    Semana {{ $sem['semana_numero'] }} <span class="text-slate-400 font-semibold text-sm">({{ $sem['year'] }})</span>
-                                </h2>
-                                @if($sem['es_semana_actual'])
-                                <span class="px-2 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider bg-blue-100 text-blue-700 border border-blue-200">
-                                    Semana Actual
-                                </span>
-                                @endif
-                                @if($sem['total_pendiente'] > 0)
-                                <span class="px-2 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider bg-amber-100 text-amber-800 border border-amber-200">
-                                    Por Liquidar
-                                </span>
-                                @endif
-                            </div>
-                            <p class="text-xs text-slate-500 font-semibold mt-0.5 flex items-center gap-1.5 flex-wrap">
-                                <i class="fas fa-calendar-week text-slate-400 text-[11px]"></i>
-                                <span>{{ $sem['inicio_semana']->format('d/m/Y') }}</span>
-                                <span class="text-slate-300">—</span>
-                                <span>{{ $sem['fin_semana']->format('d/m/Y') }}</span>
-                                <span class="text-slate-300 hidden sm:inline">·</span>
-                                <span class="text-slate-400 font-medium text-[11px] hidden sm:inline">
-                                    {{ $vendedoresSemana->count() }} {{ $vendedoresSemana->count() === 1 ? 'vendedor' : 'vendedores' }}
-                                </span>
-                            </p>
-                        </div>
-                    </div>
-
-                    <!-- RESUMEN DE CIFRAS DE LA SEMANA -->
-                    <div class="grid grid-cols-2 sm:grid-cols-4 gap-2.5 sm:gap-3 bg-slate-50/90 p-3 rounded-xl border border-slate-100 flex-1 max-w-xl">
-                        <div>
-                            <span class="text-[9px] font-bold uppercase tracking-wider text-slate-400 block">Total Semana</span>
-                            <span class="text-sm sm:text-base font-black text-slate-900">${{ number_format($sem['total_comisiones'], 2) }}</span>
-                        </div>
-                        <div>
-                            <span class="text-[9px] font-bold uppercase tracking-wider text-amber-600 block">Por Liquidar</span>
-                            <span class="text-sm sm:text-base font-black text-amber-700">${{ number_format($sem['total_pendiente'], 2) }}</span>
-                            @if(($sem['saldo_en_garantia'] ?? 0) > 0)
-                                <span class="block text-[10px] font-semibold text-amber-600 truncate" title="${{ number_format($sem['saldo_en_garantia'], 2) }} en período de garantía de devolución">
-                                    <i class="fas fa-shield-halved text-[9px]"></i> ${{ number_format($sem['saldo_en_garantia'], 2) }} en garantía
-                                </span>
-                            @endif
-                        </div>
-                        <div>
-                            <span class="text-[9px] font-bold uppercase tracking-wider text-emerald-600 block">Pagado</span>
-                            <span class="text-sm sm:text-base font-black text-emerald-700">${{ number_format($sem['total_pagada'], 2) }}</span>
-                        </div>
-                        <div>
-                            <span class="text-[9px] font-bold uppercase tracking-wider text-slate-400 block">Ventas</span>
-                            <span class="text-sm sm:text-base font-black text-slate-700">{{ $sem['total_ventas'] }}</span>
-                        </div>
-                    </div>
-
-                    <!-- BOTÓN ACCIÓN DE DESPLIEGUE / COLAPSO -->
-                    <div class="flex items-center gap-2 self-end lg:self-center flex-shrink-0" onclick="event.stopPropagation()">
-                        <button type="button"
-                                onclick="toggleSemana('{{ $sem['key'] }}')"
-                                id="btn-toggle-semana-{{ $sem['key'] }}"
-                                aria-expanded="{{ $sem['es_semana_actual'] ? 'true' : 'false' }}"
-                                class="inline-flex items-center justify-center gap-2 px-3.5 py-2 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 hover:border-slate-300 text-slate-700 text-xs font-black transition-all cursor-pointer shadow-2xs group-hover:border-blue-300 group-hover:text-blue-600">
-                            <span id="btn-text-semana-{{ $sem['key'] }}">{{ $sem['es_semana_actual'] ? 'Plegar' : 'Desplegar' }}</span>
-                            <i id="chevron-semana-{{ $sem['key'] }}" class="fas fa-chevron-down text-[11px] transition-transform duration-300 {{ $sem['es_semana_actual'] ? 'rotate-180' : '' }}"></i>
-                        </button>
-                    </div>
-
-                </div>
-
-                <!-- CUERPO DE LA SEMANA (COLAPSABLE / DESPLEGABLE) -->
-                <div id="semana-body-{{ $sem['key'] }}" class="{{ $sem['es_semana_actual'] ? '' : 'hidden' }} bg-slate-50/40 p-4 sm:p-5 border-t border-slate-100 space-y-4 transition-all">
-                    
-                    <div class="space-y-2">
-                        <div class="flex flex-wrap items-center justify-between gap-2">
-                            <div class="flex items-center gap-2 flex-wrap">
-                                <h4 class="text-xs font-bold uppercase tracking-wider text-slate-500 flex items-center gap-1.5">
-                                    <i class="fas fa-users text-slate-400"></i>
-                                    <span>Vendedores en esta semana</span>
-                                    <span class="px-1.5 py-0.2 rounded-md bg-slate-200/70 text-slate-600 text-[10px] font-black">{{ $vendedoresSemana->count() }}</span>
-                                </h4>
-                                
-                            </div>
-
-                            <div class="relative w-full sm:w-64">
-                                    <input type="text"
-                                           placeholder="Buscar vendedor..."
-                                           oninput="buscarEnCarruselSemana('{{ $sem['key'] }}', this.value)"
-                                           class="w-full pl-9 pr-3 py-2 text-xs font-medium rounded-lg border border-slate-200 bg-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all">
-                                    <i class="fas fa-search absolute left-3 top-1/2 -translate-y-1/2 text-xs text-slate-400"></i>
-                            </div>
-                        </div>
-
-                        @if($vendedoresSemana->isNotEmpty())
-                            <div class="space-y-3">
-                                @foreach($vendedoresSemana as $vItem)
-                                @if($vItem['vendedor'])
-                                @php
-                                    $vId = $vItem['vendedor']->id;
-                                    $vNombre = $vItem['vendedor']->nombre_real ?: $vItem['vendedor']->username;
-                                    $vUsername = $vItem['vendedor']->username ?? '';
-                                    $detalleId = 'desglose-' . $sem['key'] . '-' . $vId;
-                                @endphp
-                                <div data-vendedor-card="{{ $vId }}"
-                                     data-vendedor-has-pending="{{ $vItem['pendiente'] > 0 ? '1' : '0' }}"
-                                     data-vendedor-has-paid="{{ $vItem['comisiones']->where('estado', 'Pagada')->isNotEmpty() ? '1' : '0' }}"
-                                     data-vendedor-nombre="{{ strtolower($vNombre) }}"
-                                     data-vendedor-username="{{ strtolower($vUsername) }}"
-                                     class="vendedor-card-{{ $sem['key'] }} space-y-2">
-                                  <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-2xs grid grid-cols-1 lg:grid-cols-[minmax(210px,1.2fr)_minmax(340px,2fr)_auto] items-center gap-4 transition-all duration-200">
-                                    <div class="flex items-center gap-3 min-w-0">
-                                        <div class="w-11 h-11 rounded-xl bg-blue-600 text-white flex items-center justify-center text-sm font-black flex-shrink-0 shadow-sm">
-                                            {{ strtoupper(substr($vNombre, 0, 2)) }}
-                                        </div>
-                                        <div class="min-w-0">
-                                            <p class="font-black text-sm text-slate-900 truncate">{{ $vNombre }}</p>
-                                            <p class="text-[11px] text-slate-500 truncate">{{ $vUsername }}</p>
-                                        </div>
-                                    </div>
-                                    <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 bg-slate-50 rounded-xl border border-slate-100 px-3.5 py-3">
-                                        <div>
-                                            <span class="block text-[9px] font-black uppercase tracking-wider text-slate-400">Ganado semana</span>
-                                            <span class="text-sm font-black text-slate-900">${{ number_format($vItem['total'], 2) }}</span>
-                                        </div>
-                                        <div>
-                                            <span class="block text-[9px] font-black uppercase tracking-wider text-amber-600">Por liquidar</span>
-                                            <span class="text-sm font-black text-amber-700">${{ number_format($vItem['pendiente'], 2) }}</span>
-                                            @if(($vItem['saldo_en_garantia'] ?? 0) > 0)
-                                                <span class="block text-[10px] font-semibold text-amber-600" title="En período de garantía de devolución">
-                                                    <i class="fas fa-shield-halved text-[9px]"></i> ${{ number_format($vItem['saldo_en_garantia'], 2) }} en garantía
-                                                </span>
-                                            @endif
-                                        </div>
-                                        <div>
-                                            <span class="block text-[9px] font-black uppercase tracking-wider text-emerald-600">Pagado</span>
-                                            <span class="text-sm font-black text-emerald-700">${{ number_format($vItem['pagada'], 2) }}</span>
-                                        </div>
-                                        <div>
-                                            <span class="block text-[9px] font-black uppercase tracking-wider text-slate-400">Ventas</span>
-                                            <span class="text-sm font-black text-slate-700">{{ $vItem['ventas'] }}</span>
-                                        </div>
-                                    </div>
-
-                                    <div class="flex items-center justify-end gap-2 flex-wrap">
-                                        @if($isAdmin)
-                                            @php
-                                                $montoLiquidable = $vItem['saldo_liquidable'] ?? 0;
-                                                $montoGarantia   = $vItem['saldo_en_garantia'] ?? 0;
-                                                $montoHistorico  = $vItem['saldo_liquidable_total'] ?? 0;
-                                            @endphp
-
-                                            @if($montoLiquidable > 0)
-                                                <button type="button"
-                                                        onclick="abrirLiquidacionSemanal({{ $vId }}, '{{ addslashes($vNombre) }}', '{{ addslashes($vUsername) }}', '{{ $fechaDesdeSemana }}', '{{ $fechaHastaSemana }}')"
-                                                        class="inline-flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-[11px] font-extrabold transition-colors cursor-pointer whitespace-nowrap shadow-xs"
-                                                        title="Liquidar comisiones elegibles para este vendedor en esta semana">
-                                                    <i class="fas fa-circle-check"></i>
-                                                    <span>Liquidar (${{ number_format($montoLiquidable, 2) }})</span>
-                                                </button>
-                                            @elseif($montoGarantia > 0)
-                                                <button type="button"
-                                                        onclick="abrirLiquidacionSemanal({{ $vId }}, '{{ addslashes($vNombre) }}', '{{ addslashes($vUsername) }}', '{{ $fechaDesdeSemana }}', '{{ $fechaHastaSemana }}')"
-                                                        class="inline-flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg bg-amber-50 hover:bg-amber-100 text-amber-800 border border-amber-300 text-[11px] font-extrabold transition-colors cursor-pointer whitespace-nowrap shadow-xs"
-                                                        title="Comisiones en período de garantía de devolución (aún no liquidables)">
-                                                    <i class="fas fa-shield-halved text-amber-600"></i>
-                                                    <span>En garantía (${{ number_format($montoGarantia, 2) }})</span>
-                                                </button>
-                                            @endif
-
-                                            @if($montoLiquidable <= 0 && $montoHistorico > 0)
-                                                <button type="button"
-                                                        onclick="abrirLiquidacionSemanal({{ $vId }}, '{{ addslashes($vNombre) }}', '{{ addslashes($vUsername) }}', '', '')"
-                                                        class="inline-flex items-center justify-center gap-1.5 px-2.5 py-2 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 text-[11px] font-bold transition-colors cursor-pointer whitespace-nowrap"
-                                                        title="Ver y liquidar comisiones pendientes disponibles de otros periodos">
-                                                    <i class="fas fa-clock-rotate-left text-slate-500"></i>
-                                                    <span>Histórico (${{ number_format($montoHistorico, 2) }})</span>
-                                                </button>
-                                            @endif
-                                        @endif
-
-                                        <button type="button"
-                                                onclick="toggleDesgloseVendedor('{{ $detalleId }}')"
-                                                class="inline-flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 text-[11px] font-bold transition-colors cursor-pointer whitespace-nowrap">
-                                            <i class="fas fa-list-ul text-slate-500"></i>
-                                            <span>Desglose ({{ $vItem['cantidad'] }})</span>
-                                            <i id="icon-{{ $detalleId }}" class="fas fa-chevron-down text-[9px] transition-transform"></i>
-                                        </button>
-                                    </div>
-                                  </div>
-
-                                  <div id="{{ $detalleId }}" class="hidden overflow-x-auto bg-white rounded-xl border border-slate-200 shadow-2xs">
-                                    <table class="w-full min-w-[850px] text-xs">
-                                      <thead>
-                                        <tr class="bg-slate-50 border-b border-slate-200 text-slate-500 uppercase tracking-wider font-bold">
-                                          <th class="px-4 py-3 text-left">Fecha y Hora</th>
-                                          <th class="px-4 py-3 text-left">Concepto / Venta</th>
-                                          <th class="px-4 py-3 text-right">Comisión</th>
-                                          <th class="px-4 py-3 text-center">Estado</th>
-                                          <th class="px-4 py-3 text-left">Detalle de Pago</th>
-                                          <th class="px-4 py-3 text-left">Notas</th>
-                                          @if($isAdmin)<th class="px-4 py-3 text-center">Acciones</th>@endif
-                                        </tr>
-                                      </thead>
-                                      <tbody class="divide-y divide-slate-100">
-                                        @foreach($vItem['comisiones'] as $c)
-                                          <tr data-comision-estado="{{ strtolower($c->estado) }}" data-comision-pendiente="{{ $c->estado === 'Pendiente' ? '1' : '0' }}" class="hover:bg-slate-50/60 transition-colors">
-                                            <td class="px-4 py-3 whitespace-nowrap text-slate-600">
-                                              <span class="font-bold text-slate-800 block">{{ $c->fecha_registro ? $c->fecha_registro->format('d/m/Y') : '—' }}</span>
-                                              <span class="text-[10px] text-slate-400">{{ $c->fecha_registro ? $c->fecha_registro->format('h:i A') : '' }}</span>
-                                            </td>
-                                            <td class="px-4 py-3 text-slate-700">
-                                              <div class="flex items-center gap-1.5 flex-wrap">
-                                                @if($c->id_salida)
-                                                  <span class="inline-flex items-center gap-1 px-2 py-0.5 bg-blue-50 text-blue-700 rounded-md text-[10px] font-bold"><i class="fas fa-shopping-bag"></i> Salida #{{ $c->id_salida }}</span>
-                                                @else
-                                                  <span class="inline-flex items-center gap-1 px-2 py-0.5 bg-purple-50 text-purple-700 rounded-md text-[10px] font-bold"><i class="fas fa-award"></i> Bono</span>
-                                                @endif
-                                                <span class="font-semibold text-slate-800">{{ $c->concepto ?? ($c->salida ? "Venta ({$c->salida->cantidad} uds)" : "Comisión") }}</span>
-                                              </div>
-                                            </td>
-                                            <td class="px-4 py-3 text-right whitespace-nowrap"><span class="font-black text-sm text-slate-900">${{ number_format($c->monto, 2) }}</span></td>
-                                            <td class="px-4 py-3 text-center whitespace-nowrap">
-                                              @if($c->estado === 'Pendiente')
-                                                @if($c->es_liquidacion_bloqueada)
-                                                  <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-bold bg-amber-50 text-amber-700 border border-amber-200" title="En período de garantía de devolución"><i class="fas fa-shield-halved text-[9px] text-amber-600"></i>Garantía</span>
-                                                @else
-                                                  <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200" title="Lista para liquidar"><span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>Por liquidar</span>
-                                                @endif
-                                              @elseif($c->estado === 'Pagada')
-                                                <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200"><i class="fas fa-check text-[9px]"></i>Pagada</span>
-                                              @else
-                                                <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-bold bg-slate-100 text-slate-500 border border-slate-200"><i class="fas fa-ban text-[9px]"></i>Cancelada</span>
-                                              @endif
-                                            </td>
-                                            <td class="px-4 py-3 text-slate-600 text-[11px]">
-                                              @if($c->estado === 'Pagada')
-                                                <div class="space-y-1">
-                                                  <span class="font-bold text-emerald-700 block">{{ $c->metodo_pago ?? 'Efectivo' }}</span>
-                                                  @if($c->referencia_pago)<span class="text-[10px] text-slate-500 font-mono block">Ref: {{ $c->referencia_pago }}</span>@endif
-                                                  @if($c->comprobante_url)<a href="{{ $c->comprobante_url }}" target="_blank" class="text-indigo-700 font-bold hover:underline">Ver comprobante</a>@endif
-                                                </div>
-                                              @else
-                                                @if($c->es_liquidacion_bloqueada)
-                                                  <span class="text-amber-600 font-medium text-[10px]"><i class="fas fa-clock mr-0.5"></i> En garantía</span>
-                                                @else
-                                                  <span class="text-slate-400 italic">Por liquidar</span>
-                                                @endif
-                                              @endif
-                                            </td>
-                                            <td class="px-4 py-3 text-slate-500 text-[11px] max-w-[150px] truncate" title="{{ $c->notas }}">{{ $c->notas ?? '—' }}</td>
-                                            @if($isAdmin)
-                                              <td class="px-4 py-3 text-center whitespace-nowrap">
-                                                <div class="flex items-center justify-center gap-1">
-                                                  <button type="button" onclick="verDetalleComision({{ $c->id }})" class="w-7 h-7 rounded-lg flex items-center justify-center text-indigo-600 hover:text-indigo-800 hover:bg-indigo-50 cursor-pointer" title="Ver Detalle Completo"><i class="fas fa-eye text-[10px]"></i></button>
-                                                  @if($c->estado === 'Pendiente')
-                                                    @if($c->es_liquidacion_bloqueada)
-                                                      <span class="w-7 h-7 rounded-lg flex items-center justify-center text-amber-500 bg-amber-50" title="En período de garantía (no liquidable aún)"><i class="fas fa-shield-halved text-[10px]"></i></span>
-                                                    @else
-                                                      <button type="button" onclick="abrirLiquidacionSemanal({{ $vId }}, '{{ addslashes($vNombre) }}', '{{ addslashes($vUsername) }}', '{{ $fechaDesdeSemana }}', '{{ $fechaHastaSemana }}')" class="w-7 h-7 rounded-lg flex items-center justify-center text-emerald-600 hover:bg-emerald-50 cursor-pointer" title="Liquidar"><i class="fas fa-hand-holding-dollar text-[10px]"></i></button>
-                                                    @endif
-                                                    <button type="button" onclick="openEditModal({{ $c->id }}, '{{ $c->monto }}', '{{ addslashes($c->concepto ?? '') }}', '{{ addslashes($c->notas ?? '') }}')" class="w-7 h-7 rounded-lg flex items-center justify-center text-blue-600 hover:bg-blue-50 cursor-pointer" title="Editar"><i class="fas fa-pen text-[10px]"></i></button>
-                                                    <button type="button" onclick="cancelarComision({{ $c->id }})" class="w-7 h-7 rounded-lg flex items-center justify-center text-red-500 hover:bg-red-50 cursor-pointer" title="Cancelar"><i class="fas fa-ban text-[10px]"></i></button>
-                                                  @endif
-                                                </div>
-                                              </td>
-                                            @endif
-                                          </tr>
-                                        @endforeach
-                                      </tbody>
-                                    </table>
-                                  </div>
-                                </div>
-                                @endif
-                                @endforeach
-                            </div>
-                            <div id="carrusel-empty-{{ $sem['key'] }}" class="hidden py-4 text-center text-xs text-slate-400">
-                                No se encontró ningún vendedor con ese nombre.
-                            </div>
-                        @else
-                            <div class="rounded-xl border border-dashed border-slate-300 bg-white py-6 text-center text-xs text-slate-400">
-                                No hay vendedores con comisiones registradas en esta semana.
-                            </div>
-                        @endif
-
-                </div>
-
-            </div>
-            @empty
-            <div class="bg-white rounded-2xl border border-slate-200 p-12 text-center text-slate-400 shadow-sm">
-                <div class="w-16 h-16 rounded-2xl bg-slate-100 flex items-center justify-center text-2xl mx-auto mb-3 text-slate-400">
-                    <i class="fas fa-calendar-times"></i>
-                </div>
-                <h3 class="text-base font-bold text-slate-700">No hay semanas registradas</h3>
-                <p class="text-xs text-slate-400 mt-1">Selecciona otro año o realiza ventas.</p>
-            </div>
-            @endforelse
+            @include('comisiones.tabla-por-semana')
         </div>
 
-
     </div>
-
     {{-- MODALES --}}
     @include('comisiones.modals')
 
@@ -615,6 +274,87 @@
     };
     const CSRF = document.querySelector('meta[name="csrf-token"]').content;
     let filtroKpiSemanal = 'all';
+
+    // ── Filtro AJAX y Recarga Dinámica de Semanas ──
+
+    async function aplicarFiltroSemanasAjax() {
+        const form = document.getElementById('formFiltroSemana');
+        if (!form) return;
+        const formData = new FormData(form);
+        const params = new URLSearchParams(formData);
+
+        const skeleton = document.getElementById('skeletonSemanas');
+        const contenedor = document.getElementById('listaSemanas');
+        const btnFiltrar = document.getElementById('btnFiltrarSemana');
+        if (btnFiltrar) {
+            btnFiltrar.disabled = true;
+            btnFiltrar.innerHTML = '<i class="fas fa-spinner fa-spin text-[11px]"></i> <span>Filtrando...</span>';
+        }
+        if (skeleton && contenedor) {
+            skeleton.classList.remove('hidden');
+            contenedor.classList.add('opacity-40');
+        }
+
+        try {
+            const url = `${form.action}?${params.toString()}`;
+            const res = await fetch(url, {
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest',
+                    'Accept': 'application/json'
+                }
+            });
+
+            if (res.ok) {
+                const data = await res.json();
+                if (data.html && contenedor) {
+                    contenedor.innerHTML = data.html;
+                }
+                if (data.kpis) {
+                    actualizarKpisSemanas(data.kpis);
+                }
+                const btnReset = document.getElementById('btnResetSemanaFiltros');
+                if (btnReset) {
+                    const anio = document.getElementById('anio')?.value;
+                    const vId = document.getElementById('vendedor_id')?.value;
+                    const esActual = (anio == new Date().getFullYear() && !vId);
+                    btnReset.classList.toggle('hidden', esActual);
+                }
+                actualizarContadorSemanas();
+            }
+        } catch (err) {
+            console.error('Error al filtrar semanas:', err);
+        } finally {
+            if (btnFiltrar) {
+                btnFiltrar.disabled = false;
+                btnFiltrar.innerHTML = '<i class="fas fa-filter text-[11px]"></i> <span>Filtrar</span>';
+            }
+            if (skeleton && contenedor) {
+                skeleton.classList.add('hidden');
+                contenedor.classList.remove('opacity-40');
+            }
+        }
+    }
+
+    function limpiarFiltrosSemanasAjax() {
+        const anio = document.getElementById('anio');
+        if (anio) anio.value = new Date().getFullYear();
+        const vSelect = document.getElementById('vendedor_id');
+        if (vSelect) {
+            vSelect.value = '';
+            if (typeof updateSelected === 'function') updateSelected();
+        }
+        aplicarFiltroSemanasAjax();
+    }
+
+    function actualizarKpisSemanas(kpis) {
+        // Los KPIs de semanas se refrescan reactivamente
+        const elTotal = document.querySelector('[data-weekly-kpi="all"] h3');
+        if (elTotal) elTotal.textContent = `$${formatNum(kpis.total || 0)}`;
+        const elPend = document.querySelector('[data-weekly-kpi="pending"] h3');
+        if (elPend) elPend.textContent = `$${formatNum(kpis.pendiente || 0)}`;
+        const elPag = document.querySelector('[data-weekly-kpi="paid"] h3');
+        if (elPag) elPag.textContent = `$${formatNum(kpis.pagada || 0)}`;
+    }
 
     // ── Funciones de Control y Despliegue Independiente de Semanas ──
 
@@ -1118,8 +858,8 @@
             const data = await res.json();
             if (data.success) {
                 closeEditModal();
-                Swal.fire({ icon: 'success', title: '¡Actualizado!', text: data.message, timer: 2000, showConfirmButton: false });
-                setTimeout(() => window.location.reload(), 1200);
+                Swal.fire({ icon: 'success', title: '¡Actualizado!', text: data.message, timer: 1500, showConfirmButton: false });
+                aplicarFiltroSemanasAjax();
             } else {
                 Swal.fire({ icon: 'error', title: 'Error', text: data.message });
             }
@@ -1151,8 +891,8 @@
             });
             const data = await res.json();
             if (data.success) {
-                Swal.fire({ icon: 'success', title: '¡Cancelada!', text: data.message, timer: 2000, showConfirmButton: false });
-                setTimeout(() => window.location.reload(), 1200);
+                Swal.fire({ icon: 'success', title: '¡Cancelada!', text: data.message, timer: 1500, showConfirmButton: false });
+                aplicarFiltroSemanasAjax();
             } else {
                 Swal.fire({ icon: 'error', title: 'Error', text: data.message });
             }
@@ -1398,8 +1138,8 @@
             const data = await res.json();
             if (data.success) {
                 closeLiquidarModal();
-                Swal.fire({ icon: 'success', title: '¡Liquidación Completada!', text: data.message, timer: 2500, showConfirmButton: false });
-                setTimeout(() => window.location.reload(), 1200);
+                Swal.fire({ icon: 'success', title: '¡Liquidación Completada!', text: data.message, timer: 2000, showConfirmButton: false });
+                aplicarFiltroSemanasAjax();
             } else {
                 document.getElementById('btnFinalConfirmLiquidar').disabled = false;
                 document.getElementById('btnFinalConfirmLiquidar').innerHTML = '<i class="fas fa-check-circle"></i><span>Confirmar Pago</span>';
@@ -1473,8 +1213,8 @@
             const data = await res.json();
             if (data.success) {
                 closeCreateModal();
-                Swal.fire({ icon: 'success', title: '¡Registrado!', text: data.message, timer: 2000, showConfirmButton: false });
-                setTimeout(() => window.location.reload(), 1200);
+                Swal.fire({ icon: 'success', title: '¡Registrado!', text: data.message, timer: 1500, showConfirmButton: false });
+                aplicarFiltroSemanasAjax();
             } else {
                 Swal.fire({ icon: 'error', title: 'Error', text: data.message || 'Verifica los datos ingresados.' });
             }

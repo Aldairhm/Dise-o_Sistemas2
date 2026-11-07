@@ -53,11 +53,22 @@
     </header>
 
     <!-- ─── CONTENIDO PRINCIPAL ─── -->
-    <main class="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <main class="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8" x-data="gestionBitacora({
+        q: @js(request('q', '')),
+        modulo: @js(request('modulo', '')),
+        accion: @js(request('accion', '')),
+        usuario_id: @js(request('usuario_id', '')),
+        desde: @js(request('desde', '')),
+        hasta: @js(request('hasta', '')),
+        auditoria_id: @js(request('auditoria_id', ''))
+    })">
 
         <!-- ENCABEZADO DE SECCIÓN -->
         <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8">
             <div>
+                <a href="{{ route('home') }}" class="inline-flex items-center gap-2 text-xs font-bold uppercase tracking-widest text-slate-400 hover:text-teal-600 transition-colors mb-3">
+                    <i class="fas fa-arrow-left"></i> Volver al inicio
+                </a>
                 <div class="flex items-center gap-2 text-xs font-bold text-teal-600 uppercase tracking-widest mb-1.5">
                     <i class="fas fa-shield-halved"></i>
                     <span>Seguridad & Trazabilidad</span>
@@ -186,15 +197,17 @@
                     <i class="fas fa-filter text-teal-600 text-sm"></i>
                     <h2 class="text-sm font-bold text-slate-800 uppercase tracking-wider">Filtros de Búsqueda</h2>
                 </div>
-                @if(request()->anyFilled(['modulo', 'accion', 'usuario_id', 'desde', 'hasta', 'q', 'auditoria_id']))
-                    <a href="{{ route('bitacora.index') }}" class="text-xs font-bold text-rose-600 hover:text-rose-700 flex items-center gap-1.5 transition-colors">
-                        <i class="fas fa-times-circle"></i>
-                        <span>Limpiar Filtros</span>
-                    </a>
-                @endif
+                <button type="button" 
+                        @click="limpiarFiltros()"
+                        x-show="filtroQ || filtroModulo || filtroAccion || filtroUsuario || filtroDesde || filtroHasta"
+                        style="display: none;"
+                        class="text-xs font-bold text-rose-600 hover:text-rose-700 flex items-center gap-1.5 transition-colors cursor-pointer">
+                    <i class="fas fa-times-circle"></i>
+                    <span>Limpiar Filtros</span>
+                </button>
             </div>
 
-            <form method="GET" action="{{ route('bitacora.index') }}" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-6 gap-4">
+            <form @submit.prevent="ejecutarFiltro()" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-6 gap-4">
                 <!-- Búsqueda por texto libre -->
                 <div class="lg:col-span-2">
                     <label class="block text-xs font-bold text-slate-600 mb-1.5">Búsqueda Rápida</label>
@@ -202,17 +215,21 @@
                         <span class="absolute inset-y-0 left-0 flex items-center pl-3 text-slate-400 pointer-events-none">
                             <i class="fas fa-search text-xs"></i>
                         </span>
-                        <input type="text" name="q" value="{{ request('q') }}" placeholder="Descripción, usuario, IP..." class="w-full pl-9 pr-3 py-2 text-xs border border-slate-200 rounded-xl focus:ring-2 focus:ring-teal-500 focus:border-teal-500 transition-all outline-none">
+                        <input type="text" 
+                               x-model="filtroQ"
+                               @input.debounce.400ms="ejecutarFiltro()"
+                               placeholder="Descripción, usuario, IP..." 
+                               class="w-full pl-9 pr-3 py-2 text-xs border border-slate-200 rounded-xl focus:ring-2 focus:ring-teal-500 focus:border-teal-500 transition-all outline-none">
                     </div>
                 </div>
 
                 <!-- Módulo -->
                 <div>
                     <label class="block text-xs font-bold text-slate-600 mb-1.5">Módulo</label>
-                    <select name="modulo" class="w-full py-2 px-3 text-xs border border-slate-200 rounded-xl focus:ring-2 focus:ring-teal-500 focus:border-teal-500 transition-all outline-none bg-white">
+                    <select x-model="filtroModulo" @change="ejecutarFiltro()" class="w-full py-2 px-3 text-xs border border-slate-200 rounded-xl focus:ring-2 focus:ring-teal-500 focus:border-teal-500 transition-all outline-none bg-white">
                         <option value="">Todos los módulos</option>
                         @foreach($modulos as $mod)
-                            <option value="{{ $mod }}" {{ request('modulo') == $mod ? 'selected' : '' }}>{{ $mod }}</option>
+                            <option value="{{ $mod }}">{{ $mod }}</option>
                         @endforeach
                     </select>
                 </div>
@@ -220,10 +237,10 @@
                 <!-- Acción -->
                 <div>
                     <label class="block text-xs font-bold text-slate-600 mb-1.5">Acción</label>
-                    <select name="accion" class="w-full py-2 px-3 text-xs border border-slate-200 rounded-xl focus:ring-2 focus:ring-teal-500 focus:border-teal-500 transition-all outline-none bg-white">
+                    <select x-model="filtroAccion" @change="ejecutarFiltro()" class="w-full py-2 px-3 text-xs border border-slate-200 rounded-xl focus:ring-2 focus:ring-teal-500 focus:border-teal-500 transition-all outline-none bg-white">
                         <option value="">Todas las acciones</option>
                         @foreach($acciones as $acc)
-                            <option value="{{ $acc }}" {{ request('accion') == $acc ? 'selected' : '' }}>{{ $acc }}</option>
+                            <option value="{{ $acc }}">{{ $acc }}</option>
                         @endforeach
                     </select>
                 </div>
@@ -231,175 +248,44 @@
                 <!-- Usuario -->
                 <div>
                     <label class="block text-xs font-bold text-slate-600 mb-1.5">Usuario</label>
-                    <select name="usuario_id" class="w-full py-2 px-3 text-xs border border-slate-200 rounded-xl focus:ring-2 focus:ring-teal-500 focus:border-teal-500 transition-all outline-none bg-white">
+                    <select x-model="filtroUsuario" @change="ejecutarFiltro()" class="w-full py-2 px-3 text-xs border border-slate-200 rounded-xl focus:ring-2 focus:ring-teal-500 focus:border-teal-500 transition-all outline-none bg-white">
                         <option value="">Todos los usuarios</option>
                         @foreach($usuarios as $usr)
-                            <option value="{{ $usr->id }}" {{ request('usuario_id') == $usr->id ? 'selected' : '' }}>{{ $usr->nombre_real }} ({{ $usr->username }})</option>
+                            <option value="{{ $usr->id }}">{{ $usr->nombre_real }} ({{ $usr->username }})</option>
                         @endforeach
                     </select>
                 </div>
 
-                <!-- Botón de enviar -->
+                <!-- Botón de enviar con spinner -->
                 <div class="flex items-end">
-                    <button type="submit" class="w-full py-2 px-4 bg-teal-600 hover:bg-teal-700 text-white text-xs font-bold rounded-xl transition-all shadow-sm hover:shadow flex items-center justify-center gap-2 cursor-pointer">
-                        <i class="fas fa-filter"></i>
-                        <span>Filtrar</span>
+                    <button type="submit" 
+                            class="w-full rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-bold py-2 px-3 text-xs transition-all shadow-md shadow-blue-600/15 flex items-center justify-center gap-1.5 cursor-pointer">
+                        <i :class="cargandoBitacora ? 'fas fa-spinner fa-spin' : 'fas fa-filter'"></i>
+                        <span x-text="cargandoBitacora ? 'Filtrando...' : 'Filtrar'"></span>
                     </button>
                 </div>
 
                 <!-- Rango de Fechas -->
                 <div class="lg:col-span-3">
                     <label class="block text-xs font-bold text-slate-600 mb-1.5">Fecha Desde</label>
-                    <input type="date" name="desde" value="{{ request('desde') }}" class="w-full py-2 px-3 text-xs border border-slate-200 rounded-xl focus:ring-2 focus:ring-teal-500 focus:border-teal-500 transition-all outline-none">
+                    <input type="date" x-model="filtroDesde" @change="ejecutarFiltro()" class="w-full py-2 px-3 text-xs border border-slate-200 rounded-xl focus:ring-2 focus:ring-teal-500 focus:border-teal-500 transition-all outline-none">
                 </div>
 
                 <div class="lg:col-span-3">
                     <label class="block text-xs font-bold text-slate-600 mb-1.5">Fecha Hasta</label>
-                    <input type="date" name="hasta" value="{{ request('hasta') }}" class="w-full py-2 px-3 text-xs border border-slate-200 rounded-xl focus:ring-2 focus:ring-teal-500 focus:border-teal-500 transition-all outline-none">
+                    <input type="date" x-model="filtroHasta" @change="ejecutarFiltro()" class="w-full py-2 px-3 text-xs border border-slate-200 rounded-xl focus:ring-2 focus:ring-teal-500 focus:border-teal-500 transition-all outline-none">
                 </div>
             </form>
         </div>
 
+        <!-- Skeleton Loading Inteligente para Bitácora -->
+        <div x-show="cargandoBitacora" style="display: none;" class="bg-white rounded-2xl border border-slate-200/80 shadow-sm overflow-hidden mb-6 p-2">
+            <x-skeleton-table :rows="8" :cols="7" :avatarCol="1" />
+        </div>
+
         <!-- TABLA DE MOVIMIENTOS -->
-        <div class="bg-white rounded-2xl border border-slate-200/80 shadow-sm overflow-hidden mb-6">
-            <div class="overflow-x-auto">
-                <table class="w-full text-left border-collapse">
-                    <thead>
-                        <tr class="bg-slate-50/80 border-b border-slate-200/80 text-[11px] font-bold text-slate-500 uppercase tracking-wider">
-                            <th class="py-3.5 px-4">Fecha / Hora</th>
-                            <th class="py-3.5 px-4">Usuario</th>
-                            <th class="py-3.5 px-4">Módulo</th>
-                            <th class="py-3.5 px-4">Acción</th>
-                            <th class="py-3.5 px-4">Descripción del Movimiento</th>
-                            <th class="py-3.5 px-4">IP / Origen</th>
-                            <th class="py-3.5 px-4 text-center">Detalle</th>
-                        </tr>
-                    </thead>
-                    <tbody class="divide-y divide-slate-100 text-xs text-slate-700">
-                        @forelse($registros as $item)
-                        <tr class="hover:bg-slate-50/60 transition-colors">
-                            <!-- Fecha -->
-                            <td class="py-3 px-4 whitespace-nowrap">
-                                <div class="font-bold text-slate-800">{{ $item->created_at->format('d/m/Y') }}</div>
-                                <div class="text-[10px] text-slate-400 font-medium">{{ $item->created_at->format('h:i:s A') }} ({{ $item->created_at->diffForHumans() }})</div>
-                            </td>
-
-                            <!-- Usuario -->
-                            <td class="py-3 px-4 whitespace-nowrap">
-                                @if($item->usuario)
-                                    <div class="flex items-center gap-2.5">
-                                        <div class="w-7 h-7 rounded-full bg-gradient-to-tr from-teal-500 to-blue-500 text-white font-bold text-[11px] flex items-center justify-center shrink-0">
-                                            {{ strtoupper(substr($item->usuario->nombre_real, 0, 1)) }}
-                                        </div>
-                                        <div>
-                                            <div class="font-bold text-slate-900 leading-tight">{{ $item->usuario->nombre_real }}</div>
-                                            <div class="text-[10px] text-slate-400 font-medium">@<span>{{ $item->usuario->username }}</span></div>
-                                        </div>
-                                    </div>
-                                @elseif($item->username)
-                                    <div class="flex items-center gap-2">
-                                        <div class="w-7 h-7 rounded-full bg-slate-200 text-slate-600 font-bold text-[11px] flex items-center justify-center shrink-0">
-                                            <i class="fas fa-user-secret text-xs"></i>
-                                        </div>
-                                        <div>
-                                            <div class="font-bold text-slate-700">{{ $item->username }}</div>
-                                            <div class="text-[10px] text-slate-400 font-medium">Externo / Intento</div>
-                                        </div>
-                                    </div>
-                                @else
-                                    <span class="inline-flex items-center gap-1.5 text-slate-400 italic font-medium">
-                                        <i class="fas fa-robot text-xs"></i>
-                                        <span>Sistema</span>
-                                    </span>
-                                @endif
-                            </td>
-
-                            <!-- Módulo -->
-                            <td class="py-3 px-4 whitespace-nowrap">
-                                @php
-                                    $modIcon = match($item->modulo) {
-                                        'Ventas'        => 'fa-cash-register text-blue-500',
-                                        'Compras'       => 'fa-cart-plus text-emerald-500',
-                                        'Productos'     => 'fa-shopping-bag text-indigo-500',
-                                        'Categorías'    => 'fa-folder text-purple-500',
-                                        'Usuarios'      => 'fa-users text-amber-500',
-                                        'Autenticación' => 'fa-key text-slate-600',
-                                        'Bodega'        => 'fa-warehouse text-cyan-500',
-                                        'Proveedores'   => 'fa-truck text-orange-500',
-                                        'Devoluciones'  => 'fa-rotate-left text-rose-500',
-                                        'Comisiones'    => 'fa-hand-holding-dollar text-emerald-600',
-                                        default         => 'fa-circle-dot text-slate-400',
-                                    };
-                                @endphp
-                                <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-slate-100 text-[11px] font-semibold text-slate-700">
-                                    <i class="fas {{ $modIcon }}"></i>
-                                    <span>{{ $item->modulo }}</span>
-                                </span>
-                            </td>
-
-                            <!-- Acción -->
-                            <td class="py-3 px-4 whitespace-nowrap">
-                                <span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider badge-{{ $item->accion }}">
-                                    <i class="fas {{ $item->icon }} text-[9px]"></i>
-                                    <span>{{ $item->accion }}</span>
-                                </span>
-                            </td>
-
-                            <!-- Descripción -->
-                            <td class="py-3 px-4">
-                                <p class="text-xs text-slate-800 font-medium line-clamp-2" title="{{ $item->descripcion }}">
-                                    {{ $item->descripcion }}
-                                </p>
-                            </td>
-
-                            <!-- IP -->
-                            <td class="py-3 px-4 whitespace-nowrap">
-                                <div class="font-mono text-[11px] text-slate-600 font-medium flex items-center gap-1.5">
-                                    <i class="fas fa-network-wired text-slate-400 text-[10px]"></i>
-                                    <span>{{ $item->ip_address ?: '127.0.0.1' }}</span>
-                                </div>
-                            </td>
-
-                            <!-- Detalle -->
-                            <td class="py-3 px-4 text-center whitespace-nowrap">
-                                @if($item->datos_anteriores || $item->datos_nuevos)
-                                    <button type="button" 
-                                            onclick='verDetalle(@json($item))'
-                                            class="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-teal-50 hover:bg-teal-100 text-teal-700 text-xs font-bold transition-all cursor-pointer">
-                                        <i class="fas fa-code-compare"></i>
-                                        <span>Diff</span>
-                                    </button>
-                                @else
-                                    <button type="button"
-                                            onclick='verDetalleSimple(@json($item))'
-                                            class="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-600 text-xs font-bold transition-all cursor-pointer">
-                                        <i class="fas fa-eye"></i>
-                                        <span>Ver</span>
-                                    </button>
-                                @endif
-                            </td>
-                        </tr>
-                        @empty
-                        <tr>
-                            <td colspan="7" class="py-12 text-center text-slate-400">
-                                <div class="w-16 h-16 rounded-full bg-slate-100 text-slate-300 flex items-center justify-center mx-auto text-2xl mb-3">
-                                    <i class="fas fa-clipboard-question"></i>
-                                </div>
-                                <h4 class="text-sm font-bold text-slate-600">No se encontraron movimientos registrados</h4>
-                                <p class="text-xs text-slate-400 mt-1">Prueba cambiando o eliminando los filtros aplicados arriba.</p>
-                            </td>
-                        </tr>
-                        @endforelse
-                    </tbody>
-                </table>
-            </div>
-
-            <!-- Paginación -->
-            @if($registros->hasPages())
-            <div class="px-6 py-4 bg-slate-50/70 border-t border-slate-200/80">
-                {{ $registros->links() }}
-            </div>
-            @endif
+        <div id="contenedorTablaBitacora" x-show="!cargandoBitacora" class="bg-white rounded-2xl border border-slate-200/80 shadow-sm overflow-hidden mb-6">
+            @include('bitacora.tabla-bitacora', ['registros' => $registros])
         </div>
 
     </main>
@@ -522,6 +408,110 @@
         document.addEventListener('keydown', (e) => {
             if (e.key === 'Escape') cerrarModal();
         });
+
+        function gestionBitacora(config) {
+            return {
+                filtroQ: config.q || '',
+                filtroModulo: config.modulo || '',
+                filtroAccion: config.accion || '',
+                filtroUsuario: config.usuario_id || '',
+                filtroDesde: config.desde || '',
+                filtroHasta: config.hasta || '',
+                auditoriaId: config.auditoria_id || '',
+                cargandoBitacora: false,
+
+                async ejecutarFiltro() {
+                    await this.cargarBitacora();
+                },
+
+                async limpiarFiltros() {
+                    this.filtroQ = '';
+                    this.filtroModulo = '';
+                    this.filtroAccion = '';
+                    this.filtroUsuario = '';
+                    this.filtroDesde = '';
+                    this.filtroHasta = '';
+                    this.auditoriaId = '';
+                    await this.cargarBitacora();
+                },
+
+                construirUrl(pagina = 1) {
+                    const params = new URLSearchParams();
+                    if (this.filtroQ && this.filtroQ.trim() !== '') {
+                        params.set('q', this.filtroQ.trim());
+                    }
+                    if (this.filtroModulo) {
+                        params.set('modulo', this.filtroModulo);
+                    }
+                    if (this.filtroAccion) {
+                        params.set('accion', this.filtroAccion);
+                    }
+                    if (this.filtroUsuario) {
+                        params.set('usuario_id', this.filtroUsuario);
+                    }
+                    if (this.filtroDesde) {
+                        params.set('desde', this.filtroDesde);
+                    }
+                    if (this.filtroHasta) {
+                        params.set('hasta', this.filtroHasta);
+                    }
+                    if (this.auditoriaId) {
+                        params.set('auditoria_id', this.auditoriaId);
+                    }
+                    if (pagina > 1) {
+                        params.set('page', pagina);
+                    }
+
+                    const queryString = params.toString();
+                    return `{{ route('bitacora.index') }}${queryString ? '?' + queryString : ''}`;
+                },
+
+                async cargarBitacora(urlDestino = null) {
+                    this.cargandoBitacora = true;
+                    const url = urlDestino || this.construirUrl(1);
+                    window.history.pushState({}, '', url);
+
+                    try {
+                        const res = await fetch(url, {
+                            headers: {
+                                'Accept': 'application/json',
+                                'X-Requested-With': 'XMLHttpRequest'
+                            }
+                        });
+                        const data = await res.json();
+                        if (data.success && data.html) {
+                            const contenedor = document.getElementById('contenedorTablaBitacora');
+                            if (contenedor) {
+                                contenedor.innerHTML = data.html;
+                                this.atarPaginacion();
+                            }
+                        }
+                    } catch (err) {
+                        console.error('Error al cargar bitácora:', err);
+                    } finally {
+                        this.cargandoBitacora = false;
+                    }
+                },
+
+                atarPaginacion() {
+                    const contenedor = document.getElementById('contenedorTablaBitacora');
+                    if (!contenedor) return;
+                    const links = contenedor.querySelectorAll('a[href*="page="]');
+                    links.forEach(link => {
+                        link.addEventListener('click', async (e) => {
+                            e.preventDefault();
+                            const href = link.getAttribute('href');
+                            if (!href) return;
+                            await this.cargarBitacora(href);
+                        });
+                    });
+                },
+
+                init() {
+                    this.atarPaginacion();
+                }
+            };
+        }
     </script>
 </body>
 </html>

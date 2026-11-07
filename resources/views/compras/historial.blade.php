@@ -1,5 +1,50 @@
 <x-app title="Historial de compras | AXStore">
-    <div class="max-w-[1440px] mx-auto space-y-6">
+    <div class="max-w-[1440px] mx-auto space-y-6" x-data="{
+        modalDetalleAbierto: false,
+        cargandoDetalle: false,
+        compraSeleccionada: null,
+
+        async verDetalle(id) {
+            this.modalDetalleAbierto = true;
+            this.cargandoDetalle = true;
+            this.compraSeleccionada = null;
+
+            try {
+                const res = await fetch(`{{ url('compras') }}/${id}`, {
+                    headers: {
+                        'Accept': 'application/json',
+                        'X-Requested-With': 'XMLHttpRequest'
+                    }
+                });
+                const data = await res.json();
+                if (data.success && data.compra) {
+                    this.compraSeleccionada = data.compra;
+                } else {
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Error',
+                        text: data.message || 'No se pudo cargar el detalle de la compra.'
+                    });
+                    this.modalDetalleAbierto = false;
+                }
+            } catch (err) {
+                console.error('Error al cargar detalle de compra:', err);
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Error de conexión',
+                    text: 'Ocurrió un error al cargar los datos de la compra.'
+                });
+                this.modalDetalleAbierto = false;
+            } finally {
+                this.cargandoDetalle = false;
+            }
+        },
+
+        cerrarDetalle() {
+            this.modalDetalleAbierto = false;
+            this.compraSeleccionada = null;
+        }
+    }">
         <div class="flex flex-col gap-5 sm:flex-row sm:items-end sm:justify-between">
             <div>
                 <a href="{{ route('home') }}" class="inline-flex items-center gap-2 text-xs font-bold uppercase tracking-widest text-slate-400 hover:text-blue-600 mb-4"><i class="fas fa-arrow-left"></i> Volver al inicio</a>
@@ -23,7 +68,17 @@
             </div>
             <div class="overflow-x-auto">
                 <table class="w-full min-w-[860px] text-left text-sm">
-                    <thead class="border-b border-slate-200 bg-slate-50 text-[10px] uppercase tracking-widest text-slate-500"><tr><th class="px-5 py-4">Fecha</th><th class="px-5 py-4">Proveedor</th><th class="px-5 py-4">Referencia</th><th class="px-5 py-4 text-center">Líneas</th><th class="px-5 py-4 text-right">Total</th><th class="px-5 py-4">Estado</th><th class="px-5 py-4 text-right">Acciones</th></tr></thead>
+                    <thead class="border-b border-slate-200 bg-slate-50 text-[10px] uppercase tracking-widest text-slate-500">
+                        <tr>
+                            <th class="px-5 py-4">Fecha</th>
+                            <th class="px-5 py-4">Proveedor</th>
+                            <th class="px-5 py-4">Referencia</th>
+                            <th class="px-5 py-4 text-center">Líneas</th>
+                            <th class="px-5 py-4 text-right">Total</th>
+                            <th class="px-5 py-4">Estado</th>
+                            <th class="px-5 py-4 text-right">Acciones</th>
+                        </tr>
+                    </thead>
                     <tbody class="divide-y divide-slate-100">
                         @forelse ($compras as $compra)
                             <tr class="hover:bg-slate-50/60"><td class="px-5 py-4 font-semibold text-slate-700">{{ $compra->fecha_compra?->format('d/m/Y') }}</td><td class="px-5 py-4 font-bold text-slate-800">{{ $compra->proveedor?->nombre ?? 'Sin proveedor' }}</td><td class="px-5 py-4 text-slate-500">{{ $compra->referencia ?: 'Sin referencia' }}</td><td class="px-5 py-4 text-center text-slate-600">{{ $compra->detalles_count }}</td><td class="px-5 py-4 text-right font-black text-slate-800">${{ number_format((float) $compra->total, 2) }}</td><td class="px-5 py-4"><span class="rounded-full bg-emerald-50 px-3 py-1 text-xs font-bold capitalize text-emerald-700">{{ $compra->estado }}</span></td><td class="px-5 py-4 text-right"><div class="flex items-center justify-end gap-3"><button type="button" onclick="document.getElementById('compra-detalle-{{ $compra->id }}').showModal()" class="text-xs font-bold text-blue-600 hover:text-blue-800"><i class="fas fa-eye mr-1"></i>Ver detalle</button><button type="button" onclick="document.getElementById('compra-devolucion-{{ $compra->id }}').showModal()" class="text-xs font-bold text-amber-600 hover:text-amber-800"><i class="fas fa-truck-arrow-right mr-1"></i>Devolver</button></div><dialog id="compra-detalle-{{ $compra->id }}" class="m-auto w-[min(680px,calc(100vw-2rem))] max-w-none rounded-2xl border border-slate-200 bg-white p-0 text-left shadow-2xl backdrop:bg-slate-900/50"><div class="p-5"><div class="mb-4 flex items-start justify-between gap-4 border-b border-slate-100 pb-4"><div><p class="text-xs font-black uppercase tracking-wider text-blue-600">Detalle de recepción</p><p class="mt-1 text-sm font-bold text-slate-800">{{ $compra->proveedor?->nombre ?? 'Sin proveedor' }} · {{ $compra->fecha_compra?->format('d/m/Y') }}</p></div><button type="button" onclick="this.closest('dialog').close()" class="h-8 w-8 rounded-lg text-slate-400 hover:bg-slate-100 hover:text-slate-700" title="Cerrar"><i class="fas fa-xmark"></i></button></div><div class="mb-4 flex items-center justify-between rounded-xl bg-slate-50 px-4 py-3"><span class="text-xs font-bold text-slate-500">Total de la recepción</span><span class="text-xl font-black text-slate-900">${{ number_format((float) $compra->total, 2) }}</span></div><p class="mb-4 text-xs text-slate-500">{{ $compra->observaciones ?: 'Sin observaciones' }}</p><div class="space-y-2">@foreach ($compra->detalles as $detalle) @php $imagen = $detalle->variante?->imagenes?->firstWhere('es_principal', 1) ?? $detalle->variante?->imagenes?->first(); @endphp<div class="flex items-center gap-3 rounded-xl border border-slate-100 bg-slate-50 px-3 py-2"><div class="h-14 w-14 shrink-0 overflow-hidden rounded-lg border border-slate-200 bg-white">@if ($imagen)<img src="{{ str_starts_with($imagen->ruta_imagen, 'http') ? $imagen->ruta_imagen : \Illuminate\Support\Facades\Storage::disk('s3')->url($imagen->ruta_imagen) }}" alt="{{ $detalle->variante?->nombre_variante }}" class="h-full w-full object-cover">@else <div class="flex h-full items-center justify-center text-slate-300"><i class="fas fa-image"></i></div>@endif</div><div class="min-w-0 flex-1"><p class="truncate text-xs font-black text-slate-800">{{ $detalle->variante?->producto?->nombre ?? 'Producto' }}</p><p class="truncate text-xs text-slate-500">{{ $detalle->variante?->nombre_variante }}</p><p class="text-[10px] font-bold uppercase tracking-wider text-slate-400">SKU: {{ $detalle->variante?->sku ?: 'Sin SKU' }}</p></div><div class="shrink-0 text-right text-xs"><p class="font-bold text-slate-700">{{ $detalle->cantidad }} × ${{ number_format((float) $detalle->precio_unitario, 2) }}</p><p class="font-black text-slate-900">${{ number_format((float) $detalle->subtotal, 2) }}</p></div></div>@endforeach</div><div class="mt-4 border-t border-slate-100 pt-3"><div class="mb-2 flex items-center justify-between"><p class="text-[10px] font-black uppercase tracking-wider text-slate-400">Movimientos generados</p><a href="{{ route('compras.movimientos') }}" class="text-[10px] font-bold text-blue-600 hover:text-blue-800">Ver todos</a></div>@forelse ($compra->movimientos as $movimiento)<div class="flex items-center justify-between gap-3 text-xs text-slate-600"><span>{{ $movimiento->tipo === 'compra_recibida' ? 'Entrada a bodega' : 'Transferencia a tienda' }}</span><span>{{ $movimiento->cantidad }} unidades · {{ $movimiento->created_at?->format('d/m/Y H:i') }}</span></div>@empty<p class="text-xs text-slate-400">Sin movimientos asociados.</p>@endforelse</div></div></dialog></td></tr>
@@ -37,43 +92,43 @@
             @foreach ($compras as $compra)
                 <dialog id="compra-devolucion-{{ $compra->id }}" class="m-auto w-[min(820px,calc(100vw-2rem))] max-w-none rounded-2xl border border-slate-200 bg-white p-0 text-left shadow-2xl backdrop:bg-slate-900/50" x-data="{ cantidades: {}, excede(id, max) { const c = this.cantidades[id] || {}; return (Number(c.stock || 0) + Number(c.reserva || 0) + Number(c.cuarentena || 0)) > max; } }">
                     <form method="POST" action="{{ route('devoluciones.compra.store') }}" novalidate class="p-6" 
-    onsubmit="
-        event.preventDefault(); 
-        let dialog = this.closest('dialog'); /* Capturamos el modal actual */
-        
-        if (!this.checkValidity()) { 
-            let errorMsg = 'Por favor, completa todos los campos requeridos.'; 
-            this.querySelectorAll('input[type=number]').forEach(i => { 
-                if(i.validity.rangeOverflow) errorMsg = 'No puedes devolver más unidades de las que compraste.'; 
-            }); 
-            Swal.fire({ 
-                target: dialog, /* SOLUCIÓN: Renderizar dentro del modal */
-                toast: true, 
-                position: 'top-end', 
-                showConfirmButton: false, 
-                timer: 5000, 
-                timerProgressBar: true, 
-                icon: 'error', 
-                title: 'Datos inválidos', 
-                text: errorMsg 
-            }); 
-            return; 
-        } 
-        
-        Swal.fire({ 
-            target: dialog, /* SOLUCIÓN: Renderizar dentro del modal */
-            title: '¿Estás seguro?', 
-            text: 'Verifica que las cantidades sean correctas antes de procesar.', 
-            icon: 'warning', 
-            showCancelButton: true, 
-            confirmButtonColor: '#3085d6', 
-            cancelButtonColor: '#d33', 
-            confirmButtonText: 'Sí, procesar', 
-            cancelButtonText: 'Cancelar' 
-        }).then((result) => { 
-            if (result.isConfirmed) { this.submit(); } 
-        });
-    ">
+                        onsubmit="
+                            event.preventDefault(); 
+                            let dialog = this.closest('dialog');
+                            
+                            if (!this.checkValidity()) { 
+                                let errorMsg = 'Por favor, completa todos los campos requeridos.'; 
+                                this.querySelectorAll('input[type=number]').forEach(i => { 
+                                    if(i.validity.rangeOverflow) errorMsg = 'No puedes devolver más unidades de las que compraste.'; 
+                                }); 
+                                Swal.fire({ 
+                                    target: dialog,
+                                    toast: true, 
+                                    position: 'top-end', 
+                                    showConfirmButton: false, 
+                                    timer: 5000, 
+                                    timerProgressBar: true, 
+                                    icon: 'error', 
+                                    title: 'Datos inválidos', 
+                                    text: errorMsg 
+                                }); 
+                                return; 
+                            } 
+                            
+                            Swal.fire({ 
+                                target: dialog,
+                                title: '¿Estás seguro?', 
+                                text: 'Verifica que las cantidades sean correctas antes de procesar.', 
+                                icon: 'warning', 
+                                showCancelButton: true, 
+                                confirmButtonColor: '#3085d6', 
+                                cancelButtonColor: '#d33', 
+                                confirmButtonText: 'Sí, procesar', 
+                                cancelButtonText: 'Cancelar' 
+                            }).then((result) => { 
+                                if (result.isConfirmed) { this.submit(); } 
+                            });
+                        ">
                         @csrf
                         <input type="hidden" name="compra_id" value="{{ $compra->id }}">
                         <div class="mb-5 flex items-start justify-between gap-4 border-b border-slate-100 pb-4">
@@ -102,5 +157,125 @@
             @endforeach
             @if ($compras->hasPages()) <div class="border-t border-slate-100 p-4">{{ $compras->links() }}</div> @endif
         </section>
+
+        <!-- MODAL ÚNICO DE DETALLE DE COMPRA CON SKELETON -->
+        <div x-show="modalDetalleAbierto" x-cloak class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs"
+             x-transition:enter="transition ease-out duration-200"
+             x-transition:enter-start="opacity-0"
+             x-transition:enter-end="opacity-100"
+             x-transition:leave="transition ease-in duration-150"
+             x-transition:leave-start="opacity-100"
+             x-transition:leave-end="opacity-0">
+            <div @click.away="cerrarDetalle()" class="w-[min(680px,calc(100vw-2rem))] max-h-[90vh] flex flex-col rounded-2xl border border-slate-200 bg-white p-0 text-left shadow-2xl overflow-hidden">
+                
+                <!-- Encabezado del modal -->
+                <div class="p-5 border-b border-slate-100 flex items-start justify-between gap-4 bg-slate-50/50">
+                    <div>
+                        <p class="text-xs font-black uppercase tracking-wider text-blue-600">Detalle de recepción</p>
+                        <template x-if="compraSeleccionada">
+                            <p class="mt-1 text-sm font-bold text-slate-800">
+                                <span x-text="compraSeleccionada.proveedor_nombre"></span> · <span x-text="compraSeleccionada.fecha_compra"></span>
+                            </p>
+                        </template>
+                        <template x-if="!compraSeleccionada">
+                            <div class="mt-2 h-4 w-48 rounded bg-slate-200 animate-pulse"></div>
+                        </template>
+                    </div>
+                    <button type="button" @click="cerrarDetalle()" class="h-8 w-8 rounded-lg text-slate-400 hover:bg-slate-100 hover:text-slate-700 flex items-center justify-center transition-colors" title="Cerrar">
+                        <i class="fas fa-xmark"></i>
+                    </button>
+                </div>
+
+                <!-- Skeleton de Carga adaptado a Compras para evitar Layout Shift -->
+                <div x-show="cargandoDetalle" class="p-5 overflow-y-auto space-y-4">
+                    <div class="flex items-center justify-between rounded-xl bg-slate-50 px-4 py-3 border border-slate-100">
+                        <div class="h-4 w-32 rounded ax-skeleton-shimmer"></div>
+                        <div class="h-6 w-24 rounded-md ax-skeleton-shimmer"></div>
+                    </div>
+
+                    <div class="h-3.5 w-3/4 rounded ax-skeleton-shimmer"></div>
+
+                    <div class="space-y-2">
+                        @for($i = 0; $i < 3; $i++)
+                            <div class="flex items-center gap-3 rounded-xl border border-slate-100 bg-slate-50 px-3 py-2">
+                                <div class="h-14 w-14 shrink-0 rounded-lg ax-skeleton-shimmer"></div>
+                                <div class="min-w-0 flex-1 space-y-1.5">
+                                    <div class="h-4 w-40 rounded ax-skeleton-shimmer"></div>
+                                    <div class="h-3 w-28 rounded ax-skeleton-shimmer"></div>
+                                    <div class="h-2.5 w-16 rounded ax-skeleton-shimmer"></div>
+                                </div>
+                                <div class="shrink-0 space-y-1.5 text-right">
+                                    <div class="h-3 w-20 rounded ax-skeleton-shimmer ml-auto"></div>
+                                    <div class="h-4 w-16 rounded ax-skeleton-shimmer ml-auto"></div>
+                                </div>
+                            </div>
+                        @endfor
+                    </div>
+
+                    <div class="mt-4 border-t border-slate-100 pt-3 space-y-2">
+                        <div class="h-3.5 w-36 rounded ax-skeleton-shimmer"></div>
+                        <div class="h-4 w-full rounded ax-skeleton-shimmer"></div>
+                    </div>
+                </div>
+
+                <!-- Contenido Dinámico -->
+                <template x-if="!cargandoDetalle && compraSeleccionada">
+                    <div class="p-5 overflow-y-auto space-y-4">
+                        <div class="flex items-center justify-between rounded-xl bg-slate-50 px-4 py-3 border border-slate-100">
+                            <span class="text-xs font-bold text-slate-500">Total de la recepción</span>
+                            <span class="text-xl font-black text-slate-900" x-text="'$' + Number(compraSeleccionada.total || 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })"></span>
+                        </div>
+
+                        <p class="text-xs text-slate-500" x-text="compraSeleccionada.observaciones"></p>
+
+                        <div class="space-y-2">
+                            <template x-for="detalle in compraSeleccionada.detalles" :key="detalle.id">
+                                <div class="flex items-center gap-3 rounded-xl border border-slate-100 bg-slate-50 px-3 py-2">
+                                    <div class="h-14 w-14 shrink-0 overflow-hidden rounded-lg border border-slate-200 bg-white">
+                                        <template x-if="detalle.imagen_url">
+                                            <img :src="detalle.imagen_url" :alt="detalle.variante" class="h-full w-full object-cover">
+                                        </template>
+                                        <template x-if="!detalle.imagen_url">
+                                            <div class="flex h-full items-center justify-center text-slate-300">
+                                                <i class="fas fa-image"></i>
+                                            </div>
+                                        </template>
+                                    </div>
+                                    <div class="min-w-0 flex-1">
+                                        <p class="truncate text-xs font-black text-slate-800" x-text="detalle.producto"></p>
+                                        <p class="truncate text-xs text-slate-500" x-text="detalle.variante"></p>
+                                        <p class="text-[10px] font-bold uppercase tracking-wider text-slate-400" x-text="'SKU: ' + detalle.sku"></p>
+                                    </div>
+                                    <div class="shrink-0 text-right text-xs">
+                                        <p class="font-bold text-slate-700" x-text="detalle.cantidad + ' × $' + Number(detalle.precio_unitario || 0).toFixed(2)"></p>
+                                        <p class="font-black text-slate-900" x-text="'$' + Number(detalle.subtotal || 0).toFixed(2)"></p>
+                                    </div>
+                                </div>
+                            </template>
+                        </div>
+
+                        <div class="mt-4 border-t border-slate-100 pt-3">
+                            <div class="mb-2 flex items-center justify-between">
+                                <p class="text-[10px] font-black uppercase tracking-wider text-slate-400">Movimientos generados</p>
+                                <a href="{{ route('compras.movimientos') }}" class="text-[10px] font-bold text-blue-600 hover:text-blue-800">Ver todos</a>
+                            </div>
+                            <template x-if="compraSeleccionada.movimientos && compraSeleccionada.movimientos.length > 0">
+                                <div class="space-y-1">
+                                    <template x-for="movimiento in compraSeleccionada.movimientos" :key="movimiento.id">
+                                        <div class="flex items-center justify-between gap-3 text-xs text-slate-600 py-1">
+                                            <span x-text="movimiento.tipo"></span>
+                                            <span x-text="movimiento.cantidad + ' unidades · ' + movimiento.fecha"></span>
+                                        </div>
+                                    </template>
+                                </div>
+                            </template>
+                            <template x-if="!compraSeleccionada.movimientos || compraSeleccionada.movimientos.length === 0">
+                                <p class="text-xs text-slate-400">Sin movimientos asociados.</p>
+                            </template>
+                        </div>
+                    </div>
+                </template>
+            </div>
+        </div>
     </div>
 </x-app>

@@ -44,7 +44,12 @@ class ComisionVendedorController extends Controller
         }
 
         if ($request->filled('metodo_pago') && $request->metodo_pago !== 'todos') {
-            $query->where('metodo_pago', $request->metodo_pago);
+            $metodo = $request->metodo_pago;
+            if ($metodo === 'Transferencia Bancaria' || $metodo === 'Transferencia') {
+                $query->whereIn('metodo_pago', ['Transferencia Bancaria', 'Transferencia']);
+            } else {
+                $query->where('metodo_pago', $metodo);
+            }
         }
 
         if ($request->filled('fecha_desde')) {
@@ -58,10 +63,29 @@ class ComisionVendedorController extends Controller
         $comisiones = $query->paginate(15)->withQueryString();
         ComisionVendedor::cargarVentas(collect($comisiones->items()));
 
-        // KPIs
+        // KPIs base vinculados a los filtros aplicados (vendedor, rango de fechas)
         $baseStats = ComisionVendedor::query();
         if (!$isAdmin) {
             $baseStats->where('id_vendedor', $user->id);
+        } elseif ($request->filled('vendedor_id')) {
+            $baseStats->where('id_vendedor', $request->vendedor_id);
+        }
+
+        if ($request->filled('metodo_pago') && $request->metodo_pago !== 'todos') {
+            $metodo = $request->metodo_pago;
+            if ($metodo === 'Transferencia Bancaria' || $metodo === 'Transferencia') {
+                $baseStats->whereIn('metodo_pago', ['Transferencia Bancaria', 'Transferencia']);
+            } else {
+                $baseStats->where('metodo_pago', $metodo);
+            }
+        }
+
+        if ($request->filled('fecha_desde')) {
+            $baseStats->whereDate('fecha_registro', '>=', $request->fecha_desde);
+        }
+
+        if ($request->filled('fecha_hasta')) {
+            $baseStats->whereDate('fecha_registro', '<=', $request->fecha_hasta);
         }
 
         $stats = [
@@ -242,6 +266,14 @@ class ComisionVendedorController extends Controller
 
         $vendedores = $isAdmin ? User::orderBy('nombre_real')->get() : collect();
 
+        if ($request->ajax() || $request->wantsJson()) {
+            return response()->json([
+                'success' => true,
+                'html'    => view('comisiones.tabla-por-vendedor', compact('reporte', 'isAdmin', 'desde', 'hasta'))->render(),
+                'kpis'    => $kpis,
+            ]);
+        }
+
         return view('comisiones.por_vendedor', compact(
             'reporte', 'kpis', 'vendedores', 'isAdmin', 'desde', 'hasta', 'busqueda',
             'periodo', 'mes', 'anio', 'mesNombre', 'esMesActual', 'nombresMeses', 'mesAnterior', 'mesSiguiente'
@@ -372,6 +404,14 @@ class ComisionVendedorController extends Controller
         ];
 
         $vendedores = $isAdmin ? User::orderBy('nombre_real')->get() : collect();
+
+        if ($request->ajax() || $request->wantsJson()) {
+            return response()->json([
+                'success' => true,
+                'html'    => view('comisiones.tabla-por-semana', compact('reporteSemanas', 'isAdmin'))->render(),
+                'kpis'    => $kpis,
+            ]);
+        }
 
         return view('comisiones.por_semana', compact('reporteSemanas', 'kpis', 'vendedores', 'isAdmin', 'anio', 'vendedorId'));
     }

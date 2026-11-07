@@ -310,6 +310,23 @@ class VentaController extends Controller
                         $u->where('nombre_real', 'like', "%{$busqueda}%")
                             ->orWhere('username', 'like', "%{$busqueda}%");
                     });
+
+                $salidasVentasIds = Salida::where(function ($sq) use ($busqueda) {
+                    $sq->where('nombre_cliente', 'like', "%{$busqueda}%")
+                        ->orWhere('direccion', 'like', "%{$busqueda}%")
+                        ->orWhere('telefono', 'like', "%{$busqueda}%");
+                })->where('observaciones', 'like', 'Venta #%')
+                    ->pluck('observaciones')
+                    ->map(function ($obs) {
+                        if (preg_match('/Venta #(\d+)/', $obs, $m)) {
+                            return (int) $m[1];
+                        }
+                        return null;
+                    })->filter()->toArray();
+
+                if (!empty($salidasVentasIds)) {
+                    $q->orWhereIn('id', $salidasVentasIds);
+                }
             });
         }
 

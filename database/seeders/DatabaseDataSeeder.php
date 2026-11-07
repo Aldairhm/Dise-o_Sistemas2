@@ -4,51 +4,83 @@ namespace Database\Seeders;
 
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Schema;
-use Carbon\Carbon;
 
 /**
  * DatabaseDataSeeder
  *
- * Seeder con datos reales respetando fielmente toda la lógica de negocio de AXStore:
- * - Proveedores y Usuarios completos (≥ 15 cada uno).
- * - Compras con detalles y movimientos de bodega de entrada.
- * - Ventas con su desglose estricto:
- *     * Venta (Tienda o Envio, cálculo de totales, descuentos, envío, estados)
- *     * DetalleVenta (líneas de venta por variante)
- *     * Salida (1 registro de salida por cada línea de detalleventa, con 'Venta #ID' en observaciones)
- *     * Comisiones (solo para ventas 'Entregada', vinculadas a la Salida y al Vendedor)
- * - Devoluciones de Venta y Compra con detalles y movimientos de cuarentena/bodega.
- * - Bitácora de auditoría detallada.
- * - Actualización de secuencias de PostgreSQL.
+ * Seeder maestro para AXStore:
+ * - Carga integral de todos los datos reales del sistema desde database/seeders/data_export.json.
+ * - Incluye catálogos, productos, variantes, atributos, proveedores, usuarios con nombres reales,
+ *   compras, ventas, detalles, salidas, comisiones, devoluciones, movimientos de bodega,
+ *   auditorías seguras, centro de dudas/tickets con sus hilos e historiales, y bitácora.
+ * - Sincroniza y reinicia de forma automática las secuencias de PostgreSQL.
  */
 class DatabaseDataSeeder extends Seeder
 {
     public function run(): void
     {
-        $this->command->info('Iniciando DatabaseDataSeeder con logica estricta de negocio...');
+        $this->command->info('Iniciando carga de base de datos completa con nombres reales...');
 
-        // Desactivar constraints temporalmente para limpieza segura de tablas transaccionales
+        $jsonPath = __DIR__ . '/data_export.json';
+
+        if (!file_exists($jsonPath)) {
+            $this->command->error("El archivo {$jsonPath} no existe.");
+            return;
+        }
+
+        $data = json_decode(file_get_contents($jsonPath), true);
+
+        if (!$data || !is_array($data)) {
+            $this->command->error("No se pudo interpretar el archivo JSON de datos.");
+            return;
+        }
+
+        // Orden de limpieza respetando dependencias de clave foránea
+        $tablesTruncate = [
+            'bitacora',
+            'auditoria_sesiones',
+            'soporte_ticket_historial',
+            'soporte_ticket_mensajes',
+            'soporte_tickets',
+            'comision_vendedor',
+            'devolucion_detalles',
+            'devoluciones',
+            'movimiento_bodega',
+            'salida',
+            'detalleventa',
+            'venta',
+            'compra_detalle',
+            'compra',
+            'catalogos',
+            'variante_imagen',
+            'variantevalor',
+            'productoatributo',
+            'variante',
+            'producto',
+            'atributo',
+            'categoria',
+            'proveedors',
+            'usuario',
+        ];
+
         Schema::disableForeignKeyConstraints();
 
-        // Limpiar solo tablas transaccionales (sin tocar producto, variante, categoria, atributo)
-        DB::table('comision_vendedor')->truncate();
-        DB::table('devolucion_detalles')->truncate();
-        DB::table('devoluciones')->truncate();
-        DB::table('movimiento_bodega')->truncate();
-        DB::table('salida')->truncate();
-        DB::table('detalleventa')->truncate();
-        DB::table('venta')->truncate();
-        DB::table('compra_detalle')->truncate();
-        DB::table('compra')->truncate();
-        DB::table('bitacora')->truncate();
+        foreach ($tablesTruncate as $tbl) {
+            try {
+                DB::table($tbl)->truncate();
+            } catch (\Throwable $e) {
+                // Continuar si la tabla no existe o ya está limpia
+            }
+        }
 
         // 1. Sembrar Proveedores (≥ 15)
         $this->seedProveedores();
 
-        // 2. Sembrar Usuarios (≥ 15)
-        $this->seedUsuarios();
+        foreach ($tablesInsertOrder as $table) {
+            if (!isset($data[$table]) || empty($data[$table])) {
+                continue;
+            }
 
         // 3. Sembrar Catálogo base (Categorías, Atributos, Productos, Variantes)
         $this->seedCategoria();
@@ -63,16 +95,14 @@ class DatabaseDataSeeder extends Seeder
         // 4. Sembrar Compras y Movimientos de Entrada (≥ 15)
         $this->seedCompras();
 
-        // 4. Sembrar Ventas con toda su lógica detallada (≥ 18)
-        $this->seedVentas();
+            // Insertar por lotes de 100 para optimizar rendimiento y memoria
+            $chunks = array_chunk($rows, 100);
+            foreach ($chunks as $chunk) {
+                DB::table($table)->insert($chunk);
+            }
+        }
 
-        // 5. Sembrar Devoluciones (≥ 15)
-        $this->seedDevoluciones();
-
-        // 6. Sembrar Bitácora (≥ 20)
-        $this->seedBitacora();
-
-        // 7. Sincronizar secuencias de PostgreSQL
+        // Actualizar todas las secuencias seriales en PostgreSQL
         $this->resetPostgresSequences();
 
         Schema::enableForeignKeyConstraints();
@@ -1748,17 +1778,29 @@ ENVIOS TODO EL PAIS',
         }
 
         $tables = [
-            'proveedors',
             'usuario',
+            'proveedors',
+            'categoria',
+            'atributo',
+            'producto',
+            'variante',
+            'variante_imagen',
+            'productoatributo',
+            'variantevalor',
+            'catalogos',
             'compra',
             'compra_detalle',
-            'movimiento_bodega',
             'venta',
             'detalleventa',
             'salida',
+            'movimiento_bodega',
             'comision_vendedor',
             'devoluciones',
             'devolucion_detalles',
+            'soporte_tickets',
+            'soporte_ticket_mensajes',
+            'soporte_ticket_historial',
+            'auditoria_sesiones',
             'bitacora',
             'categoria',
             'atributo',
@@ -1777,7 +1819,7 @@ ENVIOS TODO EL PAIS',
                     DB::statement("SELECT setval('{$seq->seq}', COALESCE((SELECT MAX(id) FROM \"{$table}\"), 1))");
                 }
             } catch (\Throwable $e) {
-                // Si la tabla no tiene secuencia serial, continuar
+                // Silenciar tablas sin columna id serial
             }
         }
     }

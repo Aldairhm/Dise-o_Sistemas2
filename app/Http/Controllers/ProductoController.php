@@ -18,12 +18,38 @@ class ProductoController extends Controller
     {
         $query = Producto::with('categoria')->withCount('variantes');
 
-        if ($request->has('categoria')) {
-            $query->where('id_categoria', $request->categoria);
+        if ($request->filled('q')) {
+            $busqueda = trim($request->q);
+            $query->where(function($q) use ($busqueda) {
+                $q->where('nombre', 'like', "%{$busqueda}%")
+                  ->orWhere('marca', 'like', "%{$busqueda}%")
+                  ->orWhere('sku', 'like', "%{$busqueda}%");
+            });
         }
 
-        $productos = $query->get();
+        if ($request->filled('categoria') && $request->categoria !== 'todos') {
+            $query->whereHas('categoria', function($q) use ($request) {
+                $q->where('nombre', 'like', "%{$request->categoria}%")
+                  ->orWhere('id', $request->categoria);
+            });
+        }
+
+        if ($request->filled('estado') && $request->estado !== 'todos') {
+            $query->where('estado', (int) $request->estado);
+        }
+
+        $productos = $query->orderBy('id', 'asc')->get();
         $categorias = Categoria::all();
+
+        if ($request->ajax() || $request->wantsJson()) {
+            return response()->json([
+                'success' => true,
+                'table_html' => view('productos.partials.table', compact('productos'))->render(),
+                'cards_html' => view('productos.partials.cards', compact('productos'))->render(),
+                'total' => $productos->count(),
+            ]);
+        }
+
         return view('productos.index', compact('productos', 'categorias'));
     }
 
@@ -77,11 +103,40 @@ class ProductoController extends Controller
                          ->with('success', 'Producto creado exitosamente. Ahora puedes agregar las variantes.');
     }
 
-    public function edit(Producto $producto)
+    public function edit(Producto $producto, \Illuminate\Http\Request $request)
     {
         $categorias = Categoria::all();
+        $atributos = $producto->atributos;
+
+        if ($request->ajax() || $request->wantsJson()) {
+            $variantesQuery = $producto->variantes()
+                ->with(['imagenes', 'valores.atributo']);
+
+            if ($request->filled('q')) {
+                $busqueda = trim($request->q);
+                $variantesQuery->where(function($q) use ($busqueda) {
+                    $q->where('nombre_variante', 'like', "%{$busqueda}%")
+                      ->orWhere('sku', 'like', "%{$busqueda}%");
+                });
+            }
+
+            if ($request->filled('estado') && $request->estado !== 'todos') {
+                $variantesQuery->where('estado', (int) $request->estado);
+            }
+
+            $variantesFiltradas = $variantesQuery->get();
+            $producto->setRelation('variantes', $variantesFiltradas);
+
+            return response()->json([
+                'success' => true,
+                'table_html' => view('productos.partials.table_variantes', compact('producto'))->render(),
+                'cards_html' => view('productos.partials.cards_variantes', compact('producto'))->render(),
+                'total' => $variantesFiltradas->count(),
+            ]);
+        }
+
         $producto->load('atributos', 'variantes.imagenes', 'variantes.valores.atributo');
-        $atributos = $producto->atributos; // Solo los que ya tiene este producto
+        $atributos = $producto->atributos;
 
         return view('productos.edit', compact('producto', 'categorias', 'atributos'));
     }

@@ -214,8 +214,15 @@ async function handleUserSubmit(event) {
     const method = isEdit ? 'PUT' : 'POST';
 
     const submitBtn = document.getElementById('btnSubmitModal');
-    submitBtn.disabled = true;
-    submitBtn.classList.add('opacity-75');
+    const submitContent = document.getElementById('btnSubmitContent');
+    const submitSpinner = document.getElementById('btnSubmitSpinner');
+
+    if (submitBtn) submitBtn.disabled = true;
+    if (submitContent) submitContent.classList.add('invisible');
+    if (submitSpinner) {
+        submitSpinner.classList.remove('hidden');
+        submitSpinner.classList.add('flex');
+    }
 
     const payload = {
         _token: csrfToken,
@@ -261,8 +268,12 @@ async function handleUserSubmit(event) {
             } else {
                 showModalAlert(data.message || 'Error al procesar la solicitud.');
             }
-            submitBtn.disabled = false;
-            submitBtn.classList.remove('opacity-75');
+            if (submitBtn) submitBtn.disabled = false;
+            if (submitContent) submitContent.classList.remove('invisible');
+            if (submitSpinner) {
+                submitSpinner.classList.add('hidden');
+                submitSpinner.classList.remove('flex');
+            }
             return;
         }
 
@@ -283,8 +294,12 @@ async function handleUserSubmit(event) {
         console.error(err);
         showModalAlert('Ocurrió un error inesperado al conectar con el servidor.');
     } finally {
-        submitBtn.disabled = false;
-        submitBtn.classList.remove('opacity-75');
+        if (submitBtn) submitBtn.disabled = false;
+        if (submitContent) submitContent.classList.remove('invisible');
+        if (submitSpinner) {
+            submitSpinner.classList.add('hidden');
+            submitSpinner.classList.remove('flex');
+        }
     }
 }
 
@@ -326,8 +341,15 @@ async function applyFilters() {
     if (rol !== 'todos') params.append('rol', rol);
     if (estado !== 'todos') params.append('estado', estado);
 
-    const loader = document.getElementById('tableLoading');
-    loader.classList.remove('hidden');
+    const skeleton = document.getElementById('tableSkeleton');
+    const tableWrapper = document.getElementById('usersTableWrapper');
+    const cardsWrapper = document.getElementById('usersCardsWrapper');
+
+    if (skeleton && tableWrapper) {
+        skeleton.classList.remove('hidden');
+        tableWrapper.classList.add('hidden');
+        if (cardsWrapper) cardsWrapper.classList.add('hidden');
+    }
 
     try {
         const response = await fetch(`/usuarios?${params.toString()}`, {
@@ -339,7 +361,7 @@ async function applyFilters() {
 
         const data = await response.json();
         if (data.success) {
-            document.getElementById('usersTableWrapper').innerHTML = data.html;
+            tableWrapper.innerHTML = data.html;
             document.getElementById('usersCardsGrid').innerHTML = data.cards ?? '';
 
             // Actualizar KPIs
@@ -353,7 +375,14 @@ async function applyFilters() {
     } catch (err) {
         console.error('Error al filtrar usuarios:', err);
     } finally {
-        loader.classList.add('hidden');
+        if (skeleton && tableWrapper) {
+            skeleton.classList.add('hidden');
+            if (currentView === 'cards') {
+                if (cardsWrapper) cardsWrapper.classList.remove('hidden');
+            } else {
+                tableWrapper.classList.remove('hidden');
+            }
+        }
     }
 }
 

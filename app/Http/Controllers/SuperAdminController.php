@@ -86,6 +86,13 @@ class SuperAdminController extends Controller
 
         $users = $query->orderBy('id', 'desc')->paginate(10)->withQueryString();
 
+        if ($request->ajax() || $request->wantsJson()) {
+            return response()->json([
+                'success' => true,
+                'html' => view('superadmin.tabla-usuarios', compact('users'))->render(),
+            ]);
+        }
+
         return view('superadmin.usuarios', compact('users'));
     }
 
@@ -134,8 +141,16 @@ class SuperAdminController extends Controller
      */
     public function finalizarAuditoria(Request $request)
     {
+        $token = session('auditoria_token');
+        $sesion = $token ? AuditoriaSesion::where('token_sesion', $token)->first() : null;
+
         $notas = $request->input('notas_cierre', 'Auditoría completada exitosamente.');
         ImpersonationService::finalizarAuditoria($notas);
+
+        if ($sesion) {
+            return redirect()->route('superadmin.auditorias.informe', $sesion->id)
+                ->with('success', 'Sesión de auditoría finalizada exitosamente. A continuación se presenta el informe completo de la auditoría.');
+        }
 
         return redirect()->route('superadmin.dashboard')->with('success', 'Sesión de auditoría finalizada. Has vuelto a tu perfil de Super Administrador.');
     }
@@ -143,13 +158,111 @@ class SuperAdminController extends Controller
     /**
      * Historial global de auditorías
      */
-    public function historialAuditorias()
+    public function historialAuditorias(Request $request)
     {
         $auditorias = AuditoriaSesion::with(['superAdmin', 'usuarioAuditado'])
             ->latest('id')
             ->paginate(15);
 
+        if ($request->ajax() || $request->wantsJson()) {
+            return response()->json([
+                'success' => true,
+                'html' => view('superadmin.tabla-historial-auditorias', compact('auditorias'))->render(),
+            ]);
+        }
+
         return view('superadmin.historial-auditorias', compact('auditorias'));
+    }
+
+    /**
+     * Informe completo y detallado de una sesión de auditoría realizada
+     */
+    public function informeAuditoria(AuditoriaSesion $sesion)
+    {
+        $sesion->load(['superAdmin', 'usuarioAuditado']);
+
+        // Consultar todos los eventos registrados durante la auditoría
+        $eventos = \App\Models\Bitacora::where(function ($q) use ($sesion) {
+            $q->where('correlacion_id', $sesion->token_sesion)
+              ->orWhere(function ($sub) use ($sesion) {
+                  $sub->where('en_modo_auditoria', true)
+                      ->where('id_actor_real', $sesion->id_super_admin)
+                      ->where('id_usuario', $sesion->id_usuario_auditado)
+                      ->whereBetween('created_at', [
+                          $sesion->iniciada_en,
+                          $sesion->finalizada_en ?? ($sesion->expira_en ?? now())
+                      ]);
+              });
+        })
+        ->orderBy('id', 'asc')
+        ->get();
+
+        // Agrupaciones y resúmenes para el informe
+        $modulosRevisados = $eventos->pluck('modulo')->unique()->filter()->values();
+        $accionesTotales = $eventos->count();
+        $resumenAcciones = $eventos->groupBy('accion')->map->count();
+
+        // Calcular duración exacta de la auditoría
+        $duracionRealMinutos = $sesion->finalizada_en 
+            ? max(1, round($sesion->iniciada_en->diffInMinutes($sesion->finalizada_en)))
+            : round($sesion->iniciada_en->diffInMinutes(now()));
+
+        return view('superadmin.informe-auditoria', compact(
+            'sesion',
+            'eventos',
+            'modulosRevisados',
+            'accionesTotales',
+            'resumenAcciones',
+            'duracionRealMinutos'
+        ));
+    }
+
+    /**
+     * Descargar o imprimir/visualizar el informe de auditoría en formato PDF formal
+     */
+    public function exportarInformePdf(Request $request, AuditoriaSesion $sesion)
+    {
+        $sesion->load(['superAdmin', 'usuarioAuditado']);
+
+        $eventos = \App\Models\Bitacora::where(function ($q) use ($sesion) {
+            $q->where('correlacion_id', $sesion->token_sesion)
+              ->orWhere(function ($sub) use ($sesion) {
+                  $sub->where('en_modo_auditoria', true)
+                      ->where('id_actor_real', $sesion->id_super_admin)
+                      ->where('id_usuario', $sesion->id_usuario_auditado)
+                      ->whereBetween('created_at', [
+                          $sesion->iniciada_en,
+                          $sesion->finalizada_en ?? ($sesion->expira_en ?? now())
+                      ]);
+              });
+        })
+        ->orderBy('id', 'asc')
+        ->get();
+
+        $modulosRevisados = $eventos->pluck('modulo')->unique()->filter()->values();
+        $accionesTotales = $eventos->count();
+        $resumenAcciones = $eventos->groupBy('accion')->map->count();
+
+        $duracionRealMinutos = $sesion->finalizada_en 
+            ? max(1, round($sesion->iniciada_en->diffInMinutes($sesion->finalizada_en)))
+            : round($sesion->iniciada_en->diffInMinutes(now()));
+
+        $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadView('pdf.informe-auditoria', compact(
+            'sesion',
+            'eventos',
+            'modulosRevisados',
+            'accionesTotales',
+            'resumenAcciones',
+            'duracionRealMinutos'
+        ))->setPaper('letter', 'portrait');
+
+        $filename = 'Informe_Auditoria_AUD-' . str_pad($sesion->id, 4, '0', STR_PAD_LEFT) . '_' . date('Ymd_His') . '.pdf';
+
+        if ($request->query('action') === 'stream' || $request->has('print')) {
+            return $pdf->stream($filename);
+        }
+
+        return $pdf->download($filename);
     }
 
     /**
@@ -177,12 +290,21 @@ class SuperAdminController extends Controller
               ->orWhere('estado', 'Escalada');
         });
 
-        if ($request->filled('estado') && $request->estado !== 'todos') {
-            $query->where('estado', $request->estado);
-        }
+        // Conteo base para las pestañas de estado
+        $baseCounts = clone $query;
+        $conteoEstados = [
+            'todos'      => (clone $baseCounts)->count(),
+            'Pendiente'  => (clone $baseCounts)->where('estado', 'Pendiente')->count(),
+            'En proceso' => (clone $baseCounts)->where('estado', 'En proceso')->count(),
+            'Escalada'   => (clone $baseCounts)->where('estado', 'Escalada')->count(),
+            'Resuelta'   => (clone $baseCounts)->where('estado', 'Resuelta')->count(),
+            'Cancelada'  => (clone $baseCounts)->where('estado', 'Cancelada')->count(),
+        ];
 
-        if ($request->filled('prioridad') && $request->prioridad !== 'todos') {
-            $query->where('prioridad', $request->prioridad);
+        // Por defecto, siempre entra filtrando por 'Pendiente' para mayor autonomía
+        $estadoTab = $request->query('estado', 'Pendiente');
+        if ($estadoTab !== 'todos' && in_array($estadoTab, SoporteTicket::ESTADOS, true)) {
+            $query->where('estado', $estadoTab);
         }
 
         if ($request->filled('search')) {
@@ -195,28 +317,43 @@ class SuperAdminController extends Controller
             });
         }
 
-        $tickets = $query->orderByRaw("
-            CASE 
-                WHEN estado = 'Escalada' THEN 1
-                WHEN estado = 'Pendiente' THEN 2
-                WHEN estado = 'En proceso' THEN 3
-                ELSE 4
-            END
-        ")->orderBy('id', 'desc')->paginate(10)->withQueryString();
+        $tickets = $query->orderBy('created_at', 'asc')
+            ->orderBy('id', 'asc')
+            ->paginate(10)
+            ->withQueryString();
 
-        return view('superadmin.tickets', compact('tickets'));
+        if ($request->ajax() || $request->wantsJson()) {
+            return response()->json([
+                'success' => true,
+                'html' => view('superadmin.tabla-tickets', compact('tickets'))->render(),
+                'conteoEstados' => $conteoEstados,
+            ]);
+        }
+
+        return view('superadmin.tickets', compact('tickets', 'conteoEstados', 'estadoTab'));
     }
 
     /**
-     * Crear o actualizar un Super Administrador de forma segura
+     * Crear un nuevo Super Administrador de forma segura
      */
     public function guardarSuperAdmin(Request $request)
     {
         $validated = $request->validate([
             'nombre_real'   => 'required|string|max:255',
             'username'      => 'required|email|max:255|unique:usuario,username',
-            'password'      => 'required|string|min:10|confirmed',
+            'telefono'      => 'nullable|string|max:20',
+            'estado'        => 'required|in:0,1',
+            'password'      => 'required|string|min:8|confirmed',
             'auth_password' => 'required|string',
+        ], [
+            'nombre_real.required'   => 'El nombre completo es obligatorio.',
+            'username.required'      => 'El correo institucional es obligatorio.',
+            'username.email'         => 'El correo debe ser una dirección de email válida.',
+            'username.unique'        => 'Este correo ya se encuentra registrado en el sistema.',
+            'password.required'      => 'La contraseña es obligatoria.',
+            'password.min'           => 'La contraseña debe tener al menos 8 caracteres.',
+            'password.confirmed'     => 'Las contraseñas no coinciden.',
+            'auth_password.required' => 'Debes ingresar tu contraseña de Super Administrador en sesión para autorizar la creación.',
         ]);
 
         if (!Hash::check($request->auth_password, Auth::user()->password)) {
@@ -226,9 +363,10 @@ class SuperAdminController extends Controller
         $nuevoAdmin = User::create([
             'nombre_real' => $validated['nombre_real'],
             'username'    => $validated['username'],
+            'telefono'    => $validated['telefono'] ?? null,
             'password'    => Hash::make($validated['password']),
             'rol'         => 'super_admin',
-            'estado'      => 1,
+            'estado'      => (int) $validated['estado'],
         ]);
 
         ActivityLogger::log(
@@ -238,6 +376,77 @@ class SuperAdminController extends Controller
         );
 
         return back()->with('success', "Cuenta SUPER_ADMIN creada exitosamente para {$nuevoAdmin->nombre_real}.");
+    }
+
+    /**
+     * Actualizar una cuenta Super Administrador con paso de seguridad reforzado (contraseña del Super Admin en sesión)
+     */
+    public function actualizarSuperAdmin(Request $request, User $user)
+    {
+        if (!$user->isSuperAdmin()) {
+            abort(404, 'El usuario seleccionado no es un Super Administrador.');
+        }
+
+        $validated = $request->validate([
+            'nombre_real'   => 'required|string|max:255',
+            'username'      => 'required|email|max:255|unique:usuario,username,' . $user->id,
+            'telefono'      => 'nullable|string|max:20',
+            'password'      => 'nullable|string|min:8|confirmed',
+            'estado'        => 'required|in:0,1',
+            'auth_password' => 'required|string',
+        ], [
+            'nombre_real.required'   => 'El nombre completo es obligatorio.',
+            'username.required'      => 'El correo institucional es obligatorio.',
+            'username.email'         => 'El correo debe ser una dirección de email válida.',
+            'username.unique'        => 'Este correo ya se encuentra registrado por otro usuario.',
+            'password.min'           => 'La contraseña debe tener al menos 8 caracteres.',
+            'password.confirmed'     => 'Las contraseñas no coinciden.',
+            'auth_password.required' => 'Debes ingresar tu contraseña de Super Administrador en sesión para autorizar la edición.',
+        ]);
+
+        // Verificación estricta de seguridad: contraseña del Super Admin autenticado
+        if (!Hash::check($request->auth_password, Auth::user()->password)) {
+            ActivityLogger::log(
+                'INTENTO_EDICION_SUPER_ADMIN_FALLIDO',
+                'Auditoría y Seguridad',
+                "Intento fallido de editar al Super Administrador {$user->username} por contraseña de autorización incorrecta."
+            );
+            return back()->with('error', 'Contraseña de autorización incorrecta. Acción denegada por seguridad.');
+        }
+
+        $datosAnteriores = [
+            'nombre_real' => $user->nombre_real,
+            'username'    => $user->username,
+            'telefono'    => $user->telefono,
+            'estado'      => $user->estado,
+        ];
+
+        $user->nombre_real = $validated['nombre_real'];
+        $user->username = $validated['username'];
+        $user->telefono = $validated['telefono'] ?? null;
+        $user->estado = (int) $validated['estado'];
+
+        if (!empty($validated['password'])) {
+            $user->password = Hash::make($validated['password']);
+        }
+
+        $user->save();
+
+        ActivityLogger::log(
+            'ACTUALIZAR_SUPER_ADMIN',
+            'Auditoría y Seguridad',
+            "El Super Administrador " . Auth::user()->username . " actualizó los datos del Super Administrador: {$user->username}",
+            $datosAnteriores,
+            [
+                'nombre_real' => $user->nombre_real,
+                'username'    => $user->username,
+                'telefono'    => $user->telefono,
+                'estado'      => $user->estado,
+                'cambio_password' => !empty($validated['password']),
+            ]
+        );
+
+        return back()->with('success', "Cuenta de Super Administrador {$user->nombre_real} actualizada exitosamente.");
     }
 }
 

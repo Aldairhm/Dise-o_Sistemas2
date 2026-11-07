@@ -191,31 +191,31 @@
                     <p class="text-sm text-slate-500 leading-relaxed">El <strong class="text-slate-700">costo</strong> es lo que le pagas al proveedor por cada unidad recibida.</p>
                 </section>
                 
-                <section class="bg-gradient-to-b from-slate-800 to-slate-900 text-white rounded-3xl p-6 shadow-xl shadow-slate-900/20 border border-slate-700/50">
+                <section class="bg-white rounded-3xl p-6 shadow-sm border border-slate-200">
                     <div class="flex items-center justify-between mb-6">
-                        <h2 class="text-lg font-black">Resumen</h2>
-                        <div class="w-8 h-8 rounded-full bg-slate-700/50 flex items-center justify-center"><i class="fas fa-calculator text-blue-400 text-sm"></i></div>
+                        <h2 class="text-lg font-black text-slate-900">Resumen</h2>
+                        <div class="w-8 h-8 rounded-full bg-blue-50 flex items-center justify-center"><i class="fas fa-calculator text-blue-600 text-sm"></i></div>
                     </div>
                     
                     <div class="space-y-4 text-sm font-medium">
-                        <div class="flex justify-between items-center text-slate-300">
+                        <div class="flex justify-between items-center text-slate-500">
                             <span>Variantes</span>
-                            <strong class="text-white bg-slate-700/50 px-2 py-0.5 rounded" x-text="lineas.length"></strong>
+                            <strong class="text-slate-800 bg-slate-100 px-2 py-0.5 rounded font-bold" x-text="lineas.length"></strong>
                         </div>
-                        <div class="flex justify-between items-center text-slate-300">
+                        <div class="flex justify-between items-center text-slate-500">
                             <span>Unidades</span>
-                            <strong class="text-white" x-text="unidades"></strong>
+                            <strong class="text-slate-800 font-bold" x-text="unidades"></strong>
                         </div>
                     </div>
                     
-                    <div class="border-t border-slate-700 mt-6 pt-6 flex justify-between items-end">
+                    <div class="border-t border-slate-100 mt-6 pt-6 flex justify-between items-end">
                         <div>
                             <p class="text-[10px] uppercase tracking-widest text-slate-400 font-bold mb-1">Total a pagar</p>
-                            <p class="text-3xl font-black text-white leading-none" x-text="moneda(subtotal)"></p>
+                            <p class="text-3xl font-black text-blue-600 leading-none" x-text="moneda(subtotal)"></p>
                         </div>
                     </div>
                     
-                    <button type="button" @click="Swal.fire({ title: '¿Estás seguro?', text: 'Verifica que las cantidades sean correctas antes de confirmar la recepción.', icon: 'warning', showCancelButton: true, confirmButtonColor: '#3085d6', cancelButtonColor: '#d33', confirmButtonText: 'Sí, confirmar', cancelButtonText: 'Cancelar' }).then((result) => { if (result.isConfirmed) { guardarCompra(); } })" :disabled="!formularioValido()" class="w-full mt-8 rounded-xl bg-blue-600 hover:bg-blue-500 disabled:bg-slate-800 disabled:text-slate-500 disabled:border border-slate-700 disabled:cursor-not-allowed py-3.5 text-sm font-black transition-all shadow-lg shadow-blue-600/20 disabled:shadow-none flex items-center justify-center gap-2">
+                    <button type="button" @click="Swal.fire({ title: '¿Estás seguro?', text: 'Verifica que las cantidades sean correctas antes de confirmar la recepción.', icon: 'warning', showCancelButton: true, confirmButtonColor: '#3085d6', cancelButtonColor: '#d33', confirmButtonText: 'Sí, confirmar', cancelButtonText: 'Cancelar' }).then((result) => { if (result.isConfirmed) { guardarCompra(); } })" :disabled="!formularioValido()" class="w-full mt-8 rounded-xl bg-blue-600 hover:bg-blue-700 disabled:bg-slate-100 disabled:text-slate-400 disabled:border border-slate-200 disabled:cursor-not-allowed py-3.5 text-sm font-extrabold text-white transition-all shadow-lg shadow-blue-500/25 disabled:shadow-none flex items-center justify-center gap-2 cursor-pointer hover:scale-[1.01] active:scale-[0.99]">
                         <i class="fas fa-check"></i> Confirmar recepción
                     </button>
                 </section>

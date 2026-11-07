@@ -18,6 +18,9 @@ class UserController extends Controller
     {
         $query = User::query();
 
+        // En este apartado administrativo ordinario no se muestran usuarios con rol super_admin (solo admin y vendedor/bodeguero)
+        $query->where('rol', '!=', 'super_admin');
+
         // Filtro de búsqueda por nombre_real o username
         if ($request->filled('search')) {
             $search = strtolower(trim($request->search));
@@ -40,13 +43,13 @@ class UserController extends Controller
         // Ordenamiento
         $users = $query->orderBy('id', 'desc')->paginate(5)->withQueryString();
 
-        // Estadísticas para las tarjetas KPI
+        // Estadísticas para las tarjetas KPI (excluyendo super_admin)
         $stats = [
-            'total'        => User::count(),
+            'total'        => User::where('rol', '!=', 'super_admin')->count(),
             'admins'       => User::where('rol', 'admin')->count(),
             'vendedores'   => User::where('rol', 'vendedor')->count(),
-            'activos'      => User::where('estado', 1)->count(),
-            'inactivos'    => User::where('estado', 0)->count(),
+            'activos'      => User::where('rol', '!=', 'super_admin')->where('estado', 1)->count(),
+            'inactivos'    => User::where('rol', '!=', 'super_admin')->where('estado', 0)->count(),
         ];
 
         if ($request->ajax()) {
