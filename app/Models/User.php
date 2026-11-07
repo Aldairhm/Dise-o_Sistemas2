@@ -8,6 +8,8 @@ use Illuminate\Notifications\Notifiable;
 
 class User extends Authenticatable
 {
+    use \App\Models\Concerns\NotifiesBusinessChanges;
+
     use Notifiable, SoftDeletes;
     protected $table = 'usuario';
 

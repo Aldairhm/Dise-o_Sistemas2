@@ -1,7 +1,7 @@
 <x-app title="Manejo de inventario | AXStore">
     <meta name="transferencia-tienda-url" content="{{ route('movimientos-bodega.transferencia-tienda') }}">
 
-    <div class="max-w-[1440px] mx-auto space-y-6" x-data="gestionMovimientosKardex()">
+    <div class="max-w-[1440px] mx-auto space-y-6" x-data="{ inventarioTab: @js($movimientoId > 0 || request()->has('tipo') ? 'kardex' : 'transferir') }">
         <div>
             <a href="{{ route('home') }}" class="inline-flex items-center gap-2 text-xs font-bold uppercase tracking-widest text-slate-400 hover:text-blue-600 mb-4"><i class="fas fa-arrow-left"></i> Volver al inicio</a>
             <p class="text-xs font-black uppercase tracking-[0.18em] text-blue-600 mb-1">Inventario</p>

@@ -8,6 +8,8 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class AuditoriaSesion extends Model
 {
+    use \App\Models\Concerns\NotifiesBusinessChanges;
+
     use HasFactory;
 
     protected $table = 'auditoria_sesiones';

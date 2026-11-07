@@ -70,8 +70,9 @@
                 @if($isAdmin)
                 {{-- SELECT VENDEDOR --}}
                 <div class="lg:col-span-3">
-                    <label for="filtroVendedor" class="block text-[11px] font-bold uppercase tracking-wider text-slate-600 mb-1.5">
-                        <i class="fas fa-user-tie text-slate-400 mr-1"></i> Vendedor
+                    <label for="filtroVendedor" class="mb-1.5 flex items-center gap-1.5 text-xs font-bold text-slate-700 tracking-tight">
+                        <i class="fas fa-user-tie text-blue-600 text-xs"></i>
+                        <span>Vendedor</span>
                     </label>
                     <select id="filtroVendedor" name="vendedor_id" data-searchable-vendedor
                             class="w-full rounded-xl border border-slate-300 bg-slate-50 px-3 py-2 text-xs font-semibold text-slate-700 focus:border-blue-500 focus:bg-white focus:outline-none focus:ring-4 focus:ring-blue-500/10 transition-all">
@@ -85,65 +86,118 @@
                 </div>
                 @endif
 
-                {{-- ESTADO --}}
-                <div class="{{ $isAdmin ? 'lg:col-span-2' : 'lg:col-span-3' }}">
-                    <label for="filtroEstado" class="block text-[11px] font-bold uppercase tracking-wider text-slate-600 mb-1.5">
-                        <i class="fas fa-tag text-slate-400 mr-1"></i> Estado
+                {{-- SELECT CUSTOM: ESTADO --}}
+                <div class="{{ $isAdmin ? 'lg:col-span-2' : 'lg:col-span-3' }} relative" data-custom-comision-select="estado">
+                    <label class="mb-1.5 flex items-center gap-1.5 text-xs font-bold text-slate-700 tracking-tight">
+                        <i class="fas fa-tag text-blue-600 text-xs"></i>
+                        <span>Estado</span>
                     </label>
-                    <select id="filtroEstado" name="estado"
-                            class="w-full rounded-xl border border-slate-300 bg-slate-50 px-3 py-2 text-xs font-semibold text-slate-700 focus:border-blue-500 focus:bg-white focus:outline-none focus:ring-4 focus:ring-blue-500/10 transition-all">
-                        <option value="todos">Todos los estados</option>
-                        <option value="Pendiente" {{ request('estado') === 'Pendiente' ? 'selected' : '' }}>Pendiente (Por liquidar)</option>
-                        <option value="Pagada"    {{ request('estado') === 'Pagada'    ? 'selected' : '' }}>Pagada</option>
-                        <option value="Cancelada" {{ request('estado') === 'Cancelada' ? 'selected' : '' }}>Cancelada</option>
-                    </select>
+                    @php
+                        $estadoVal = request('estado', 'todos');
+                        $estadoMap = [
+                            'todos'     => ['label' => 'Todos los estados', 'icon' => 'fas fa-layer-group text-slate-400'],
+                            'Pendiente' => ['label' => 'Pendiente (Por liquidar)', 'icon' => 'fas fa-clock text-amber-500'],
+                            'Pagada'    => ['label' => 'Pagada', 'icon' => 'fas fa-circle-check text-emerald-500'],
+                            'Cancelada' => ['label' => 'Cancelada', 'icon' => 'fas fa-circle-xmark text-rose-500'],
+                        ];
+                        $curEstado = $estadoMap[$estadoVal] ?? $estadoMap['todos'];
+                    @endphp
+                    <input type="hidden" id="filtroEstado" name="estado" value="{{ $estadoVal }}">
+                    <button type="button" class="h-10 w-full min-w-0 rounded-xl border border-slate-200 bg-slate-50/90 px-3.5 text-xs font-bold text-slate-700 shadow-sm transition hover:border-slate-300 hover:bg-white focus:border-blue-500 focus:bg-white focus:outline-none focus:ring-4 focus:ring-blue-500/10 flex items-center justify-between gap-2 cursor-pointer text-left" data-toggle aria-expanded="false">
+                        <span class="flex items-center gap-2 truncate">
+                            <i class="{{ $curEstado['icon'] }}" data-icon></i>
+                            <span class="truncate" data-label>{{ $curEstado['label'] }}</span>
+                        </span>
+                        <i class="fas fa-chevron-down text-[10px] text-slate-400 transition-transform duration-200" data-arrow></i>
+                    </button>
+                    <div class="hidden absolute left-0 top-full z-50 mt-1.5 w-full min-w-[200px] rounded-2xl border border-slate-200 bg-white p-1.5 shadow-2xl" data-menu>
+                        <div class="space-y-0.5">
+                            @foreach($estadoMap as $val => $opt)
+                                @php $isSelected = ($estadoVal === $val); @endphp
+                                <button type="button" data-option data-value="{{ $val }}" data-label="{{ $opt['label'] }}" data-icon="{{ $opt['icon'] }}"
+                                    class="w-full flex items-center justify-between rounded-xl px-3 py-2 text-xs font-bold transition-colors text-left {{ $isSelected ? 'bg-blue-50 text-blue-700' : 'text-slate-700 hover:bg-slate-50 hover:text-slate-900' }}">
+                                    <span class="flex items-center gap-2 truncate">
+                                        <i class="{{ $opt['icon'] }}"></i>
+                                        <span>{{ $opt['label'] }}</span>
+                                    </span>
+                                    <i class="fas fa-check text-blue-600 text-[10px] {{ $isSelected ? '' : 'hidden' }}" data-check></i>
+                                </button>
+                            @endforeach
+                        </div>
+                    </div>
                 </div>
 
-                {{-- MÉTODO DE PAGO --}}
-                <div class="{{ $isAdmin ? 'lg:col-span-2' : 'lg:col-span-3' }}">
-                    <label for="filtroMetodoPago" class="block text-[11px] font-bold uppercase tracking-wider text-slate-600 mb-1.5">
-                        <i class="fas fa-wallet text-slate-400 mr-1"></i> Método de Pago
+                {{-- SELECT CUSTOM: MÉTODO DE PAGO --}}
+                <div class="{{ $isAdmin ? 'lg:col-span-2' : 'lg:col-span-3' }} relative" data-custom-comision-select="metodo_pago">
+                    <label class="mb-1.5 flex items-center gap-1.5 text-xs font-bold text-slate-700 tracking-tight">
+                        <i class="fas fa-wallet text-blue-600 text-xs"></i>
+                        <span>Método de Pago</span>
                     </label>
-                    <select id="filtroMetodoPago" name="metodo_pago"
-                            class="w-full rounded-xl border border-slate-300 bg-slate-50 px-3 py-2 text-xs font-semibold text-slate-700 focus:border-blue-500 focus:bg-white focus:outline-none focus:ring-4 focus:ring-blue-500/10 transition-all">
-                        <option value="todos">Todos los métodos</option>
-                        <option value="Efectivo" {{ request('metodo_pago') === 'Efectivo' ? 'selected' : '' }}>Efectivo</option>
-                        <option value="Transferencia Bancaria" {{ in_array(request('metodo_pago'), ['Transferencia Bancaria', 'Transferencia']) ? 'selected' : '' }}>Transferencia Bancaria</option>
-                        <option value="Compensación de Saldo" {{ request('metodo_pago') === 'Compensación de Saldo' ? 'selected' : '' }}>Compensación de Saldo</option>
-                    </select>
+                    @php
+                        $metodoVal = request('metodo_pago', 'todos');
+                        $metodoMap = [
+                            'todos'                  => ['label' => 'Todos los métodos', 'icon' => 'fas fa-wallet text-slate-400'],
+                            'Efectivo'               => ['label' => 'Efectivo', 'icon' => 'fas fa-money-bill-wave text-emerald-500'],
+                            'Transferencia Bancaria' => ['label' => 'Transferencia Bancaria', 'icon' => 'fas fa-building-columns text-blue-500'],
+                        ];
+                        $curMetodo = $metodoMap[$metodoVal] ?? $metodoMap['todos'];
+                    @endphp
+                    <input type="hidden" id="filtroMetodoPago" name="metodo_pago" value="{{ $metodoVal }}">
+                    <button type="button" class="h-10 w-full min-w-0 rounded-xl border border-slate-200 bg-slate-50/90 px-3.5 text-xs font-bold text-slate-700 shadow-sm transition hover:border-slate-300 hover:bg-white focus:border-blue-500 focus:bg-white focus:outline-none focus:ring-4 focus:ring-blue-500/10 flex items-center justify-between gap-2 cursor-pointer text-left" data-toggle aria-expanded="false">
+                        <span class="flex items-center gap-2 truncate">
+                            <i class="{{ $curMetodo['icon'] }}" data-icon></i>
+                            <span class="truncate" data-label>{{ $curMetodo['label'] }}</span>
+                        </span>
+                        <i class="fas fa-chevron-down text-[10px] text-slate-400 transition-transform duration-200" data-arrow></i>
+                    </button>
+                    <div class="hidden absolute left-0 top-full z-50 mt-1.5 w-full min-w-[200px] rounded-2xl border border-slate-200 bg-white p-1.5 shadow-2xl" data-menu>
+                        <div class="space-y-0.5">
+                            @foreach($metodoMap as $val => $opt)
+                                @php $isSelected = ($metodoVal === $val); @endphp
+                                <button type="button" data-option data-value="{{ $val }}" data-label="{{ $opt['label'] }}" data-icon="{{ $opt['icon'] }}"
+                                    class="w-full flex items-center justify-between rounded-xl px-3 py-2 text-xs font-bold transition-colors text-left {{ $isSelected ? 'bg-blue-50 text-blue-700' : 'text-slate-700 hover:bg-slate-50 hover:text-slate-900' }}">
+                                    <span class="flex items-center gap-2 truncate">
+                                        <i class="{{ $opt['icon'] }}"></i>
+                                        <span>{{ $opt['label'] }}</span>
+                                    </span>
+                                    <i class="fas fa-check text-blue-600 text-[10px] {{ $isSelected ? '' : 'hidden' }}" data-check></i>
+                                </button>
+                            @endforeach
+                        </div>
+                    </div>
                 </div>
 
                 {{-- FECHA DESDE --}}
                 <div class="lg:col-span-2">
-                    <label for="filtroDesde" class="block text-[11px] font-bold uppercase tracking-wider text-slate-600 mb-1.5">
-                        <i class="fas fa-calendar-day text-slate-400 mr-1"></i> Desde
+                    <label for="filtroDesde" class="mb-1.5 flex items-center gap-1.5 text-xs font-bold text-slate-700 tracking-tight">
+                        <i class="fas fa-calendar-day text-blue-600 text-xs"></i> <span>Desde</span>
                     </label>
                     <input type="date" id="filtroDesde" name="fecha_desde"
                            value="{{ request('fecha_desde') }}"
-                           class="w-full rounded-xl border border-slate-300 bg-slate-50 px-3 py-2 text-xs font-semibold text-slate-700 focus:border-blue-500 focus:bg-white focus:outline-none focus:ring-4 focus:ring-blue-500/10 transition-all">
+                           class="h-10 w-full rounded-xl border border-slate-200 bg-slate-50/90 px-3 text-xs font-semibold text-slate-700 shadow-sm transition hover:border-slate-300 hover:bg-white focus:border-blue-500 focus:bg-white focus:outline-none focus:ring-4 focus:ring-blue-500/10">
                 </div>
 
                 {{-- FECHA HASTA --}}
                 <div class="lg:col-span-2">
-                    <label for="filtroHasta" class="block text-[11px] font-bold uppercase tracking-wider text-slate-600 mb-1.5">
-                        <i class="fas fa-calendar-check text-slate-400 mr-1"></i> Hasta
+                    <label for="filtroHasta" class="mb-1.5 flex items-center gap-1.5 text-xs font-bold text-slate-700 tracking-tight">
+                        <i class="fas fa-calendar-check text-blue-600 text-xs"></i> <span>Hasta</span>
                     </label>
                     <input type="date" id="filtroHasta" name="fecha_hasta"
                            value="{{ request('fecha_hasta') }}"
-                           class="w-full rounded-xl border border-slate-300 bg-slate-50 px-3 py-2 text-xs font-semibold text-slate-700 focus:border-blue-500 focus:bg-white focus:outline-none focus:ring-4 focus:ring-blue-500/10 transition-all">
+                           class="h-10 w-full rounded-xl border border-slate-200 bg-slate-50/90 px-3 text-xs font-semibold text-slate-700 shadow-sm transition hover:border-slate-300 hover:bg-white focus:border-blue-500 focus:bg-white focus:outline-none focus:ring-4 focus:ring-blue-500/10">
                 </div>
 
                 {{-- BOTONES DE FILTRADO --}}
-                <div class="lg:col-span-1 flex items-center gap-1.5">
-                    <button type="button" id="btnFiltrarComisiones" onclick="aplicarFiltros()"
-                            class="w-full rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-bold py-2 px-2.5 text-xs transition-all shadow-md shadow-blue-600/15 flex items-center justify-center gap-1 cursor-pointer"
+                <div class="lg:col-span-1 flex items-center gap-2">
+                    <button type="button" onclick="aplicarFiltros()"
+                            class="h-10 w-full rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-3 text-xs transition-all shadow-md shadow-blue-600/20 active:scale-95 flex items-center justify-center gap-1.5 cursor-pointer"
                             title="Aplicar filtros">
-                        <i class="fas fa-filter text-[11px]"></i>
+                        <i class="fas fa-filter text-xs"></i>
                         <span>Filtrar</span>
                     </button>
                     <button type="button" onclick="limpiarFiltros()"
-                            class="rounded-xl border border-slate-300 hover:bg-slate-100 text-slate-500 p-2 text-xs transition-all cursor-pointer"
-                            title="Restablecer">
+                            class="h-10 rounded-xl border border-slate-200 hover:bg-red-50 hover:text-red-600 hover:border-red-200 text-slate-500 px-3 text-xs transition-all cursor-pointer flex items-center justify-center"
+                            title="Restablecer filtros">
                         <i class="fas fa-rotate-left"></i>
                     </button>
                 </div>
@@ -364,6 +418,9 @@
         document.getElementById('filtroMetodoPago').value = 'todos';
         document.getElementById('filtroDesde').value      = '';
         document.getElementById('filtroHasta').value      = '';
+        if (window.resetComisionCustomSelects) {
+            window.resetComisionCustomSelects();
+        }
         aplicarFiltros();
     }
 
@@ -974,10 +1031,122 @@
         }
     });
 
+<<<<<<< HEAD
     // ── Inicializar paginación AJAX en carga inicial ───────────────────────
     document.addEventListener('DOMContentLoaded', () => {
         atarPaginacionComisiones();
     });
+=======
+    // ── Custom Dropdowns para Comisiones ────────────────────────────────────
+    (() => {
+        function initComisionSelects() {
+            const dropdowns = document.querySelectorAll('[data-custom-comision-select]');
+            if (!dropdowns.length) return;
+
+            function closeAll() {
+                dropdowns.forEach(dd => {
+                    const menu = dd.querySelector('[data-menu]');
+                    const arrow = dd.querySelector('[data-arrow]');
+                    const toggle = dd.querySelector('[data-toggle]');
+                    if (menu) menu.classList.add('hidden');
+                    if (arrow) arrow.classList.remove('rotate-180');
+                    if (toggle) toggle.setAttribute('aria-expanded', 'false');
+                });
+            }
+
+            dropdowns.forEach(dd => {
+                const toggle = dd.querySelector('[data-toggle]');
+                const menu = dd.querySelector('[data-menu]');
+                const arrow = dd.querySelector('[data-arrow]');
+                const input = dd.querySelector('input[type="hidden"]');
+                const label = dd.querySelector('[data-label]');
+                const icon = dd.querySelector('[data-icon]');
+                const options = dd.querySelectorAll('[data-option]');
+
+                if (!toggle || !menu) return;
+
+                toggle.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    const isHidden = menu.classList.contains('hidden');
+                    closeAll();
+                    if (isHidden) {
+                        menu.classList.remove('hidden');
+                        if (arrow) arrow.classList.add('rotate-180');
+                        toggle.setAttribute('aria-expanded', 'true');
+                    }
+                });
+
+                options.forEach(opt => {
+                    opt.addEventListener('click', (e) => {
+                        e.stopPropagation();
+                        const val = opt.dataset.value;
+                        const text = opt.dataset.label;
+                        const iconClass = opt.dataset.icon;
+
+                        if (input) input.value = val;
+                        if (label) label.textContent = text;
+                        if (icon && iconClass) {
+                            icon.className = iconClass;
+                        }
+
+                        options.forEach(o => {
+                            const check = o.querySelector('[data-check]');
+                            if (o === opt) {
+                                o.classList.add('bg-blue-50', 'text-blue-700');
+                                o.classList.remove('text-slate-700');
+                                if (check) check.classList.remove('hidden');
+                            } else {
+                                o.classList.remove('bg-blue-50', 'text-blue-700');
+                                o.classList.add('text-slate-700');
+                                if (check) check.classList.add('hidden');
+                            }
+                        });
+
+                        closeAll();
+                    });
+                });
+            });
+
+            window.resetComisionCustomSelects = () => {
+                dropdowns.forEach(dd => {
+                    const input = dd.querySelector('input[type="hidden"]');
+                    const label = dd.querySelector('[data-label]');
+                    const icon = dd.querySelector('[data-icon]');
+                    const options = dd.querySelectorAll('[data-option]');
+                    const firstOption = options[0];
+                    if (firstOption) {
+                        if (input) input.value = firstOption.dataset.value;
+                        if (label) label.textContent = firstOption.dataset.label;
+                        if (icon) icon.className = firstOption.dataset.icon;
+                        options.forEach((o, idx) => {
+                            const check = o.querySelector('[data-check]');
+                            if (idx === 0) {
+                                o.classList.add('bg-blue-50', 'text-blue-700');
+                                o.classList.remove('text-slate-700');
+                                if (check) check.classList.remove('hidden');
+                            } else {
+                                o.classList.remove('bg-blue-50', 'text-blue-700');
+                                o.classList.add('text-slate-700');
+                                if (check) check.classList.add('hidden');
+                            }
+                        });
+                    }
+                });
+            };
+
+            document.addEventListener('click', () => closeAll());
+            document.addEventListener('keydown', (e) => {
+                if (e.key === 'Escape') closeAll();
+            });
+        }
+
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', initComisionSelects);
+        } else {
+            initComisionSelects();
+        }
+    })();
+>>>>>>> 2e9f6a24ebf6d8db4a7c3d5a96d046a0fa880f1f
     </script>
     @if($isAdmin)
         @include('comisiones.partials.searchable-vendedor-select')

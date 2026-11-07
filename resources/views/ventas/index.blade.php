@@ -52,14 +52,21 @@
         </nav>
 
         <!-- 1. SECCIÓN SUPERIOR: FILTROS GLOBALES -->
-        <section class="bg-white border border-slate-200 rounded-2xl p-4 sm:p-5 shadow-sm">
-            <form method="GET" action="{{ route('ventas.index') }}" @submit.prevent="filtrarVentasIndex()" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-12 gap-3.5 items-end">
-                <input type="hidden" name="tab" :value="estadoTabActual">
+        @php
+            $selectedVendedorObj = $vendedores->firstWhere('id', $vendedorId);
+            $selectedVendedorNombre = $selectedVendedorObj ? ($selectedVendedorObj->nombre_real ?: $selectedVendedorObj->username) : 'Todos';
+            $selectedProductoObj = $productos->firstWhere('id', $productoId);
+            $selectedProductoNombre = $selectedProductoObj ? $selectedProductoObj->nombre : 'Todos';
+        @endphp
+        <section class="bg-white border border-slate-200/80 rounded-2xl p-4 sm:p-5 shadow-xs">
+            <form method="GET" action="{{ route('ventas.index') }}" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-12 gap-3.5 items-end">
+                <input type="hidden" name="tab" value="{{ $estadoTab }}">
 
                 <!-- BÚSQUEDA RÁPIDA -->
                 <div class="sm:col-span-2 md:col-span-3 lg:col-span-3">
-                    <label for="q" class="block text-[11px] font-bold uppercase tracking-wider text-slate-600 mb-1.5">
-                        <i class="fas fa-magnifying-glass text-slate-400 mr-1"></i> Buscar por Folio / Cliente / Teléfono
+                    <label for="q" class="mb-1.5 flex items-center gap-1.5 text-xs font-bold text-slate-700 tracking-tight">
+                        <i class="fas fa-search text-blue-600 text-xs"></i>
+                        <span>Buscar por Folio / Cliente / Teléfono</span>
                     </label>
                     <div class="relative">
                         <input
@@ -68,92 +75,153 @@
                             id="q"
                             x-model="filtroBusqueda"
                             placeholder="Ej: 00004 o 7123-4567..."
-                            class="w-full rounded-xl border border-slate-300 bg-slate-50 pl-9 pr-3 py-2 text-xs font-semibold text-slate-700 focus:border-blue-500 focus:bg-white focus:outline-none focus:ring-4 focus:ring-blue-500/10 transition-all">
-                        <i class="fas fa-search absolute left-3 top-2.5 text-slate-400 text-xs"></i>
+                            class="h-10 w-full rounded-xl border border-slate-200 bg-slate-50/90 pl-9 pr-3 text-xs font-semibold text-slate-700 shadow-sm transition hover:border-slate-300 hover:bg-white focus:border-blue-500 focus:bg-white focus:outline-none focus:ring-4 focus:ring-blue-500/10">
+                        <i class="fas fa-search absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-xs pointer-events-none"></i>
                     </div>
                 </div>
 
                 <!-- FECHA DESDE -->
                 <div class="lg:col-span-2">
-                    <label for="desde" class="block text-[11px] font-bold uppercase tracking-wider text-slate-600 mb-1.5">
-                        <i class="fas fa-calendar-day text-slate-400 mr-1"></i> Desde
+                    <label for="desde" class="mb-1.5 flex items-center gap-1.5 text-xs font-bold text-slate-700 tracking-tight">
+                        <i class="fas fa-calendar-day text-blue-600 text-xs"></i>
+                        <span>Desde</span>
                     </label>
                     <input
                         type="date"
                         name="desde"
                         id="desde"
-                        x-model="filtroDesde"
-                        class="w-full rounded-xl border border-slate-300 bg-slate-50 px-3 py-2 text-xs font-semibold text-slate-700 focus:border-blue-500 focus:bg-white focus:outline-none focus:ring-4 focus:ring-blue-500/10 transition-all">
+                        value="{{ $desde }}"
+                        class="h-10 w-full rounded-xl border border-slate-200 bg-slate-50/90 px-3 text-xs font-semibold text-slate-700 shadow-sm transition hover:border-slate-300 hover:bg-white focus:border-blue-500 focus:bg-white focus:outline-none focus:ring-4 focus:ring-blue-500/10">
                 </div>
 
                 <!-- FECHA HASTA -->
                 <div class="lg:col-span-2">
-                    <label for="hasta" class="block text-[11px] font-bold uppercase tracking-wider text-slate-600 mb-1.5">
-                        <i class="fas fa-calendar-check text-slate-400 mr-1"></i> Hasta
+                    <label for="hasta" class="mb-1.5 flex items-center gap-1.5 text-xs font-bold text-slate-700 tracking-tight">
+                        <i class="fas fa-calendar-check text-blue-600 text-xs"></i>
+                        <span>Hasta</span>
                     </label>
                     <input
                         type="date"
                         name="hasta"
                         id="hasta"
-                        x-model="filtroHasta"
-                        class="w-full rounded-xl border border-slate-300 bg-slate-50 px-3 py-2 text-xs font-semibold text-slate-700 focus:border-blue-500 focus:bg-white focus:outline-none focus:ring-4 focus:ring-blue-500/10 transition-all">
+                        value="{{ $hasta }}"
+                        class="h-10 w-full rounded-xl border border-slate-200 bg-slate-50/90 px-3 text-xs font-semibold text-slate-700 shadow-sm transition hover:border-slate-300 hover:bg-white focus:border-blue-500 focus:bg-white focus:outline-none focus:ring-4 focus:ring-blue-500/10">
                 </div>
 
-                <!-- SELECT VENDEDOR -->
-                <div class="lg:col-span-2">
-                    <label for="vendedor_id" class="block text-[11px] font-bold uppercase tracking-wider text-slate-600 mb-1.5">
-                        <i class="fas fa-user-tie text-slate-400 mr-1"></i> Vendedor
+                <!-- SELECT VENDEDOR CON BUSCADOR -->
+                <div class="lg:col-span-2 relative" data-searchable-select="vendedor">
+                    <label class="mb-1.5 flex items-center gap-1.5 text-xs font-bold text-slate-700 tracking-tight">
+                        <i class="fas fa-user-tie text-blue-600 text-xs"></i>
+                        <span>Vendedor</span>
                     </label>
-                    <select
-                        name="vendedor_id"
-                        id="vendedor_id"
-                        x-model="filtroVendedor"
-                        class="w-full rounded-xl border border-slate-300 bg-slate-50 px-3 py-2 text-xs font-semibold text-slate-700 focus:border-blue-500 focus:bg-white focus:outline-none focus:ring-4 focus:ring-blue-500/10 transition-all">
-                        <option value="">Todos</option>
-                        @foreach($vendedores as $v)
-                        <option value="{{ $v->id }}">
-                            {{ $v->nombre_real ?: $v->username }}
-                        </option>
-                        @endforeach
-                    </select>
+                    <input type="hidden" name="vendedor_id" id="vendedor_id" value="{{ $vendedorId }}">
+                    <button type="button" class="h-10 w-full rounded-xl border border-slate-200 bg-slate-50/90 px-3 text-xs font-bold text-slate-700 shadow-sm transition hover:border-slate-300 hover:bg-white focus:border-blue-500 focus:bg-white focus:outline-none focus:ring-4 focus:ring-blue-500/10 flex items-center justify-between gap-2 cursor-pointer text-left" data-toggle aria-expanded="false">
+                        <span class="flex items-center gap-2 truncate">
+                            <i class="fas fa-user-tie {{ $vendedorId ? 'text-blue-600' : 'text-slate-400' }}" data-icon></i>
+                            <span class="truncate" data-label>{{ $selectedVendedorNombre }}</span>
+                        </span>
+                        <i class="fas fa-chevron-down text-[10px] text-slate-400 transition-transform duration-200" data-arrow></i>
+                    </button>
+                    <div class="hidden absolute left-0 top-full z-50 mt-1.5 w-full min-w-[210px] rounded-2xl border border-slate-200 bg-white p-2 shadow-2xl" data-menu>
+                        <div class="relative mb-2">
+                            <i class="fas fa-search absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-xs pointer-events-none"></i>
+                            <input type="text" placeholder="Buscar vendedor..." class="w-full pl-8 pr-3 py-1.5 text-xs bg-slate-50 border border-slate-200 rounded-xl text-slate-700 placeholder:text-slate-400 focus:bg-white focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/10" data-search-input>
+                        </div>
+                        <div class="max-h-52 overflow-y-auto space-y-0.5" data-options-list>
+                            <button type="button" data-option data-value="" data-label="Todos" data-icon="fas fa-user-tie text-slate-400"
+                                class="w-full flex items-center justify-between rounded-xl px-3 py-2 text-xs font-bold transition-colors text-left {{ empty($vendedorId) ? 'bg-blue-50 text-blue-700' : 'text-slate-700 hover:bg-slate-50' }}">
+                                <span class="flex items-center gap-2 truncate">
+                                    <i class="fas fa-user-tie text-slate-400"></i>
+                                    <span>Todos</span>
+                                </span>
+                                <i class="fas fa-check text-blue-600 text-[10px] {{ empty($vendedorId) ? '' : 'hidden' }}" data-check></i>
+                            </button>
+                            @foreach($vendedores as $v)
+                                @php
+                                    $nVend = $v->nombre_real ?: $v->username;
+                                    $isSelV = (string)$vendedorId === (string)$v->id;
+                                @endphp
+                                <button type="button" data-option data-value="{{ $v->id }}" data-label="{{ $nVend }}" data-icon="fas fa-user-tie text-blue-600"
+                                    class="w-full flex items-center justify-between rounded-xl px-3 py-2 text-xs font-bold transition-colors text-left {{ $isSelV ? 'bg-blue-50 text-blue-700' : 'text-slate-700 hover:bg-slate-50 hover:text-slate-900' }}">
+                                    <span class="flex items-center gap-2 truncate">
+                                        <i class="fas fa-user-tie text-blue-500"></i>
+                                        <span class="truncate">{{ $nVend }}</span>
+                                    </span>
+                                    <i class="fas fa-check text-blue-600 text-[10px] {{ $isSelV ? '' : 'hidden' }}" data-check></i>
+                                </button>
+                            @endforeach
+                            <div class="hidden py-4 text-center text-xs text-slate-400 font-medium" data-empty-msg>
+                                No se encontraron resultados
+                            </div>
+                        </div>
+                    </div>
                 </div>
 
-                <!-- SELECT PRODUCTO ESPECÍFICO (MÉTRICAS DETALLADAS) -->
-                <div class="lg:col-span-2">
-                    <label for="producto_id" class="block text-[11px] font-bold uppercase tracking-wider text-slate-600 mb-1.5">
-                        <i class="fas fa-box text-slate-400 mr-1"></i> Producto
+                <!-- SELECT PRODUCTO CON BUSCADOR -->
+                <div class="lg:col-span-2 relative" data-searchable-select="producto">
+                    <label class="mb-1.5 flex items-center gap-1.5 text-xs font-bold text-slate-700 tracking-tight">
+                        <i class="fas fa-box text-blue-600 text-xs"></i>
+                        <span>Producto</span>
                     </label>
-                    <select
-                        name="producto_id"
-                        id="producto_id"
-                        x-model="filtroProducto"
-                        class="w-full rounded-xl border border-slate-300 bg-slate-50 px-3 py-2 text-xs font-semibold text-slate-700 focus:border-blue-500 focus:bg-white focus:outline-none focus:ring-4 focus:ring-blue-500/10 transition-all">
-                        <option value="">Todos</option>
-                        @foreach($productos as $p)
-                        <option value="{{ $p->id }}">
-                            {{ $p->nombre }}
-                        </option>
-                        @endforeach
-                    </select>
+                    <input type="hidden" name="producto_id" id="producto_id" value="{{ $productoId }}">
+                    <button type="button" class="h-10 w-full rounded-xl border border-slate-200 bg-slate-50/90 px-3 text-xs font-bold text-slate-700 shadow-sm transition hover:border-slate-300 hover:bg-white focus:border-blue-500 focus:bg-white focus:outline-none focus:ring-4 focus:ring-blue-500/10 flex items-center justify-between gap-2 cursor-pointer text-left" data-toggle aria-expanded="false">
+                        <span class="flex items-center gap-2 truncate">
+                            <i class="fas fa-box {{ $productoId ? 'text-blue-600' : 'text-slate-400' }}" data-icon></i>
+                            <span class="truncate" data-label>{{ $selectedProductoNombre }}</span>
+                        </span>
+                        <i class="fas fa-chevron-down text-[10px] text-slate-400 transition-transform duration-200" data-arrow></i>
+                    </button>
+                    <div class="hidden absolute right-0 lg:left-0 top-full z-50 mt-1.5 w-full min-w-[230px] rounded-2xl border border-slate-200 bg-white p-2 shadow-2xl" data-menu>
+                        <div class="relative mb-2">
+                            <i class="fas fa-search absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-xs pointer-events-none"></i>
+                            <input type="text" placeholder="Buscar producto..." class="w-full pl-8 pr-3 py-1.5 text-xs bg-slate-50 border border-slate-200 rounded-xl text-slate-700 placeholder:text-slate-400 focus:bg-white focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/10" data-search-input>
+                        </div>
+                        <div class="max-h-52 overflow-y-auto space-y-0.5" data-options-list>
+                            <button type="button" data-option data-value="" data-label="Todos" data-icon="fas fa-box text-slate-400"
+                                class="w-full flex items-center justify-between rounded-xl px-3 py-2 text-xs font-bold transition-colors text-left {{ empty($productoId) ? 'bg-blue-50 text-blue-700' : 'text-slate-700 hover:bg-slate-50' }}">
+                                <span class="flex items-center gap-2 truncate">
+                                    <i class="fas fa-box text-slate-400"></i>
+                                    <span>Todos</span>
+                                </span>
+                                <i class="fas fa-check text-blue-600 text-[10px] {{ empty($productoId) ? '' : 'hidden' }}" data-check></i>
+                            </button>
+                            @foreach($productos as $p)
+                                @php
+                                    $isSelP = (string)$productoId === (string)$p->id;
+                                @endphp
+                                <button type="button" data-option data-value="{{ $p->id }}" data-label="{{ $p->nombre }}" data-icon="fas fa-box text-blue-600"
+                                    class="w-full flex items-center justify-between rounded-xl px-3 py-2 text-xs font-bold transition-colors text-left {{ $isSelP ? 'bg-blue-50 text-blue-700' : 'text-slate-700 hover:bg-slate-50 hover:text-slate-900' }}">
+                                    <span class="flex items-center gap-2 truncate">
+                                        <i class="fas fa-box text-blue-500"></i>
+                                        <span class="truncate">{{ $p->nombre }}</span>
+                                    </span>
+                                    <i class="fas fa-check text-blue-600 text-[10px] {{ $isSelP ? '' : 'hidden' }}" data-check></i>
+                                </button>
+                            @endforeach
+                            <div class="hidden py-4 text-center text-xs text-slate-400 font-medium" data-empty-msg>
+                                No se encontraron resultados
+                            </div>
+                        </div>
+                    </div>
                 </div>
 
                 <!-- BOTONES DE FILTRADO -->
                 <div class="lg:col-span-1 flex items-center gap-1.5">
                     <button
                         type="submit"
-                        class="w-full rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-bold py-2 px-2.5 text-xs transition-all shadow-md shadow-blue-600/15 flex items-center justify-center gap-1.5 cursor-pointer"
+                        class="h-10 flex-1 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold px-3 text-xs transition-all shadow-sm shadow-blue-500/20 hover:shadow-md flex items-center justify-center gap-1.5 cursor-pointer"
                         title="Aplicar filtros">
-                        <i :class="cargandoTabla ? 'fas fa-spinner fa-spin' : 'fas fa-filter'"></i>
-                        <span class="hidden sm:inline lg:hidden xl:inline" x-text="cargandoTabla ? 'Filtrando...' : 'Filtrar'"></span>
+                        <i class="fas fa-filter text-xs"></i>
+                        <span class="hidden sm:inline lg:hidden xl:inline">Filtrar</span>
                     </button>
-                    <button
-                        type="button"
-                        x-show="filtroBusqueda || filtroVendedor || filtroProducto"
-                        @click="limpiarFiltrosIndex()"
-                        class="rounded-xl border border-slate-200 bg-slate-50 hover:bg-slate-100 text-slate-600 font-bold py-2 px-2.5 text-xs transition-colors flex items-center justify-center shrink-0 cursor-pointer"
+                    @if(request()->hasAny(['desde', 'hasta', 'vendedor_id', 'producto_id', 'q']))
+                    <a
+                        href="{{ route('ventas.index', $estadoTab !== 'todos' ? ['tab' => $estadoTab] : []) }}"
+                        class="h-10 w-10 rounded-xl border border-slate-200 bg-slate-50/90 hover:bg-red-50 hover:text-red-600 hover:border-red-200 text-slate-500 font-bold transition-all shadow-sm flex items-center justify-center cursor-pointer shrink-0"
                         title="Limpiar filtros">
-                        <i class="fas fa-rotate-left text-[11px]"></i>
-                    </button>
+                        <i class="fas fa-rotate-left text-xs"></i>
+                    </a>
+                    @endif
                 </div>
 
             </form>
@@ -2420,6 +2488,11 @@
     <script>
         function gestorVentasIndex() {
             return {
+                init() {
+                    const id = window.location.hash.match(/^#venta-([1-9][0-9]*)$/)?.[1];
+                    if (id) this.abrirDetalle(id);
+                },
+
                 modalDetalleAbierto: false,
                 cargandoDetalle: false,
                 cargandoTabla: false,
@@ -3343,5 +3416,142 @@
                 }
             };
         }
+
+        // Dropdowns con Buscador Interno para Vendedor y Producto
+        function initSearchableVentasSelects() {
+            const containers = document.querySelectorAll('[data-searchable-select]');
+
+            containers.forEach(container => {
+                const toggle = container.querySelector('[data-toggle]');
+                const menu = container.querySelector('[data-menu]');
+                const arrow = container.querySelector('[data-arrow]');
+                const labelSpan = container.querySelector('[data-label]');
+                const iconEl = container.querySelector('[data-icon]');
+                const hiddenInput = container.querySelector('input[type="hidden"]');
+                const searchInput = container.querySelector('[data-search-input]');
+                const options = container.querySelectorAll('[data-option]');
+                const emptyMsg = container.querySelector('[data-empty-msg]');
+
+                function openMenu() {
+                    document.querySelectorAll('[data-searchable-select] [data-menu]').forEach(m => {
+                        if (m !== menu) {
+                            m.classList.add('hidden');
+                            const p = m.closest('[data-searchable-select]');
+                            p?.querySelector('[data-arrow]')?.classList.remove('rotate-180');
+                            p?.querySelector('[data-toggle]')?.setAttribute('aria-expanded', 'false');
+                        }
+                    });
+                    menu.classList.remove('hidden');
+                    arrow?.classList.add('rotate-180');
+                    toggle.setAttribute('aria-expanded', 'true');
+                    if (searchInput) {
+                        setTimeout(() => searchInput.focus(), 50);
+                    }
+                }
+
+                function closeMenu() {
+                    menu.classList.add('hidden');
+                    arrow?.classList.remove('rotate-180');
+                    toggle.setAttribute('aria-expanded', 'false');
+                    if (searchInput) {
+                        searchInput.value = '';
+                        options.forEach(opt => opt.style.display = '');
+                        if (emptyMsg) emptyMsg.classList.add('hidden');
+                    }
+                }
+
+                toggle.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    if (menu.classList.contains('hidden')) {
+                        openMenu();
+                    } else {
+                        closeMenu();
+                    }
+                });
+
+                if (searchInput) {
+                    searchInput.addEventListener('click', (e) => e.stopPropagation());
+                    searchInput.addEventListener('input', () => {
+                        const q = searchInput.value.toLowerCase().trim();
+                        let matches = 0;
+                        options.forEach(opt => {
+                            const lbl = (opt.dataset.label || '').toLowerCase();
+                            if (opt.dataset.value === '') {
+                                opt.style.display = q === '' ? '' : 'none';
+                                if (q === '') matches++;
+                                return;
+                            }
+                            if (lbl.includes(q)) {
+                                opt.style.display = '';
+                                matches++;
+                            } else {
+                                opt.style.display = 'none';
+                            }
+                        });
+                        if (emptyMsg) {
+                            emptyMsg.classList.toggle('hidden', matches > 0);
+                        }
+                    });
+                }
+
+                options.forEach(opt => {
+                    opt.addEventListener('click', (e) => {
+                        e.stopPropagation();
+                        const val = opt.dataset.value;
+                        const lbl = opt.dataset.label;
+                        const icn = opt.dataset.icon;
+
+                        hiddenInput.value = val;
+                        if (labelSpan) labelSpan.textContent = lbl;
+                        if (iconEl && icn) iconEl.className = icn;
+
+                        options.forEach(o => {
+                            const isSelected = o === opt;
+                            o.classList.toggle('bg-blue-50', isSelected);
+                            o.classList.toggle('text-blue-700', isSelected);
+                            o.classList.toggle('text-slate-700', !isSelected);
+                            const check = o.querySelector('[data-check]');
+                            if (check) check.classList.toggle('hidden', !isSelected);
+                        });
+
+                        closeMenu();
+                    });
+                });
+            });
+
+            document.addEventListener('click', (e) => {
+                if (!e.target.closest('[data-searchable-select]')) {
+                    document.querySelectorAll('[data-searchable-select]').forEach(container => {
+                        container.querySelector('[data-menu]')?.classList.add('hidden');
+                        container.querySelector('[data-arrow]')?.classList.remove('rotate-180');
+                        container.querySelector('[data-toggle]')?.setAttribute('aria-expanded', 'false');
+                        const sIn = container.querySelector('[data-search-input]');
+                        if (sIn) {
+                            sIn.value = '';
+                            container.querySelectorAll('[data-option]').forEach(opt => opt.style.display = '');
+                            container.querySelector('[data-empty-msg]')?.classList.add('hidden');
+                        }
+                    });
+                }
+            });
+
+            document.addEventListener('keydown', (e) => {
+                if (e.key === 'Escape') {
+                    document.querySelectorAll('[data-searchable-select]').forEach(container => {
+                        container.querySelector('[data-menu]')?.classList.add('hidden');
+                        container.querySelector('[data-arrow]')?.classList.remove('rotate-180');
+                        container.querySelector('[data-toggle]')?.setAttribute('aria-expanded', 'false');
+                        const sIn = container.querySelector('[data-search-input]');
+                        if (sIn) {
+                            sIn.value = '';
+                            container.querySelectorAll('[data-option]').forEach(opt => opt.style.display = '');
+                            container.querySelector('[data-empty-msg]')?.classList.add('hidden');
+                        }
+                    });
+                }
+            });
+        }
+
+        document.addEventListener('DOMContentLoaded', initSearchableVentasSelects);
     </script>
 </x-app>

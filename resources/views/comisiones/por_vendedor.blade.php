@@ -149,93 +149,135 @@
         </div>
 
         <!-- FILTROS GLOBALES -->
-        <section class="bg-white border border-slate-200 rounded-2xl p-4 sm:p-5 shadow-sm">
-            <form id="formFiltroVendedor" method="GET" action="{{ route('comisiones.porVendedor') }}" onsubmit="event.preventDefault(); aplicarFiltroVendedoresAjax();"
+        <section class="bg-white border border-slate-200/90 rounded-2xl p-4 sm:p-5 shadow-sm mb-6 transition-all hover:shadow-md">
+            <form method="GET" action="{{ route('comisiones.porVendedor') }}"
                 class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-12 gap-3.5 items-end">
                 <input type="hidden" name="periodo" id="filtroPeriodo" value="{{ $periodo }}">
 
                 @if($isAdmin)
                     {{-- Búsqueda rápida por nombre --}}
                     <div class="sm:col-span-2 md:col-span-4">
-                        <label for="q" class="block text-[11px] font-bold uppercase tracking-wider text-slate-600 mb-1.5">
-                            <i class="fas fa-magnifying-glass text-slate-400 mr-1"></i> Buscar Vendedor
+                        <label for="q" class="mb-1.5 flex items-center gap-1.5 text-xs font-bold text-slate-700 tracking-tight">
+                            <i class="fas fa-magnifying-glass text-blue-600 text-xs"></i>
+                            <span>Buscar Vendedor</span>
                         </label>
                         <div class="relative">
                             <input type="text" name="q" id="q" value="{{ $busqueda ?? '' }}" oninput="debounceFiltroVendedores()"
                                 placeholder="Nombre o correo del vendedor..."
-                                class="w-full rounded-xl border border-slate-300 bg-slate-50 pl-9 pr-3 py-2 text-xs font-semibold text-slate-700 focus:border-blue-500 focus:bg-white focus:outline-none focus:ring-4 focus:ring-blue-500/10 transition-all">
-                            <i class="fas fa-search absolute left-3 top-2.5 text-slate-400 text-xs"></i>
+                                class="h-10 w-full rounded-xl border border-slate-200 bg-slate-50/90 pl-9 pr-3 text-xs font-semibold text-slate-700 shadow-sm transition hover:border-slate-300 hover:bg-white focus:border-blue-500 focus:bg-white focus:outline-none focus:ring-4 focus:ring-blue-500/10">
+                            <i class="fas fa-search absolute left-3 top-3 text-slate-400 text-xs"></i>
                         </div>
                     </div>
                 @endif
 
                 @if($periodo === 'mes')
-                    {{-- Selector de Mes --}}
-                    <div class="sm:col-span-1 {{ $isAdmin ? 'md:col-span-3' : 'md:col-span-5' }}">
-                        <label for="mes" class="block text-[11px] font-bold uppercase tracking-wider text-slate-600 mb-1.5">
-                            <i class="fas fa-calendar-alt text-slate-400 mr-1"></i> Mes
+                    {{-- Selector Custom de Mes --}}
+                    <div class="sm:col-span-1 {{ $isAdmin ? 'md:col-span-3' : 'md:col-span-5' }} relative" data-custom-vendedor-select="mes">
+                        <label class="mb-1.5 flex items-center gap-1.5 text-xs font-bold text-slate-700 tracking-tight">
+                            <i class="fas fa-calendar-alt text-blue-600 text-xs"></i>
+                            <span>Mes</span>
                         </label>
-                        <select name="mes" id="mes" onchange="aplicarFiltroVendedoresAjax()"
-                            class="w-full rounded-xl border border-slate-300 bg-slate-50 px-3 py-2 text-xs font-semibold text-slate-700 focus:border-blue-500 focus:bg-white focus:outline-none focus:ring-4 focus:ring-blue-500/10 transition-all">
-                            @foreach($nombresMeses as $mNum => $mNombre)
-                                <option value="{{ $mNum }}" {{ (int) $mes === $mNum ? 'selected' : '' }}>
-                                    {{ $mNombre }}
-                                    {{ (int) now()->month === $mNum && (int) now()->year === (int) $anio ? '(Actual)' : '' }}
-                                </option>
-                            @endforeach
-                        </select>
+                        @php
+                            $curMesNombre = $nombresMeses[(int)$mes] ?? 'Mes';
+                        @endphp
+                        <input type="hidden" id="mes" name="mes" value="{{ (int)$mes }}">
+                        <button type="button" class="h-10 w-full min-w-0 rounded-xl border border-slate-200 bg-slate-50/90 px-3.5 text-xs font-bold text-slate-700 shadow-sm transition hover:border-slate-300 hover:bg-white focus:border-blue-500 focus:bg-white focus:outline-none focus:ring-4 focus:ring-blue-500/10 flex items-center justify-between gap-2 cursor-pointer text-left" data-toggle aria-expanded="false">
+                            <span class="flex items-center gap-2 truncate">
+                                <i class="fas fa-calendar-alt text-blue-600" data-icon></i>
+                                <span class="truncate" data-label>{{ $curMesNombre }}</span>
+                            </span>
+                            <i class="fas fa-chevron-down text-[10px] text-slate-400 transition-transform duration-200" data-arrow></i>
+                        </button>
+                        <div class="hidden absolute left-0 top-full z-50 mt-1.5 w-full min-w-[190px] rounded-2xl border border-slate-200 bg-white p-1.5 shadow-2xl max-h-64 overflow-y-auto" data-menu>
+                            <div class="space-y-0.5">
+                                @foreach($nombresMeses as $mNum => $mNombre)
+                                    @php
+                                        $isSelected = ((int) $mes === $mNum);
+                                        $isActual = ((int) now()->month === $mNum && (int) now()->year === (int) $anio);
+                                    @endphp
+                                    <button type="button" data-option data-value="{{ $mNum }}" data-label="{{ $mNombre }}" data-icon="fas fa-calendar-alt text-blue-600"
+                                        class="w-full flex items-center justify-between rounded-xl px-3 py-2 text-xs font-bold transition-colors text-left {{ $isSelected ? 'bg-blue-50 text-blue-700' : 'text-slate-700 hover:bg-slate-50 hover:text-slate-900' }}">
+                                        <span class="flex items-center gap-2 truncate">
+                                            <i class="fas fa-calendar-day {{ $isActual ? 'text-amber-500' : 'text-slate-400' }}"></i>
+                                            <span>{{ $mNombre }}</span>
+                                        </span>
+                                        <div class="flex items-center gap-1.5">
+                                            @if($isActual)
+                                                <span class="text-[9px] font-extrabold uppercase px-1.5 py-0.5 rounded bg-amber-100 text-amber-800">Actual</span>
+                                            @endif
+                                            <i class="fas fa-check text-blue-600 text-[10px] {{ $isSelected ? '' : 'hidden' }}" data-check></i>
+                                        </div>
+                                    </button>
+                                @endforeach
+                            </div>
+                        </div>
                     </div>
 
-                    {{-- Selector de Año --}}
-                    <div class="sm:col-span-1 {{ $isAdmin ? 'md:col-span-3' : 'md:col-span-5' }}">
-                        <label for="anio"
-                            class="block text-[11px] font-bold uppercase tracking-wider text-slate-600 mb-1.5">
-                            <i class="fas fa-calendar text-slate-400 mr-1"></i> Año
+                    {{-- Selector Custom de Año --}}
+                    <div class="sm:col-span-1 {{ $isAdmin ? 'md:col-span-3' : 'md:col-span-5' }} relative" data-custom-vendedor-select="anio">
+                        <label class="mb-1.5 flex items-center gap-1.5 text-xs font-bold text-slate-700 tracking-tight">
+                            <i class="fas fa-calendar text-blue-600 text-xs"></i>
+                            <span>Año</span>
                         </label>
-                        <select name="anio" id="anio" onchange="aplicarFiltroVendedoresAjax()"
-                            class="w-full rounded-xl border border-slate-300 bg-slate-50 px-3 py-2 text-xs font-semibold text-slate-700 focus:border-blue-500 focus:bg-white focus:outline-none focus:ring-4 focus:ring-blue-500/10 transition-all">
-                            @for($y = now()->year; $y >= now()->year - 3; $y--)
-                                <option value="{{ $y }}" {{ (int) $anio === $y ? 'selected' : '' }}>{{ $y }}</option>
-                            @endfor
-                        </select>
+                        <input type="hidden" id="anio" name="anio" value="{{ (int)$anio }}">
+                        <button type="button" class="h-10 w-full min-w-0 rounded-xl border border-slate-200 bg-slate-50/90 px-3.5 text-xs font-bold text-slate-700 shadow-sm transition hover:border-slate-300 hover:bg-white focus:border-blue-500 focus:bg-white focus:outline-none focus:ring-4 focus:ring-blue-500/10 flex items-center justify-between gap-2 cursor-pointer text-left" data-toggle aria-expanded="false">
+                            <span class="flex items-center gap-2 truncate">
+                                <i class="fas fa-calendar text-blue-600" data-icon></i>
+                                <span class="truncate" data-label>Año {{ $anio }}</span>
+                            </span>
+                            <i class="fas fa-chevron-down text-[10px] text-slate-400 transition-transform duration-200" data-arrow></i>
+                        </button>
+                        <div class="hidden absolute left-0 top-full z-50 mt-1.5 w-full min-w-[170px] rounded-2xl border border-slate-200 bg-white p-1.5 shadow-2xl" data-menu>
+                            <div class="space-y-0.5">
+                                @for($y = now()->year; $y >= now()->year - 3; $y--)
+                                    @php $isSelected = ((int)$anio === $y); @endphp
+                                    <button type="button" data-option data-value="{{ $y }}" data-label="Año {{ $y }}" data-icon="fas fa-calendar text-blue-600"
+                                        class="w-full flex items-center justify-between rounded-xl px-3 py-2 text-xs font-bold transition-colors text-left {{ $isSelected ? 'bg-blue-50 text-blue-700' : 'text-slate-700 hover:bg-slate-50 hover:text-slate-900' }}">
+                                        <span class="flex items-center gap-2">
+                                            <i class="fas fa-calendar text-blue-500"></i>
+                                            <span>Año {{ $y }}</span>
+                                        </span>
+                                        <i class="fas fa-check text-blue-600 text-[10px] {{ $isSelected ? '' : 'hidden' }}" data-check></i>
+                                    </button>
+                                @endfor
+                            </div>
+                        </div>
                     </div>
 
                 @else
                     {{-- Rango Histórico: Fecha Desde --}}
                     <div class="{{ $isAdmin ? 'md:col-span-3' : 'md:col-span-5' }}">
-                        <label for="fecha_desde"
-                            class="block text-[11px] font-bold uppercase tracking-wider text-slate-600 mb-1.5">
-                            <i class="fas fa-calendar-day text-slate-400 mr-1"></i> Desde
+                        <label for="fecha_desde" class="mb-1.5 flex items-center gap-1.5 text-xs font-bold text-slate-700 tracking-tight">
+                            <i class="fas fa-calendar-day text-blue-600 text-xs"></i> <span>Desde</span>
                         </label>
-                        <input type="date" name="fecha_desde" id="fecha_desde" value="{{ $desde }}" onchange="aplicarFiltroVendedoresAjax()"
-                            class="w-full rounded-xl border border-slate-300 bg-slate-50 px-3 py-2 text-xs font-semibold text-slate-700 focus:border-blue-500 focus:bg-white focus:outline-none focus:ring-4 focus:ring-blue-500/10 transition-all">
+                        <input type="date" name="fecha_desde" id="fecha_desde" value="{{ $desde }}"
+                            class="h-10 w-full rounded-xl border border-slate-200 bg-slate-50/90 px-3 text-xs font-semibold text-slate-700 shadow-sm transition hover:border-slate-300 hover:bg-white focus:border-blue-500 focus:bg-white focus:outline-none focus:ring-4 focus:ring-blue-500/10">
                     </div>
 
                     {{-- Rango Histórico: Fecha Hasta --}}
                     <div class="{{ $isAdmin ? 'md:col-span-3' : 'md:col-span-5' }}">
-                        <label for="fecha_hasta"
-                            class="block text-[11px] font-bold uppercase tracking-wider text-slate-600 mb-1.5">
-                            <i class="fas fa-calendar-check text-slate-400 mr-1"></i> Hasta
+                        <label for="fecha_hasta" class="mb-1.5 flex items-center gap-1.5 text-xs font-bold text-slate-700 tracking-tight">
+                            <i class="fas fa-calendar-check text-blue-600 text-xs"></i> <span>Hasta</span>
                         </label>
-                        <input type="date" name="fecha_hasta" id="fecha_hasta" value="{{ $hasta }}" onchange="aplicarFiltroVendedoresAjax()"
-                            class="w-full rounded-xl border border-slate-300 bg-slate-50 px-3 py-2 text-xs font-semibold text-slate-700 focus:border-blue-500 focus:bg-white focus:outline-none focus:ring-4 focus:ring-blue-500/10 transition-all">
+                        <input type="date" name="fecha_hasta" id="fecha_hasta" value="{{ $hasta }}"
+                            class="h-10 w-full rounded-xl border border-slate-200 bg-slate-50/90 px-3 text-xs font-semibold text-slate-700 shadow-sm transition hover:border-slate-300 hover:bg-white focus:border-blue-500 focus:bg-white focus:outline-none focus:ring-4 focus:ring-blue-500/10">
                     </div>
                 @endif
 
                 {{-- Botones --}}
-                <div class="md:col-span-2 flex items-center gap-1.5">
-                    <button type="submit" id="btnFiltrarVendedores"
-                        class="w-full rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-bold py-2 px-2.5 text-xs transition-all shadow-md shadow-blue-600/15 flex items-center justify-center gap-1 cursor-pointer">
-                        <i class="fas fa-filter text-[11px]"></i>
+                <div class="md:col-span-2 flex items-center gap-2">
+                    <button type="submit"
+                        class="h-10 w-full rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-3 text-xs transition-all shadow-md shadow-blue-600/20 active:scale-95 flex items-center justify-center gap-1.5 cursor-pointer">
+                        <i class="fas fa-filter text-xs"></i>
                         <span>Filtrar</span>
                     </button>
-                    <button type="button"
-                        id="btnResetVendedorFiltros"
-                        onclick="limpiarFiltrosVendedoresAjax()"
-                        class="{{ ($desde || $hasta || $busqueda || ($periodo === 'mes' && (!$esMesActual || $anio != now()->year))) ? '' : 'hidden' }} rounded-xl border border-slate-300 hover:bg-slate-100 text-slate-500 p-2 text-xs transition-all flex items-center justify-center cursor-pointer"
-                        title="Restablecer filtros">
-                        <i class="fas fa-rotate-left"></i>
-                    </button>
+                    @if($desde || $hasta || $busqueda || ($periodo === 'mes' && (!$esMesActual || $anio != now()->year)))
+                        <a href="{{ route('comisiones.porVendedor', ['periodo' => $periodo]) }}"
+                            class="h-10 rounded-xl border border-slate-200 hover:bg-red-50 hover:text-red-600 hover:border-red-200 text-slate-500 px-3 text-xs transition-all flex items-center justify-center"
+                            title="Restablecer filtros">
+                            <i class="fas fa-rotate-left"></i>
+                        </a>
+                    @endif
                 </div>
             </form>
         </section>
@@ -1022,5 +1064,86 @@
                 if (typeof closeDetalleModal === 'function') closeDetalleModal();
             }
         });
+
+        // ── Custom Dropdowns para Comisiones por Vendedor ──────────────────────
+        (() => {
+            function initVendedorSelects() {
+                const dropdowns = document.querySelectorAll('[data-custom-vendedor-select]');
+                if (!dropdowns.length) return;
+
+                function closeAll() {
+                    dropdowns.forEach(dd => {
+                        const menu = dd.querySelector('[data-menu]');
+                        const arrow = dd.querySelector('[data-arrow]');
+                        const toggle = dd.querySelector('[data-toggle]');
+                        if (menu) menu.classList.add('hidden');
+                        if (arrow) arrow.classList.remove('rotate-180');
+                        if (toggle) toggle.setAttribute('aria-expanded', 'false');
+                    });
+                }
+
+                dropdowns.forEach(dd => {
+                    const toggle = dd.querySelector('[data-toggle]');
+                    const menu = dd.querySelector('[data-menu]');
+                    const arrow = dd.querySelector('[data-arrow]');
+                    const input = dd.querySelector('input[type="hidden"]');
+                    const label = dd.querySelector('[data-label]');
+                    const icon = dd.querySelector('[data-icon]');
+                    const options = dd.querySelectorAll('[data-option]');
+
+                    if (!toggle || !menu) return;
+
+                    toggle.addEventListener('click', (e) => {
+                        e.stopPropagation();
+                        const isHidden = menu.classList.contains('hidden');
+                        closeAll();
+                        if (isHidden) {
+                            menu.classList.remove('hidden');
+                            if (arrow) arrow.classList.add('rotate-180');
+                            toggle.setAttribute('aria-expanded', 'true');
+                        }
+                    });
+
+                    options.forEach(opt => {
+                        opt.addEventListener('click', (e) => {
+                            e.stopPropagation();
+                            const val = opt.dataset.value;
+                            const text = opt.dataset.label;
+                            const iconClass = opt.dataset.icon;
+
+                            if (input) input.value = val;
+                            if (label) label.textContent = text;
+                            if (icon && iconClass) icon.className = iconClass;
+
+                            options.forEach(o => {
+                                const check = o.querySelector('[data-check]');
+                                if (o === opt) {
+                                    o.classList.add('bg-blue-50', 'text-blue-700');
+                                    o.classList.remove('text-slate-700');
+                                    if (check) check.classList.remove('hidden');
+                                } else {
+                                    o.classList.remove('bg-blue-50', 'text-blue-700');
+                                    o.classList.add('text-slate-700');
+                                    if (check) check.classList.add('hidden');
+                                }
+                            });
+
+                            closeAll();
+                        });
+                    });
+                });
+
+                document.addEventListener('click', () => closeAll());
+                document.addEventListener('keydown', (e) => {
+                    if (e.key === 'Escape') closeAll();
+                });
+            }
+
+            if (document.readyState === 'loading') {
+                document.addEventListener('DOMContentLoaded', initVendedorSelects);
+            } else {
+                initVendedorSelects();
+            }
+        })();
     </script>
 </x-app>

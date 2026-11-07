@@ -11,6 +11,7 @@ use App\Models\Producto;
 use App\Models\User;
 use App\Services\ActivityLogger;
 use App\Support\CloudStorage;
+use App\Services\NotificationService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Auth;
@@ -286,6 +287,7 @@ class VentaController extends Controller
         $desde = $request->input('desde');
         $hasta = $request->input('hasta');
         $vendedorId = $request->input('vendedor_id');
+        $productoId = $request->input('producto_id');
         $busqueda = trim($request->input('q', ''));
         $estadoTab = $request->input('tab', 'todos');
 
@@ -293,7 +295,12 @@ class VentaController extends Controller
             ->whereNotIn('estado', ['Entregada', 'Entregado'])
             ->when($desde, fn($q) => $q->whereDate('fecha', '>=', $desde))
             ->when($hasta, fn($q) => $q->whereDate('fecha', '<=', $hasta))
-            ->when($vendedorId, fn($q) => $q->where('id_usuario', $vendedorId));
+            ->when($vendedorId, fn($q) => $q->where('id_usuario', $vendedorId))
+            ->when($productoId, function ($q) use ($productoId) {
+                return $q->whereHas('detalles.variante', function ($sub) use ($productoId) {
+                    $sub->where('id_producto', $productoId);
+                });
+            });
 
         if (!empty($busqueda)) {
             $query->where(function ($q) use ($busqueda) {
@@ -384,8 +391,9 @@ class VentaController extends Controller
         ];
 
         $vendedores = User::where('estado', 1)->orderBy('nombre_real')->get(['id', 'nombre_real', 'username', 'rol']);
+        $productos = Producto::where('estado', 1)->orderBy('nombre')->get(['id', 'nombre']);
 
-        return view('ventas.pedidos', compact('todasVentas', 'conteoEstados', 'vendedores', 'desde', 'hasta', 'vendedorId', 'busqueda', 'estadoTab'));
+        return view('ventas.pedidos', compact('todasVentas', 'conteoEstados', 'vendedores', 'productos', 'desde', 'hasta', 'vendedorId', 'productoId', 'busqueda', 'estadoTab'));
     }
 
     /**
@@ -605,13 +613,13 @@ class VentaController extends Controller
             }
 
             // Anular comisiones con lógica de descuento y deducción de envío
-            $salidasIds = Salida::where('observaciones', 'like', "Venta #{$venta->id}%")->pluck('id');
+            $salidasIds = Salida::deVenta($venta->id)->pluck('id');
             if ($salidasIds->isNotEmpty()) {
                 $this->cancelarComisionesVenta($venta, $salidasIds, 'Cancelada');
             }
 
             // Actualizar salidas asociadas
-            Salida::where('observaciones', 'like', "Venta #{$venta->id}%")->update([
+            Salida::deVenta($venta->id)->update([
                 'estado' => $nuevoEstado,
                 'fecha_cancelacion' => now()->toDateString(),
                 'observaciones' => DB::raw("CONCAT(observaciones, ' - Cancelada por vendedor: {$motivo}')"),
@@ -1103,13 +1111,13 @@ class VentaController extends Controller
                 }
 
                 // Anular comisiones con lógica de descuento y deducción de envío
-                $salidasIds = Salida::where('observaciones', 'like', "Venta #{$venta->id}%")->pluck('id');
+                $salidasIds = Salida::deVenta($venta->id)->pluck('id');
                 if ($salidasIds->isNotEmpty()) {
                     $this->cancelarComisionesVenta($venta, $salidasIds, $nuevoEstado);
                 }
             } elseif ($nuevoEstado === 'Cambio') {
                 // En un cambio físico la venta sigue vigente: se conserva la comisión del vendedor
-                $salidasIds = Salida::where('observaciones', 'like', "Venta #{$venta->id}%")->pluck('id');
+                $salidasIds = Salida::deVenta($venta->id)->pluck('id');
                 if ($salidasIds->isNotEmpty()) {
                     ComisionVendedor::whereIn('id_salida', $salidasIds)->each(function ($comision) {
                         $comision->update([
@@ -1140,7 +1148,7 @@ class VentaController extends Controller
                 $salidasUpdates['observaciones'] = "Venta #{$venta->id} - {$nuevoEstado}: " . trim($validated['observaciones']);
             }
 
-            Salida::where('observaciones', 'like', "Venta #{$venta->id}%")->update($salidasUpdates);
+            Salida::deVenta($venta->id)->update($salidasUpdates);
 
             // REGLA: Si la venta ha sido entregada (ej. envíos finalizados),
             // registrar las comisiones de los productos para el vendedor asignado si aún no están registradas.
@@ -1196,7 +1204,7 @@ class VentaController extends Controller
         }
 
         // Asociar costos extras guardados en la tabla salida
-        $salidas = Salida::where('observaciones', 'like', "Venta #{$venta->id}%")
+        $salidas = Salida::deVenta($venta->id)
             ->get()
             ->keyBy('id_variante');
 
@@ -1265,7 +1273,7 @@ class VentaController extends Controller
         }
 
         // Recuperar costos extras asociados a esta venta
-        $salidas = Salida::where('observaciones', 'like', "Venta #{$venta->id}%")
+        $salidas = Salida::deVenta($venta->id)
             ->get()
             ->keyBy('id_variante');
 
@@ -1567,7 +1575,7 @@ class VentaController extends Controller
     {
         $comisionService = app(\App\Services\ComisionService::class);
         $salidas = Salida::with(['variante.producto'])
-            ->where('observaciones', 'like', "Venta #{$venta->id}%")
+            ->deVenta($venta->id)
             ->get();
 
         if ($salidas->isEmpty()) {
@@ -1575,6 +1583,8 @@ class VentaController extends Controller
         }
 
         $vendedorVentaId = (int) $venta->id_usuario;
+        $esEnvio = in_array($venta->tipo_venta, ['Envio', 'Envío'], true);
+        $totalPendiente = 0.0;
 
         foreach ($salidas as $salida) {
             // Verificar si ya existe registro de comisión para esta salida
@@ -1613,7 +1623,7 @@ class VentaController extends Controller
                 $partesNotas[] = 'Descuento de venta aplicado a comisión: -$' . number_format($descuentoComision, 2)
                     . ' (comisión bruta: $' . number_format($comisionBruta, 2) . ')';
             }
-            if (in_array($venta->tipo_venta, ['Envio', 'Envío'])) {
+            if ($esEnvio) {
                 $partesNotas[] = 'Comisión registrada tras entrega exitosa del envío.';
             }
             $notasComision = !empty($partesNotas) ? implode(' | ', $partesNotas) : null;
@@ -1630,6 +1640,11 @@ class VentaController extends Controller
                 'notas'          => $notasComision,
                 'fecha_registro' => now(),
             ]);
+            $totalPendiente += max(0, $comisionTotal);
+        }
+
+        if ($esEnvio && $totalPendiente > 0 && $venta->puede_devolver) {
+            app(NotificationService::class)->notifyDeliveredShippingCommission($venta, $totalPendiente);
         }
     }
 }

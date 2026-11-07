@@ -257,6 +257,9 @@
                             </label>
                             <select 
                                 id="select-departamento-entrega"
+                                data-select-label="Departamento"
+                                data-select-icon="fa-map-location-dot"
+                                data-select-search="Buscar departamento..."
                                 x-model="departamento" 
                                 @change="onDepartamentoChange()"
                                 :class="errorDepartamento ? 'border-rose-500 bg-rose-50/40 text-rose-800 focus:border-rose-500 focus:ring-rose-500/20' : 'border-slate-300 text-slate-800 focus:border-blue-500 focus:ring-blue-500/20'"
@@ -280,6 +283,8 @@
                             </label>
                             <select 
                                 id="select-municipio-entrega"
+                                data-select-label="Municipio"
+                                data-select-icon="fa-location-dot"
                                 x-model="municipio" 
                                 @change="errorMunicipio = false"
                                 :disabled="!departamento"
@@ -432,6 +437,7 @@
                         </label>
                         <select 
                             x-model="metodoPago" 
+                            data-select-icon="fa-wallet"
                             class="w-full rounded-lg border border-slate-300 px-3.5 py-2 text-xs font-bold text-slate-800 bg-white focus:border-blue-500 focus:outline-none cursor-pointer"
                         >
                             <option value="Efectivo">Efectivo</option>

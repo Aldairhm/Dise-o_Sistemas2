@@ -130,15 +130,14 @@
                         </label>
                         <select
                             name="tipo"
-                            id="tipo"
-                            x-model="filtros.tipo"
+                            id="tipo" data-filter-select data-select-label="Tipo de movimiento" data-select-icon="fa-tags"
                             class="w-full rounded-xl border border-slate-300 bg-slate-50 px-3 py-2 text-xs font-semibold text-slate-700 focus:border-blue-500 focus:bg-white focus:outline-none focus:ring-4 focus:ring-blue-500/10 transition-all">
-                            <option value="todos">Todos los movimientos</option>
-                            <option value="ventas">Solo Ventas / Salidas</option>
-                            <option value="compras">Solo Compras / Entradas</option>
-                            <option value="transferencias">Transferencias a Tienda</option>
-                            <option value="devoluciones">Devoluciones</option>
-                            <option value="comisiones">Comisiones de Vendedores</option>
+                            <option value="todos" {{ ($filtros['tipo'] ?? '') === 'todos' ? 'selected' : '' }}>Todos los movimientos</option>
+                            <option data-icon="fa-cart-shopping" data-tone="blue" value="ventas" {{ ($filtros['tipo'] ?? '') === 'ventas' ? 'selected' : '' }}>Solo Ventas / Salidas</option>
+                            <option data-icon="fa-boxes-stacked" data-tone="emerald" value="compras" {{ ($filtros['tipo'] ?? '') === 'compras' ? 'selected' : '' }}>Solo Compras / Entradas</option>
+                            <option data-icon="fa-truck" data-tone="amber" value="transferencias" {{ ($filtros['tipo'] ?? '') === 'transferencias' ? 'selected' : '' }}>Transferencias a Tienda</option>
+                            <option data-icon="fa-rotate-left" data-tone="purple" value="devoluciones" {{ ($filtros['tipo'] ?? '') === 'devoluciones' ? 'selected' : '' }}>Devoluciones</option>
+                            <option data-icon="fa-hand-holding-dollar" data-tone="emerald" value="comisiones" {{ ($filtros['tipo'] ?? '') === 'comisiones' ? 'selected' : '' }}>Comisiones de Vendedores</option>
                         </select>
                     </div>
 

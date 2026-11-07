@@ -8,6 +8,8 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 class ComisionVendedor extends Model
 {
+    use \App\Models\Concerns\NotifiesBusinessChanges;
+
     use HasFactory;
 
     public $timestamps = false;

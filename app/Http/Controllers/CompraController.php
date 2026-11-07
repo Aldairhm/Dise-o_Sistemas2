@@ -86,6 +86,7 @@ class CompraController extends Controller
             ->get(['id', 'id_producto', 'sku', 'nombre_variante', 'stock', 'reserva']);
 
         $filtroMovimiento = request()->query('tipo', 'todos');
+        $movimientoId = request()->integer('movimiento');
         $tiposPermitidos = ['todos', 'transferencias', 'devoluciones', 'compras', 'entradas', 'salidas'];
         if (!in_array($filtroMovimiento, $tiposPermitidos, true)) {
             $filtroMovimiento = 'todos';
@@ -97,6 +98,7 @@ class CompraController extends Controller
             'compra.proveedor',
             'devolucion',
         ]);
+        $movimientosQuery->when($movimientoId > 0, fn ($query) => $query->whereKey($movimientoId));
 
         $movimientosQuery->when($filtroMovimiento === 'transferencias', fn ($query) =>
             $query->where('tipo', 'transferencia_tienda')
@@ -131,7 +133,8 @@ class CompraController extends Controller
             ]);
         }
 
-        return view('compras.movimientos', compact('movimientos', 'variantes', 'filtroMovimiento'));
+        return view('compras.movimientos', compact('movimientos', 'variantes', 'filtroMovimiento', 'movimientoId'));
+
     }
 
     public function detalleMovimiento(string|int $id)

@@ -8,6 +8,8 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class SoporteTicketMensaje extends Model
 {
+    use \App\Models\Concerns\NotifiesBusinessChanges;
+
     use HasFactory;
 
     protected $table = 'soporte_ticket_mensajes';

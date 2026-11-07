@@ -143,13 +143,14 @@
         </div>
 
         <!-- 1. BARRA DE FILTROS Y BÚSQUEDA -->
-        <section class="bg-white border border-slate-200 rounded-2xl p-4 sm:p-5 shadow-sm">
-            <form method="GET" action="{{ route('ventas.mis-ventas') }}" id="formFiltrosMisVentas" @submit.prevent="filtrarMisVentas()" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-12 gap-3.5 items-end">
+        <section class="bg-white border border-slate-200/80 rounded-2xl p-4 sm:p-5 shadow-xs">
+            <form method="GET" action="{{ route('ventas.mis-ventas') }}" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-12 gap-3.5 items-end">
                 
                 <!-- BÚSQUEDA RÁPIDA -->
                 <div class="lg:col-span-6">
-                    <label for="q" class="block text-[11px] font-bold uppercase tracking-wider text-slate-600 mb-1">
-                        <i class="fas fa-magnifying-glass text-slate-400 mr-1"></i> Buscar por Folio / Teléfono / Notas
+                    <label for="q" class="mb-1.5 flex items-center gap-1.5 text-xs font-bold text-slate-700 tracking-tight">
+                        <i class="fas fa-search text-blue-600 text-xs"></i>
+                        <span>Buscar por Folio / Teléfono / Notas</span>
                     </label>
                     <div class="relative">
                         <input 
@@ -158,37 +159,39 @@
                             id="q" 
                             x-model="filtroBusqueda"
                             placeholder="Ej: 00004 o 7123-4567..." 
-                            class="w-full rounded-xl border border-slate-300 bg-slate-50 pl-9 pr-3 py-2 text-xs font-semibold text-slate-700 focus:border-blue-500 focus:bg-white focus:outline-none focus:ring-4 focus:ring-blue-500/10 transition-all"
+                            class="h-10 w-full rounded-xl border border-slate-200 bg-slate-50/90 pl-9 pr-3 text-xs font-semibold text-slate-700 shadow-sm transition hover:border-slate-300 hover:bg-white focus:border-blue-500 focus:bg-white focus:outline-none focus:ring-4 focus:ring-blue-500/10"
                         >
-                        <i class="fas fa-search absolute left-3 top-2.5 text-slate-400 text-xs"></i>
+                        <i class="fas fa-search absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-xs pointer-events-none"></i>
                     </div>
                 </div>
 
                 <!-- FECHA DESDE -->
                 <div class="lg:col-span-2">
-                    <label for="desde" class="block text-[11px] font-bold uppercase tracking-wider text-slate-600 mb-1">
-                        <i class="fas fa-calendar-day text-slate-400 mr-1"></i> Desde
+                    <label for="desde" class="mb-1.5 flex items-center gap-1.5 text-xs font-bold text-slate-700 tracking-tight">
+                        <i class="fas fa-calendar-day text-blue-600 text-xs"></i>
+                        <span>Desde</span>
                     </label>
                     <input 
                         type="date" 
                         name="desde" 
                         id="desde" 
-                        x-model="filtroDesde"
-                        class="w-full rounded-xl border border-slate-300 bg-slate-50 px-3 py-2 text-xs font-semibold text-slate-700 focus:border-blue-500 focus:bg-white focus:outline-none focus:ring-4 focus:ring-blue-500/10 transition-all"
+                        value="{{ $desde }}" 
+                        class="h-10 w-full rounded-xl border border-slate-200 bg-slate-50/90 px-3 text-xs font-semibold text-slate-700 shadow-sm transition hover:border-slate-300 hover:bg-white focus:border-blue-500 focus:bg-white focus:outline-none focus:ring-4 focus:ring-blue-500/10"
                     >
                 </div>
 
                 <!-- FECHA HASTA -->
                 <div class="lg:col-span-2">
-                    <label for="hasta" class="block text-[11px] font-bold uppercase tracking-wider text-slate-600 mb-1">
-                        <i class="fas fa-calendar-check text-slate-400 mr-1"></i> Hasta
+                    <label for="hasta" class="mb-1.5 flex items-center gap-1.5 text-xs font-bold text-slate-700 tracking-tight">
+                        <i class="fas fa-calendar-check text-blue-600 text-xs"></i>
+                        <span>Hasta</span>
                     </label>
                     <input 
                         type="date" 
                         name="hasta" 
                         id="hasta" 
-                        x-model="filtroHasta"
-                        class="w-full rounded-xl border border-slate-300 bg-slate-50 px-3 py-2 text-xs font-semibold text-slate-700 focus:border-blue-500 focus:bg-white focus:outline-none focus:ring-4 focus:ring-blue-500/10 transition-all"
+                        value="{{ $hasta }}" 
+                        class="h-10 w-full rounded-xl border border-slate-200 bg-slate-50/90 px-3 text-xs font-semibold text-slate-700 shadow-sm transition hover:border-slate-300 hover:bg-white focus:border-blue-500 focus:bg-white focus:outline-none focus:ring-4 focus:ring-blue-500/10"
                     >
                 </div>
 
@@ -196,20 +199,20 @@
                 <div class="lg:col-span-2 flex items-center gap-2">
                     <button 
                         type="submit" 
-                        class="flex-1 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-bold py-2 px-3 text-xs transition-all shadow-md shadow-blue-600/15 flex items-center justify-center gap-1.5 cursor-pointer"
+                        class="h-10 flex-1 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold px-4 text-xs transition-all shadow-sm shadow-blue-500/20 hover:shadow-md flex items-center justify-center gap-2 cursor-pointer"
                     >
-                        <i :class="cargandoTabla ? 'fas fa-spinner fa-spin' : 'fas fa-filter'"></i>
-                        <span x-text="cargandoTabla ? 'Filtrando...' : 'Filtrar'"></span>
+                        <i class="fas fa-filter text-xs"></i>
+                        <span>Filtrar</span>
                     </button>
-                    <button 
-                        type="button"
-                        x-show="filtroBusqueda || filtroDesde || filtroHasta"
-                        @click="limpiarFiltros()" 
-                        class="rounded-xl border border-slate-200 bg-slate-50 hover:bg-slate-100 text-slate-600 font-bold py-2 px-3 text-xs transition-colors flex items-center justify-center cursor-pointer"
-                        title="Limpiar filtros"
-                    >
-                        <i class="fas fa-rotate-left"></i>
-                    </button>
+                    @if(request()->hasAny(['desde', 'hasta', 'q']))
+                        <a 
+                            href="{{ route('ventas.mis-ventas') }}" 
+                            class="h-10 w-10 rounded-xl border border-slate-200 bg-slate-50/90 hover:bg-red-50 hover:text-red-600 hover:border-red-200 text-slate-500 font-bold transition-all shadow-sm flex items-center justify-center cursor-pointer flex-shrink-0"
+                            title="Limpiar filtros"
+                        >
+                            <i class="fas fa-rotate-left text-xs"></i>
+                        </a>
+                    @endif
                 </div>
 
             </form>
@@ -771,6 +774,11 @@
     <script>
         function gestorMisVentas() {
             return {
+                init() {
+                    const id = window.location.hash.match(/^#venta-([1-9][0-9]*)$/)?.[1];
+                    if (id) this.abrirDetalle(id);
+                },
+
                 tabActiva: '{{ $estadoTab ?? "todos" }}',
 
                 // Filtros reactivos AJAX

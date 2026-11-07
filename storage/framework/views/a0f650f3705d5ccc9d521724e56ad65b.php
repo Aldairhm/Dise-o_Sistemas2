@@ -42,8 +42,42 @@
     </div>
 
     
+    <div id="home-products-skeleton" class="hidden grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 sm:gap-8 mb-4">
+        <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::openLoop(); ?><?php endif; ?><?php for($s = 0; $s < 4; $s++): ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::startLoopIteration(); ?><?php endif; ?>
+        <div class="bg-white rounded-3xl shadow-sm border border-slate-100 p-4 flex flex-col space-y-4 animate-pulse select-none">
+            
+            <div class="h-[240px] w-full rounded-2xl ax-skeleton-shimmer"></div>
+            
+            <div class="flex items-center justify-between pt-1">
+                <div class="h-3 w-20 rounded-md ax-skeleton-shimmer"></div>
+                <div class="h-4 w-14 rounded-md ax-skeleton-shimmer"></div>
+            </div>
+            
+            <div class="space-y-2">
+                <div class="h-4.5 w-5/6 rounded-md ax-skeleton-shimmer"></div>
+                <div class="h-3.5 w-1/2 rounded-md ax-skeleton-shimmer"></div>
+            </div>
+            
+            <div class="flex items-center gap-2 pt-1">
+                <div class="h-5 w-16 rounded-md ax-skeleton-shimmer"></div>
+                <div class="h-5 w-14 rounded-md ax-skeleton-shimmer"></div>
+                <div class="h-5 w-10 rounded-md ax-skeleton-shimmer"></div>
+            </div>
+            
+            <div class="flex items-center justify-between pt-4 mt-auto border-t border-slate-50">
+                <div class="space-y-1">
+                    <div class="h-2.5 w-12 rounded ax-skeleton-shimmer"></div>
+                    <div class="h-6 w-20 rounded-lg ax-skeleton-shimmer"></div>
+                </div>
+                <div class="h-9 w-20 rounded-xl ax-skeleton-shimmer"></div>
+            </div>
+        </div>
+        <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::endLoop(); ?><?php endif; ?><?php endfor; ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::closeLoop(); ?><?php endif; ?>
+    </div>
+
+    
     <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php endif; ?><?php if($products->isNotEmpty()): ?>
-    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 sm:gap-8">
+    <div id="home-products-grid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 sm:gap-8">
         <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::openLoop(); ?><?php endif; ?><?php $__currentLoopData = $products; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $prod): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::startLoopIteration(); ?><?php endif; ?>
         <?php
             $variantesActivas = $prod->variantes->where('estado', 1)->values();
@@ -285,8 +319,10 @@ document.addEventListener('DOMContentLoaded', function() {
     let isExpanded = false;
     const ITEMS_PER_PAGE = 4; // Límite inicial de productos a mostrar (1 fila)
 
-    // Elemento para mostrar "No hay resultados"
-    const gridContainer = document.querySelector('.grid');
+    const gridContainer = document.getElementById('home-products-grid') || document.querySelector('.grid');
+    const skeletonContainer = document.getElementById('home-products-skeleton');
+    let skeletonTimeout = null;
+
     let noResultsMsg = document.createElement('div');
     noResultsMsg.className = 'col-span-full text-center py-12 text-slate-400 hidden';
     noResultsMsg.innerHTML = `
@@ -296,6 +332,27 @@ document.addEventListener('DOMContentLoaded', function() {
     `;
     if (gridContainer) {
         gridContainer.appendChild(noResultsMsg);
+    }
+
+    function showSkeleton() {
+        if (!skeletonContainer || !gridContainer) return;
+        skeletonContainer.classList.remove('hidden');
+        gridContainer.classList.add('opacity-40', 'pointer-events-none');
+    }
+
+    function hideSkeleton() {
+        if (!skeletonContainer || !gridContainer) return;
+        skeletonContainer.classList.add('hidden');
+        gridContainer.classList.remove('opacity-40', 'pointer-events-none');
+    }
+
+    function triggerRenderWithSkeleton(delay = 200) {
+        if (skeletonTimeout) clearTimeout(skeletonTimeout);
+        showSkeleton();
+        skeletonTimeout = setTimeout(() => {
+            renderProducts();
+            hideSkeleton();
+        }, delay);
     }
 
     function renderProducts() {
@@ -352,11 +409,12 @@ document.addEventListener('DOMContentLoaded', function() {
 
             currentCategory = btn.getAttribute('data-category');
             isExpanded = false; // Al cambiar categoría, colapsamos
-            renderProducts();
+            triggerRenderWithSkeleton(220);
         });
     });
 
-    // Eventos Buscador
+    // Eventos Buscador con debounce y skeleton
+    let searchDebounce = null;
     if (searchInput) {
         searchInput.addEventListener('input', (e) => {
             searchQuery = e.target.value.toLowerCase().trim();
@@ -367,10 +425,15 @@ document.addEventListener('DOMContentLoaded', function() {
                 clearSearchBtn.classList.add('hidden');
             }
             
-            isExpanded = true; // Si busca, mostrar todos los resultados filtrados sin colapsar (opcional, pero buena UX)
+            isExpanded = true; // Si busca, mostrar todos los resultados filtrados sin colapsar
             if (searchQuery === '') isExpanded = false; // Si borra, volver a 4
 
-            renderProducts();
+            if (searchDebounce) clearTimeout(searchDebounce);
+            showSkeleton();
+            searchDebounce = setTimeout(() => {
+                renderProducts();
+                hideSkeleton();
+            }, 250);
         });
     }
 
@@ -380,7 +443,7 @@ document.addEventListener('DOMContentLoaded', function() {
             searchQuery = '';
             clearSearchBtn.classList.add('hidden');
             isExpanded = false;
-            renderProducts();
+            triggerRenderWithSkeleton(150);
         });
     }
 
@@ -389,7 +452,7 @@ document.addEventListener('DOMContentLoaded', function() {
         btnVerTodos.addEventListener('click', (e) => {
             e.preventDefault();
             isExpanded = !isExpanded;
-            renderProducts();
+            triggerRenderWithSkeleton(180);
         });
     }
 

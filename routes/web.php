@@ -46,6 +46,15 @@ Route::get('/preview-reset-password', [AuthController::class, 'previewResetPassw
 
 // ── Rutas protegidas (requieren estar logueado) ─────────────
 Route::middleware('auth')->group(function () {
+    Route::prefix('notificaciones')->name('notifications.')->middleware('throttle:120,1')->group(function () {
+        Route::get('/', [\App\Http\Controllers\NotificationController::class, 'index'])->name('index');
+        Route::get('/feed', [\App\Http\Controllers\NotificationController::class, 'feed'])->name('feed');
+        Route::post('/leer-todas', [\App\Http\Controllers\NotificationController::class, 'readAll'])->name('read-all');
+        Route::post('/{id}/leer', [\App\Http\Controllers\NotificationController::class, 'read'])->whereNumber('id')->name('read');
+        Route::post('/{id}/archivar', [\App\Http\Controllers\NotificationController::class, 'archive'])->whereNumber('id')->name('archive');
+        Route::get('/{id}/abrir', [\App\Http\Controllers\NotificationController::class, 'open'])->whereNumber('id')->name('open');
+    });
+
     Route::get('/ayuda', [AyudaController::class, 'index'])->name('ayuda.index');
     Route::post('/ayuda/subir-evidencia', [AyudaController::class, 'subirEvidencia'])->name('ayuda.subir-evidencia');
     Route::post('/ayuda/tickets', [AyudaController::class, 'guardarTicket'])->name('ayuda.tickets.store');

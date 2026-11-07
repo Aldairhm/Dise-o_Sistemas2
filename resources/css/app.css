@@ -1,4 +1,6 @@
 @import 'tailwindcss';
+@import './filter-selects.css';
+@import './date-picker.css';
 
 [x-cloak] {
     display: none !important;

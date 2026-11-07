@@ -225,8 +225,8 @@
 
                 <!-- Módulo -->
                 <div>
-                    <label class="block text-xs font-bold text-slate-600 mb-1.5">Módulo</label>
-                    <select x-model="filtroModulo" @change="ejecutarFiltro()" class="w-full py-2 px-3 text-xs border border-slate-200 rounded-xl focus:ring-2 focus:ring-teal-500 focus:border-teal-500 transition-all outline-none bg-white">
+                    <label for="bitacora-modulo" class="block text-xs font-bold text-slate-600 mb-1.5">Módulo</label>
+                    <select id="bitacora-modulo" data-filter-select data-select-label="Módulo" data-select-icon="fa-layer-group" name="modulo" class="w-full py-2 px-3 text-xs border border-slate-200 rounded-xl focus:ring-2 focus:ring-teal-500 focus:border-teal-500 transition-all outline-none bg-white">
                         <option value="">Todos los módulos</option>
                         @foreach($modulos as $mod)
                             <option value="{{ $mod }}">{{ $mod }}</option>
@@ -236,8 +236,8 @@
 
                 <!-- Acción -->
                 <div>
-                    <label class="block text-xs font-bold text-slate-600 mb-1.5">Acción</label>
-                    <select x-model="filtroAccion" @change="ejecutarFiltro()" class="w-full py-2 px-3 text-xs border border-slate-200 rounded-xl focus:ring-2 focus:ring-teal-500 focus:border-teal-500 transition-all outline-none bg-white">
+                    <label for="bitacora-accion" class="block text-xs font-bold text-slate-600 mb-1.5">Acción</label>
+                    <select id="bitacora-accion" data-filter-select data-select-label="Acción" data-select-icon="fa-bolt" name="accion" class="w-full py-2 px-3 text-xs border border-slate-200 rounded-xl focus:ring-2 focus:ring-teal-500 focus:border-teal-500 transition-all outline-none bg-white">
                         <option value="">Todas las acciones</option>
                         @foreach($acciones as $acc)
                             <option value="{{ $acc }}">{{ $acc }}</option>
@@ -247,8 +247,8 @@
 
                 <!-- Usuario -->
                 <div>
-                    <label class="block text-xs font-bold text-slate-600 mb-1.5">Usuario</label>
-                    <select x-model="filtroUsuario" @change="ejecutarFiltro()" class="w-full py-2 px-3 text-xs border border-slate-200 rounded-xl focus:ring-2 focus:ring-teal-500 focus:border-teal-500 transition-all outline-none bg-white">
+                    <label for="bitacora-usuario_id" class="block text-xs font-bold text-slate-600 mb-1.5">Usuario</label>
+                    <select id="bitacora-usuario_id" data-filter-select data-select-label="Usuario" data-select-icon="fa-user-tie" data-select-search="Buscar usuario..." name="usuario_id" class="w-full py-2 px-3 text-xs border border-slate-200 rounded-xl focus:ring-2 focus:ring-teal-500 focus:border-teal-500 transition-all outline-none bg-white">
                         <option value="">Todos los usuarios</option>
                         @foreach($usuarios as $usr)
                             <option value="{{ $usr->id }}">{{ $usr->nombre_real }} ({{ $usr->username }})</option>

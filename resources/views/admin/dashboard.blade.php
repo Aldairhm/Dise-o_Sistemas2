@@ -142,12 +142,11 @@
                         </label>
                         <select
                             name="vendedor_id"
-                            id="vendedor_id"
-                            x-model="filtros.vendedor_id"
+                            id="vendedor_id" data-filter-select data-select-label="Vendedor" data-select-icon="fa-user-tie" data-select-search="Buscar vendedor..."
                             class="w-full rounded-xl border border-slate-300 bg-slate-50 px-3 py-2 text-xs font-semibold text-slate-700 focus:border-blue-500 focus:bg-white focus:outline-none focus:ring-4 focus:ring-blue-500/10 transition-all">
                             <option value="">Todos los vendedores</option>
                             @foreach ($vendedores as $v)
-                                <option value="{{ $v->id }}">
+                                <option value="{{ $v->id }}" data-search="{{ $v->username }}" {{ ($filtros['vendedor_id'] ?? '') == $v->id ? 'selected' : '' }}>
                                     {{ $v->nombre_real }} ({{ ucfirst($v->rol) }})
                                 </option>
                             @endforeach
