@@ -228,9 +228,9 @@
                     </div>
                     <div class="text-xs text-slate-500 space-y-1">
                         <p class="font-bold text-slate-700">Política de retención</p>
-                        <p>• Se conservan respaldos diarios de los <strong class="text-slate-700">últimos 7 días</strong>.</p>
-                        <p>• Se conserva <strong class="text-slate-700">1 copia semanal</strong> durante 1 mes.</p>
-                        <p>• Máximo aproximado: <strong class="text-slate-700">~11 archivos</strong> en disco.</p>
+                        <p>• Se conserva <strong class="text-slate-700">1 respaldo por día</strong> durante los últimos 7 días.</p>
+                        <p>• Se conserva <strong class="text-slate-700">1 respaldo por semana</strong> durante las últimas 8 semanas.</p>
+                        <p>• Los respaldos antiguos se eliminan automáticamente según esta política.</p>
                         <p>• Sincronización automática simultánea con Google Drive.</p>
                     </div>
                 </div>

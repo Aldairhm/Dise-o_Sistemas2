@@ -20,7 +20,7 @@
         <a href="<?php echo e(route('notifications.index')); ?>" class="block border-t border-gray-100 p-3 text-center text-xs font-bold text-blue-700 hover:bg-blue-50 transition sticky bottom-0 bg-white">Ver todas las notificaciones</a>
     </section>
 </div>
-<?php if (! $__env->hasRenderedOnce('5e85da12-6f79-4d6c-9e92-a4d128edcc7a')): $__env->markAsRenderedOnce('5e85da12-6f79-4d6c-9e92-a4d128edcc7a'); ?>
+<?php if (! $__env->hasRenderedOnce('0a2e67ae-dea0-41b3-bf31-ec7a7280078a')): $__env->markAsRenderedOnce('0a2e67ae-dea0-41b3-bf31-ec7a7280078a'); ?>
 <style>
 .notification-bell [data-bell-items]:not(:empty) { display: flex; flex-direction: column; gap: 10px; padding: 12px; }
 .notification-bell .notification-preview {

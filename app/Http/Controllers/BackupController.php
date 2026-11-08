@@ -208,7 +208,21 @@ class BackupController extends Controller
                 throw new \Exception('No se pudo abrir el archivo .zip de respaldo.');
             }
 
-            $zip->extractTo($tempExtractPath);
+            // Los respaldos generados por Spatie pueden estar cifrados con la
+            // misma contraseña configurada en BACKUP_ARCHIVE_PASSWORD.
+            $archivePassword = config('backup.backup.password');
+            if (is_string($archivePassword) && $archivePassword !== '') {
+                $zip->setPassword($archivePassword);
+            }
+
+            if ($zip->extractTo($tempExtractPath) !== true) {
+                $zip->close();
+                throw new \Exception(
+                    $archivePassword
+                        ? 'No se pudo extraer el respaldo. Verifica que el ZIP corresponda a la contraseña configurada para los respaldos.'
+                        : 'No se pudo extraer el contenido del archivo .zip de respaldo.'
+                );
+            }
             $zip->close();
 
             // 3. Restauración de Base de Datos: Escanear archivo .sql (normalmente en db-dumps/)
