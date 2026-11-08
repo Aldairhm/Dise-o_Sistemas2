@@ -77,13 +77,14 @@
 
         <!-- FILTROS GLOBALES -->
         <section class="bg-white border border-slate-200 rounded-2xl p-4 sm:p-5 shadow-sm">
-            <form id="filtrosForm" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-12 gap-3.5 items-end">
+            <form id="filtrosForm" onsubmit="event.preventDefault(); aplicarFiltros();" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-12 gap-3.5 items-end">
 
                 <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php endif; ?><?php if($isAdmin): ?>
                 
                 <div class="lg:col-span-3">
-                    <label for="filtroVendedor" class="block text-[11px] font-bold uppercase tracking-wider text-slate-600 mb-1.5">
-                        <i class="fas fa-user-tie text-slate-400 mr-1"></i> Vendedor
+                    <label for="filtroVendedor" class="mb-1.5 flex items-center gap-1.5 text-xs font-bold text-slate-700 tracking-tight">
+                        <i class="fas fa-user-tie text-blue-600 text-xs"></i>
+                        <span>Vendedor</span>
                     </label>
                     <select id="filtroVendedor" name="vendedor_id" data-searchable-vendedor
                             class="w-full rounded-xl border border-slate-300 bg-slate-50 px-3 py-2 text-xs font-semibold text-slate-700 focus:border-blue-500 focus:bg-white focus:outline-none focus:ring-4 focus:ring-blue-500/10 transition-all">
@@ -98,63 +99,117 @@
                 <?php endif; ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php endif; ?>
 
                 
-                <div class="<?php echo e($isAdmin ? 'lg:col-span-2' : 'lg:col-span-3'); ?>">
-                    <label for="filtroEstado" class="block text-[11px] font-bold uppercase tracking-wider text-slate-600 mb-1.5">
-                        <i class="fas fa-tag text-slate-400 mr-1"></i> Estado
+                <div class="<?php echo e($isAdmin ? 'lg:col-span-2' : 'lg:col-span-3'); ?> relative" data-custom-comision-select="estado">
+                    <label class="mb-1.5 flex items-center gap-1.5 text-xs font-bold text-slate-700 tracking-tight">
+                        <i class="fas fa-tag text-blue-600 text-xs"></i>
+                        <span>Estado</span>
                     </label>
-                    <select id="filtroEstado" name="estado"
-                            class="w-full rounded-xl border border-slate-300 bg-slate-50 px-3 py-2 text-xs font-semibold text-slate-700 focus:border-blue-500 focus:bg-white focus:outline-none focus:ring-4 focus:ring-blue-500/10 transition-all">
-                        <option value="todos">Todos los estados</option>
-                        <option value="Pendiente" <?php echo e(request('estado') === 'Pendiente' ? 'selected' : ''); ?>>Pendiente (Por liquidar)</option>
-                        <option value="Pagada"    <?php echo e(request('estado') === 'Pagada'    ? 'selected' : ''); ?>>Pagada</option>
-                        <option value="Cancelada" <?php echo e(request('estado') === 'Cancelada' ? 'selected' : ''); ?>>Cancelada</option>
-                    </select>
+                    <?php
+                        $estadoVal = request('estado', 'todos');
+                        $estadoMap = [
+                            'todos'     => ['label' => 'Todos los estados', 'icon' => 'fas fa-layer-group text-slate-400'],
+                            'Pendiente' => ['label' => 'Pendiente (Por liquidar)', 'icon' => 'fas fa-clock text-amber-500'],
+                            'Pagada'    => ['label' => 'Pagada', 'icon' => 'fas fa-circle-check text-emerald-500'],
+                            'Cancelada' => ['label' => 'Cancelada', 'icon' => 'fas fa-circle-xmark text-rose-500'],
+                        ];
+                        $curEstado = $estadoMap[$estadoVal] ?? $estadoMap['todos'];
+                    ?>
+                    <input type="hidden" id="filtroEstado" name="estado" value="<?php echo e($estadoVal); ?>">
+                    <button type="button" class="h-10 w-full min-w-0 rounded-xl border border-slate-200 bg-slate-50/90 px-3.5 text-xs font-bold text-slate-700 shadow-sm transition hover:border-slate-300 hover:bg-white focus:border-blue-500 focus:bg-white focus:outline-none focus:ring-4 focus:ring-blue-500/10 flex items-center justify-between gap-2 cursor-pointer text-left" data-toggle aria-expanded="false">
+                        <span class="flex items-center gap-2 truncate">
+                            <i class="<?php echo e($curEstado['icon']); ?>" data-icon></i>
+                            <span class="truncate" data-label><?php echo e($curEstado['label']); ?></span>
+                        </span>
+                        <i class="fas fa-chevron-down text-[10px] text-slate-400 transition-transform duration-200" data-arrow></i>
+                    </button>
+                    <div class="hidden absolute left-0 top-full z-50 mt-1.5 w-full min-w-[200px] rounded-2xl border border-slate-200 bg-white p-1.5 shadow-2xl" data-menu>
+                        <div class="space-y-0.5">
+                            <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::openLoop(); ?><?php endif; ?><?php $__currentLoopData = $estadoMap; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $val => $opt): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::startLoopIteration(); ?><?php endif; ?>
+                                <?php $isSelected = ($estadoVal === $val); ?>
+                                <button type="button" data-option data-value="<?php echo e($val); ?>" data-label="<?php echo e($opt['label']); ?>" data-icon="<?php echo e($opt['icon']); ?>"
+                                    class="w-full flex items-center justify-between rounded-xl px-3 py-2 text-xs font-bold transition-colors text-left <?php echo e($isSelected ? 'bg-blue-50 text-blue-700' : 'text-slate-700 hover:bg-slate-50 hover:text-slate-900'); ?>">
+                                    <span class="flex items-center gap-2 truncate">
+                                        <i class="<?php echo e($opt['icon']); ?>"></i>
+                                        <span><?php echo e($opt['label']); ?></span>
+                                    </span>
+                                    <i class="fas fa-check text-blue-600 text-[10px] <?php echo e($isSelected ? '' : 'hidden'); ?>" data-check></i>
+                                </button>
+                            <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::endLoop(); ?><?php endif; ?><?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::closeLoop(); ?><?php endif; ?>
+                        </div>
+                    </div>
                 </div>
 
                 
-                <div class="<?php echo e($isAdmin ? 'lg:col-span-2' : 'lg:col-span-3'); ?>">
-                    <label for="filtroMetodoPago" class="block text-[11px] font-bold uppercase tracking-wider text-slate-600 mb-1.5">
-                        <i class="fas fa-wallet text-slate-400 mr-1"></i> Método de Pago
+                <div class="<?php echo e($isAdmin ? 'lg:col-span-2' : 'lg:col-span-3'); ?> relative" data-custom-comision-select="metodo_pago">
+                    <label class="mb-1.5 flex items-center gap-1.5 text-xs font-bold text-slate-700 tracking-tight">
+                        <i class="fas fa-wallet text-blue-600 text-xs"></i>
+                        <span>Método de Pago</span>
                     </label>
-                    <select id="filtroMetodoPago" name="metodo_pago"
-                            class="w-full rounded-xl border border-slate-300 bg-slate-50 px-3 py-2 text-xs font-semibold text-slate-700 focus:border-blue-500 focus:bg-white focus:outline-none focus:ring-4 focus:ring-blue-500/10 transition-all">
-                        <option value="todos">Todos los métodos</option>
-                        <option value="Efectivo" <?php echo e(request('metodo_pago') === 'Efectivo' ? 'selected' : ''); ?>>Efectivo</option>
-                        <option value="Transferencia Bancaria" <?php echo e(request('metodo_pago') === 'Transferencia Bancaria' ? 'selected' : ''); ?>>Transferencia Bancaria</option>
-                    </select>
+                    <?php
+                        $metodoVal = request('metodo_pago', 'todos');
+                        $metodoMap = [
+                            'todos'                  => ['label' => 'Todos los métodos', 'icon' => 'fas fa-wallet text-slate-400'],
+                            'Efectivo'               => ['label' => 'Efectivo', 'icon' => 'fas fa-money-bill-wave text-emerald-500'],
+                            'Transferencia Bancaria' => ['label' => 'Transferencia Bancaria', 'icon' => 'fas fa-building-columns text-blue-500'],
+                        ];
+                        $curMetodo = $metodoMap[$metodoVal] ?? $metodoMap['todos'];
+                    ?>
+                    <input type="hidden" id="filtroMetodoPago" name="metodo_pago" value="<?php echo e($metodoVal); ?>">
+                    <button type="button" class="h-10 w-full min-w-0 rounded-xl border border-slate-200 bg-slate-50/90 px-3.5 text-xs font-bold text-slate-700 shadow-sm transition hover:border-slate-300 hover:bg-white focus:border-blue-500 focus:bg-white focus:outline-none focus:ring-4 focus:ring-blue-500/10 flex items-center justify-between gap-2 cursor-pointer text-left" data-toggle aria-expanded="false">
+                        <span class="flex items-center gap-2 truncate">
+                            <i class="<?php echo e($curMetodo['icon']); ?>" data-icon></i>
+                            <span class="truncate" data-label><?php echo e($curMetodo['label']); ?></span>
+                        </span>
+                        <i class="fas fa-chevron-down text-[10px] text-slate-400 transition-transform duration-200" data-arrow></i>
+                    </button>
+                    <div class="hidden absolute left-0 top-full z-50 mt-1.5 w-full min-w-[200px] rounded-2xl border border-slate-200 bg-white p-1.5 shadow-2xl" data-menu>
+                        <div class="space-y-0.5">
+                            <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::openLoop(); ?><?php endif; ?><?php $__currentLoopData = $metodoMap; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $val => $opt): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::startLoopIteration(); ?><?php endif; ?>
+                                <?php $isSelected = ($metodoVal === $val); ?>
+                                <button type="button" data-option data-value="<?php echo e($val); ?>" data-label="<?php echo e($opt['label']); ?>" data-icon="<?php echo e($opt['icon']); ?>"
+                                    class="w-full flex items-center justify-between rounded-xl px-3 py-2 text-xs font-bold transition-colors text-left <?php echo e($isSelected ? 'bg-blue-50 text-blue-700' : 'text-slate-700 hover:bg-slate-50 hover:text-slate-900'); ?>">
+                                    <span class="flex items-center gap-2 truncate">
+                                        <i class="<?php echo e($opt['icon']); ?>"></i>
+                                        <span><?php echo e($opt['label']); ?></span>
+                                    </span>
+                                    <i class="fas fa-check text-blue-600 text-[10px] <?php echo e($isSelected ? '' : 'hidden'); ?>" data-check></i>
+                                </button>
+                            <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::endLoop(); ?><?php endif; ?><?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::closeLoop(); ?><?php endif; ?>
+                        </div>
+                    </div>
                 </div>
 
                 
                 <div class="lg:col-span-2">
-                    <label for="filtroDesde" class="block text-[11px] font-bold uppercase tracking-wider text-slate-600 mb-1.5">
-                        <i class="fas fa-calendar-day text-slate-400 mr-1"></i> Desde
+                    <label for="filtroDesde" class="mb-1.5 flex items-center gap-1.5 text-xs font-bold text-slate-700 tracking-tight">
+                        <i class="fas fa-calendar-day text-blue-600 text-xs"></i> <span>Desde</span>
                     </label>
                     <input type="date" id="filtroDesde" name="fecha_desde"
                            value="<?php echo e(request('fecha_desde')); ?>"
-                           class="w-full rounded-xl border border-slate-300 bg-slate-50 px-3 py-2 text-xs font-semibold text-slate-700 focus:border-blue-500 focus:bg-white focus:outline-none focus:ring-4 focus:ring-blue-500/10 transition-all">
+                           class="h-10 w-full rounded-xl border border-slate-200 bg-slate-50/90 px-3 text-xs font-semibold text-slate-700 shadow-sm transition hover:border-slate-300 hover:bg-white focus:border-blue-500 focus:bg-white focus:outline-none focus:ring-4 focus:ring-blue-500/10">
                 </div>
 
                 
                 <div class="lg:col-span-2">
-                    <label for="filtroHasta" class="block text-[11px] font-bold uppercase tracking-wider text-slate-600 mb-1.5">
-                        <i class="fas fa-calendar-check text-slate-400 mr-1"></i> Hasta
+                    <label for="filtroHasta" class="mb-1.5 flex items-center gap-1.5 text-xs font-bold text-slate-700 tracking-tight">
+                        <i class="fas fa-calendar-check text-blue-600 text-xs"></i> <span>Hasta</span>
                     </label>
                     <input type="date" id="filtroHasta" name="fecha_hasta"
                            value="<?php echo e(request('fecha_hasta')); ?>"
-                           class="w-full rounded-xl border border-slate-300 bg-slate-50 px-3 py-2 text-xs font-semibold text-slate-700 focus:border-blue-500 focus:bg-white focus:outline-none focus:ring-4 focus:ring-blue-500/10 transition-all">
+                           class="h-10 w-full rounded-xl border border-slate-200 bg-slate-50/90 px-3 text-xs font-semibold text-slate-700 shadow-sm transition hover:border-slate-300 hover:bg-white focus:border-blue-500 focus:bg-white focus:outline-none focus:ring-4 focus:ring-blue-500/10">
                 </div>
 
                 
-                <div class="lg:col-span-1 flex items-center gap-1.5">
+                <div class="lg:col-span-1 flex items-center gap-2">
                     <button type="button" onclick="aplicarFiltros()"
-                            class="w-full rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-bold py-2 px-2.5 text-xs transition-all shadow-md shadow-blue-600/15 flex items-center justify-center gap-1 cursor-pointer"
+                            class="h-10 w-full rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-3 text-xs transition-all shadow-md shadow-blue-600/20 active:scale-95 flex items-center justify-center gap-1.5 cursor-pointer"
                             title="Aplicar filtros">
-                        <i class="fas fa-filter text-[11px]"></i>
+                        <i class="fas fa-filter text-xs"></i>
                         <span>Filtrar</span>
                     </button>
                     <button type="button" onclick="limpiarFiltros()"
-                            class="rounded-xl border border-slate-300 hover:bg-slate-100 text-slate-500 p-2 text-xs transition-all cursor-pointer"
-                            title="Restablecer">
+                            class="h-10 rounded-xl border border-slate-200 hover:bg-red-50 hover:text-red-600 hover:border-red-200 text-slate-500 px-3 text-xs transition-all cursor-pointer flex items-center justify-center"
+                            title="Restablecer filtros">
                         <i class="fas fa-rotate-left"></i>
                     </button>
                 </div>
@@ -226,11 +281,29 @@
         <!-- TABLA PRINCIPAL DE COMISIONES -->
         <div class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden relative" id="tableContainer">
             
-            <div id="tableLoading" class="absolute inset-0 bg-white/70 backdrop-blur-xs flex items-center justify-center z-20 hidden">
-                <div class="flex items-center gap-3 bg-white px-5 py-3 rounded-2xl shadow-xl border border-slate-100 text-blue-600 text-sm font-bold">
-                    <i class="fas fa-spinner fa-spin text-lg"></i>
-                    <span>Cargando comisiones...</span>
-                </div>
+            <div id="tableSkeletonComisiones" class="hidden">
+                <?php if (isset($component)) { $__componentOriginalb3a7e296665e2f58ea67cad97892cbe7 = $component; } ?>
+<?php if (isset($attributes)) { $__attributesOriginalb3a7e296665e2f58ea67cad97892cbe7 = $attributes; } ?>
+<?php $component = Illuminate\View\AnonymousComponent::resolve(['view' => 'components.skeleton-table','data' => ['rows' => 5,'cols' => 7]] + (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag ? $attributes->all() : [])); ?>
+<?php $component->withName('skeleton-table'); ?>
+<?php if ($component->shouldRender()): ?>
+<?php $__env->startComponent($component->resolveView(), $component->data()); ?>
+<?php if (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag): ?>
+<?php $attributes = $attributes->except(\Illuminate\View\AnonymousComponent::ignoredParameterNames()); ?>
+<?php endif; ?>
+<?php $component->withAttributes(['rows' => 5,'cols' => 7]); ?>
+<?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::processComponentKey($component); ?>
+
+<?php echo $__env->renderComponent(); ?>
+<?php endif; ?>
+<?php if (isset($__attributesOriginalb3a7e296665e2f58ea67cad97892cbe7)): ?>
+<?php $attributes = $__attributesOriginalb3a7e296665e2f58ea67cad97892cbe7; ?>
+<?php unset($__attributesOriginalb3a7e296665e2f58ea67cad97892cbe7); ?>
+<?php endif; ?>
+<?php if (isset($__componentOriginalb3a7e296665e2f58ea67cad97892cbe7)): ?>
+<?php $component = $__componentOriginalb3a7e296665e2f58ea67cad97892cbe7; ?>
+<?php unset($__componentOriginalb3a7e296665e2f58ea67cad97892cbe7); ?>
+<?php endif; ?>
             </div>
 
             <div id="tableWrapper">
@@ -266,8 +339,17 @@
             return;
         }
 
-        const loading = document.getElementById('tableLoading');
-        loading.classList.remove('hidden');
+        const skeleton = document.getElementById('tableSkeletonComisiones');
+        const wrapper = document.getElementById('tableWrapper');
+        const btnFiltrar = document.getElementById('btnFiltrarComisiones');
+        if (btnFiltrar) {
+            btnFiltrar.disabled = true;
+            btnFiltrar.innerHTML = '<i class="fas fa-spinner fa-spin text-[11px]"></i> <span>Filtrando...</span>';
+        }
+        if (skeleton && wrapper) {
+            skeleton.classList.remove('hidden');
+            wrapper.classList.add('hidden');
+        }
 
         const params = new URLSearchParams();
         <?php if($isAdmin): ?>
@@ -290,6 +372,7 @@
             const data = await res.json();
             if (data.success) {
                 document.getElementById('tableWrapper').innerHTML = data.table;
+                atarPaginacionComisiones();
                 if (data.stats) {
                     document.getElementById('kpiTotal').textContent     = '$' + formatNum(data.stats.total);
                     document.getElementById('kpiPendiente').textContent = '$' + formatNum(data.stats.pendiente);
@@ -300,7 +383,60 @@
         } catch(e) {
             console.error(e);
         } finally {
-            loading.classList.add('hidden');
+            if (btnFiltrar) {
+                btnFiltrar.disabled = false;
+                btnFiltrar.innerHTML = '<i class="fas fa-filter text-[11px]"></i> <span>Filtrar</span>';
+            }
+            if (skeleton && wrapper) {
+                skeleton.classList.add('hidden');
+                wrapper.classList.remove('hidden');
+            }
+        }
+    }
+
+    function atarPaginacionComisiones() {
+        const wrapper = document.getElementById('tableWrapper');
+        if (!wrapper) return;
+        const links = wrapper.querySelectorAll('a[href*="page="]');
+        links.forEach(link => {
+            link.addEventListener('click', async (e) => {
+                e.preventDefault();
+                const url = link.getAttribute('href');
+                if (!url) return;
+                await cargarPaginaComisiones(url);
+            });
+        });
+    }
+
+    async function cargarPaginaComisiones(url) {
+        const skeleton = document.getElementById('tableSkeletonComisiones');
+        const wrapper = document.getElementById('tableWrapper');
+        if (skeleton && wrapper) {
+            skeleton.classList.remove('hidden');
+            wrapper.classList.add('hidden');
+        }
+        try {
+            const res = await fetch(url, {
+                headers: { 'X-Requested-With': 'XMLHttpRequest' }
+            });
+            const data = await res.json();
+            if (data.success) {
+                wrapper.innerHTML = data.table;
+                atarPaginacionComisiones();
+                if (data.stats) {
+                    document.getElementById('kpiTotal').textContent     = '$' + formatNum(data.stats.total);
+                    document.getElementById('kpiPendiente').textContent = '$' + formatNum(data.stats.pendiente);
+                    document.getElementById('kpiPagada').textContent    = '$' + formatNum(data.stats.pagada);
+                    document.getElementById('kpiCancelada').textContent = '$' + formatNum(data.stats.cancelada);
+                }
+            }
+        } catch(e) {
+            console.error('Error al paginar comisiones:', e);
+        } finally {
+            if (skeleton && wrapper) {
+                skeleton.classList.add('hidden');
+                wrapper.classList.remove('hidden');
+            }
         }
     }
 
@@ -315,6 +451,9 @@
         document.getElementById('filtroMetodoPago').value = 'todos';
         document.getElementById('filtroDesde').value      = '';
         document.getElementById('filtroHasta').value      = '';
+        if (window.resetComisionCustomSelects) {
+            window.resetComisionCustomSelects();
+        }
         aplicarFiltros();
     }
 
@@ -924,6 +1063,121 @@
             closeCreateModal();
         }
     });
+
+    // ── Inicializar paginación AJAX en carga inicial ───────────────────────
+    document.addEventListener('DOMContentLoaded', () => {
+        atarPaginacionComisiones();
+    });
+
+    // ── Custom Dropdowns para Comisiones ────────────────────────────────────
+    (() => {
+        function initComisionSelects() {
+            const dropdowns = document.querySelectorAll('[data-custom-comision-select]');
+            if (!dropdowns.length) return;
+
+            function closeAll() {
+                dropdowns.forEach(dd => {
+                    const menu = dd.querySelector('[data-menu]');
+                    const arrow = dd.querySelector('[data-arrow]');
+                    const toggle = dd.querySelector('[data-toggle]');
+                    if (menu) menu.classList.add('hidden');
+                    if (arrow) arrow.classList.remove('rotate-180');
+                    if (toggle) toggle.setAttribute('aria-expanded', 'false');
+                });
+            }
+
+            dropdowns.forEach(dd => {
+                const toggle = dd.querySelector('[data-toggle]');
+                const menu = dd.querySelector('[data-menu]');
+                const arrow = dd.querySelector('[data-arrow]');
+                const input = dd.querySelector('input[type="hidden"]');
+                const label = dd.querySelector('[data-label]');
+                const icon = dd.querySelector('[data-icon]');
+                const options = dd.querySelectorAll('[data-option]');
+
+                if (!toggle || !menu) return;
+
+                toggle.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    const isHidden = menu.classList.contains('hidden');
+                    closeAll();
+                    if (isHidden) {
+                        menu.classList.remove('hidden');
+                        if (arrow) arrow.classList.add('rotate-180');
+                        toggle.setAttribute('aria-expanded', 'true');
+                    }
+                });
+
+                options.forEach(opt => {
+                    opt.addEventListener('click', (e) => {
+                        e.stopPropagation();
+                        const val = opt.dataset.value;
+                        const text = opt.dataset.label;
+                        const iconClass = opt.dataset.icon;
+
+                        if (input) input.value = val;
+                        if (label) label.textContent = text;
+                        if (icon && iconClass) {
+                            icon.className = iconClass;
+                        }
+
+                        options.forEach(o => {
+                            const check = o.querySelector('[data-check]');
+                            if (o === opt) {
+                                o.classList.add('bg-blue-50', 'text-blue-700');
+                                o.classList.remove('text-slate-700');
+                                if (check) check.classList.remove('hidden');
+                            } else {
+                                o.classList.remove('bg-blue-50', 'text-blue-700');
+                                o.classList.add('text-slate-700');
+                                if (check) check.classList.add('hidden');
+                            }
+                        });
+
+                        closeAll();
+                    });
+                });
+            });
+
+            window.resetComisionCustomSelects = () => {
+                dropdowns.forEach(dd => {
+                    const input = dd.querySelector('input[type="hidden"]');
+                    const label = dd.querySelector('[data-label]');
+                    const icon = dd.querySelector('[data-icon]');
+                    const options = dd.querySelectorAll('[data-option]');
+                    const firstOption = options[0];
+                    if (firstOption) {
+                        if (input) input.value = firstOption.dataset.value;
+                        if (label) label.textContent = firstOption.dataset.label;
+                        if (icon) icon.className = firstOption.dataset.icon;
+                        options.forEach((o, idx) => {
+                            const check = o.querySelector('[data-check]');
+                            if (idx === 0) {
+                                o.classList.add('bg-blue-50', 'text-blue-700');
+                                o.classList.remove('text-slate-700');
+                                if (check) check.classList.remove('hidden');
+                            } else {
+                                o.classList.remove('bg-blue-50', 'text-blue-700');
+                                o.classList.add('text-slate-700');
+                                if (check) check.classList.add('hidden');
+                            }
+                        });
+                    }
+                });
+            };
+
+            document.addEventListener('click', () => closeAll());
+            document.addEventListener('keydown', (e) => {
+                if (e.key === 'Escape') closeAll();
+            });
+        }
+
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', initComisionSelects);
+        } else {
+            initComisionSelects();
+        }
+    })();
     </script>
     <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php endif; ?><?php if($isAdmin): ?>
         <?php echo $__env->make('comisiones.partials.searchable-vendedor-select', array_diff_key(get_defined_vars(), ['__data' => 1, '__path' => 1]))->render(); ?>

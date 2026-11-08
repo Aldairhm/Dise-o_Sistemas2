@@ -264,6 +264,7 @@
 
                  <!-- Icons -->
                 <div class="flex items-center gap-4">
+                    <?php echo $__env->make('notifications.bell', array_diff_key(get_defined_vars(), ['__data' => 1, '__path' => 1]))->render(); ?>
                     <!-- WhatsApp Dropdown -->
                     <div class="wa-dropdown">
                         <a href="#" class="wa-trigger" title="Grupos de WhatsApp">

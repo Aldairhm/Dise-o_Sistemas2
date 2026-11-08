@@ -30,6 +30,10 @@
 
     <main class="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8">
 
+        <a href="<?php echo e(route('productos.index')); ?>" class="inline-flex items-center gap-2 text-xs font-bold uppercase tracking-widest text-slate-400 hover:text-blue-600 transition-colors mb-4">
+            <i class="fas fa-arrow-left"></i> Volver a productos
+        </a>
+
         
         <div class="flex items-center gap-2 text-xs font-bold text-blue-600 uppercase tracking-widest mb-6">
             <i class="fas fa-boxes-stacked"></i>
@@ -109,7 +113,7 @@ unset($__errorArgs, $__bag); ?>"
                         <label for="id_categoria" class="block text-xs font-bold text-slate-500 uppercase tracking-widest mb-1.5">
                             Categoría <span class="text-red-500">*</span>
                         </label>
-                        <select name="id_categoria" id="id_categoria"
+                        <select name="id_categoria" id="id_categoria" data-select-icon="fa-layer-group"
                                 class="w-full rounded-xl border border-slate-200 px-4 py-2.5 text-sm text-slate-800 bg-white focus:outline-none focus:ring-2 focus:ring-blue-500/30 focus:border-blue-500 transition-all">
                             <option value="">Selecciona una categoría...</option>
                             <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::openLoop(); ?><?php endif; ?><?php $__currentLoopData = $categorias; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $cat): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::startLoopIteration(); ?><?php endif; ?>
@@ -280,31 +284,92 @@ unset($__errorArgs, $__bag); ?>"
                     </button>
                 </div>
 
-                <!-- Filtro por Estado -->
+                <!-- Filtro por Estado Personalizado -->
                 <div class="flex flex-wrap items-center gap-3">
-                    <div class="flex items-center gap-2">
-                        <span class="text-xs font-bold text-slate-500 uppercase tracking-wider hidden sm:inline">Estado:</span>
-                        <select id="statusVarFilter" 
-                                onchange="applyFiltersVar()" 
-                                class="bg-white border border-slate-200 rounded-xl px-3 py-2 text-xs font-bold text-slate-700 focus:border-blue-600 focus:ring-2 focus:ring-blue-600/20 focus:outline-none cursor-pointer">
-                            <option value="todos">Todos</option>
-                            <option value="1">Activos</option>
-                            <option value="0">Inactivos</option>
-                        </select>
+                    <div class="relative" data-custom-var-select="estado">
+                        <label class="mb-1.5 flex items-center gap-1.5 text-xs font-bold text-slate-700 tracking-tight">
+                            <i class="fas fa-toggle-on text-blue-600 text-xs"></i>
+                            <span>Estado</span>
+                        </label>
+                        <input type="hidden" id="statusVarFilter" value="todos">
+                        <button type="button" class="h-10 min-w-[130px] rounded-xl border border-slate-200 bg-white px-3.5 text-xs font-bold text-slate-700 shadow-sm transition hover:border-slate-300 hover:bg-slate-50 focus:border-blue-500 focus:bg-white focus:outline-none focus:ring-4 focus:ring-blue-500/10 flex items-center justify-between gap-2 cursor-pointer text-left" data-toggle aria-expanded="false">
+                            <span class="flex items-center gap-2 truncate">
+                                <i class="fas fa-layer-group text-slate-400" data-icon></i>
+                                <span class="truncate" data-label>Todos</span>
+                            </span>
+                            <i class="fas fa-chevron-down text-[10px] text-slate-400 transition-transform duration-200" data-arrow></i>
+                        </button>
+                        <div class="hidden absolute right-0 md:left-0 top-full z-50 mt-1.5 w-full min-w-[160px] rounded-2xl border border-slate-200 bg-white p-1.5 shadow-2xl" data-menu>
+                            <div class="space-y-0.5">
+                                <button type="button" data-option data-value="todos" data-label="Todos" data-icon="fas fa-layer-group text-slate-400"
+                                    class="w-full flex items-center justify-between rounded-xl px-3 py-2 text-xs font-bold transition-colors text-left bg-blue-50 text-blue-700">
+                                    <span class="flex items-center gap-2 truncate">
+                                        <i class="fas fa-layer-group text-slate-400"></i>
+                                        <span>Todos</span>
+                                    </span>
+                                    <i class="fas fa-check text-blue-600 text-[10px]" data-check></i>
+                                </button>
+                                <button type="button" data-option data-value="1" data-label="Activos" data-icon="fas fa-circle-check text-emerald-500"
+                                    class="w-full flex items-center justify-between rounded-xl px-3 py-2 text-xs font-bold transition-colors text-left text-slate-700 hover:bg-slate-50 hover:text-slate-900">
+                                    <span class="flex items-center gap-2 truncate">
+                                        <i class="fas fa-circle-check text-emerald-500"></i>
+                                        <span>Activos</span>
+                                    </span>
+                                    <i class="fas fa-check text-blue-600 text-[10px] hidden" data-check></i>
+                                </button>
+                                <button type="button" data-option data-value="0" data-label="Inactivos" data-icon="fas fa-ban text-rose-500"
+                                    class="w-full flex items-center justify-between rounded-xl px-3 py-2 text-xs font-bold transition-colors text-left text-slate-700 hover:bg-slate-50 hover:text-slate-900">
+                                    <span class="flex items-center gap-2 truncate">
+                                        <i class="fas fa-ban text-rose-500"></i>
+                                        <span>Inactivos</span>
+                                    </span>
+                                    <i class="fas fa-check text-blue-600 text-[10px] hidden" data-check></i>
+                                </button>
+                            </div>
+                        </div>
                     </div>
 
                     <!-- Boton Restablecer -->
-                    <button type="button" 
-                            onclick="resetAllFiltersVar()" 
-                            class="p-2 text-slate-400 hover:text-blue-600 rounded-xl hover:bg-slate-100 transition-colors cursor-pointer"
-                            title="Restablecer filtros">
-                        <i class="fas fa-rotate-right text-xs"></i>
-                    </button>
+                    <div class="flex items-end">
+                        <button type="button" 
+                                onclick="resetAllFiltersVar()" 
+                                class="h-10 rounded-xl border border-slate-200 hover:bg-red-50 hover:text-red-600 hover:border-red-200 text-slate-500 px-3 text-xs font-bold transition-all cursor-pointer flex items-center justify-center gap-1.5 shadow-sm"
+                                title="Restablecer filtros">
+                            <i class="fas fa-rotate-left text-xs"></i>
+                            <span class="hidden sm:inline">Limpiar</span>
+                        </button>
+                    </div>
                 </div>
             </div>
 
             <!-- Contenedor Principal (Tabla o Tarjetas) -->
             <div id="variantsContainer" class="relative">
+                <!-- Skeleton Loader para Variantes -->
+                <div id="tableSkeletonVariantes" class="hidden p-5">
+                    <?php if (isset($component)) { $__componentOriginalb3a7e296665e2f58ea67cad97892cbe7 = $component; } ?>
+<?php if (isset($attributes)) { $__attributesOriginalb3a7e296665e2f58ea67cad97892cbe7 = $attributes; } ?>
+<?php $component = Illuminate\View\AnonymousComponent::resolve(['view' => 'components.skeleton-table','data' => ['rows' => 4,'cols' => 6,'avatarCol' => 0]] + (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag ? $attributes->all() : [])); ?>
+<?php $component->withName('skeleton-table'); ?>
+<?php if ($component->shouldRender()): ?>
+<?php $__env->startComponent($component->resolveView(), $component->data()); ?>
+<?php if (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag): ?>
+<?php $attributes = $attributes->except(\Illuminate\View\AnonymousComponent::ignoredParameterNames()); ?>
+<?php endif; ?>
+<?php $component->withAttributes(['rows' => 4,'cols' => 6,'avatarCol' => 0]); ?>
+<?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::processComponentKey($component); ?>
+
+<?php echo $__env->renderComponent(); ?>
+<?php endif; ?>
+<?php if (isset($__attributesOriginalb3a7e296665e2f58ea67cad97892cbe7)): ?>
+<?php $attributes = $__attributesOriginalb3a7e296665e2f58ea67cad97892cbe7; ?>
+<?php unset($__attributesOriginalb3a7e296665e2f58ea67cad97892cbe7); ?>
+<?php endif; ?>
+<?php if (isset($__componentOriginalb3a7e296665e2f58ea67cad97892cbe7)): ?>
+<?php $component = $__componentOriginalb3a7e296665e2f58ea67cad97892cbe7; ?>
+<?php unset($__componentOriginalb3a7e296665e2f58ea67cad97892cbe7); ?>
+<?php endif; ?>
+                </div>
+
                 <!-- Vista Tabla -->
                 <div id="variantsTableWrapper">
                     <?php echo $__env->make('productos.partials.table_variantes', ['producto' => $producto], array_diff_key(get_defined_vars(), ['__data' => 1, '__path' => 1]))->render(); ?>
@@ -441,10 +506,12 @@ unset($__errorArgs, $__bag); ?>"
             }
         }
 
+        let filterDebounceTimerVar = null;
+
         function applyFiltersVar() {
             const searchInput = document.getElementById('searchVarInput');
             const clearBtn = document.getElementById('clearSearchVarBtn');
-            const query = searchInput.value.toLowerCase().trim();
+            const query = (searchInput.value || '').trim().toLowerCase();
             const status = document.getElementById('statusVarFilter').value;
 
             // Mostrar/ocultar boton X
@@ -454,11 +521,38 @@ unset($__errorArgs, $__bag); ?>"
                 clearBtn.classList.add('hidden');
             }
 
+            // Mostrar skeleton sutil de transición
+            const skeleton = document.getElementById('tableSkeletonVariantes');
+            const tableWrapper = document.getElementById('variantsTableWrapper');
+            const cardsWrapper = document.getElementById('variantsCardsWrapper');
+
+            if (skeleton) {
+                skeleton.classList.remove('hidden');
+                if (tableWrapper) tableWrapper.classList.add('hidden');
+                if (cardsWrapper) cardsWrapper.classList.add('hidden');
+            }
+
+            clearTimeout(filterDebounceTimerVar);
+            filterDebounceTimerVar = setTimeout(() => {
+                filtrarVariantesLocalmente(query, status);
+
+                if (skeleton) {
+                    skeleton.classList.add('hidden');
+                    setViewVar(currentViewVar, false);
+                }
+            }, 120);
+        }
+
+        function filtrarVariantesLocalmente(query, status) {
             // Filtrar tabla
             let visibleRows = 0;
             document.querySelectorAll('.variante-row').forEach(row => {
-                const matchQuery = row.dataset.nombre.includes(query) || row.dataset.sku.includes(query);
-                const matchStatus = status === 'todos' || row.dataset.estado === status;
+                const rowNombre = (row.dataset.nombre || '').toLowerCase();
+                const rowSku = (row.dataset.sku || '').toLowerCase();
+                const rowEstado = String(row.dataset.estado);
+
+                const matchQuery = !query || rowNombre.includes(query) || rowSku.includes(query);
+                const matchStatus = status === 'todos' || rowEstado === String(status);
 
                 if (matchQuery && matchStatus) {
                     row.style.display = '';
@@ -469,7 +563,7 @@ unset($__errorArgs, $__bag); ?>"
             });
             
             const noResultsTable = document.getElementById('table-no-results-variantes');
-            const emptyRowTable = document.getElementById('rowNoVariantes'); // El mensaje original si no hay ninguna variante
+            const emptyRowTable = document.getElementById('rowNoVariantes');
             if (noResultsTable) {
                 noResultsTable.style.display = (visibleRows === 0 && !emptyRowTable) ? '' : 'none';
             }
@@ -477,8 +571,12 @@ unset($__errorArgs, $__bag); ?>"
             // Filtrar tarjetas
             let visibleCards = 0;
             document.querySelectorAll('.variante-card').forEach(card => {
-                const matchQuery = card.dataset.nombre.includes(query) || card.dataset.sku.includes(query);
-                const matchStatus = status === 'todos' || card.dataset.estado === status;
+                const cardNombre = (card.dataset.nombre || '').toLowerCase();
+                const cardSku = (card.dataset.sku || '').toLowerCase();
+                const cardEstado = String(card.dataset.estado);
+
+                const matchQuery = !query || cardNombre.includes(query) || cardSku.includes(query);
+                const matchStatus = status === 'todos' || cardEstado === String(status);
 
                 if (matchQuery && matchStatus) {
                     card.style.display = '';
@@ -509,8 +607,120 @@ unset($__errorArgs, $__bag); ?>"
         function resetAllFiltersVar() {
             document.getElementById('searchVarInput').value = '';
             document.getElementById('statusVarFilter').value = 'todos';
+            if (window.resetVarianteCustomSelects) {
+                window.resetVarianteCustomSelects();
+            }
             applyFiltersVar();
         }
+
+        // Custom Select para Estado de Variantes
+        function initVarianteCustomSelects() {
+            const containers = document.querySelectorAll('[data-custom-var-select]');
+            containers.forEach(container => {
+                const toggle = container.querySelector('[data-toggle]');
+                const menu = container.querySelector('[data-menu]');
+                const arrow = container.querySelector('[data-arrow]');
+                const labelSpan = container.querySelector('[data-label]');
+                const iconEl = container.querySelector('[data-icon]');
+                const hiddenInput = container.querySelector('input[type="hidden"]');
+                const options = container.querySelectorAll('[data-option]');
+
+                function openMenu() {
+                    menu.classList.remove('hidden');
+                    arrow?.classList.add('rotate-180');
+                    toggle.setAttribute('aria-expanded', 'true');
+                }
+
+                function closeMenu() {
+                    menu.classList.add('hidden');
+                    arrow?.classList.remove('rotate-180');
+                    toggle.setAttribute('aria-expanded', 'false');
+                }
+
+                toggle.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    if (menu.classList.contains('hidden')) {
+                        openMenu();
+                    } else {
+                        closeMenu();
+                    }
+                });
+
+                options.forEach(opt => {
+                    opt.addEventListener('click', (e) => {
+                        e.stopPropagation();
+                        const val = opt.dataset.value;
+                        const lbl = opt.dataset.label;
+                        const icn = opt.dataset.icon;
+
+                        hiddenInput.value = val;
+                        if (labelSpan) labelSpan.textContent = lbl;
+                        if (iconEl && icn) iconEl.className = icn;
+
+                        options.forEach(o => {
+                            const isSelected = o === opt;
+                            o.classList.toggle('bg-blue-50', isSelected);
+                            o.classList.toggle('text-blue-700', isSelected);
+                            o.classList.toggle('text-slate-700', !isSelected);
+                            const check = o.querySelector('[data-check]');
+                            if (check) check.classList.toggle('hidden', !isSelected);
+                        });
+
+                        closeMenu();
+                        applyFiltersVar();
+                    });
+                });
+            });
+
+            document.addEventListener('click', (e) => {
+                if (!e.target.closest('[data-custom-var-select]')) {
+                    document.querySelectorAll('[data-custom-var-select]').forEach(container => {
+                        container.querySelector('[data-menu]')?.classList.add('hidden');
+                        container.querySelector('[data-arrow]')?.classList.remove('rotate-180');
+                        container.querySelector('[data-toggle]')?.setAttribute('aria-expanded', 'false');
+                    });
+                }
+            });
+
+            document.addEventListener('keydown', (e) => {
+                if (e.key === 'Escape') {
+                    document.querySelectorAll('[data-custom-var-select]').forEach(container => {
+                        container.querySelector('[data-menu]')?.classList.add('hidden');
+                        container.querySelector('[data-arrow]')?.classList.remove('rotate-180');
+                        container.querySelector('[data-toggle]')?.setAttribute('aria-expanded', 'false');
+                    });
+                }
+            });
+
+            window.resetVarianteCustomSelects = function() {
+                containers.forEach(container => {
+                    const hiddenInput = container.querySelector('input[type="hidden"]');
+                    const defaultOption = container.querySelector('[data-option][data-value="todos"]');
+                    if (defaultOption && hiddenInput) {
+                        hiddenInput.value = 'todos';
+                        const labelSpan = container.querySelector('[data-label]');
+                        const iconEl = container.querySelector('[data-icon]');
+                        if (labelSpan) labelSpan.textContent = defaultOption.dataset.label;
+                        if (iconEl && defaultOption.dataset.icon) iconEl.className = defaultOption.dataset.icon;
+
+                        const options = container.querySelectorAll('[data-option]');
+                        options.forEach(o => {
+                            const isDefault = o === defaultOption;
+                            o.classList.toggle('bg-blue-50', isDefault);
+                            o.classList.toggle('text-blue-700', isDefault);
+                            o.classList.toggle('text-slate-700', !isDefault);
+                            const check = o.querySelector('[data-check]');
+                            if (check) check.classList.toggle('hidden', !isDefault);
+                        });
+                    }
+                    container.querySelector('[data-menu]')?.classList.add('hidden');
+                    container.querySelector('[data-arrow]')?.classList.remove('rotate-180');
+                    container.querySelector('[data-toggle]')?.setAttribute('aria-expanded', 'false');
+                });
+            };
+        }
+
+        document.addEventListener('DOMContentLoaded', initVarianteCustomSelects);
 
         window.applyFiltersVar = applyFiltersVar;
     </script>

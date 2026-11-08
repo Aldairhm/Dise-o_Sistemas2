@@ -57,27 +57,72 @@
                 </div>
             </div>
             <div class="grid grid-cols-1 md:grid-cols-12 gap-5">
-                <label class="block md:col-span-5">
-                    <span class="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-2">Proveedor <b class="text-red-500">*</b></span>
-                    <select x-model="proveedorId" class="w-full rounded-xl border border-slate-300 bg-slate-50 px-4 py-2.5 text-sm focus:border-blue-500 focus:bg-white focus:ring-4 focus:ring-blue-500/10 transition-all">
-                        <option value="">Selecciona un proveedor</option>
-                        <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::openLoop(); ?><?php endif; ?><?php $__currentLoopData = $proveedores; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $proveedor): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::startLoopIteration(); ?><?php endif; ?>
-                            <option value="<?php echo e($proveedor['id']); ?>"><?php echo e($proveedor['nombre']); ?></option>
-                        <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::endLoop(); ?><?php endif; ?><?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::closeLoop(); ?><?php endif; ?>
-                    </select>
-                </label>
-                <label class="block md:col-span-3">
-                    <span class="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-2">Recepción <b class="text-red-500">*</b></span>
-                    <input type="date" x-model="fecha" class="w-full rounded-xl border border-slate-300 bg-slate-50 px-4 py-2.5 text-sm focus:border-blue-500 focus:bg-white focus:ring-4 focus:ring-blue-500/10 transition-all">
-                </label>
-                <label class="block md:col-span-4">
-                    <span class="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-2">Referencia <span class="font-normal text-slate-400 normal-case">(opcional)</span></span>
-                    <input type="text" x-model="referencia" placeholder="Ej. FAC-000124" class="w-full rounded-xl border border-slate-300 bg-slate-50 px-4 py-2.5 text-sm focus:border-blue-500 focus:bg-white focus:ring-4 focus:ring-blue-500/10 transition-all">
-                </label>
-                <label class="block md:col-span-12">
-                    <span class="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-2">Descripción <span class="font-normal text-slate-400 normal-case">(opcional)</span></span>
-                    <textarea x-model="observaciones" rows="2" placeholder="Estado de las cajas, acuerdos o cualquier detalle importante..." class="w-full rounded-xl border border-slate-300 bg-slate-50 px-4 py-3 text-sm focus:border-blue-500 focus:bg-white focus:ring-4 focus:ring-blue-500/10 transition-all resize-none"></textarea>
-                </label>
+                
+                <div class="block md:col-span-5 relative" x-data="{ openProv: false }">
+                    <label class="mb-1.5 flex items-center gap-1.5 text-xs font-bold text-slate-700 tracking-tight">
+                        <i class="fas fa-truck text-blue-600 text-xs"></i>
+                        <span>Proveedor</span> <b class="text-red-500">*</b>
+                    </label>
+                    <input type="hidden" x-model="proveedorId">
+                    <button type="button" @click="openProv = !openProv" @click.outside="openProv = false"
+                        class="h-11 w-full min-w-0 rounded-xl border border-slate-200 bg-slate-50/90 px-3.5 text-xs font-bold text-slate-700 shadow-sm transition hover:border-slate-300 hover:bg-white focus:border-blue-500 focus:bg-white focus:outline-none focus:ring-4 focus:ring-blue-500/10 flex items-center justify-between gap-2 cursor-pointer text-left">
+                        <span class="flex items-center gap-2 truncate">
+                            <i class="fas fa-building text-slate-400" :class="proveedorId ? 'text-blue-600' : 'text-slate-400'"></i>
+                            <span class="truncate" x-text="proveedores.find(p => String(p.id) === String(proveedorId))?.nombre || 'Selecciona un proveedor'">Selecciona un proveedor</span>
+                        </span>
+                        <i class="fas fa-chevron-down text-[10px] text-slate-400 transition-transform duration-200" :class="openProv ? 'rotate-180' : ''"></i>
+                    </button>
+                    <div x-show="openProv" x-transition.origin.top.left class="absolute left-0 top-full z-50 mt-1.5 w-full min-w-[220px] rounded-2xl border border-slate-200 bg-white p-1.5 shadow-2xl max-h-64 overflow-y-auto" style="display: none;">
+                        <div class="space-y-0.5">
+                            <button type="button" @click="proveedorId = ''; openProv = false"
+                                class="w-full flex items-center justify-between rounded-xl px-3 py-2 text-xs font-bold transition-colors text-left text-slate-600 hover:bg-slate-50">
+                                <span class="flex items-center gap-2">
+                                    <i class="fas fa-building text-slate-400"></i>
+                                    <span>Selecciona un proveedor</span>
+                                </span>
+                                <i class="fas fa-check text-blue-600 text-[10px]" x-show="!proveedorId"></i>
+                            </button>
+                            <template x-for="p in proveedores" :key="p.id">
+                                <button type="button" @click="proveedorId = p.id; openProv = false"
+                                    class="w-full flex items-center justify-between rounded-xl px-3 py-2 text-xs font-bold transition-colors text-left hover:bg-slate-50 hover:text-slate-900"
+                                    :class="String(proveedorId) === String(p.id) ? 'bg-blue-50 text-blue-700' : 'text-slate-700'">
+                                    <span class="flex items-center gap-2 truncate">
+                                        <i class="fas fa-truck text-blue-500"></i>
+                                        <span x-text="p.nombre"></span>
+                                    </span>
+                                    <i class="fas fa-check text-blue-600 text-[10px]" x-show="String(proveedorId) === String(p.id)"></i>
+                                </button>
+                            </template>
+                        </div>
+                    </div>
+                </div>
+
+                
+                <div class="block md:col-span-3">
+                    <label class="mb-1.5 flex items-center gap-1.5 text-xs font-bold text-slate-700 tracking-tight">
+                        <i class="fas fa-calendar-day text-blue-600 text-xs"></i>
+                        <span>Recepción</span> <b class="text-red-500">*</b>
+                    </label>
+                    <input type="date" x-model="fecha" class="h-11 w-full rounded-xl border border-slate-200 bg-slate-50/90 px-3.5 text-xs font-semibold text-slate-700 shadow-sm transition hover:border-slate-300 hover:bg-white focus:border-blue-500 focus:bg-white focus:outline-none focus:ring-4 focus:ring-blue-500/10">
+                </div>
+
+                
+                <div class="block md:col-span-4">
+                    <label class="mb-1.5 flex items-center gap-1.5 text-xs font-bold text-slate-700 tracking-tight">
+                        <i class="fas fa-hashtag text-blue-600 text-xs"></i>
+                        <span>Referencia</span> <span class="font-normal text-slate-400 text-[11px]">(opcional)</span>
+                    </label>
+                    <input type="text" x-model="referencia" placeholder="Ej. FAC-000124" class="h-11 w-full rounded-xl border border-slate-200 bg-slate-50/90 px-3.5 text-xs font-semibold text-slate-700 shadow-sm transition hover:border-slate-300 hover:bg-white focus:border-blue-500 focus:bg-white focus:outline-none focus:ring-4 focus:ring-blue-500/10">
+                </div>
+
+                
+                <div class="block md:col-span-12">
+                    <label class="mb-1.5 flex items-center gap-1.5 text-xs font-bold text-slate-700 tracking-tight">
+                        <i class="fas fa-comment-dots text-blue-600 text-xs"></i>
+                        <span>Descripción</span> <span class="font-normal text-slate-400 text-[11px]">(opcional)</span>
+                    </label>
+                    <textarea x-model="observaciones" rows="2" placeholder="Estado de las cajas, acuerdos o cualquier detalle importante..." class="w-full rounded-xl border border-slate-200 bg-slate-50/90 px-3.5 py-2.5 text-xs font-semibold text-slate-700 shadow-sm transition hover:border-slate-300 hover:bg-white focus:border-blue-500 focus:bg-white focus:outline-none focus:ring-4 focus:ring-blue-500/10 resize-none"></textarea>
+                </div>
             </div>
         </section>
 
@@ -202,31 +247,31 @@
                     <p class="text-sm text-slate-500 leading-relaxed">El <strong class="text-slate-700">costo</strong> es lo que le pagas al proveedor por cada unidad recibida.</p>
                 </section>
                 
-                <section class="bg-gradient-to-b from-slate-800 to-slate-900 text-white rounded-3xl p-6 shadow-xl shadow-slate-900/20 border border-slate-700/50">
+                <section class="bg-white rounded-3xl p-6 shadow-sm border border-slate-200">
                     <div class="flex items-center justify-between mb-6">
-                        <h2 class="text-lg font-black">Resumen</h2>
-                        <div class="w-8 h-8 rounded-full bg-slate-700/50 flex items-center justify-center"><i class="fas fa-calculator text-blue-400 text-sm"></i></div>
+                        <h2 class="text-lg font-black text-slate-900">Resumen</h2>
+                        <div class="w-8 h-8 rounded-full bg-blue-50 flex items-center justify-center"><i class="fas fa-calculator text-blue-600 text-sm"></i></div>
                     </div>
                     
                     <div class="space-y-4 text-sm font-medium">
-                        <div class="flex justify-between items-center text-slate-300">
+                        <div class="flex justify-between items-center text-slate-500">
                             <span>Variantes</span>
-                            <strong class="text-white bg-slate-700/50 px-2 py-0.5 rounded" x-text="lineas.length"></strong>
+                            <strong class="text-slate-800 bg-slate-100 px-2 py-0.5 rounded font-bold" x-text="lineas.length"></strong>
                         </div>
-                        <div class="flex justify-between items-center text-slate-300">
+                        <div class="flex justify-between items-center text-slate-500">
                             <span>Unidades</span>
-                            <strong class="text-white" x-text="unidades"></strong>
+                            <strong class="text-slate-800 font-bold" x-text="unidades"></strong>
                         </div>
                     </div>
                     
-                    <div class="border-t border-slate-700 mt-6 pt-6 flex justify-between items-end">
+                    <div class="border-t border-slate-100 mt-6 pt-6 flex justify-between items-end">
                         <div>
                             <p class="text-[10px] uppercase tracking-widest text-slate-400 font-bold mb-1">Total a pagar</p>
-                            <p class="text-3xl font-black text-white leading-none" x-text="moneda(subtotal)"></p>
+                            <p class="text-3xl font-black text-blue-600 leading-none" x-text="moneda(subtotal)"></p>
                         </div>
                     </div>
                     
-                    <button type="button" @click="Swal.fire({ title: '¿Estás seguro?', text: 'Verifica que las cantidades sean correctas antes de confirmar la recepción.', icon: 'warning', showCancelButton: true, confirmButtonColor: '#3085d6', cancelButtonColor: '#d33', confirmButtonText: 'Sí, confirmar', cancelButtonText: 'Cancelar' }).then((result) => { if (result.isConfirmed) { guardarCompra(); } })" :disabled="!formularioValido()" class="w-full mt-8 rounded-xl bg-blue-600 hover:bg-blue-500 disabled:bg-slate-800 disabled:text-slate-500 disabled:border border-slate-700 disabled:cursor-not-allowed py-3.5 text-sm font-black transition-all shadow-lg shadow-blue-600/20 disabled:shadow-none flex items-center justify-center gap-2">
+                    <button type="button" @click="Swal.fire({ title: '¿Estás seguro?', text: 'Verifica que las cantidades sean correctas antes de confirmar la recepción.', icon: 'warning', showCancelButton: true, confirmButtonColor: '#3085d6', cancelButtonColor: '#d33', confirmButtonText: 'Sí, confirmar', cancelButtonText: 'Cancelar' }).then((result) => { if (result.isConfirmed) { guardarCompra(); } })" :disabled="!formularioValido()" class="w-full mt-8 rounded-xl bg-blue-600 hover:bg-blue-700 disabled:bg-slate-100 disabled:text-slate-400 disabled:border border-slate-200 disabled:cursor-not-allowed py-3.5 text-sm font-extrabold text-white transition-all shadow-lg shadow-blue-500/25 disabled:shadow-none flex items-center justify-center gap-2 cursor-pointer hover:scale-[1.01] active:scale-[0.99]">
                         <i class="fas fa-check"></i> Confirmar recepción
                     </button>
                 </section>

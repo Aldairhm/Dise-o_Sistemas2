@@ -66,4 +66,4 @@
     <span class="sr-only">Cargando detalles...</span>
 </div>
 
-<?php /**PATH C:\laragon\www\diseno\resources\views/components/skeleton-modal-detalle.blade.php ENDPATH**/ ?>
+<?php /**PATH /home/edwin/Desktop/UES II-2026/Diseño II/Proyecto/Dise-o_Sistemas2/resources/views/components/skeleton-modal-detalle.blade.php ENDPATH**/ ?>

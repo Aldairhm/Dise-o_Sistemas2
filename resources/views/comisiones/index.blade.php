@@ -1031,12 +1031,11 @@
         }
     });
 
-<<<<<<< HEAD
     // ── Inicializar paginación AJAX en carga inicial ───────────────────────
     document.addEventListener('DOMContentLoaded', () => {
         atarPaginacionComisiones();
     });
-=======
+
     // ── Custom Dropdowns para Comisiones ────────────────────────────────────
     (() => {
         function initComisionSelects() {
@@ -1146,7 +1145,6 @@
             initComisionSelects();
         }
     })();
->>>>>>> 2e9f6a24ebf6d8db4a7c3d5a96d046a0fa880f1f
     </script>
     @if($isAdmin)
         @include('comisiones.partials.searchable-vendedor-select')

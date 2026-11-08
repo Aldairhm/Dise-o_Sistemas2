@@ -29,6 +29,10 @@
 
     <main class="flex-1 max-w-4xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8">
 
+        <a href="<?php echo e(route('productos.index')); ?>" class="inline-flex items-center gap-2 text-xs font-bold uppercase tracking-widest text-slate-400 hover:text-blue-600 transition-colors mb-4">
+            <i class="fas fa-arrow-left"></i> Volver a productos
+        </a>
+
         
         <div class="flex items-center gap-2 text-xs font-bold text-blue-600 uppercase tracking-widest mb-6">
             <i class="fas fa-boxes-stacked"></i>
@@ -107,7 +111,7 @@ unset($__errorArgs, $__bag); ?>"
                         <label for="id_categoria" class="block text-xs font-bold text-slate-500 uppercase tracking-widest mb-1.5">
                             Categoría <span class="text-red-500">*</span>
                         </label>
-                        <select name="id_categoria" id="id_categoria"
+                        <select name="id_categoria" id="id_categoria" data-select-icon="fa-layer-group"
                                 class="w-full rounded-xl border border-slate-200 px-4 py-2.5 text-sm text-slate-800 bg-white focus:outline-none focus:ring-2 focus:ring-blue-500/30 focus:border-blue-500 transition-all <?php $__errorArgs = ['id_categoria'];
 $__bag = $errors->getBag($__errorArgs[1] ?? 'default');
 if ($__bag->has($__errorArgs[0])) :

@@ -125,7 +125,8 @@
                        class="h-10 rounded-xl border border-slate-200 hover:bg-red-50 hover:text-red-600 hover:border-red-200 text-slate-500 px-3 text-xs transition-all flex items-center justify-center"
                        title="Restablecer filtros">
                         <i class="fas fa-rotate-left"></i>
-                    </button>
+                    </a>
+                    @endif
                 </div>
             </form>
         </section>

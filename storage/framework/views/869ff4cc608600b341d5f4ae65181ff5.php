@@ -20,7 +20,7 @@
         <a href="<?php echo e(route('notifications.index')); ?>" class="block border-t border-gray-100 p-3 text-center text-xs font-bold text-blue-700 hover:bg-blue-50 transition sticky bottom-0 bg-white">Ver todas las notificaciones</a>
     </section>
 </div>
-<?php if (! $__env->hasRenderedOnce('62f9c755-47a4-42c3-b9ca-b548de411709')): $__env->markAsRenderedOnce('62f9c755-47a4-42c3-b9ca-b548de411709'); ?>
+<?php if (! $__env->hasRenderedOnce('5e85da12-6f79-4d6c-9e92-a4d128edcc7a')): $__env->markAsRenderedOnce('5e85da12-6f79-4d6c-9e92-a4d128edcc7a'); ?>
 <style>
 .notification-bell [data-bell-items]:not(:empty) { display: flex; flex-direction: column; gap: 10px; padding: 12px; }
 .notification-bell .notification-preview {
@@ -66,4 +66,4 @@ html.dark .notification-bell .notification-preview .border-gray-100 {
 <script src="<?php echo e(asset('js/notification-center.js')); ?>?v=<?php echo e(filemtime(public_path('js/notification-center.js'))); ?>" defer></script>
 <?php endif; ?>
 <?php endif; ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php endif; ?>
-<?php endif; ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php endif; ?><?php /**PATH C:\laragon\www\diseno\resources\views/notifications/bell.blade.php ENDPATH**/ ?>
+<?php endif; ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php endif; ?><?php /**PATH /home/edwin/Desktop/UES II-2026/Diseño II/Proyecto/Dise-o_Sistemas2/resources/views/notifications/bell.blade.php ENDPATH**/ ?>

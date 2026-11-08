@@ -10,7 +10,10 @@
 <?php $component->withAttributes(['title' => 'Centro de Dudas Administrativas | AXStore Super Admin']); ?>
 <?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::processComponentKey($component); ?>
 
-    <div class="mx-auto max-w-7xl space-y-6 pb-12">
+    <div class="mx-auto max-w-7xl space-y-6 pb-12" x-data="gestionSuperAdminTickets({
+        estadoTab: <?php echo \Illuminate\Support\Js::from($estadoTab)->toHtml() ?>,
+        conteoEstados: <?php echo \Illuminate\Support\Js::from($conteoEstados)->toHtml() ?>
+    })">
         
         <!-- Header -->
         <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
@@ -31,121 +34,190 @@
             </div>
         </div>
 
+        <!-- Barra de Pestañas por Estado (Mismo estilo que Control de Dudas) -->
+        <div class="flex flex-wrap items-center gap-2 border-b border-slate-200 pb-3">
+            <?php
+                $tabs = [
+                    'todos'      => ['label' => 'Todos',       'badge_bg' => 'bg-slate-100',   'badge_fg' => 'text-slate-700'],
+                    'Pendiente'  => ['label' => 'Pendientes',  'badge_bg' => 'bg-amber-100',   'badge_fg' => 'text-amber-800'],
+                    'En proceso' => ['label' => 'En proceso',  'badge_bg' => 'bg-blue-100',    'badge_fg' => 'text-blue-800'],
+                    'Escalada'   => ['label' => 'Escaladas',   'badge_bg' => 'bg-purple-100',  'badge_fg' => 'text-purple-800'],
+                    'Resuelta'   => ['label' => 'Resueltas',   'badge_bg' => 'bg-emerald-100', 'badge_fg' => 'text-emerald-800'],
+                    'Cancelada'  => ['label' => 'Canceladas',  'badge_bg' => 'bg-rose-100',    'badge_fg' => 'text-rose-800'],
+                ];
+            ?>
+
+            <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::openLoop(); ?><?php endif; ?><?php $__currentLoopData = $tabs; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $key => $t): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::startLoopIteration(); ?><?php endif; ?>
+                <button type="button"
+                   @click="cambiarEstado('<?php echo e($key); ?>')"
+                   :class="estadoTab === '<?php echo e($key); ?>' ? 'bg-slate-800 text-white shadow-sm' : 'bg-white text-slate-600 hover:bg-slate-100 border border-slate-200'"
+                   class="inline-flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer">
+                    <span><?php echo e($t['label']); ?></span>
+                    <span :class="estadoTab === '<?php echo e($key); ?>' ? 'bg-white/20 text-white' : '<?php echo e($t['badge_bg']); ?> <?php echo e($t['badge_fg']); ?>'"
+                          class="px-2 py-0.5 rounded-full text-[10px] font-black"
+                          x-text="conteoEstados['<?php echo e($key); ?>'] ?? 0">
+                        <?php echo e($conteoEstados[$key] ?? 0); ?>
+
+                    </span>
+                </button>
+            <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::endLoop(); ?><?php endif; ?><?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::closeLoop(); ?><?php endif; ?>
+        </div>
+
         <!-- Filtros y Búsqueda -->
-        <form method="GET" action="<?php echo e(route('superadmin.tickets')); ?>" class="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm flex flex-wrap items-center gap-3">
+        <form @submit.prevent="ejecutarFiltro()" class="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm flex flex-wrap items-center gap-3">
             <div class="flex-1 min-w-[240px]">
                 <div class="relative">
                     <i class="fas fa-search absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 text-xs"></i>
-                    <input type="text" name="search" value="<?php echo e(request('search')); ?>" placeholder="Buscar por código, título, duda o usuario..." class="w-full pl-9 pr-4 py-2 rounded-xl border border-slate-200 text-xs text-slate-700 focus:outline-none focus:border-indigo-500">
+                    <input type="text"
+                           x-model="filtroSearch"
+                           @input.debounce.400ms="ejecutarFiltro()"
+                           placeholder="Buscar por código, título, duda o usuario..."
+                           class="w-full pl-9 pr-4 py-2 rounded-xl border border-slate-200 text-xs text-slate-700 focus:outline-none focus:border-indigo-500">
                 </div>
             </div>
 
-            <div>
-                <select name="estado" class="px-3 py-2 rounded-xl border border-slate-200 text-xs text-slate-700 focus:outline-none focus:border-indigo-500">
-                    <option value="todos">Todos los estados</option>
-                    <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::openLoop(); ?><?php endif; ?><?php $__currentLoopData = \App\Models\SoporteTicket::ESTADOS; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $est): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::startLoopIteration(); ?><?php endif; ?>
-                        <option value="<?php echo e($est); ?>" <?php echo e(request('estado') === $est ? 'selected' : ''); ?>><?php echo e($est); ?></option>
-                    <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::endLoop(); ?><?php endif; ?><?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::closeLoop(); ?><?php endif; ?>
-                </select>
+            <div class="flex items-center gap-2">
+                <button type="submit" 
+                        class="rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-bold py-2 px-3 text-xs transition-all shadow-md shadow-blue-600/15 flex items-center justify-center gap-1.5 cursor-pointer">
+                    <i :class="cargandoTickets ? 'fas fa-spinner fa-spin' : 'fas fa-filter'"></i>
+                    <span x-text="cargandoTickets ? 'Filtrando...' : 'Filtrar'"></span>
+                </button>
+                <button type="button" 
+                        @click="limpiarFiltros()"
+                        x-show="filtroSearch || estadoTab !== 'Pendiente'"
+                        style="display: none;"
+                        class="rounded-xl border border-slate-200 bg-slate-50 hover:bg-slate-100 text-slate-600 font-bold py-2 px-3 text-xs transition-colors flex items-center justify-center cursor-pointer" 
+                        title="Restablecer filtros">
+                    <i class="fas fa-rotate-left"></i>
+                </button>
             </div>
-
-            <div>
-                <select name="prioridad" class="px-3 py-2 rounded-xl border border-slate-200 text-xs text-slate-700 focus:outline-none focus:border-indigo-500">
-                    <option value="todos">Todas las prioridades</option>
-                    <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::openLoop(); ?><?php endif; ?><?php $__currentLoopData = \App\Models\SoporteTicket::PRIORIDADES; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $prio): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::startLoopIteration(); ?><?php endif; ?>
-                        <option value="<?php echo e($prio); ?>" <?php echo e(request('prioridad') === $prio ? 'selected' : ''); ?>><?php echo e($prio); ?></option>
-                    <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::endLoop(); ?><?php endif; ?><?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::closeLoop(); ?><?php endif; ?>
-                </select>
-            </div>
-
-            <button type="submit" class="px-4 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-white text-xs font-bold transition-colors">
-                Filtrar
-            </button>
         </form>
 
-        <!-- Lista de Tickets -->
-        <div class="space-y-4">
-            <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::openLoop(); ?><?php endif; ?><?php $__empty_1 = true; $__currentLoopData = $tickets; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $tk): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); $__empty_1 = false; ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::startLoopIteration(); ?><?php endif; ?>
-                <div class="bg-white rounded-3xl border border-slate-200 shadow-sm p-6 hover:border-indigo-200 transition-all flex flex-col md:flex-row md:items-start justify-between gap-6">
+        <!-- Skeleton Loading Dinámico para Super Admin -->
+        <div x-show="cargandoTickets" style="display: none;" class="space-y-4 select-none" role="status" aria-label="Cargando dudas...">
+            <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::openLoop(); ?><?php endif; ?><?php for($i = 0; $i < 3; $i++): ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::startLoopIteration(); ?><?php endif; ?>
+                <div class="bg-white rounded-3xl border border-slate-200 shadow-sm p-6 flex flex-col md:flex-row md:items-start justify-between gap-6">
                     <div class="space-y-3 flex-1">
-                        <div class="flex flex-wrap items-center gap-2">
-                            <span class="font-mono text-xs font-black text-indigo-900 bg-indigo-50 px-2.5 py-1 rounded-lg">
-                                #<?php echo e($tk->codigo_ticket); ?>
-
-                            </span>
-                            <span class="px-2.5 py-1 rounded-md text-[10px] font-bold 
-                                <?php echo e($tk->estado === 'Escalada' ? 'bg-amber-100 text-amber-800' : ($tk->estado === 'Resuelta' ? 'bg-emerald-100 text-emerald-800' : 'bg-slate-100 text-slate-700')); ?>">
-                                <?php echo e($tk->estado); ?>
-
-                            </span>
-                            <span class="px-2.5 py-1 rounded-md text-[10px] font-bold 
-                                <?php echo e($tk->prioridad === 'Urgente' ? 'bg-rose-100 text-rose-800 animate-pulse' : ($tk->prioridad === 'Alta' ? 'bg-amber-100 text-amber-800' : 'bg-blue-50 text-blue-700')); ?>">
-                                Prioridad: <?php echo e($tk->prioridad); ?>
-
-                            </span>
-                            <span class="text-xs text-slate-400">&bull;</span>
-                            <span class="text-xs font-bold text-slate-600"><?php echo e($tk->modulo); ?></span>
+                        <div class="flex items-center gap-2">
+                            <div class="h-6 w-20 rounded-lg ax-skeleton-shimmer"></div>
+                            <div class="h-6 w-20 rounded-md ax-skeleton-shimmer"></div>
+                            <div class="h-6 w-24 rounded-md ax-skeleton-shimmer"></div>
                         </div>
-
-                        <div>
-                            <h2 class="text-base font-black text-slate-900">
-                                <?php echo e($tk->titulo ?? 'Consulta sobre ' . $tk->modulo); ?>
-
-                            </h2>
-                            <p class="text-xs text-slate-600 mt-1 leading-relaxed">
-                                <?php echo e($tk->duda); ?>
-
-                            </p>
+                        <div class="space-y-2">
+                            <div class="h-5 w-72 rounded-md ax-skeleton-shimmer"></div>
+                            <div class="h-4 w-full rounded ax-skeleton-shimmer"></div>
+                            <div class="h-4 w-3/4 rounded ax-skeleton-shimmer"></div>
                         </div>
-
-                        <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php endif; ?><?php if($tk->justificacion_escalamiento): ?>
-                            <div class="p-3 bg-amber-50 rounded-xl border border-amber-200 text-xs text-amber-900">
-                                <span class="font-bold flex items-center gap-1.5 text-amber-800 mb-0.5">
-                                    <i class="fas fa-triangle-exclamation"></i> Justificación de escalamiento:
-                                </span>
-                                <?php echo e($tk->justificacion_escalamiento); ?>
-
-                                <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php endif; ?><?php if($tk->escalador): ?>
-                                    <span class="block text-[10px] text-amber-700 mt-1">
-                                        Escalado por: <?php echo e($tk->escalador->nombre_real); ?> (Admin)
-                                    </span>
-                                <?php endif; ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php endif; ?>
-                            </div>
-                        <?php endif; ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php endif; ?>
-
-                        <div class="flex flex-wrap items-center gap-4 text-[11px] text-slate-400 pt-2 border-t border-slate-100">
-                            <span class="flex items-center gap-1">
-                                <i class="fas fa-user text-slate-300"></i> Creador: <strong class="text-slate-600"><?php echo e($tk->nombre_usuario); ?></strong> (<?php echo e($tk->rol_usuario); ?>)
-                            </span>
-                            <span>&bull;</span>
-                            <span>Fecha: <?php echo e($tk->created_at->format('d/m/Y H:i')); ?></span>
-                            <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php endif; ?><?php if($tk->mensajes_count ?? false): ?>
-                                <span>&bull;</span>
-                                <span class="font-bold text-indigo-600"><i class="fas fa-comments"></i> <?php echo e($tk->mensajes_count); ?> mensajes</span>
-                            <?php endif; ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php endif; ?>
+                        <div class="flex items-center gap-4 pt-2">
+                            <div class="h-4 w-28 rounded ax-skeleton-shimmer"></div>
+                            <div class="h-4 w-36 rounded ax-skeleton-shimmer"></div>
                         </div>
                     </div>
-
                     <div class="flex flex-col sm:flex-row md:flex-col gap-2 shrink-0">
-                        <a href="<?php echo e(route('ayuda.tickets.show', $tk->id)); ?>" class="px-5 py-2.5 rounded-xl text-xs font-bold bg-indigo-600 hover:bg-indigo-700 text-white text-center transition-colors shadow-sm">
-                            <i class="fas fa-comments mr-1.5"></i> Ver Conversación
-                        </a>
+                        <div class="h-10 w-36 rounded-xl ax-skeleton-shimmer"></div>
                     </div>
                 </div>
-            <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::endLoop(); ?><?php endif; ?><?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); if ($__empty_1): ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::closeLoop(); ?><?php endif; ?>
-                <div class="bg-white rounded-3xl border border-slate-200 p-12 text-center text-slate-400">
-                    <i class="fas fa-inbox text-3xl mb-2 text-slate-300"></i>
-                    <p class="text-sm font-medium">No hay dudas que requieran atención de Super Administrador en este momento.</p>
-                </div>
-            <?php endif; ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php endif; ?>
+            <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::endLoop(); ?><?php endif; ?><?php endfor; ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::closeLoop(); ?><?php endif; ?>
+            <span class="sr-only">Cargando dudas...</span>
+        </div>
 
-            <div class="p-4">
-                <?php echo e($tickets->links()); ?>
-
-            </div>
+        <!-- Contenedor de Tickets -->
+        <div id="contenedorListaSuperAdminTickets" x-show="!cargandoTickets">
+            <?php echo $__env->make('superadmin.tabla-tickets', ['tickets' => $tickets], array_diff_key(get_defined_vars(), ['__data' => 1, '__path' => 1]))->render(); ?>
         </div>
 
     </div>
+
+    <script>
+        function gestionSuperAdminTickets(config) {
+            return {
+                estadoTab: config.estadoTab || 'Pendiente',
+                conteoEstados: config.conteoEstados || {},
+                filtroSearch: '<?php echo e(request('search')); ?>',
+                cargandoTickets: false,
+
+                async cambiarEstado(estado) {
+                    if (this.estadoTab === estado && !this.cargandoTickets) return;
+                    this.estadoTab = estado;
+                    await this.cargarTickets();
+                },
+
+                async ejecutarFiltro() {
+                    await this.cargarTickets();
+                },
+
+                async limpiarFiltros() {
+                    this.filtroSearch = '';
+                    this.estadoTab = 'Pendiente';
+                    await this.cargarTickets();
+                },
+
+                construirUrl(pagina = 1) {
+                    const params = new URLSearchParams();
+                    if (this.estadoTab && this.estadoTab !== 'todos') {
+                        params.set('estado', this.estadoTab);
+                    }
+                    if (this.filtroSearch && this.filtroSearch.trim() !== '') {
+                        params.set('search', this.filtroSearch.trim());
+                    }
+                    if (pagina > 1) {
+                        params.set('page', pagina);
+                    }
+
+                    const queryString = params.toString();
+                    return `<?php echo e(route('superadmin.tickets')); ?>${queryString ? '?' + queryString : ''}`;
+                },
+
+                async cargarTickets(urlDestino = null) {
+                    this.cargandoTickets = true;
+                    const url = urlDestino || this.construirUrl(1);
+                    window.history.pushState({}, '', url);
+
+                    try {
+                        const res = await fetch(url, {
+                            headers: {
+                                'Accept': 'application/json',
+                                'X-Requested-With': 'XMLHttpRequest'
+                            }
+                        });
+                        const data = await res.json();
+                        if (data.success && data.html) {
+                            const contenedor = document.getElementById('contenedorListaSuperAdminTickets');
+                            if (contenedor) {
+                                contenedor.innerHTML = data.html;
+                                this.atarPaginacionTickets();
+                            }
+                            if (data.conteoEstados) {
+                                this.conteoEstados = data.conteoEstados;
+                            }
+                        }
+                    } catch (err) {
+                        console.error('Error al cargar tickets super admin:', err);
+                    } finally {
+                        this.cargandoTickets = false;
+                    }
+                },
+
+                atarPaginacionTickets() {
+                    const contenedor = document.getElementById('contenedorListaSuperAdminTickets');
+                    if (!contenedor) return;
+                    const links = contenedor.querySelectorAll('a[href*="page="]');
+                    links.forEach(link => {
+                        link.addEventListener('click', async (e) => {
+                            e.preventDefault();
+                            const href = link.getAttribute('href');
+                            if (!href) return;
+                            await this.cargarTickets(href);
+                        });
+                    });
+                },
+
+                init() {
+                    this.atarPaginacionTickets();
+                }
+            };
+        }
+    </script>
  <?php echo $__env->renderComponent(); ?>
 <?php endif; ?>
 <?php if (isset($__attributesOriginal7ae6b45c011e855a5545a671a7f3568e)): ?>

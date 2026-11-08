@@ -15,6 +15,9 @@
         <!-- ENCABEZADO PRINCIPAL -->
         <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
             <div>
+                <a href="<?php echo e(route('home')); ?>" class="inline-flex items-center gap-2 text-xs font-bold uppercase tracking-widest text-slate-400 hover:text-blue-600 transition-colors mb-3">
+                    <i class="fas fa-arrow-left"></i> Volver al inicio
+                </a>
                 <div class="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-slate-400 mb-1">
                     <a href="<?php echo e(route('ventas.index')); ?>" class="hover:text-blue-600 transition-colors">Ventas</a>
                     <span>/</span>
@@ -61,13 +64,20 @@
         </nav>
 
         <!-- 1. BARRA DE FILTROS Y BÚSQUEDA -->
-        <section class="bg-white border border-slate-200 rounded-2xl p-4 sm:p-5 shadow-sm">
-            <form method="GET" action="<?php echo e(route('ventas.pedidos')); ?>" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-12 gap-3.5 items-end">
+        <?php
+            $selectedVendedorObj = $vendedores->firstWhere('id', $vendedorId);
+            $selectedVendedorNombre = $selectedVendedorObj ? ($selectedVendedorObj->nombre_real ?: $selectedVendedorObj->username) : 'Todos';
+            $selectedProductoObj = isset($productos) ? $productos->firstWhere('id', $productoId ?? null) : null;
+            $selectedProductoNombre = $selectedProductoObj ? $selectedProductoObj->nombre : 'Todos';
+        ?>
+        <section class="bg-white border border-slate-200/80 rounded-2xl p-4 sm:p-5 shadow-xs">
+            <form method="GET" action="<?php echo e(route('ventas.pedidos')); ?>" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-12 gap-3.5 items-end">
                 
                 <!-- BÚSQUEDA RÁPIDA -->
-                <div class="lg:col-span-4">
-                    <label for="q" class="block text-[11px] font-bold uppercase tracking-wider text-slate-600 mb-1">
-                        <i class="fas fa-magnifying-glass text-slate-400 mr-1"></i> Buscar por Folio / Cliente / Teléfono
+                <div class="sm:col-span-2 md:col-span-3 lg:col-span-3">
+                    <label for="q" class="mb-1.5 flex items-center gap-1.5 text-xs font-bold text-slate-700 tracking-tight">
+                        <i class="fas fa-search text-blue-600 text-xs"></i>
+                        <span>Buscar por Folio / Cliente / Teléfono</span>
                     </label>
                     <div class="relative">
                         <input 
@@ -76,76 +86,158 @@
                             id="q" 
                             value="<?php echo e($busqueda); ?>" 
                             placeholder="Ej: 00004 o 7123-4567..." 
-                            class="w-full rounded-xl border border-slate-300 bg-slate-50 pl-9 pr-3 py-2 text-xs font-semibold text-slate-700 focus:border-blue-500 focus:bg-white focus:outline-none focus:ring-4 focus:ring-blue-500/10 transition-all"
+                            class="h-10 w-full rounded-xl border border-slate-200 bg-slate-50/90 pl-9 pr-3 text-xs font-semibold text-slate-700 shadow-sm transition hover:border-slate-300 hover:bg-white focus:border-blue-500 focus:bg-white focus:outline-none focus:ring-4 focus:ring-blue-500/10"
                         >
-                        <i class="fas fa-search absolute left-3 top-2.5 text-slate-400 text-xs"></i>
+                        <i class="fas fa-search absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-xs pointer-events-none"></i>
                     </div>
                 </div>
 
                 <!-- FECHA DESDE -->
                 <div class="lg:col-span-2">
-                    <label for="desde" class="block text-[11px] font-bold uppercase tracking-wider text-slate-600 mb-1">
-                        <i class="fas fa-calendar-day text-slate-400 mr-1"></i> Desde
+                    <label for="desde" class="mb-1.5 flex items-center gap-1.5 text-xs font-bold text-slate-700 tracking-tight">
+                        <i class="fas fa-calendar-day text-blue-600 text-xs"></i>
+                        <span>Desde</span>
                     </label>
                     <input 
                         type="date" 
                         name="desde" 
                         id="desde" 
                         value="<?php echo e($desde); ?>" 
-                        class="w-full rounded-xl border border-slate-300 bg-slate-50 px-3 py-2 text-xs font-semibold text-slate-700 focus:border-blue-500 focus:bg-white focus:outline-none focus:ring-4 focus:ring-blue-500/10 transition-all"
+                        class="h-10 w-full rounded-xl border border-slate-200 bg-slate-50/90 px-3 text-xs font-semibold text-slate-700 shadow-sm transition hover:border-slate-300 hover:bg-white focus:border-blue-500 focus:bg-white focus:outline-none focus:ring-4 focus:ring-blue-500/10"
                     >
                 </div>
 
                 <!-- FECHA HASTA -->
                 <div class="lg:col-span-2">
-                    <label for="hasta" class="block text-[11px] font-bold uppercase tracking-wider text-slate-600 mb-1">
-                        <i class="fas fa-calendar-check text-slate-400 mr-1"></i> Hasta
+                    <label for="hasta" class="mb-1.5 flex items-center gap-1.5 text-xs font-bold text-slate-700 tracking-tight">
+                        <i class="fas fa-calendar-check text-blue-600 text-xs"></i>
+                        <span>Hasta</span>
                     </label>
                     <input 
                         type="date" 
                         name="hasta" 
                         id="hasta" 
                         value="<?php echo e($hasta); ?>" 
-                        class="w-full rounded-xl border border-slate-300 bg-slate-50 px-3 py-2 text-xs font-semibold text-slate-700 focus:border-blue-500 focus:bg-white focus:outline-none focus:ring-4 focus:ring-blue-500/10 transition-all"
+                        class="h-10 w-full rounded-xl border border-slate-200 bg-slate-50/90 px-3 text-xs font-semibold text-slate-700 shadow-sm transition hover:border-slate-300 hover:bg-white focus:border-blue-500 focus:bg-white focus:outline-none focus:ring-4 focus:ring-blue-500/10"
                     >
                 </div>
 
-                <!-- VENDEDOR -->
-                <div class="lg:col-span-2">
-                    <label for="vendedor_id" class="block text-[11px] font-bold uppercase tracking-wider text-slate-600 mb-1">
-                        <i class="fas fa-user-tie text-slate-400 mr-1"></i> Vendedor
+                <!-- VENDEDOR CON BUSCADOR -->
+                <div class="lg:col-span-2 relative" data-searchable-select="vendedor">
+                    <label class="mb-1.5 flex items-center gap-1.5 text-xs font-bold text-slate-700 tracking-tight">
+                        <i class="fas fa-user-tie text-blue-600 text-xs"></i>
+                        <span>Vendedor</span>
                     </label>
-                    <select 
-                        name="vendedor_id" 
-                        id="vendedor_id" 
-                        class="w-full rounded-xl border border-slate-300 bg-slate-50 px-3 py-2 text-xs font-semibold text-slate-700 focus:border-blue-500 focus:bg-white focus:outline-none focus:ring-4 focus:ring-blue-500/10 transition-all"
-                    >
-                        <option value="">Todos</option>
-                        <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::openLoop(); ?><?php endif; ?><?php $__currentLoopData = $vendedores; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $v): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::startLoopIteration(); ?><?php endif; ?>
-                            <option value="<?php echo e($v->id); ?>" <?php echo e((string)$vendedorId === (string)$v->id ? 'selected' : ''); ?>>
-                                <?php echo e($v->nombre_real ?: $v->username); ?>
+                    <input type="hidden" name="vendedor_id" id="vendedor_id" value="<?php echo e($vendedorId); ?>">
+                    <button type="button" class="h-10 w-full rounded-xl border border-slate-200 bg-slate-50/90 px-3 text-xs font-bold text-slate-700 shadow-sm transition hover:border-slate-300 hover:bg-white focus:border-blue-500 focus:bg-white focus:outline-none focus:ring-4 focus:ring-blue-500/10 flex items-center justify-between gap-2 cursor-pointer text-left" data-toggle aria-expanded="false">
+                        <span class="flex items-center gap-2 truncate">
+                            <i class="fas fa-user-tie <?php echo e($vendedorId ? 'text-blue-600' : 'text-slate-400'); ?>" data-icon></i>
+                            <span class="truncate" data-label><?php echo e($selectedVendedorNombre); ?></span>
+                        </span>
+                        <i class="fas fa-chevron-down text-[10px] text-slate-400 transition-transform duration-200" data-arrow></i>
+                    </button>
+                    <div class="hidden absolute left-0 top-full z-50 mt-1.5 w-full min-w-[210px] rounded-2xl border border-slate-200 bg-white p-2 shadow-2xl" data-menu>
+                        <div class="relative mb-2">
+                            <i class="fas fa-search absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-xs pointer-events-none"></i>
+                            <input type="text" placeholder="Buscar vendedor..." class="w-full pl-8 pr-3 py-1.5 text-xs bg-slate-50 border border-slate-200 rounded-xl text-slate-700 placeholder:text-slate-400 focus:bg-white focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/10" data-search-input>
+                        </div>
+                        <div class="max-h-52 overflow-y-auto space-y-0.5" data-options-list>
+                            <button type="button" data-option data-value="" data-label="Todos" data-icon="fas fa-user-tie text-slate-400"
+                                class="w-full flex items-center justify-between rounded-xl px-3 py-2 text-xs font-bold transition-colors text-left <?php echo e(empty($vendedorId) ? 'bg-blue-50 text-blue-700' : 'text-slate-700 hover:bg-slate-50'); ?>">
+                                <span class="flex items-center gap-2 truncate">
+                                    <i class="fas fa-user-tie text-slate-400"></i>
+                                    <span>Todos</span>
+                                </span>
+                                <i class="fas fa-check text-blue-600 text-[10px] <?php echo e(empty($vendedorId) ? '' : 'hidden'); ?>" data-check></i>
+                            </button>
+                            <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::openLoop(); ?><?php endif; ?><?php $__currentLoopData = $vendedores; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $v): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::startLoopIteration(); ?><?php endif; ?>
+                                <?php
+                                    $nVend = $v->nombre_real ?: $v->username;
+                                    $isSelV = (string)$vendedorId === (string)$v->id;
+                                ?>
+                                <button type="button" data-option data-value="<?php echo e($v->id); ?>" data-label="<?php echo e($nVend); ?>" data-icon="fas fa-user-tie text-blue-600"
+                                    class="w-full flex items-center justify-between rounded-xl px-3 py-2 text-xs font-bold transition-colors text-left <?php echo e($isSelV ? 'bg-blue-50 text-blue-700' : 'text-slate-700 hover:bg-slate-50 hover:text-slate-900'); ?>">
+                                    <span class="flex items-center gap-2 truncate">
+                                        <i class="fas fa-user-tie text-blue-500"></i>
+                                        <span class="truncate"><?php echo e($nVend); ?></span>
+                                    </span>
+                                    <i class="fas fa-check text-blue-600 text-[10px] <?php echo e($isSelV ? '' : 'hidden'); ?>" data-check></i>
+                                </button>
+                            <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::endLoop(); ?><?php endif; ?><?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::closeLoop(); ?><?php endif; ?>
+                            <div class="hidden py-4 text-center text-xs text-slate-400 font-medium" data-empty-msg>
+                                No se encontraron resultados
+                            </div>
+                        </div>
+                    </div>
+                </div>
 
-                            </option>
-                        <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::endLoop(); ?><?php endif; ?><?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::closeLoop(); ?><?php endif; ?>
-                    </select>
+                <!-- PRODUCTO CON BUSCADOR -->
+                <div class="lg:col-span-2 relative" data-searchable-select="producto">
+                    <label class="mb-1.5 flex items-center gap-1.5 text-xs font-bold text-slate-700 tracking-tight">
+                        <i class="fas fa-box text-blue-600 text-xs"></i>
+                        <span>Producto</span>
+                    </label>
+                    <input type="hidden" name="producto_id" id="producto_id" value="<?php echo e($productoId ?? ''); ?>">
+                    <button type="button" class="h-10 w-full rounded-xl border border-slate-200 bg-slate-50/90 px-3 text-xs font-bold text-slate-700 shadow-sm transition hover:border-slate-300 hover:bg-white focus:border-blue-500 focus:bg-white focus:outline-none focus:ring-4 focus:ring-blue-500/10 flex items-center justify-between gap-2 cursor-pointer text-left" data-toggle aria-expanded="false">
+                        <span class="flex items-center gap-2 truncate">
+                            <i class="fas fa-box <?php echo e(!empty($productoId) ? 'text-blue-600' : 'text-slate-400'); ?>" data-icon></i>
+                            <span class="truncate" data-label><?php echo e($selectedProductoNombre); ?></span>
+                        </span>
+                        <i class="fas fa-chevron-down text-[10px] text-slate-400 transition-transform duration-200" data-arrow></i>
+                    </button>
+                    <div class="hidden absolute right-0 lg:left-0 top-full z-50 mt-1.5 w-full min-w-[230px] rounded-2xl border border-slate-200 bg-white p-2 shadow-2xl" data-menu>
+                        <div class="relative mb-2">
+                            <i class="fas fa-search absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-xs pointer-events-none"></i>
+                            <input type="text" placeholder="Buscar producto..." class="w-full pl-8 pr-3 py-1.5 text-xs bg-slate-50 border border-slate-200 rounded-xl text-slate-700 placeholder:text-slate-400 focus:bg-white focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/10" data-search-input>
+                        </div>
+                        <div class="max-h-52 overflow-y-auto space-y-0.5" data-options-list>
+                            <button type="button" data-option data-value="" data-label="Todos" data-icon="fas fa-box text-slate-400"
+                                class="w-full flex items-center justify-between rounded-xl px-3 py-2 text-xs font-bold transition-colors text-left <?php echo e(empty($productoId) ? 'bg-blue-50 text-blue-700' : 'text-slate-700 hover:bg-slate-50'); ?>">
+                                <span class="flex items-center gap-2 truncate">
+                                    <i class="fas fa-box text-slate-400"></i>
+                                    <span>Todos</span>
+                                </span>
+                                <i class="fas fa-check text-blue-600 text-[10px] <?php echo e(empty($productoId) ? '' : 'hidden'); ?>" data-check></i>
+                            </button>
+                            <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php endif; ?><?php if(isset($productos)): ?>
+                                <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::openLoop(); ?><?php endif; ?><?php $__currentLoopData = $productos; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $p): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::startLoopIteration(); ?><?php endif; ?>
+                                    <?php
+                                        $isSelP = (string)($productoId ?? '') === (string)$p->id;
+                                    ?>
+                                    <button type="button" data-option data-value="<?php echo e($p->id); ?>" data-label="<?php echo e($p->nombre); ?>" data-icon="fas fa-box text-blue-600"
+                                        class="w-full flex items-center justify-between rounded-xl px-3 py-2 text-xs font-bold transition-colors text-left <?php echo e($isSelP ? 'bg-blue-50 text-blue-700' : 'text-slate-700 hover:bg-slate-50 hover:text-slate-900'); ?>">
+                                        <span class="flex items-center gap-2 truncate">
+                                            <i class="fas fa-box text-blue-500"></i>
+                                            <span class="truncate"><?php echo e($p->nombre); ?></span>
+                                        </span>
+                                        <i class="fas fa-check text-blue-600 text-[10px] <?php echo e($isSelP ? '' : 'hidden'); ?>" data-check></i>
+                                    </button>
+                                <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::endLoop(); ?><?php endif; ?><?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::closeLoop(); ?><?php endif; ?>
+                            <?php endif; ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php endif; ?>
+                            <div class="hidden py-4 text-center text-xs text-slate-400 font-medium" data-empty-msg>
+                                No se encontraron resultados
+                            </div>
+                        </div>
+                    </div>
                 </div>
 
                 <!-- BOTONES -->
-                <div class="lg:col-span-2 flex items-center gap-2">
+                <div class="lg:col-span-1 flex items-center gap-1.5">
                     <button 
                         type="submit" 
-                        class="flex-1 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-bold py-2 px-3 text-xs transition-all shadow-md shadow-blue-600/15 flex items-center justify-center gap-1.5 cursor-pointer"
+                        class="h-10 flex-1 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold px-3 text-xs transition-all shadow-sm shadow-blue-500/20 hover:shadow-md flex items-center justify-center gap-1.5 cursor-pointer"
+                        title="Aplicar filtros"
                     >
-                        <i class="fas fa-filter"></i>
-                        <span>Filtrar</span>
+                        <i class="fas fa-filter text-xs"></i>
+                        <span class="hidden sm:inline lg:hidden xl:inline">Filtrar</span>
                     </button>
-                    <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php endif; ?><?php if(request()->hasAny(['desde', 'hasta', 'vendedor_id', 'q'])): ?>
+                    <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php endif; ?><?php if(request()->hasAny(['desde', 'hasta', 'vendedor_id', 'producto_id', 'q'])): ?>
                         <a 
                             href="<?php echo e(route('ventas.pedidos')); ?>" 
-                            class="rounded-xl border border-slate-200 bg-slate-50 hover:bg-slate-100 text-slate-600 font-bold py-2 px-3 text-xs transition-colors flex items-center justify-center"
+                            class="h-10 w-10 rounded-xl border border-slate-200 bg-slate-50/90 hover:bg-red-50 hover:text-red-600 hover:border-red-200 text-slate-500 font-bold transition-all shadow-sm flex items-center justify-center cursor-pointer shrink-0"
                             title="Limpiar filtros"
                         >
-                            <i class="fas fa-rotate-left"></i>
+                            <i class="fas fa-rotate-left text-xs"></i>
                         </a>
                     <?php endif; ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php endif; ?>
                 </div>
@@ -269,8 +361,35 @@
         </div>
 
         <!-- 3. TABLA DEL APARTADO SELECCIONADO -->
-        <section class="bg-white border border-slate-200 rounded-2xl shadow-sm overflow-hidden">
+        <section class="bg-white border border-slate-200 rounded-2xl shadow-sm overflow-hidden relative">
             
+            <!-- SKELETON LOADER PARA TRANSICIÓN DE APARTADOS Y FILTRADO -->
+            <div x-show="cargandoFiltros" class="p-6">
+                <?php if (isset($component)) { $__componentOriginalb3a7e296665e2f58ea67cad97892cbe7 = $component; } ?>
+<?php if (isset($attributes)) { $__attributesOriginalb3a7e296665e2f58ea67cad97892cbe7 = $attributes; } ?>
+<?php $component = Illuminate\View\AnonymousComponent::resolve(['view' => 'components.skeleton-table','data' => ['rows' => 6,'cols' => 7]] + (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag ? $attributes->all() : [])); ?>
+<?php $component->withName('skeleton-table'); ?>
+<?php if ($component->shouldRender()): ?>
+<?php $__env->startComponent($component->resolveView(), $component->data()); ?>
+<?php if (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag): ?>
+<?php $attributes = $attributes->except(\Illuminate\View\AnonymousComponent::ignoredParameterNames()); ?>
+<?php endif; ?>
+<?php $component->withAttributes(['rows' => 6,'cols' => 7]); ?>
+<?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::processComponentKey($component); ?>
+
+<?php echo $__env->renderComponent(); ?>
+<?php endif; ?>
+<?php if (isset($__attributesOriginalb3a7e296665e2f58ea67cad97892cbe7)): ?>
+<?php $attributes = $__attributesOriginalb3a7e296665e2f58ea67cad97892cbe7; ?>
+<?php unset($__attributesOriginalb3a7e296665e2f58ea67cad97892cbe7); ?>
+<?php endif; ?>
+<?php if (isset($__componentOriginalb3a7e296665e2f58ea67cad97892cbe7)): ?>
+<?php $component = $__componentOriginalb3a7e296665e2f58ea67cad97892cbe7; ?>
+<?php unset($__componentOriginalb3a7e296665e2f58ea67cad97892cbe7); ?>
+<?php endif; ?>
+            </div>
+
+            <div x-show="!cargandoFiltros">
             <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-5 border-b border-slate-100 bg-slate-50/60">
                 <div class="flex items-center gap-3">
                     <div class="w-9 h-9 rounded-xl flex items-center justify-center font-bold text-sm shadow-xs"
@@ -324,7 +443,7 @@
                     <!-- Opción 1: Todos los Pendientes -->
                     <button 
                         type="button" 
-                        @click="subFiltroPendiente = 'todos'"
+                        @click="cambiarSubFiltro('todos')"
                         class="px-3 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer"
                         :class="subFiltroPendiente === 'todos' ? 'bg-amber-500 text-white shadow-xs' : 'text-slate-600 hover:text-amber-800 hover:bg-amber-50'"
                     >
@@ -339,7 +458,7 @@
                     <!-- Opción 2: San Salvador -->
                     <button 
                         type="button" 
-                        @click="subFiltroPendiente = 'san_salvador'"
+                        @click="cambiarSubFiltro('san_salvador')"
                         class="px-3 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer"
                         :class="subFiltroPendiente === 'san_salvador' ? 'bg-blue-600 text-white shadow-xs' : 'text-slate-600 hover:text-blue-800 hover:bg-blue-50'"
                     >
@@ -355,7 +474,7 @@
                     <!-- Opción 3: Otros Departamentos -->
                     <button 
                         type="button" 
-                        @click="subFiltroPendiente = 'otros'"
+                        @click="cambiarSubFiltro('otros')"
                         class="px-3 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer"
                         :class="subFiltroPendiente === 'otros' ? 'bg-indigo-600 text-white shadow-xs' : 'text-slate-600 hover:text-indigo-800 hover:bg-indigo-50'"
                     >
@@ -665,7 +784,7 @@
                         <button 
                             type="button" 
                             x-show="tabActiva === 'Pendiente' && subFiltroPendiente !== 'todos'"
-                            @click="subFiltroPendiente = 'todos'"
+                            @click="cambiarSubFiltro('todos')"
                             class="text-xs font-bold text-amber-600 hover:underline cursor-pointer"
                         >
                             Ver todos los pendientes
@@ -681,6 +800,8 @@
                     </div>
                 </div>
             </div>
+
+            </div> <!-- FIN x-show="!cargandoFiltros" -->
 
         </section>
 
@@ -776,14 +897,14 @@
                             </template>
                         </div>
 
-                        <!-- ALERTA INFORMATIVA: EN RUTA NO PUEDE CANCELARSE -->
+                        <!-- ALERTA INFORMATIVA: EN RUTA -->
                         <template x-if="estadoModalData.estadoActual === 'En ruta'">
                             <div class="p-3.5 bg-amber-50 border border-amber-200 rounded-xl text-xs text-amber-900 flex items-start gap-2.5 shadow-2xs">
                                 <i class="fas fa-truck-fast text-amber-600 mt-0.5 text-base shrink-0"></i>
                                 <div>
-                                    <p class="font-bold text-amber-950 leading-snug">Envío actualmente en camino</p>
+                                    <p class="font-bold text-amber-950 leading-snug">Envío en camino con paquetería</p>
                                     <p class="text-[11px] text-amber-800 mt-0.5 leading-relaxed">
-                                        Este paquete ya fue entregado a la paquetería y se encuentra en ruta hacia el cliente. Por políticas de despacho y logística, <strong>este pedido ya no puede ser cancelado</strong>; únicamente puede avanzar a <strong>Entregada</strong> una vez completada la entrega al cliente.
+                                        Este paquete está en tránsito hacia el cliente. No se puede cancelar de forma directa; si el cliente <strong>no lo recibió o rechazó la entrega</strong>, selecciona <strong>Devolución</strong> para reingresar los artículos al stock de tienda y registrar la evidencia física del paquete.
                                     </p>
                                 </div>
                             </div>
@@ -1044,8 +1165,7 @@
                             <i class="fas fa-circle-exclamation text-amber-600 text-sm mt-0.5 shrink-0"></i>
                             <div class="text-[11px]">
                                 <span class="font-bold block">Acción con impacto en inventario y comisiones:</span>
-                                <span class="text-amber-800">
-                                    Si cancelas la venta, el stock de las variantes se devolverá automáticamente a la bodega y se anularán las comisiones asociadas.
+                                <span class="text-amber-800" x-text="nuevoEstadoSeleccionado === 'Devolución' ? 'Si procesas la devolución por paquete no recibido, los productos retornarán al stock activo de tienda y se anularán las comisiones del pedido (deduciendo el 50% del costo de envío al vendedor).' : 'Si cancelas la venta, el stock de las variantes se devolverá automáticamente a la tienda y se anularán las comisiones asociadas.'">
                                 </span>
                             </div>
                         </div>
@@ -2332,6 +2452,7 @@
             return {
                 tabActiva: '<?php echo e($estadoTab ?? "todos"); ?>',
                 subFiltroPendiente: 'todos', // 'todos', 'san_salvador', 'otros'
+                cargandoFiltros: false,
 
                 // Conteos dinámicos
                 conteoEstados: <?php echo json_encode($conteoEstados, 15, 512) ?>,
@@ -2394,8 +2515,28 @@
                 errorObservacionesEstado: false,
                 errorObservacionesEstadoMensaje: '',
 
+                iniciarFiltrado(event) {
+                    setTimeout(() => {
+                        this.cargandoFiltros = true;
+                    }, 50);
+                },
+
                 cambiarTab(tab) {
+                    if (this.tabActiva === tab) return;
+                    this.cargandoFiltros = true;
                     this.tabActiva = tab;
+                    setTimeout(() => {
+                        this.cargandoFiltros = false;
+                    }, 120);
+                },
+
+                cambiarSubFiltro(sub) {
+                    if (this.subFiltroPendiente === sub) return;
+                    this.cargandoFiltros = true;
+                    this.subFiltroPendiente = sub;
+                    setTimeout(() => {
+                        this.cargandoFiltros = false;
+                    }, 100);
                 },
 
                 nombreTabActual() {
@@ -2417,8 +2558,8 @@
                         'Pendiente': 'Pedidos recién registrados que requieren confirmación para empaque.',
                         'Confirmada': 'Órdenes listas para ser empaquetadas o despachadas a mensajería.',
                         'En ruta': 'Envíos en tránsito con fotografía de comprobante de paquetería registrada.',
-                        'Cancelada': 'Transacciones que han sido anuladas, con stock retornado a bodega.',
-                        'Devolución': 'Paquetes de envío no recibidos por el cliente, devueltos a la tienda.',
+                        'Cancelada': 'Transacciones que han sido anuladas, con stock retornado a la tienda.',
+                        'Devolución': 'Paquetes de envío no recibidos por el cliente, devueltos al stock de tienda.',
                         'Cambio': 'Producto entregado al cliente que regresa a la tienda para un cambio.'
                     };
                     return descripciones[this.tabActiva] || '';
@@ -2460,7 +2601,13 @@
 
                 abrirModalCambiarEstado(id, estadoActual, tipoVenta, puedeDevolver, estadosPermitidos, diasRestantes, textoGarantia, fechaLimite) {
                     let permitidosFiltrados = Array.isArray(estadosPermitidos) 
-                        ? estadosPermitidos.filter(s => s !== 'Devolución' && s !== 'Cambio') 
+                        ? estadosPermitidos.filter(s => {
+                            // Si está en ruta, permitir Devolución (paquete no recibido)
+                            if (estadoActual === 'En ruta') {
+                                return s !== 'Cambio' && s !== 'Cancelada';
+                            }
+                            return s !== 'Devolución' && s !== 'Cambio';
+                        }) 
                         : [];
 
                     // Regla de despacho: un envío en ruta nunca puede cancelarse
@@ -2528,9 +2675,9 @@
                         case 'Entregada':
                             return 'Entregado al cliente exitosamente.';
                         case 'Cancelada':
-                            return 'Cancela la venta. Reintegra stock a bodega y anula comisiones.';
+                            return 'Cancela la venta. Reintegra stock a la tienda y anula comisiones.';
                         case 'Devolución':
-                            return 'Paquete no recibido por el cliente en ruta. Requiere motivo y foto del paquete.';
+                            return 'Paquete no recibido por el cliente en ruta. Retorna stock a tienda.';
                         case 'Cambio':
                             return 'Retorno por garantía. Requiere justificación y foto del paquete.';
                         default:
@@ -3174,6 +3321,143 @@
                 }
             };
         }
+
+        // Dropdowns con Buscador Interno para Vendedor y Producto en Pedidos
+        function initSearchablePedidosSelects() {
+            const containers = document.querySelectorAll('[data-searchable-select]');
+
+            containers.forEach(container => {
+                const toggle = container.querySelector('[data-toggle]');
+                const menu = container.querySelector('[data-menu]');
+                const arrow = container.querySelector('[data-arrow]');
+                const labelSpan = container.querySelector('[data-label]');
+                const iconEl = container.querySelector('[data-icon]');
+                const hiddenInput = container.querySelector('input[type="hidden"]');
+                const searchInput = container.querySelector('[data-search-input]');
+                const options = container.querySelectorAll('[data-option]');
+                const emptyMsg = container.querySelector('[data-empty-msg]');
+
+                function openMenu() {
+                    document.querySelectorAll('[data-searchable-select] [data-menu]').forEach(m => {
+                        if (m !== menu) {
+                            m.classList.add('hidden');
+                            const p = m.closest('[data-searchable-select]');
+                            p?.querySelector('[data-arrow]')?.classList.remove('rotate-180');
+                            p?.querySelector('[data-toggle]')?.setAttribute('aria-expanded', 'false');
+                        }
+                    });
+                    menu.classList.remove('hidden');
+                    arrow?.classList.add('rotate-180');
+                    toggle.setAttribute('aria-expanded', 'true');
+                    if (searchInput) {
+                        setTimeout(() => searchInput.focus(), 50);
+                    }
+                }
+
+                function closeMenu() {
+                    menu.classList.add('hidden');
+                    arrow?.classList.remove('rotate-180');
+                    toggle.setAttribute('aria-expanded', 'false');
+                    if (searchInput) {
+                        searchInput.value = '';
+                        options.forEach(opt => opt.style.display = '');
+                        if (emptyMsg) emptyMsg.classList.add('hidden');
+                    }
+                }
+
+                toggle.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    if (menu.classList.contains('hidden')) {
+                        openMenu();
+                    } else {
+                        closeMenu();
+                    }
+                });
+
+                if (searchInput) {
+                    searchInput.addEventListener('click', (e) => e.stopPropagation());
+                    searchInput.addEventListener('input', () => {
+                        const q = searchInput.value.toLowerCase().trim();
+                        let matches = 0;
+                        options.forEach(opt => {
+                            const lbl = (opt.dataset.label || '').toLowerCase();
+                            if (opt.dataset.value === '') {
+                                opt.style.display = q === '' ? '' : 'none';
+                                if (q === '') matches++;
+                                return;
+                            }
+                            if (lbl.includes(q)) {
+                                opt.style.display = '';
+                                matches++;
+                            } else {
+                                opt.style.display = 'none';
+                            }
+                        });
+                        if (emptyMsg) {
+                            emptyMsg.classList.toggle('hidden', matches > 0);
+                        }
+                    });
+                }
+
+                options.forEach(opt => {
+                    opt.addEventListener('click', (e) => {
+                        e.stopPropagation();
+                        const val = opt.dataset.value;
+                        const lbl = opt.dataset.label;
+                        const icn = opt.dataset.icon;
+
+                        hiddenInput.value = val;
+                        if (labelSpan) labelSpan.textContent = lbl;
+                        if (iconEl && icn) iconEl.className = icn;
+
+                        options.forEach(o => {
+                            const isSelected = o === opt;
+                            o.classList.toggle('bg-blue-50', isSelected);
+                            o.classList.toggle('text-blue-700', isSelected);
+                            o.classList.toggle('text-slate-700', !isSelected);
+                            const check = o.querySelector('[data-check]');
+                            if (check) check.classList.toggle('hidden', !isSelected);
+                        });
+
+                        closeMenu();
+                    });
+                });
+            });
+
+            document.addEventListener('click', (e) => {
+                if (!e.target.closest('[data-searchable-select]')) {
+                    document.querySelectorAll('[data-searchable-select]').forEach(container => {
+                        container.querySelector('[data-menu]')?.classList.add('hidden');
+                        container.querySelector('[data-arrow]')?.classList.remove('rotate-180');
+                        container.querySelector('[data-toggle]')?.setAttribute('aria-expanded', 'false');
+                        const sIn = container.querySelector('[data-search-input]');
+                        if (sIn) {
+                            sIn.value = '';
+                            container.querySelectorAll('[data-option]').forEach(opt => opt.style.display = '');
+                            container.querySelector('[data-empty-msg]')?.classList.add('hidden');
+                        }
+                    });
+                }
+            });
+
+            document.addEventListener('keydown', (e) => {
+                if (e.key === 'Escape') {
+                    document.querySelectorAll('[data-searchable-select]').forEach(container => {
+                        container.querySelector('[data-menu]')?.classList.add('hidden');
+                        container.querySelector('[data-arrow]')?.classList.remove('rotate-180');
+                        container.querySelector('[data-toggle]')?.setAttribute('aria-expanded', 'false');
+                        const sIn = container.querySelector('[data-search-input]');
+                        if (sIn) {
+                            sIn.value = '';
+                            container.querySelectorAll('[data-option]').forEach(opt => opt.style.display = '');
+                            container.querySelector('[data-empty-msg]')?.classList.add('hidden');
+                        }
+                    });
+                }
+            });
+        }
+
+        document.addEventListener('DOMContentLoaded', initSearchablePedidosSelects);
     </script>
  <?php echo $__env->renderComponent(); ?>
 <?php endif; ?>

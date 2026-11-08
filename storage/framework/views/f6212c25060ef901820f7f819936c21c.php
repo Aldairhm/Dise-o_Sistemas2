@@ -16,6 +16,9 @@
         <!-- ENCABEZADO (igual estilo que Categorías) -->
         <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8">
             <div>
+                <a href="<?php echo e(route('home')); ?>" class="inline-flex items-center gap-2 text-xs font-bold uppercase tracking-widest text-slate-400 hover:text-blue-600 transition-colors mb-3">
+                    <i class="fas fa-arrow-left"></i> Volver al inicio
+                </a>
                 <div class="flex items-center gap-2 text-xs font-bold text-blue-600 uppercase tracking-widest mb-1.5">
                     <i class="fas fa-truck-loading"></i>
                     <span>Módulo de Proveedores</span>
@@ -139,24 +142,71 @@
         <!-- CONTENEDOR TABLA / CARDS -->
         <div class="bg-white rounded-2xl border border-slate-200/80 shadow-xs overflow-hidden relative">
 
-            <!-- Loader -->
-            <div x-show="loadingLista" style="display:none;"
-                class="absolute inset-0 bg-white/70 backdrop-blur-xs flex items-center justify-center z-20">
-                <div class="flex items-center gap-3 bg-white px-5 py-3 rounded-2xl shadow-xl border border-slate-100 text-blue-600 text-sm font-bold">
-                    <i class="fas fa-spinner fa-spin text-lg"></i>
-                    <span>Buscando proveedores...</span>
-                </div>
+            <!-- Skeleton Loader Inteligente para Tabla y Cards -->
+            <div x-show="loadingLista" style="display:none;" class="p-5">
+                <template x-if="vista === 'table'">
+                    <?php if (isset($component)) { $__componentOriginalb3a7e296665e2f58ea67cad97892cbe7 = $component; } ?>
+<?php if (isset($attributes)) { $__attributesOriginalb3a7e296665e2f58ea67cad97892cbe7 = $attributes; } ?>
+<?php $component = Illuminate\View\AnonymousComponent::resolve(['view' => 'components.skeleton-table','data' => ['rows' => 4,'cols' => 5]] + (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag ? $attributes->all() : [])); ?>
+<?php $component->withName('skeleton-table'); ?>
+<?php if ($component->shouldRender()): ?>
+<?php $__env->startComponent($component->resolveView(), $component->data()); ?>
+<?php if (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag): ?>
+<?php $attributes = $attributes->except(\Illuminate\View\AnonymousComponent::ignoredParameterNames()); ?>
+<?php endif; ?>
+<?php $component->withAttributes(['rows' => 4,'cols' => 5]); ?>
+<?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::processComponentKey($component); ?>
+
+<?php echo $__env->renderComponent(); ?>
+<?php endif; ?>
+<?php if (isset($__attributesOriginalb3a7e296665e2f58ea67cad97892cbe7)): ?>
+<?php $attributes = $__attributesOriginalb3a7e296665e2f58ea67cad97892cbe7; ?>
+<?php unset($__attributesOriginalb3a7e296665e2f58ea67cad97892cbe7); ?>
+<?php endif; ?>
+<?php if (isset($__componentOriginalb3a7e296665e2f58ea67cad97892cbe7)): ?>
+<?php $component = $__componentOriginalb3a7e296665e2f58ea67cad97892cbe7; ?>
+<?php unset($__componentOriginalb3a7e296665e2f58ea67cad97892cbe7); ?>
+<?php endif; ?>
+                </template>
+                <template x-if="vista === 'cards'">
+                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                        <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::openLoop(); ?><?php endif; ?><?php for($i = 0; $i < 6; $i++): ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::startLoopIteration(); ?><?php endif; ?>
+                            <?php if (isset($component)) { $__componentOriginalfd3a6f8f1730f577643b0c9e9ee5a212 = $component; } ?>
+<?php if (isset($attributes)) { $__attributesOriginalfd3a6f8f1730f577643b0c9e9ee5a212 = $attributes; } ?>
+<?php $component = Illuminate\View\AnonymousComponent::resolve(['view' => 'components.skeleton-card','data' => ['lines' => 3]] + (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag ? $attributes->all() : [])); ?>
+<?php $component->withName('skeleton-card'); ?>
+<?php if ($component->shouldRender()): ?>
+<?php $__env->startComponent($component->resolveView(), $component->data()); ?>
+<?php if (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag): ?>
+<?php $attributes = $attributes->except(\Illuminate\View\AnonymousComponent::ignoredParameterNames()); ?>
+<?php endif; ?>
+<?php $component->withAttributes(['lines' => 3]); ?>
+<?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::processComponentKey($component); ?>
+
+<?php echo $__env->renderComponent(); ?>
+<?php endif; ?>
+<?php if (isset($__attributesOriginalfd3a6f8f1730f577643b0c9e9ee5a212)): ?>
+<?php $attributes = $__attributesOriginalfd3a6f8f1730f577643b0c9e9ee5a212; ?>
+<?php unset($__attributesOriginalfd3a6f8f1730f577643b0c9e9ee5a212); ?>
+<?php endif; ?>
+<?php if (isset($__componentOriginalfd3a6f8f1730f577643b0c9e9ee5a212)): ?>
+<?php $component = $__componentOriginalfd3a6f8f1730f577643b0c9e9ee5a212; ?>
+<?php unset($__componentOriginalfd3a6f8f1730f577643b0c9e9ee5a212); ?>
+<?php endif; ?>
+                        <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::endLoop(); ?><?php endif; ?><?php endfor; ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::closeLoop(); ?><?php endif; ?>
+                    </div>
+                </template>
             </div>
 
             <!-- Mensaje sin datos -->
-            <div x-show="proveedoresFiltrados.length === 0" style="display:none;"
+            <div x-show="!loadingLista && proveedoresFiltrados.length === 0" style="display:none;"
                 class="text-center py-12 text-gray-500">
                 <i class="fas fa-folder-open text-3xl mb-3 text-gray-400"></i>
                 <p>No hay proveedores que coincidan con la búsqueda.</p>
             </div>
 
             <!-- ===================== VISTA TABLA ===================== -->
-            <div x-show="vista === 'table' && proveedoresFiltrados.length > 0" style="display:none;">
+            <div x-show="!loadingLista && vista === 'table' && proveedoresFiltrados.length > 0" style="display:none;">
                 <div class="overflow-x-auto w-full">
                     <table class="w-full text-sm min-w-[600px]">
                         <thead>
@@ -233,7 +283,7 @@
             </div>
 
             <!-- ===================== VISTA CARDS ===================== -->
-            <div x-show="vista === 'cards' && proveedoresFiltrados.length > 0" style="display:none;" class="p-4 sm:p-5">
+            <div x-show="!loadingLista && vista === 'cards' && proveedoresFiltrados.length > 0" style="display:none;" class="p-4 sm:p-5">
                 <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                     <template x-for="proveedor in proveedoresPaginados" :key="proveedor.id">
                         <div class="group bg-white rounded-xl shadow-sm hover:shadow-md transition-all duration-300 relative flex flex-col border border-slate-200/60"

@@ -544,10 +544,29 @@
         </div>
 
         
-        <div id="detLoadingSkeleton" class="p-8 space-y-4 animate-pulse">
-            <div class="h-24 bg-slate-100 rounded-2xl"></div>
-            <div class="h-36 bg-slate-100 rounded-2xl"></div>
-            <div class="h-28 bg-slate-100 rounded-2xl"></div>
+        <div id="detLoadingSkeleton" class="p-6">
+            <?php if (isset($component)) { $__componentOriginale9d5d542df57601608f2d578e153aecc = $component; } ?>
+<?php if (isset($attributes)) { $__attributesOriginale9d5d542df57601608f2d578e153aecc = $attributes; } ?>
+<?php $component = Illuminate\View\AnonymousComponent::resolve(['view' => 'components.skeleton-modal-detalle','data' => []] + (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag ? $attributes->all() : [])); ?>
+<?php $component->withName('skeleton-modal-detalle'); ?>
+<?php if ($component->shouldRender()): ?>
+<?php $__env->startComponent($component->resolveView(), $component->data()); ?>
+<?php if (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag): ?>
+<?php $attributes = $attributes->except(\Illuminate\View\AnonymousComponent::ignoredParameterNames()); ?>
+<?php endif; ?>
+<?php $component->withAttributes([]); ?>
+<?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::processComponentKey($component); ?>
+
+<?php echo $__env->renderComponent(); ?>
+<?php endif; ?>
+<?php if (isset($__attributesOriginale9d5d542df57601608f2d578e153aecc)): ?>
+<?php $attributes = $__attributesOriginale9d5d542df57601608f2d578e153aecc; ?>
+<?php unset($__attributesOriginale9d5d542df57601608f2d578e153aecc); ?>
+<?php endif; ?>
+<?php if (isset($__componentOriginale9d5d542df57601608f2d578e153aecc)): ?>
+<?php $component = $__componentOriginale9d5d542df57601608f2d578e153aecc; ?>
+<?php unset($__componentOriginale9d5d542df57601608f2d578e153aecc); ?>
+<?php endif; ?>
         </div>
 
         

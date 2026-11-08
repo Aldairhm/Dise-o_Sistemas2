@@ -160,91 +160,131 @@
         </div>
 
         <!-- FILTROS GLOBALES -->
-        <section class="bg-white border border-slate-200 rounded-2xl p-4 sm:p-5 shadow-sm">
+        <section class="bg-white border border-slate-200/90 rounded-2xl p-4 sm:p-5 shadow-sm mb-6 transition-all hover:shadow-md">
             <form method="GET" action="<?php echo e(route('comisiones.porVendedor')); ?>"
                 class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-12 gap-3.5 items-end">
-                <input type="hidden" name="periodo" value="<?php echo e($periodo); ?>">
+                <input type="hidden" name="periodo" id="filtroPeriodo" value="<?php echo e($periodo); ?>">
 
                 <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php endif; ?><?php if($isAdmin): ?>
                     
                     <div class="sm:col-span-2 md:col-span-4">
-                        <label for="q" class="block text-[11px] font-bold uppercase tracking-wider text-slate-600 mb-1.5">
-                            <i class="fas fa-magnifying-glass text-slate-400 mr-1"></i> Buscar Vendedor
+                        <label for="q" class="mb-1.5 flex items-center gap-1.5 text-xs font-bold text-slate-700 tracking-tight">
+                            <i class="fas fa-magnifying-glass text-blue-600 text-xs"></i>
+                            <span>Buscar Vendedor</span>
                         </label>
                         <div class="relative">
-                            <input type="text" name="q" id="q" value="<?php echo e($busqueda ?? ''); ?>"
+                            <input type="text" name="q" id="q" value="<?php echo e($busqueda ?? ''); ?>" oninput="debounceFiltroVendedores()"
                                 placeholder="Nombre o correo del vendedor..."
-                                class="w-full rounded-xl border border-slate-300 bg-slate-50 pl-9 pr-3 py-2 text-xs font-semibold text-slate-700 focus:border-blue-500 focus:bg-white focus:outline-none focus:ring-4 focus:ring-blue-500/10 transition-all">
-                            <i class="fas fa-search absolute left-3 top-2.5 text-slate-400 text-xs"></i>
+                                class="h-10 w-full rounded-xl border border-slate-200 bg-slate-50/90 pl-9 pr-3 text-xs font-semibold text-slate-700 shadow-sm transition hover:border-slate-300 hover:bg-white focus:border-blue-500 focus:bg-white focus:outline-none focus:ring-4 focus:ring-blue-500/10">
+                            <i class="fas fa-search absolute left-3 top-3 text-slate-400 text-xs"></i>
                         </div>
                     </div>
                 <?php endif; ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php endif; ?>
 
                 <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php endif; ?><?php if($periodo === 'mes'): ?>
                     
-                    <div class="sm:col-span-1 <?php echo e($isAdmin ? 'md:col-span-3' : 'md:col-span-5'); ?>">
-                        <label for="mes" class="block text-[11px] font-bold uppercase tracking-wider text-slate-600 mb-1.5">
-                            <i class="fas fa-calendar-alt text-slate-400 mr-1"></i> Mes
+                    <div class="sm:col-span-1 <?php echo e($isAdmin ? 'md:col-span-3' : 'md:col-span-5'); ?> relative" data-custom-vendedor-select="mes">
+                        <label class="mb-1.5 flex items-center gap-1.5 text-xs font-bold text-slate-700 tracking-tight">
+                            <i class="fas fa-calendar-alt text-blue-600 text-xs"></i>
+                            <span>Mes</span>
                         </label>
-                        <select name="mes" id="mes"
-                            class="w-full rounded-xl border border-slate-300 bg-slate-50 px-3 py-2 text-xs font-semibold text-slate-700 focus:border-blue-500 focus:bg-white focus:outline-none focus:ring-4 focus:ring-blue-500/10 transition-all">
-                            <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::openLoop(); ?><?php endif; ?><?php $__currentLoopData = $nombresMeses; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $mNum => $mNombre): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::startLoopIteration(); ?><?php endif; ?>
-                                <option value="<?php echo e($mNum); ?>" <?php echo e((int) $mes === $mNum ? 'selected' : ''); ?>>
-                                    <?php echo e($mNombre); ?>
-
-                                    <?php echo e((int) now()->month === $mNum && (int) now()->year === (int) $anio ? '(Actual)' : ''); ?>
-
-                                </option>
-                            <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::endLoop(); ?><?php endif; ?><?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::closeLoop(); ?><?php endif; ?>
-                        </select>
+                        <?php
+                            $curMesNombre = $nombresMeses[(int)$mes] ?? 'Mes';
+                        ?>
+                        <input type="hidden" id="mes" name="mes" value="<?php echo e((int)$mes); ?>">
+                        <button type="button" class="h-10 w-full min-w-0 rounded-xl border border-slate-200 bg-slate-50/90 px-3.5 text-xs font-bold text-slate-700 shadow-sm transition hover:border-slate-300 hover:bg-white focus:border-blue-500 focus:bg-white focus:outline-none focus:ring-4 focus:ring-blue-500/10 flex items-center justify-between gap-2 cursor-pointer text-left" data-toggle aria-expanded="false">
+                            <span class="flex items-center gap-2 truncate">
+                                <i class="fas fa-calendar-alt text-blue-600" data-icon></i>
+                                <span class="truncate" data-label><?php echo e($curMesNombre); ?></span>
+                            </span>
+                            <i class="fas fa-chevron-down text-[10px] text-slate-400 transition-transform duration-200" data-arrow></i>
+                        </button>
+                        <div class="hidden absolute left-0 top-full z-50 mt-1.5 w-full min-w-[190px] rounded-2xl border border-slate-200 bg-white p-1.5 shadow-2xl max-h-64 overflow-y-auto" data-menu>
+                            <div class="space-y-0.5">
+                                <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::openLoop(); ?><?php endif; ?><?php $__currentLoopData = $nombresMeses; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $mNum => $mNombre): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::startLoopIteration(); ?><?php endif; ?>
+                                    <?php
+                                        $isSelected = ((int) $mes === $mNum);
+                                        $isActual = ((int) now()->month === $mNum && (int) now()->year === (int) $anio);
+                                    ?>
+                                    <button type="button" data-option data-value="<?php echo e($mNum); ?>" data-label="<?php echo e($mNombre); ?>" data-icon="fas fa-calendar-alt text-blue-600"
+                                        class="w-full flex items-center justify-between rounded-xl px-3 py-2 text-xs font-bold transition-colors text-left <?php echo e($isSelected ? 'bg-blue-50 text-blue-700' : 'text-slate-700 hover:bg-slate-50 hover:text-slate-900'); ?>">
+                                        <span class="flex items-center gap-2 truncate">
+                                            <i class="fas fa-calendar-day <?php echo e($isActual ? 'text-amber-500' : 'text-slate-400'); ?>"></i>
+                                            <span><?php echo e($mNombre); ?></span>
+                                        </span>
+                                        <div class="flex items-center gap-1.5">
+                                            <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php endif; ?><?php if($isActual): ?>
+                                                <span class="text-[9px] font-extrabold uppercase px-1.5 py-0.5 rounded bg-amber-100 text-amber-800">Actual</span>
+                                            <?php endif; ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php endif; ?>
+                                            <i class="fas fa-check text-blue-600 text-[10px] <?php echo e($isSelected ? '' : 'hidden'); ?>" data-check></i>
+                                        </div>
+                                    </button>
+                                <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::endLoop(); ?><?php endif; ?><?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::closeLoop(); ?><?php endif; ?>
+                            </div>
+                        </div>
                     </div>
 
                     
-                    <div class="sm:col-span-1 <?php echo e($isAdmin ? 'md:col-span-3' : 'md:col-span-5'); ?>">
-                        <label for="anio"
-                            class="block text-[11px] font-bold uppercase tracking-wider text-slate-600 mb-1.5">
-                            <i class="fas fa-calendar text-slate-400 mr-1"></i> Año
+                    <div class="sm:col-span-1 <?php echo e($isAdmin ? 'md:col-span-3' : 'md:col-span-5'); ?> relative" data-custom-vendedor-select="anio">
+                        <label class="mb-1.5 flex items-center gap-1.5 text-xs font-bold text-slate-700 tracking-tight">
+                            <i class="fas fa-calendar text-blue-600 text-xs"></i>
+                            <span>Año</span>
                         </label>
-                        <select name="anio" id="anio"
-                            class="w-full rounded-xl border border-slate-300 bg-slate-50 px-3 py-2 text-xs font-semibold text-slate-700 focus:border-blue-500 focus:bg-white focus:outline-none focus:ring-4 focus:ring-blue-500/10 transition-all">
-                            <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::openLoop(); ?><?php endif; ?><?php for($y = now()->year; $y >= now()->year - 3; $y--): ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::startLoopIteration(); ?><?php endif; ?>
-                                <option value="<?php echo e($y); ?>" <?php echo e((int) $anio === $y ? 'selected' : ''); ?>><?php echo e($y); ?></option>
-                            <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::endLoop(); ?><?php endif; ?><?php endfor; ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::closeLoop(); ?><?php endif; ?>
-                        </select>
+                        <input type="hidden" id="anio" name="anio" value="<?php echo e((int)$anio); ?>">
+                        <button type="button" class="h-10 w-full min-w-0 rounded-xl border border-slate-200 bg-slate-50/90 px-3.5 text-xs font-bold text-slate-700 shadow-sm transition hover:border-slate-300 hover:bg-white focus:border-blue-500 focus:bg-white focus:outline-none focus:ring-4 focus:ring-blue-500/10 flex items-center justify-between gap-2 cursor-pointer text-left" data-toggle aria-expanded="false">
+                            <span class="flex items-center gap-2 truncate">
+                                <i class="fas fa-calendar text-blue-600" data-icon></i>
+                                <span class="truncate" data-label>Año <?php echo e($anio); ?></span>
+                            </span>
+                            <i class="fas fa-chevron-down text-[10px] text-slate-400 transition-transform duration-200" data-arrow></i>
+                        </button>
+                        <div class="hidden absolute left-0 top-full z-50 mt-1.5 w-full min-w-[170px] rounded-2xl border border-slate-200 bg-white p-1.5 shadow-2xl" data-menu>
+                            <div class="space-y-0.5">
+                                <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::openLoop(); ?><?php endif; ?><?php for($y = now()->year; $y >= now()->year - 3; $y--): ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::startLoopIteration(); ?><?php endif; ?>
+                                    <?php $isSelected = ((int)$anio === $y); ?>
+                                    <button type="button" data-option data-value="<?php echo e($y); ?>" data-label="Año <?php echo e($y); ?>" data-icon="fas fa-calendar text-blue-600"
+                                        class="w-full flex items-center justify-between rounded-xl px-3 py-2 text-xs font-bold transition-colors text-left <?php echo e($isSelected ? 'bg-blue-50 text-blue-700' : 'text-slate-700 hover:bg-slate-50 hover:text-slate-900'); ?>">
+                                        <span class="flex items-center gap-2">
+                                            <i class="fas fa-calendar text-blue-500"></i>
+                                            <span>Año <?php echo e($y); ?></span>
+                                        </span>
+                                        <i class="fas fa-check text-blue-600 text-[10px] <?php echo e($isSelected ? '' : 'hidden'); ?>" data-check></i>
+                                    </button>
+                                <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::endLoop(); ?><?php endif; ?><?php endfor; ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::closeLoop(); ?><?php endif; ?>
+                            </div>
+                        </div>
                     </div>
 
                 <?php else: ?>
                     
                     <div class="<?php echo e($isAdmin ? 'md:col-span-3' : 'md:col-span-5'); ?>">
-                        <label for="fecha_desde"
-                            class="block text-[11px] font-bold uppercase tracking-wider text-slate-600 mb-1.5">
-                            <i class="fas fa-calendar-day text-slate-400 mr-1"></i> Desde
+                        <label for="fecha_desde" class="mb-1.5 flex items-center gap-1.5 text-xs font-bold text-slate-700 tracking-tight">
+                            <i class="fas fa-calendar-day text-blue-600 text-xs"></i> <span>Desde</span>
                         </label>
                         <input type="date" name="fecha_desde" id="fecha_desde" value="<?php echo e($desde); ?>"
-                            class="w-full rounded-xl border border-slate-300 bg-slate-50 px-3 py-2 text-xs font-semibold text-slate-700 focus:border-blue-500 focus:bg-white focus:outline-none focus:ring-4 focus:ring-blue-500/10 transition-all">
+                            class="h-10 w-full rounded-xl border border-slate-200 bg-slate-50/90 px-3 text-xs font-semibold text-slate-700 shadow-sm transition hover:border-slate-300 hover:bg-white focus:border-blue-500 focus:bg-white focus:outline-none focus:ring-4 focus:ring-blue-500/10">
                     </div>
 
                     
                     <div class="<?php echo e($isAdmin ? 'md:col-span-3' : 'md:col-span-5'); ?>">
-                        <label for="fecha_hasta"
-                            class="block text-[11px] font-bold uppercase tracking-wider text-slate-600 mb-1.5">
-                            <i class="fas fa-calendar-check text-slate-400 mr-1"></i> Hasta
+                        <label for="fecha_hasta" class="mb-1.5 flex items-center gap-1.5 text-xs font-bold text-slate-700 tracking-tight">
+                            <i class="fas fa-calendar-check text-blue-600 text-xs"></i> <span>Hasta</span>
                         </label>
                         <input type="date" name="fecha_hasta" id="fecha_hasta" value="<?php echo e($hasta); ?>"
-                            class="w-full rounded-xl border border-slate-300 bg-slate-50 px-3 py-2 text-xs font-semibold text-slate-700 focus:border-blue-500 focus:bg-white focus:outline-none focus:ring-4 focus:ring-blue-500/10 transition-all">
+                            class="h-10 w-full rounded-xl border border-slate-200 bg-slate-50/90 px-3 text-xs font-semibold text-slate-700 shadow-sm transition hover:border-slate-300 hover:bg-white focus:border-blue-500 focus:bg-white focus:outline-none focus:ring-4 focus:ring-blue-500/10">
                     </div>
                 <?php endif; ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php endif; ?>
 
                 
-                <div class="md:col-span-2 flex items-center gap-1.5">
+                <div class="md:col-span-2 flex items-center gap-2">
                     <button type="submit"
-                        class="w-full rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-bold py-2 px-2.5 text-xs transition-all shadow-md shadow-blue-600/15 flex items-center justify-center gap-1 cursor-pointer">
-                        <i class="fas fa-filter text-[11px]"></i>
+                        class="h-10 w-full rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-3 text-xs transition-all shadow-md shadow-blue-600/20 active:scale-95 flex items-center justify-center gap-1.5 cursor-pointer">
+                        <i class="fas fa-filter text-xs"></i>
                         <span>Filtrar</span>
                     </button>
                     <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php endif; ?><?php if($desde || $hasta || $busqueda || ($periodo === 'mes' && (!$esMesActual || $anio != now()->year))): ?>
                         <a href="<?php echo e(route('comisiones.porVendedor', ['periodo' => $periodo])); ?>"
-                            class="rounded-xl border border-slate-300 hover:bg-slate-100 text-slate-500 p-2 text-xs transition-all flex items-center justify-center"
+                            class="h-10 rounded-xl border border-slate-200 hover:bg-red-50 hover:text-red-600 hover:border-red-200 text-slate-500 px-3 text-xs transition-all flex items-center justify-center"
                             title="Restablecer filtros">
                             <i class="fas fa-rotate-left"></i>
                         </a>
@@ -268,7 +308,7 @@
                     </div>
                 </div>
                 <div>
-                    <h3 class="text-3xl font-black text-slate-900 tracking-tight">
+                    <h3 id="kpiTotalGeneradoVendedores" class="text-3xl font-black text-slate-900 tracking-tight">
                         $<?php echo e(number_format($kpis['total'], 2)); ?></h3>
                     <p class="text-xs font-semibold text-slate-500 mt-1 flex items-center gap-1.5">
                         <span class="w-2 h-2 rounded-full bg-blue-600"></span>
@@ -290,7 +330,7 @@
                     </div>
                 </div>
                 <div>
-                    <h3 class="text-3xl font-black text-amber-700 tracking-tight">
+                    <h3 id="kpiPorLiquidarVendedores" class="text-3xl font-black text-amber-700 tracking-tight">
                         $<?php echo e(number_format($kpis['pendiente'], 2)); ?></h3>
                     <p class="text-xs font-semibold text-amber-600 mt-1">
                         <?php echo e($periodo === 'mes' ? "Saldo pendiente de {$mesNombre}" : "Saldo pendiente acumulado"); ?>
@@ -313,7 +353,7 @@
                     </div>
                 </div>
                 <div>
-                    <h3 class="text-3xl font-black text-emerald-700 tracking-tight">
+                    <h3 id="kpiTotalPagadoVendedores" class="text-3xl font-black text-emerald-700 tracking-tight">
                         $<?php echo e(number_format($kpis['pagada'], 2)); ?></h3>
                     <p class="text-xs font-semibold text-emerald-600 mt-1">Total transferido / entregado</p>
                 </div>
@@ -332,7 +372,7 @@
                     </div>
                 </div>
                 <div>
-                    <h3 class="text-3xl font-black text-slate-900 tracking-tight">
+                    <h3 id="kpiTotalCanceladasVendedores" class="text-3xl font-black text-slate-900 tracking-tight">
                         $<?php echo e(number_format($kpis['cancelada'], 2)); ?></h3>
                     <p class="text-xs font-semibold text-slate-400 mt-1">Por ventas anuladas</p>
                 </div>
@@ -340,335 +380,35 @@
         </div>
 
         <!-- LISTA DE VENDEDORES CON HISTORIAL Y DESGLOSE -->
-        <div class="space-y-4">
-            <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::openLoop(); ?><?php endif; ?><?php $__empty_1 = true; $__currentLoopData = $reporte; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $item): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); $__empty_1 = false; ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::startLoopIteration(); ?><?php endif; ?>
-                <?php
-                    $vendedor = $item['vendedor'];
-                    $comisiones = $item['comisiones'];
-                    $hasPendiente = $item['total_pendiente'] > 0;
-                ?>
-                <div class="bg-white border border-slate-200 rounded-2xl shadow-sm overflow-hidden transition-all duration-200 hover:border-slate-300"
-                    id="card-vendedor-<?php echo e($vendedor->id); ?>">
+        <div id="skeletonVendedores" class="hidden">
+            <?php if (isset($component)) { $__componentOriginalb3a7e296665e2f58ea67cad97892cbe7 = $component; } ?>
+<?php if (isset($attributes)) { $__attributesOriginalb3a7e296665e2f58ea67cad97892cbe7 = $attributes; } ?>
+<?php $component = Illuminate\View\AnonymousComponent::resolve(['view' => 'components.skeleton-table','data' => ['rows' => 4,'cols' => 7]] + (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag ? $attributes->all() : [])); ?>
+<?php $component->withName('skeleton-table'); ?>
+<?php if ($component->shouldRender()): ?>
+<?php $__env->startComponent($component->resolveView(), $component->data()); ?>
+<?php if (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag): ?>
+<?php $attributes = $attributes->except(\Illuminate\View\AnonymousComponent::ignoredParameterNames()); ?>
+<?php endif; ?>
+<?php $component->withAttributes(['rows' => 4,'cols' => 7]); ?>
+<?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::processComponentKey($component); ?>
 
-                    <!-- HEADER DE LA TARJETA DEL VENDEDOR -->
-                    <div
-                        class="p-5 sm:p-6 bg-white flex flex-col lg:flex-row lg:items-center justify-between gap-5 border-b border-slate-100">
-
-                        <!-- INFORMACIÓN DEL VENDEDOR -->
-                        <div class="flex items-center gap-4">
-                            <div
-                                class="w-14 h-14 rounded-2xl bg-gradient-to-tr from-blue-600 to-indigo-600 text-white font-black text-lg flex items-center justify-center shadow-md shadow-blue-500/20 flex-shrink-0">
-                                <?php echo e(strtoupper(substr($vendedor->nombre_real ?: $vendedor->username, 0, 2))); ?>
-
-                            </div>
-                            <div>
-                                <div class="flex items-center gap-2 flex-wrap">
-                                    <h2 class="text-lg font-black text-slate-900 tracking-tight">
-                                        <?php echo e($vendedor->nombre_real ?: $vendedor->username); ?></h2>
-                                    <span
-                                        class="px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider <?php echo e($vendedor->rol === 'admin' ? 'bg-purple-100 text-purple-700' : 'bg-blue-100 text-blue-700'); ?>">
-                                        <?php echo e($vendedor->rol); ?>
-
-                                    </span>
-                                </div>
-                                <p class="text-xs text-slate-500 font-medium mt-0.5 flex items-center gap-2">
-                                    <span><i
-                                            class="fas fa-envelope text-slate-400 mr-1"></i><?php echo e($vendedor->username); ?></span>
-                                    <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php endif; ?><?php if($vendedor->telefono): ?>
-                                        <span><i class="fas fa-phone text-slate-400 mr-1"></i><?php echo e($vendedor->telefono); ?></span>
-                                    <?php endif; ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php endif; ?>
-                                </p>
-                            </div>
-                        </div>
-
-                        <!-- RESUMEN DE CIFRAS DEL VENDEDOR -->
-                        <div
-                            class="grid grid-cols-2 sm:grid-cols-4 gap-3 bg-slate-50/80 p-3.5 rounded-2xl border border-slate-100 flex-1 max-w-2xl">
-                            <div>
-                                <span class="text-[10px] font-bold uppercase tracking-wider text-slate-400 block">
-                                    <?php echo e($periodo === 'mes' ? "Ganado ({$mesNombre})" : "Total Ganado"); ?>
-
-                                </span>
-                                <span
-                                    class="text-base font-black text-slate-900">$<?php echo e(number_format($item['total_comisiones'], 2)); ?></span>
-                            </div>
-                            <div>
-                                <span class="text-[10px] font-bold uppercase tracking-wider text-amber-600 block">Por
-                                    Liquidar</span>
-                                <span
-                                    class="text-base font-black text-amber-700">$<?php echo e(number_format($item['total_pendiente'], 2)); ?></span>
-                                <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php endif; ?><?php if(($item['saldo_garantia_total'] ?? 0) > 0): ?>
-                                    <span class="text-[9px] text-amber-800 font-semibold block leading-tight mt-0.5"
-                                        title="En período de garantía de devolución (aún no liquidable)">
-                                        <i class="fas fa-shield-halved text-[8px] text-amber-600"></i> En garantía: $<?php echo e(number_format($item['saldo_garantia_total'], 2)); ?>
-
-                                    </span>
-                                <?php endif; ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php endif; ?>
-                                <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php endif; ?><?php if($periodo === 'mes' && $item['saldo_pendiente_total'] > $item['total_pendiente']): ?>
-                                    <span class="text-[9px] text-slate-500 font-semibold block leading-tight mt-0.5"
-                                        title="Incluye pendientes de meses anteriores">
-                                        Total acum: $<?php echo e(number_format($item['saldo_pendiente_total'], 2)); ?>
-
-                                    </span>
-                                <?php endif; ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php endif; ?>
-                            </div>
-                            <div>
-                                <span
-                                    class="text-[10px] font-bold uppercase tracking-wider text-emerald-600 block">Pagado</span>
-                                <span
-                                    class="text-base font-black text-emerald-700">$<?php echo e(number_format($item['total_pagada'], 2)); ?></span>
-                            </div>
-                            <div>
-                                <span class="text-[10px] font-bold uppercase tracking-wider text-slate-400 block">
-                                    <?php echo e($periodo === 'mes' ? "Ventas en {$mesNombre}" : "Ventas/Registros"); ?>
-
-                                </span>
-                                <span class="text-base font-black text-slate-700"><?php echo e($item['total_ventas']); ?></span>
-                            </div>
-                        </div>
-
-                        <!-- BOTONES DE ACCIÓN DE ESTE VENDEDOR -->
-                        <div class="flex items-center gap-2 flex-wrap justify-end">
-                            <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php endif; ?><?php if($isAdmin && ($hasPendiente || ($item['saldo_pendiente_total'] ?? 0) > 0)): ?>
-                                <?php
-                                    if ($periodo === 'mes') {
-                                        $montoLiquidable = $item['saldo_liquidable'] ?? 0;
-                                        $montoGarantia   = $item['saldo_en_garantia'] ?? 0;
-                                    } else {
-                                        $montoLiquidable = $item['saldo_liquidable_total'] ?? 0;
-                                        $montoGarantia   = $item['saldo_garantia_total'] ?? 0;
-                                    }
-                                ?>
-                                <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php endif; ?><?php if($montoLiquidable > 0): ?>
-                                    <button type="button" onclick="liquidarDirectoVendedor(<?php echo e($vendedor->id); ?>, '<?php echo e(addslashes($vendedor->nombre_real)); ?>', '<?php echo e(addslashes($vendedor->username)); ?>', '<?php echo e($fechaDesdeFiltro); ?>', '<?php echo e($fechaHastaFiltro); ?>')"
-                                        class="px-3.5 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold shadow-md shadow-emerald-500/20 transition-all cursor-pointer flex items-center gap-1.5"
-                                        title="Liquidar comisiones elegibles para este vendedor en el período">
-                                        <i class="fas fa-circle-check"></i>
-                                        <span>Liquidar ($<?php echo e(number_format($montoLiquidable, 2)); ?>)</span>
-                                    </button>
-                                <?php elseif($montoGarantia > 0): ?>
-                                    <button type="button" onclick="liquidarDirectoVendedor(<?php echo e($vendedor->id); ?>, '<?php echo e(addslashes($vendedor->nombre_real)); ?>', '<?php echo e(addslashes($vendedor->username)); ?>', '<?php echo e($fechaDesdeFiltro); ?>', '<?php echo e($fechaHastaFiltro); ?>')"
-                                        class="px-3.5 py-2 rounded-xl bg-amber-50 hover:bg-amber-100 text-amber-800 border border-amber-300 text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5"
-                                        title="Comisiones en período de garantía de devolución (aún no liquidables)">
-                                        <i class="fas fa-shield-halved text-amber-600"></i>
-                                        <span>En garantía ($<?php echo e(number_format($montoGarantia, 2)); ?>)</span>
-                                    </button>
-                                <?php elseif(($item['saldo_liquidable_total'] ?? 0) > 0): ?>
-                                    <button type="button" onclick="liquidarDirectoVendedor(<?php echo e($vendedor->id); ?>, '<?php echo e(addslashes($vendedor->nombre_real)); ?>', '<?php echo e(addslashes($vendedor->username)); ?>', '', '')"
-                                        class="px-3.5 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5"
-                                        title="Ver y liquidar comisiones pendientes de otros periodos">
-                                        <i class="fas fa-clock-rotate-left text-slate-500"></i>
-                                        <span>Histórico ($<?php echo e(number_format($item['saldo_liquidable_total'], 2)); ?>)</span>
-                                    </button>
-                                <?php endif; ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php endif; ?>
-                            <?php endif; ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php endif; ?>
-
-                            <button type="button" onclick="toggleDesgloseVendedor(<?php echo e($vendedor->id); ?>)"
-                                class="px-3.5 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5">
-                                <i class="fas fa-list-ul text-slate-500"></i>
-                                <span>Desglose
-                                    <?php echo e($periodo === 'mes' ? "({$mesNombre}: {$comisiones->count()})" : "({$comisiones->count()})"); ?></span>
-                                <i class="fas fa-chevron-down text-[10px] transition-transform duration-200"
-                                    id="icon-chevron-<?php echo e($vendedor->id); ?>"></i>
-                            </button>
-                        </div>
-                    </div>
-
-                    <!-- DESGLOSE EXPANDIBLE DE TODAS LAS VENTAS / COMISIONES -->
-                    <div id="desglose-vendedor-<?php echo e($vendedor->id); ?>"
-                        class="hidden bg-slate-50/40 p-4 sm:p-5 border-t border-slate-100">
-                        <div class="overflow-x-auto bg-white rounded-xl border border-slate-200 shadow-2xs">
-                            <table class="w-full text-xs">
-                                <thead>
-                                    <tr
-                                        class="bg-slate-50 border-b border-slate-200 text-slate-500 uppercase tracking-wider font-bold">
-                                        <th class="px-4 py-3 text-left">Fecha y Hora</th>
-                                        <th class="px-4 py-3 text-left">Concepto / Detalle de la Venta</th>
-                                        <th class="px-4 py-3 text-right">Comisión</th>
-                                        <th class="px-4 py-3 text-center">Estado</th>
-                                        <th class="px-4 py-3 text-left">Detalle de Pago</th>
-                                        <th class="px-4 py-3 text-left">Notas</th>
-                                        <th class="px-4 py-3 text-center">Acciones</th>
-                                    </tr>
-                                </thead>
-                                <tbody class="divide-y divide-slate-100">
-                                    <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::openLoop(); ?><?php endif; ?><?php $__empty_2 = true; $__currentLoopData = $comisiones; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $c): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); $__empty_2 = false; ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::startLoopIteration(); ?><?php endif; ?>
-                                        <tr class="hover:bg-slate-50/60 transition-colors">
-
-                                            
-                                            <td class="px-4 py-3 whitespace-nowrap text-slate-600">
-                                                <span
-                                                    class="font-bold text-slate-800 block"><?php echo e($c->fecha_registro ? $c->fecha_registro->format('d/m/Y') : '—'); ?></span>
-                                                <span
-                                                    class="text-[10px] text-slate-400"><?php echo e($c->fecha_registro ? $c->fecha_registro->format('h:i A') : ''); ?></span>
-                                            </td>
-
-                                            
-                                            <td class="px-4 py-3 text-slate-700">
-                                                <div class="flex items-center gap-1.5 flex-wrap">
-                                                    <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php endif; ?><?php if($c->id_salida): ?>
-                                                        <span
-                                                            class="inline-flex items-center gap-1 px-2 py-0.5 bg-blue-50 text-blue-700 rounded-md text-[10px] font-bold">
-                                                            <i class="fas fa-shopping-bag"></i> Salida #<?php echo e($c->id_salida); ?>
-
-                                                        </span>
-                                                    <?php else: ?>
-                                                        <span
-                                                            class="inline-flex items-center gap-1 px-2 py-0.5 bg-purple-50 text-purple-700 rounded-md text-[10px] font-bold">
-                                                            <i class="fas fa-award"></i> Bono
-                                                        </span>
-                                                    <?php endif; ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php endif; ?>
-                                                    <span class="font-semibold text-slate-800">
-                                                        <?php echo e($c->concepto ?? ($c->salida ? "Venta directa ({$c->salida->cantidad} uds)" : "Comisión directa")); ?>
-
-                                                    </span>
-                                                </div>
-                                                <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php endif; ?><?php if($c->salida && $c->salida->variante && $c->salida->variante->producto): ?>
-                                                    <p class="text-[11px] text-slate-500 mt-0.5">
-                                                        <?php echo e($c->salida->variante->producto->nombre); ?> -
-                                                        <?php echo e($c->salida->variante->nombre_variante); ?> | Total salida:
-                                                        $<?php echo e(number_format($c->salida->total, 2)); ?>
-
-                                                    </p>
-                                                <?php endif; ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php endif; ?>
-                                            </td>
-
-                                            
-                                            <td class="px-4 py-3 text-right whitespace-nowrap">
-                                                <span
-                                                    class="font-black text-sm text-slate-900 block">$<?php echo e(number_format($c->monto, 2)); ?></span>
-                                                <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php endif; ?><?php if($c->porcentaje && $c->porcentaje > 0): ?>
-                                                    <span class="text-[10px] text-slate-400">Ref:
-                                                        $<?php echo e(number_format($c->porcentaje, 2)); ?>/ud</span>
-                                                <?php endif; ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php endif; ?>
-                                            </td>
-
-                                            
-                                            <td class="px-4 py-3 text-center whitespace-nowrap">
-                                                <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php endif; ?><?php if($c->estado === 'Pendiente'): ?>
-                                                    <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php endif; ?><?php if($c->es_liquidacion_bloqueada): ?>
-                                                        <span
-                                                            class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-bold bg-amber-100 text-amber-800 border border-amber-300 shadow-2xs"
-                                                            title="<?php echo e($c->motivo_bloqueo_liquidacion); ?>">
-                                                            <i class="fas fa-shield-halved text-[9px] text-amber-600"></i>
-                                                            En garantía
-                                                        </span>
-                                                    <?php else: ?>
-                                                        <span
-                                                            class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-bold bg-amber-50 text-amber-700 border border-amber-200">
-                                                            <span class="w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse"></span>
-                                                            Liquidación pendiente
-                                                        </span>
-                                                    <?php endif; ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php endif; ?>
-                                                <?php elseif($c->estado === 'Pagada'): ?>
-                                                    <span
-                                                        class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
-                                                        <i class="fas fa-check text-[9px]"></i>
-                                                        Pagada
-                                                    </span>
-                                                <?php else: ?>
-                                                    <span
-                                                        class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-bold bg-slate-100 text-slate-500 border border-slate-200">
-                                                        <i class="fas fa-ban text-[9px]"></i>
-                                                        Cancelada
-                                                    </span>
-                                                <?php endif; ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php endif; ?>
-                                            </td>
-
-                                            
-                                            <td class="px-4 py-3 text-slate-600 text-[11px]">
-                                                <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php endif; ?><?php if($c->estado === 'Pagada'): ?>
-                                                    <div class="space-y-1.5">
-                                                        <span class="font-bold text-emerald-700 flex items-center gap-1.5 text-xs">
-                                                            <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php endif; ?><?php if($c->metodo_pago === 'Transferencia Bancaria'): ?>
-                                                                <i class="fas fa-university text-blue-600"></i>
-                                                            <?php elseif($c->metodo_pago === 'Efectivo'): ?>
-                                                                <i class="fas fa-money-bill-wave text-emerald-600"></i>
-                                                            <?php else: ?>
-                                                                <i class="fas fa-money-bill-transfer text-emerald-600"></i>
-                                                            <?php endif; ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php endif; ?>
-                                                            <?php echo e($c->metodo_pago ?? 'Efectivo'); ?>
-
-                                                        </span>
-                                                        <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php endif; ?><?php if($c->referencia_pago): ?>
-                                                            <span class="text-[10px] text-slate-500 font-mono block">Ref:
-                                                                <?php echo e($c->referencia_pago); ?></span>
-                                                        <?php endif; ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php endif; ?>
-                                                        <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php endif; ?><?php if($c->comprobante_url): ?>
-                                                            <a href="<?php echo e($c->comprobante_url); ?>" target="_blank"
-                                                                class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-indigo-50 hover:bg-indigo-100 text-indigo-700 font-bold border border-indigo-200 text-[11px] shadow-2xs transition-all hover:scale-[1.02] cursor-pointer w-fit">
-                                                                <i class="fas fa-file-invoice-dollar text-indigo-600"></i>
-                                                                <span>Ver Comprobante</span>
-                                                                <i class="fas fa-arrow-up-right-from-square text-[9px] opacity-70"></i>
-                                                            </a>
-                                                        <?php endif; ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php endif; ?>
-                                                    </div>
-                                                <?php else: ?>
-                                                    <span class="text-slate-400 italic">Por liquidar</span>
-                                                <?php endif; ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php endif; ?>
-                                            </td>
-
-                                            
-                                            <td class="px-4 py-3 text-slate-500 text-[11px] max-w-[150px] truncate"
-                                                title="<?php echo e($c->notas); ?>">
-                                                <?php echo e($c->notas ?? '—'); ?>
-
-                                            </td>
-
-                                            
-                                            <td class="px-4 py-3 text-center whitespace-nowrap">
-                                                <div class="flex items-center justify-center gap-1">
-                                                    
-                                                    <button type="button"
-                                                        onclick="verDetalleComision(<?php echo e($c->id); ?>)"
-                                                        class="w-7 h-7 rounded-lg flex items-center justify-center text-indigo-600 hover:text-indigo-800 hover:bg-indigo-50 transition-colors cursor-pointer"
-                                                        title="Ver Detalle Completo">
-                                                        <i class="fas fa-eye text-[11px]"></i>
-                                                    </button>
-
-                                                    <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php endif; ?><?php if($isAdmin && $c->estado === 'Pendiente'): ?>
-                                                        <button type="button"
-                                                            onclick="openEditModal(<?php echo e($c->id); ?>, '<?php echo e($c->monto); ?>', '<?php echo e(addslashes($c->concepto ?? '')); ?>', '<?php echo e(addslashes($c->notas ?? '')); ?>')"
-                                                            class="w-7 h-7 rounded-lg flex items-center justify-center text-blue-600 hover:bg-blue-50 transition-colors cursor-pointer"
-                                                            title="Editar">
-                                                            <i class="fas fa-pen text-[10px]"></i>
-                                                        </button>
-                                                        <button type="button" onclick="cancelarComision(<?php echo e($c->id); ?>)"
-                                                            class="w-7 h-7 rounded-lg flex items-center justify-center text-red-500 hover:bg-red-50 transition-colors cursor-pointer"
-                                                            title="Cancelar">
-                                                            <i class="fas fa-ban text-[10px]"></i>
-                                                        </button>
-                                                    <?php endif; ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php endif; ?>
-                                                </div>
-                                            </td>
-                                        </tr>
-                                    <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::endLoop(); ?><?php endif; ?><?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); if ($__empty_2): ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::closeLoop(); ?><?php endif; ?>
-                                        <tr>
-                                            <td colspan="7" class="px-4 py-6 text-center text-slate-400">
-                                                No hay registros de comisiones para este vendedor en el rango seleccionado.
-                                            </td>
-                                        </tr>
-                                    <?php endif; ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php endif; ?>
-                                </tbody>
-                            </table>
-                        </div>
-                    </div>
-
-                </div>
-            <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::endLoop(); ?><?php endif; ?><?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); if ($__empty_1): ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::closeLoop(); ?><?php endif; ?>
-                <div class="bg-white rounded-2xl border border-slate-200 p-12 text-center text-slate-400 shadow-sm">
-                    <div
-                        class="w-16 h-16 rounded-2xl bg-slate-100 flex items-center justify-center text-2xl mx-auto mb-3 text-slate-400">
-                        <i class="fas fa-users-slash"></i>
-                    </div>
-                    <h3 class="text-base font-bold text-slate-700">No se encontraron vendedores</h3>
-                    <p class="text-xs text-slate-400 mt-1">Ajusta los filtros de búsqueda o fechas.</p>
-                </div>
-            <?php endif; ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php endif; ?>
+<?php echo $__env->renderComponent(); ?>
+<?php endif; ?>
+<?php if (isset($__attributesOriginalb3a7e296665e2f58ea67cad97892cbe7)): ?>
+<?php $attributes = $__attributesOriginalb3a7e296665e2f58ea67cad97892cbe7; ?>
+<?php unset($__attributesOriginalb3a7e296665e2f58ea67cad97892cbe7); ?>
+<?php endif; ?>
+<?php if (isset($__componentOriginalb3a7e296665e2f58ea67cad97892cbe7)): ?>
+<?php $component = $__componentOriginalb3a7e296665e2f58ea67cad97892cbe7; ?>
+<?php unset($__componentOriginalb3a7e296665e2f58ea67cad97892cbe7); ?>
+<?php endif; ?>
+        </div>
+        <div id="contenedorListaVendedores" class="space-y-4">
+            <?php echo $__env->make('comisiones.tabla-por-vendedor', array_diff_key(get_defined_vars(), ['__data' => 1, '__path' => 1]))->render(); ?>
         </div>
 
     </div>
-
     
     <?php echo $__env->make('comisiones.modals', array_diff_key(get_defined_vars(), ['__data' => 1, '__path' => 1]))->render(); ?>
 
@@ -683,6 +423,90 @@
             cancelar: <?php if($isAdmin): ?> "<?php echo e(url('comisiones')); ?>" <?php else: ?>"null" <?php endif; ?>,
         };
         const CSRF = document.querySelector('meta[name="csrf-token"]').content;
+
+        let debounceVendedorTimer = null;
+        function debounceFiltroVendedores() {
+            clearTimeout(debounceVendedorTimer);
+            debounceVendedorTimer = setTimeout(() => {
+                aplicarFiltroVendedoresAjax();
+            }, 300);
+        }
+
+        async function aplicarFiltroVendedoresAjax() {
+            const form = document.getElementById('formFiltroVendedor');
+            if (!form) return;
+            const formData = new FormData(form);
+            const params = new URLSearchParams(formData);
+
+            const skeleton = document.getElementById('skeletonVendedores');
+            const contenedor = document.getElementById('contenedorListaVendedores');
+            const btnFiltrar = document.getElementById('btnFiltrarVendedores');
+            if (btnFiltrar) {
+                btnFiltrar.disabled = true;
+                btnFiltrar.innerHTML = '<i class="fas fa-spinner fa-spin text-[11px]"></i> <span>Filtrando...</span>';
+            }
+            if (skeleton && contenedor) {
+                skeleton.classList.remove('hidden');
+                contenedor.classList.add('opacity-40');
+            }
+
+            try {
+                const url = `${form.action}?${params.toString()}`;
+                const res = await fetch(url, {
+                    headers: {
+                        'X-Requested-With': 'XMLHttpRequest',
+                        'Accept': 'application/json'
+                    }
+                });
+
+                if (res.ok) {
+                    const data = await res.json();
+                    if (data.html && contenedor) {
+                        contenedor.innerHTML = data.html;
+                    }
+                    if (data.kpis) {
+                        actualizarKpisVendedores(data.kpis);
+                    }
+                    const btnReset = document.getElementById('btnResetVendedorFiltros');
+                    if (btnReset) {
+                        const hayFiltros = (document.getElementById('q')?.value || document.getElementById('fecha_desde')?.value || document.getElementById('fecha_hasta')?.value);
+                        btnReset.classList.toggle('hidden', !hayFiltros);
+                    }
+                }
+            } catch (err) {
+                console.error('Error al filtrar vendedores:', err);
+            } finally {
+                if (btnFiltrar) {
+                    btnFiltrar.disabled = false;
+                    btnFiltrar.innerHTML = '<i class="fas fa-filter text-[11px]"></i> <span>Filtrar</span>';
+                }
+                if (skeleton && contenedor) {
+                    skeleton.classList.add('hidden');
+                    contenedor.classList.remove('opacity-40');
+                }
+            }
+        }
+
+        function limpiarFiltrosVendedoresAjax() {
+            const q = document.getElementById('q');
+            if (q) q.value = '';
+            const fDesde = document.getElementById('fecha_desde');
+            if (fDesde) fDesde.value = '';
+            const fHasta = document.getElementById('fecha_hasta');
+            if (fHasta) fHasta.value = '';
+            aplicarFiltroVendedoresAjax();
+        }
+
+        function actualizarKpisVendedores(kpis) {
+            const totalGen = document.getElementById('kpiTotalGeneradoVendedores');
+            if (totalGen) totalGen.textContent = `$${formatNum(kpis.total || 0)}`;
+            const porLiq = document.getElementById('kpiPorLiquidarVendedores');
+            if (porLiq) porLiq.textContent = `$${formatNum(kpis.pendiente || 0)}`;
+            const totalPag = document.getElementById('kpiTotalPagadoVendedores');
+            if (totalPag) totalPag.textContent = `$${formatNum(kpis.pagada || 0)}`;
+            const totalCanc = document.getElementById('kpiTotalCanceladasVendedores');
+            if (totalCanc) totalCanc.textContent = `$${formatNum(kpis.cancelada || 0)}`;
+        }
 
         function toggleDesgloseVendedor(id) {
             const desglose = document.getElementById(`desglose-vendedor-${id}`);
@@ -918,8 +742,8 @@
                 const data = await res.json();
                 if (data.success) {
                     closeEditModal();
-                    Swal.fire({ icon: 'success', title: '¡Actualizado!', text: data.message, timer: 2000, showConfirmButton: false });
-                    setTimeout(() => window.location.reload(), 1200);
+                    Swal.fire({ icon: 'success', title: '¡Actualizado!', text: data.message, timer: 1500, showConfirmButton: false });
+                    aplicarFiltroVendedoresAjax();
                 } else {
                     Swal.fire({ icon: 'error', title: 'Error', text: data.message });
                 }
@@ -951,8 +775,8 @@
                 });
                 const data = await res.json();
                 if (data.success) {
-                    Swal.fire({ icon: 'success', title: '¡Cancelada!', text: data.message, timer: 2000, showConfirmButton: false });
-                    setTimeout(() => window.location.reload(), 1200);
+                    Swal.fire({ icon: 'success', title: '¡Cancelada!', text: data.message, timer: 1500, showConfirmButton: false });
+                    aplicarFiltroVendedoresAjax();
                 } else {
                     Swal.fire({ icon: 'error', title: 'Error', text: data.message });
                 }
@@ -1183,8 +1007,8 @@
                 const data = await res.json();
                 if (data.success) {
                     closeLiquidarModal();
-                    Swal.fire({ icon: 'success', title: '¡Liquidación Completada!', text: data.message, timer: 2500, showConfirmButton: false });
-                    setTimeout(() => window.location.reload(), 1200);
+                    Swal.fire({ icon: 'success', title: '¡Liquidación Completada!', text: data.message, timer: 2000, showConfirmButton: false });
+                    aplicarFiltroVendedoresAjax();
                 } else {
                     document.getElementById('btnFinalConfirmLiquidar').disabled = false;
                     document.getElementById('btnFinalConfirmLiquidar').innerHTML = '<i class="fas fa-check-circle"></i><span>Confirmar Pago</span>';
@@ -1258,8 +1082,8 @@
                 const data = await res.json();
                 if (data.success) {
                     closeCreateModal();
-                    Swal.fire({ icon: 'success', title: '¡Registrado!', text: data.message, timer: 2000, showConfirmButton: false });
-                    setTimeout(() => window.location.reload(), 1200);
+                    Swal.fire({ icon: 'success', title: '¡Registrado!', text: data.message, timer: 1500, showConfirmButton: false });
+                    aplicarFiltroVendedoresAjax();
                 } else {
                     Swal.fire({ icon: 'error', title: 'Error', text: data.message || 'Verifica los datos ingresados.' });
                 }
@@ -1277,6 +1101,87 @@
                 if (typeof closeDetalleModal === 'function') closeDetalleModal();
             }
         });
+
+        // ── Custom Dropdowns para Comisiones por Vendedor ──────────────────────
+        (() => {
+            function initVendedorSelects() {
+                const dropdowns = document.querySelectorAll('[data-custom-vendedor-select]');
+                if (!dropdowns.length) return;
+
+                function closeAll() {
+                    dropdowns.forEach(dd => {
+                        const menu = dd.querySelector('[data-menu]');
+                        const arrow = dd.querySelector('[data-arrow]');
+                        const toggle = dd.querySelector('[data-toggle]');
+                        if (menu) menu.classList.add('hidden');
+                        if (arrow) arrow.classList.remove('rotate-180');
+                        if (toggle) toggle.setAttribute('aria-expanded', 'false');
+                    });
+                }
+
+                dropdowns.forEach(dd => {
+                    const toggle = dd.querySelector('[data-toggle]');
+                    const menu = dd.querySelector('[data-menu]');
+                    const arrow = dd.querySelector('[data-arrow]');
+                    const input = dd.querySelector('input[type="hidden"]');
+                    const label = dd.querySelector('[data-label]');
+                    const icon = dd.querySelector('[data-icon]');
+                    const options = dd.querySelectorAll('[data-option]');
+
+                    if (!toggle || !menu) return;
+
+                    toggle.addEventListener('click', (e) => {
+                        e.stopPropagation();
+                        const isHidden = menu.classList.contains('hidden');
+                        closeAll();
+                        if (isHidden) {
+                            menu.classList.remove('hidden');
+                            if (arrow) arrow.classList.add('rotate-180');
+                            toggle.setAttribute('aria-expanded', 'true');
+                        }
+                    });
+
+                    options.forEach(opt => {
+                        opt.addEventListener('click', (e) => {
+                            e.stopPropagation();
+                            const val = opt.dataset.value;
+                            const text = opt.dataset.label;
+                            const iconClass = opt.dataset.icon;
+
+                            if (input) input.value = val;
+                            if (label) label.textContent = text;
+                            if (icon && iconClass) icon.className = iconClass;
+
+                            options.forEach(o => {
+                                const check = o.querySelector('[data-check]');
+                                if (o === opt) {
+                                    o.classList.add('bg-blue-50', 'text-blue-700');
+                                    o.classList.remove('text-slate-700');
+                                    if (check) check.classList.remove('hidden');
+                                } else {
+                                    o.classList.remove('bg-blue-50', 'text-blue-700');
+                                    o.classList.add('text-slate-700');
+                                    if (check) check.classList.add('hidden');
+                                }
+                            });
+
+                            closeAll();
+                        });
+                    });
+                });
+
+                document.addEventListener('click', () => closeAll());
+                document.addEventListener('keydown', (e) => {
+                    if (e.key === 'Escape') closeAll();
+                });
+            }
+
+            if (document.readyState === 'loading') {
+                document.addEventListener('DOMContentLoaded', initVendedorSelects);
+            } else {
+                initVendedorSelects();
+            }
+        })();
     </script>
  <?php echo $__env->renderComponent(); ?>
 <?php endif; ?>

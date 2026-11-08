@@ -171,6 +171,7 @@
                                 </label>
                                 <select id="input_rol" 
                                         name="rol" 
+                                        data-select-icon="fa-user-shield"
                                         required
                                         class="w-full rounded-xl border border-gray-300 px-3 py-2.5 text-sm text-gray-900 focus:border-blue-600 focus:ring-2 focus:ring-blue-600/20 focus:outline-none transition-all bg-white"
                                         onchange="updatePreviewCard()">
@@ -187,6 +188,7 @@
                                 </label>
                                 <select id="input_estado" 
                                         name="estado" 
+                                        data-select-icon="fa-circle-check"
                                         required
                                         class="w-full rounded-xl border border-gray-300 px-3 py-2.5 text-sm text-gray-900 focus:border-blue-600 focus:ring-2 focus:ring-blue-600/20 focus:outline-none transition-all bg-white"
                                         onchange="updatePreviewCard()">

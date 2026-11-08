@@ -61,4 +61,4 @@
         </div>
     </nav>
 <?php endif; ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php endif; ?>
-<?php /**PATH C:\laragon\www\diseno\resources\views/vendor/pagination/tailwind.blade.php ENDPATH**/ ?>
+<?php /**PATH /home/edwin/Desktop/UES II-2026/Diseño II/Proyecto/Dise-o_Sistemas2/resources/views/vendor/pagination/tailwind.blade.php ENDPATH**/ ?>

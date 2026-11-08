@@ -63,106 +63,174 @@
         </nav>
 
         <!-- 1. SECCIÓN SUPERIOR: FILTROS GLOBALES -->
-        <section class="bg-white border border-slate-200 rounded-2xl p-4 sm:p-5 shadow-sm">
+        <?php
+            $selectedVendedorObj = $vendedores->firstWhere('id', $vendedorId);
+            $selectedVendedorNombre = $selectedVendedorObj ? ($selectedVendedorObj->nombre_real ?: $selectedVendedorObj->username) : 'Todos';
+            $selectedProductoObj = $productos->firstWhere('id', $productoId);
+            $selectedProductoNombre = $selectedProductoObj ? $selectedProductoObj->nombre : 'Todos';
+        ?>
+        <section class="bg-white border border-slate-200/80 rounded-2xl p-4 sm:p-5 shadow-xs">
             <form method="GET" action="<?php echo e(route('ventas.index')); ?>" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-12 gap-3.5 items-end">
                 <input type="hidden" name="tab" value="<?php echo e($estadoTab); ?>">
 
                 <!-- BÚSQUEDA RÁPIDA -->
                 <div class="sm:col-span-2 md:col-span-3 lg:col-span-3">
-                    <label for="q" class="block text-[11px] font-bold uppercase tracking-wider text-slate-600 mb-1.5">
-                        <i class="fas fa-magnifying-glass text-slate-400 mr-1"></i> Buscar por Folio / Cliente / Teléfono
+                    <label for="q" class="mb-1.5 flex items-center gap-1.5 text-xs font-bold text-slate-700 tracking-tight">
+                        <i class="fas fa-search text-blue-600 text-xs"></i>
+                        <span>Buscar por Folio / Cliente / Teléfono</span>
                     </label>
                     <div class="relative">
                         <input
                             type="text"
                             name="q"
                             id="q"
-                            value="<?php echo e($busqueda ?? ''); ?>"
+                            x-model="filtroBusqueda"
                             placeholder="Ej: 00004 o 7123-4567..."
-                            class="w-full rounded-xl border border-slate-300 bg-slate-50 pl-9 pr-3 py-2 text-xs font-semibold text-slate-700 focus:border-blue-500 focus:bg-white focus:outline-none focus:ring-4 focus:ring-blue-500/10 transition-all">
-                        <i class="fas fa-search absolute left-3 top-2.5 text-slate-400 text-xs"></i>
+                            class="h-10 w-full rounded-xl border border-slate-200 bg-slate-50/90 pl-9 pr-3 text-xs font-semibold text-slate-700 shadow-sm transition hover:border-slate-300 hover:bg-white focus:border-blue-500 focus:bg-white focus:outline-none focus:ring-4 focus:ring-blue-500/10">
+                        <i class="fas fa-search absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-xs pointer-events-none"></i>
                     </div>
                 </div>
 
                 <!-- FECHA DESDE -->
                 <div class="lg:col-span-2">
-                    <label for="desde" class="block text-[11px] font-bold uppercase tracking-wider text-slate-600 mb-1.5">
-                        <i class="fas fa-calendar-day text-slate-400 mr-1"></i> Desde
+                    <label for="desde" class="mb-1.5 flex items-center gap-1.5 text-xs font-bold text-slate-700 tracking-tight">
+                        <i class="fas fa-calendar-day text-blue-600 text-xs"></i>
+                        <span>Desde</span>
                     </label>
                     <input
                         type="date"
                         name="desde"
                         id="desde"
                         value="<?php echo e($desde); ?>"
-                        class="w-full rounded-xl border border-slate-300 bg-slate-50 px-3 py-2 text-xs font-semibold text-slate-700 focus:border-blue-500 focus:bg-white focus:outline-none focus:ring-4 focus:ring-blue-500/10 transition-all">
+                        class="h-10 w-full rounded-xl border border-slate-200 bg-slate-50/90 px-3 text-xs font-semibold text-slate-700 shadow-sm transition hover:border-slate-300 hover:bg-white focus:border-blue-500 focus:bg-white focus:outline-none focus:ring-4 focus:ring-blue-500/10">
                 </div>
 
                 <!-- FECHA HASTA -->
                 <div class="lg:col-span-2">
-                    <label for="hasta" class="block text-[11px] font-bold uppercase tracking-wider text-slate-600 mb-1.5">
-                        <i class="fas fa-calendar-check text-slate-400 mr-1"></i> Hasta
+                    <label for="hasta" class="mb-1.5 flex items-center gap-1.5 text-xs font-bold text-slate-700 tracking-tight">
+                        <i class="fas fa-calendar-check text-blue-600 text-xs"></i>
+                        <span>Hasta</span>
                     </label>
                     <input
                         type="date"
                         name="hasta"
                         id="hasta"
                         value="<?php echo e($hasta); ?>"
-                        class="w-full rounded-xl border border-slate-300 bg-slate-50 px-3 py-2 text-xs font-semibold text-slate-700 focus:border-blue-500 focus:bg-white focus:outline-none focus:ring-4 focus:ring-blue-500/10 transition-all">
+                        class="h-10 w-full rounded-xl border border-slate-200 bg-slate-50/90 px-3 text-xs font-semibold text-slate-700 shadow-sm transition hover:border-slate-300 hover:bg-white focus:border-blue-500 focus:bg-white focus:outline-none focus:ring-4 focus:ring-blue-500/10">
                 </div>
 
-                <!-- SELECT VENDEDOR -->
-                <div class="lg:col-span-2">
-                    <label for="vendedor_id" class="block text-[11px] font-bold uppercase tracking-wider text-slate-600 mb-1.5">
-                        <i class="fas fa-user-tie text-slate-400 mr-1"></i> Vendedor
+                <!-- SELECT VENDEDOR CON BUSCADOR -->
+                <div class="lg:col-span-2 relative" data-searchable-select="vendedor">
+                    <label class="mb-1.5 flex items-center gap-1.5 text-xs font-bold text-slate-700 tracking-tight">
+                        <i class="fas fa-user-tie text-blue-600 text-xs"></i>
+                        <span>Vendedor</span>
                     </label>
-                    <select
-                        name="vendedor_id"
-                        id="vendedor_id"
-                        class="w-full rounded-xl border border-slate-300 bg-slate-50 px-3 py-2 text-xs font-semibold text-slate-700 focus:border-blue-500 focus:bg-white focus:outline-none focus:ring-4 focus:ring-blue-500/10 transition-all">
-                        <option value="">Todos</option>
-                        <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::openLoop(); ?><?php endif; ?><?php $__currentLoopData = $vendedores; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $v): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::startLoopIteration(); ?><?php endif; ?>
-                        <option value="<?php echo e($v->id); ?>" <?php echo e((string)$vendedorId === (string)$v->id ? 'selected' : ''); ?>>
-                            <?php echo e($v->nombre_real ?: $v->username); ?>
-
-                        </option>
-                        <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::endLoop(); ?><?php endif; ?><?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::closeLoop(); ?><?php endif; ?>
-                    </select>
+                    <input type="hidden" name="vendedor_id" id="vendedor_id" value="<?php echo e($vendedorId); ?>">
+                    <button type="button" class="h-10 w-full rounded-xl border border-slate-200 bg-slate-50/90 px-3 text-xs font-bold text-slate-700 shadow-sm transition hover:border-slate-300 hover:bg-white focus:border-blue-500 focus:bg-white focus:outline-none focus:ring-4 focus:ring-blue-500/10 flex items-center justify-between gap-2 cursor-pointer text-left" data-toggle aria-expanded="false">
+                        <span class="flex items-center gap-2 truncate">
+                            <i class="fas fa-user-tie <?php echo e($vendedorId ? 'text-blue-600' : 'text-slate-400'); ?>" data-icon></i>
+                            <span class="truncate" data-label><?php echo e($selectedVendedorNombre); ?></span>
+                        </span>
+                        <i class="fas fa-chevron-down text-[10px] text-slate-400 transition-transform duration-200" data-arrow></i>
+                    </button>
+                    <div class="hidden absolute left-0 top-full z-50 mt-1.5 w-full min-w-[210px] rounded-2xl border border-slate-200 bg-white p-2 shadow-2xl" data-menu>
+                        <div class="relative mb-2">
+                            <i class="fas fa-search absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-xs pointer-events-none"></i>
+                            <input type="text" placeholder="Buscar vendedor..." class="w-full pl-8 pr-3 py-1.5 text-xs bg-slate-50 border border-slate-200 rounded-xl text-slate-700 placeholder:text-slate-400 focus:bg-white focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/10" data-search-input>
+                        </div>
+                        <div class="max-h-52 overflow-y-auto space-y-0.5" data-options-list>
+                            <button type="button" data-option data-value="" data-label="Todos" data-icon="fas fa-user-tie text-slate-400"
+                                class="w-full flex items-center justify-between rounded-xl px-3 py-2 text-xs font-bold transition-colors text-left <?php echo e(empty($vendedorId) ? 'bg-blue-50 text-blue-700' : 'text-slate-700 hover:bg-slate-50'); ?>">
+                                <span class="flex items-center gap-2 truncate">
+                                    <i class="fas fa-user-tie text-slate-400"></i>
+                                    <span>Todos</span>
+                                </span>
+                                <i class="fas fa-check text-blue-600 text-[10px] <?php echo e(empty($vendedorId) ? '' : 'hidden'); ?>" data-check></i>
+                            </button>
+                            <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::openLoop(); ?><?php endif; ?><?php $__currentLoopData = $vendedores; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $v): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::startLoopIteration(); ?><?php endif; ?>
+                                <?php
+                                    $nVend = $v->nombre_real ?: $v->username;
+                                    $isSelV = (string)$vendedorId === (string)$v->id;
+                                ?>
+                                <button type="button" data-option data-value="<?php echo e($v->id); ?>" data-label="<?php echo e($nVend); ?>" data-icon="fas fa-user-tie text-blue-600"
+                                    class="w-full flex items-center justify-between rounded-xl px-3 py-2 text-xs font-bold transition-colors text-left <?php echo e($isSelV ? 'bg-blue-50 text-blue-700' : 'text-slate-700 hover:bg-slate-50 hover:text-slate-900'); ?>">
+                                    <span class="flex items-center gap-2 truncate">
+                                        <i class="fas fa-user-tie text-blue-500"></i>
+                                        <span class="truncate"><?php echo e($nVend); ?></span>
+                                    </span>
+                                    <i class="fas fa-check text-blue-600 text-[10px] <?php echo e($isSelV ? '' : 'hidden'); ?>" data-check></i>
+                                </button>
+                            <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::endLoop(); ?><?php endif; ?><?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::closeLoop(); ?><?php endif; ?>
+                            <div class="hidden py-4 text-center text-xs text-slate-400 font-medium" data-empty-msg>
+                                No se encontraron resultados
+                            </div>
+                        </div>
+                    </div>
                 </div>
 
-                <!-- SELECT PRODUCTO ESPECÍFICO (MÉTRICAS DETALLADAS) -->
-                <div class="lg:col-span-2">
-                    <label for="producto_id" class="block text-[11px] font-bold uppercase tracking-wider text-slate-600 mb-1.5">
-                        <i class="fas fa-box text-slate-400 mr-1"></i> Producto
+                <!-- SELECT PRODUCTO CON BUSCADOR -->
+                <div class="lg:col-span-2 relative" data-searchable-select="producto">
+                    <label class="mb-1.5 flex items-center gap-1.5 text-xs font-bold text-slate-700 tracking-tight">
+                        <i class="fas fa-box text-blue-600 text-xs"></i>
+                        <span>Producto</span>
                     </label>
-                    <select
-                        name="producto_id"
-                        id="producto_id"
-                        class="w-full rounded-xl border border-slate-300 bg-slate-50 px-3 py-2 text-xs font-semibold text-slate-700 focus:border-blue-500 focus:bg-white focus:outline-none focus:ring-4 focus:ring-blue-500/10 transition-all">
-                        <option value="">Todos</option>
-                        <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::openLoop(); ?><?php endif; ?><?php $__currentLoopData = $productos; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $p): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::startLoopIteration(); ?><?php endif; ?>
-                        <option value="<?php echo e($p->id); ?>" <?php echo e((string)$productoId === (string)$p->id ? 'selected' : ''); ?>>
-                            <?php echo e($p->nombre); ?>
-
-                        </option>
-                        <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::endLoop(); ?><?php endif; ?><?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::closeLoop(); ?><?php endif; ?>
-                    </select>
+                    <input type="hidden" name="producto_id" id="producto_id" value="<?php echo e($productoId); ?>">
+                    <button type="button" class="h-10 w-full rounded-xl border border-slate-200 bg-slate-50/90 px-3 text-xs font-bold text-slate-700 shadow-sm transition hover:border-slate-300 hover:bg-white focus:border-blue-500 focus:bg-white focus:outline-none focus:ring-4 focus:ring-blue-500/10 flex items-center justify-between gap-2 cursor-pointer text-left" data-toggle aria-expanded="false">
+                        <span class="flex items-center gap-2 truncate">
+                            <i class="fas fa-box <?php echo e($productoId ? 'text-blue-600' : 'text-slate-400'); ?>" data-icon></i>
+                            <span class="truncate" data-label><?php echo e($selectedProductoNombre); ?></span>
+                        </span>
+                        <i class="fas fa-chevron-down text-[10px] text-slate-400 transition-transform duration-200" data-arrow></i>
+                    </button>
+                    <div class="hidden absolute right-0 lg:left-0 top-full z-50 mt-1.5 w-full min-w-[230px] rounded-2xl border border-slate-200 bg-white p-2 shadow-2xl" data-menu>
+                        <div class="relative mb-2">
+                            <i class="fas fa-search absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-xs pointer-events-none"></i>
+                            <input type="text" placeholder="Buscar producto..." class="w-full pl-8 pr-3 py-1.5 text-xs bg-slate-50 border border-slate-200 rounded-xl text-slate-700 placeholder:text-slate-400 focus:bg-white focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/10" data-search-input>
+                        </div>
+                        <div class="max-h-52 overflow-y-auto space-y-0.5" data-options-list>
+                            <button type="button" data-option data-value="" data-label="Todos" data-icon="fas fa-box text-slate-400"
+                                class="w-full flex items-center justify-between rounded-xl px-3 py-2 text-xs font-bold transition-colors text-left <?php echo e(empty($productoId) ? 'bg-blue-50 text-blue-700' : 'text-slate-700 hover:bg-slate-50'); ?>">
+                                <span class="flex items-center gap-2 truncate">
+                                    <i class="fas fa-box text-slate-400"></i>
+                                    <span>Todos</span>
+                                </span>
+                                <i class="fas fa-check text-blue-600 text-[10px] <?php echo e(empty($productoId) ? '' : 'hidden'); ?>" data-check></i>
+                            </button>
+                            <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::openLoop(); ?><?php endif; ?><?php $__currentLoopData = $productos; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $p): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::startLoopIteration(); ?><?php endif; ?>
+                                <?php
+                                    $isSelP = (string)$productoId === (string)$p->id;
+                                ?>
+                                <button type="button" data-option data-value="<?php echo e($p->id); ?>" data-label="<?php echo e($p->nombre); ?>" data-icon="fas fa-box text-blue-600"
+                                    class="w-full flex items-center justify-between rounded-xl px-3 py-2 text-xs font-bold transition-colors text-left <?php echo e($isSelP ? 'bg-blue-50 text-blue-700' : 'text-slate-700 hover:bg-slate-50 hover:text-slate-900'); ?>">
+                                    <span class="flex items-center gap-2 truncate">
+                                        <i class="fas fa-box text-blue-500"></i>
+                                        <span class="truncate"><?php echo e($p->nombre); ?></span>
+                                    </span>
+                                    <i class="fas fa-check text-blue-600 text-[10px] <?php echo e($isSelP ? '' : 'hidden'); ?>" data-check></i>
+                                </button>
+                            <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::endLoop(); ?><?php endif; ?><?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::closeLoop(); ?><?php endif; ?>
+                            <div class="hidden py-4 text-center text-xs text-slate-400 font-medium" data-empty-msg>
+                                No se encontraron resultados
+                            </div>
+                        </div>
+                    </div>
                 </div>
 
                 <!-- BOTONES DE FILTRADO -->
                 <div class="lg:col-span-1 flex items-center gap-1.5">
                     <button
                         type="submit"
-                        class="w-full rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-bold py-2 px-2.5 text-xs transition-all shadow-md shadow-blue-600/15 flex items-center justify-center gap-1 cursor-pointer"
+                        class="h-10 flex-1 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold px-3 text-xs transition-all shadow-sm shadow-blue-500/20 hover:shadow-md flex items-center justify-center gap-1.5 cursor-pointer"
                         title="Aplicar filtros">
-                        <i class="fas fa-filter text-[11px]"></i>
+                        <i class="fas fa-filter text-xs"></i>
                         <span class="hidden sm:inline lg:hidden xl:inline">Filtrar</span>
                     </button>
                     <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php endif; ?><?php if(request()->hasAny(['desde', 'hasta', 'vendedor_id', 'producto_id', 'q'])): ?>
                     <a
                         href="<?php echo e(route('ventas.index', $estadoTab !== 'todos' ? ['tab' => $estadoTab] : [])); ?>"
-                        class="rounded-xl border border-slate-200 bg-slate-50 hover:bg-slate-100 text-slate-600 font-bold py-2 px-2.5 text-xs transition-colors flex items-center justify-center shrink-0"
+                        class="h-10 w-10 rounded-xl border border-slate-200 bg-slate-50/90 hover:bg-red-50 hover:text-red-600 hover:border-red-200 text-slate-500 font-bold transition-all shadow-sm flex items-center justify-center cursor-pointer shrink-0"
                         title="Limpiar filtros">
-                        <i class="fas fa-rotate-left text-[11px]"></i>
+                        <i class="fas fa-rotate-left text-xs"></i>
                     </a>
                     <?php endif; ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php endif; ?>
                 </div>
@@ -358,56 +426,64 @@
             <div class="flex flex-wrap items-center justify-between gap-3">
                 <div class="flex flex-wrap items-center gap-1.5 rounded-2xl border border-slate-200 bg-white p-1.5 shadow-sm" aria-label="Apartados de estado del historial">
                     <!-- 1. TODAS LAS TRANSACCIONES -->
-                    <a 
-                        href="<?php echo e(route('ventas.index', array_merge(request()->except('page'), ['tab' => 'todos']))); ?>"
-                        class="rounded-xl px-3.5 py-2 text-xs font-bold transition-all flex items-center gap-2 cursor-pointer <?php echo e($estadoTab === 'todos' ? 'bg-blue-600 text-white shadow-xs' : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900'); ?>"
+                    <button 
+                        type="button"
+                        @click="cambiarTab('todos')"
+                        class="rounded-xl px-3.5 py-2 text-xs font-bold transition-all flex items-center gap-2 cursor-pointer"
+                        :class="estadoTabActual === 'todos' ? 'bg-blue-600 text-white shadow-xs' : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900'"
                     >
-                        <i class="fas fa-layer-group text-[11px] <?php echo e($estadoTab === 'todos' ? 'text-white' : 'text-slate-400'); ?>"></i>
+                        <i class="fas fa-layer-group text-[11px]" :class="estadoTabActual === 'todos' ? 'text-white' : 'text-slate-400'"></i>
                         <span>Todas</span>
-                        <span class="px-1.5 py-0.5 rounded-md text-[10px] font-black <?php echo e($estadoTab === 'todos' ? 'bg-white/20 text-white' : 'bg-slate-100 text-slate-600'); ?>">
+                        <span class="px-1.5 py-0.5 rounded-md text-[10px] font-black" :class="estadoTabActual === 'todos' ? 'bg-white/20 text-white' : 'bg-slate-100 text-slate-600'" x-text="conteos.todos ?? <?php echo e($conteoEstados['todos'] ?? 0); ?>">
                             <?php echo e($conteoEstados['todos'] ?? 0); ?>
 
                         </span>
-                    </a>
+                    </button>
 
                     <!-- 2. VENTAS ENTREGADAS -->
-                    <a 
-                        href="<?php echo e(route('ventas.index', array_merge(request()->except('page'), ['tab' => 'Entregada']))); ?>"
-                        class="rounded-xl px-3.5 py-2 text-xs font-bold transition-all flex items-center gap-2 cursor-pointer <?php echo e($estadoTab === 'Entregada' ? 'bg-emerald-600 text-white shadow-xs' : 'text-slate-600 hover:bg-emerald-50 hover:text-emerald-700'); ?>"
+                    <button 
+                        type="button"
+                        @click="cambiarTab('Entregada')"
+                        class="rounded-xl px-3.5 py-2 text-xs font-bold transition-all flex items-center gap-2 cursor-pointer"
+                        :class="estadoTabActual === 'Entregada' ? 'bg-emerald-600 text-white shadow-xs' : 'text-slate-600 hover:bg-emerald-50 hover:text-emerald-700'"
                     >
-                        <i class="fas fa-box-open text-[11px] <?php echo e($estadoTab === 'Entregada' ? 'text-white' : 'text-emerald-500'); ?>"></i>
+                        <i class="fas fa-box-open text-[11px]" :class="estadoTabActual === 'Entregada' ? 'text-white' : 'text-emerald-500'"></i>
                         <span>Entregadas</span>
-                        <span class="px-1.5 py-0.5 rounded-md text-[10px] font-black <?php echo e($estadoTab === 'Entregada' ? 'bg-white/20 text-white' : 'bg-emerald-100 text-emerald-800'); ?>">
+                        <span class="px-1.5 py-0.5 rounded-md text-[10px] font-black" :class="estadoTabActual === 'Entregada' ? 'bg-white/20 text-white' : 'bg-emerald-100 text-emerald-800'" x-text="conteos.Entregada ?? <?php echo e($conteoEstados['Entregada'] ?? 0); ?>">
                             <?php echo e($conteoEstados['Entregada'] ?? 0); ?>
 
                         </span>
-                    </a>
+                    </button>
 
                     <!-- 3. DEVOLUCIONES -->
-                    <a 
-                        href="<?php echo e(route('ventas.index', array_merge(request()->except('page'), ['tab' => 'Devolución']))); ?>"
-                        class="rounded-xl px-3.5 py-2 text-xs font-bold transition-all flex items-center gap-2 cursor-pointer <?php echo e($estadoTab === 'Devolución' ? 'bg-purple-600 text-white shadow-xs' : 'text-slate-600 hover:bg-purple-50 hover:text-purple-700'); ?>"
+                    <button 
+                        type="button"
+                        @click="cambiarTab('Devolución')"
+                        class="rounded-xl px-3.5 py-2 text-xs font-bold transition-all flex items-center gap-2 cursor-pointer"
+                        :class="estadoTabActual === 'Devolución' ? 'bg-purple-600 text-white shadow-xs' : 'text-slate-600 hover:bg-purple-50 hover:text-purple-700'"
                     >
-                        <i class="fas fa-rotate-left text-[11px] <?php echo e($estadoTab === 'Devolución' ? 'text-white' : 'text-purple-500'); ?>"></i>
+                        <i class="fas fa-rotate-left text-[11px]" :class="estadoTabActual === 'Devolución' ? 'text-white' : 'text-purple-500'"></i>
                         <span>Devoluciones</span>
-                        <span class="px-1.5 py-0.5 rounded-md text-[10px] font-black <?php echo e($estadoTab === 'Devolución' ? 'bg-white/20 text-white' : 'bg-purple-100 text-purple-800'); ?>">
+                        <span class="px-1.5 py-0.5 rounded-md text-[10px] font-black" :class="estadoTabActual === 'Devolución' ? 'bg-white/20 text-white' : 'bg-purple-100 text-purple-800'" x-text="conteos['Devolución'] ?? <?php echo e($conteoEstados['Devolución'] ?? 0); ?>">
                             <?php echo e($conteoEstados['Devolución'] ?? 0); ?>
 
                         </span>
-                    </a>
+                    </button>
 
                     <!-- 4. CAMBIOS -->
-                    <a 
-                        href="<?php echo e(route('ventas.index', array_merge(request()->except('page'), ['tab' => 'Cambio']))); ?>"
-                        class="rounded-xl px-3.5 py-2 text-xs font-bold transition-all flex items-center gap-2 cursor-pointer <?php echo e($estadoTab === 'Cambio' ? 'bg-teal-600 text-white shadow-xs' : 'text-slate-600 hover:bg-teal-50 hover:text-teal-700'); ?>"
+                    <button 
+                        type="button"
+                        @click="cambiarTab('Cambio')"
+                        class="rounded-xl px-3.5 py-2 text-xs font-bold transition-all flex items-center gap-2 cursor-pointer"
+                        :class="estadoTabActual === 'Cambio' ? 'bg-teal-600 text-white shadow-xs' : 'text-slate-600 hover:bg-teal-50 hover:text-teal-700'"
                     >
-                        <i class="fas fa-arrow-right-arrow-left text-[11px] <?php echo e($estadoTab === 'Cambio' ? 'text-white' : 'text-teal-500'); ?>"></i>
+                        <i class="fas fa-arrow-right-arrow-left text-[11px]" :class="estadoTabActual === 'Cambio' ? 'text-white' : 'text-teal-500'"></i>
                         <span>Cambios</span>
-                        <span class="px-1.5 py-0.5 rounded-md text-[10px] font-black <?php echo e($estadoTab === 'Cambio' ? 'bg-white/20 text-white' : 'bg-teal-100 text-teal-800'); ?>">
+                        <span class="px-1.5 py-0.5 rounded-md text-[10px] font-black" :class="estadoTabActual === 'Cambio' ? 'bg-white/20 text-white' : 'bg-teal-100 text-teal-800'" x-text="conteos.Cambio ?? <?php echo e($conteoEstados['Cambio'] ?? 0); ?>">
                             <?php echo e($conteoEstados['Cambio'] ?? 0); ?>
 
                         </span>
-                    </a>
+                    </button>
                 </div>
 
                 <div class="flex items-center gap-2">
@@ -761,13 +837,9 @@
                 </table>
             </div>
 
-            <!-- PAGINACIÓN -->
-            <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php endif; ?><?php if($ventas->hasPages()): ?>
-            <div class="p-4 border-t border-slate-100 bg-slate-50/50">
-                <?php echo e($ventas->links()); ?>
-
+            <div x-show="!cargandoTabla" id="contenedorTablaVentasIndex">
+                <?php echo $__env->make('ventas.tabla-index', array_diff_key(get_defined_vars(), ['__data' => 1, '__path' => 1]))->render(); ?>
             </div>
-            <?php endif; ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php endif; ?>
         </section>
         </div>
 
@@ -833,13 +905,33 @@
                         </button>
                     </div>
 
-                    <!-- CUERPO DEL MODAL (SPINNER O DATOS) -->
+                    <!-- CUERPO DEL MODAL (SKELETON O DATOS) -->
                     <div class="p-6 sm:p-8 overflow-y-auto space-y-6 flex-1 custom-scrollbar">
 
-                        <!-- ESTADO CARGANDO -->
-                        <div x-show="cargandoDetalle" class="py-16 text-center text-slate-400 space-y-3">
-                            <i class="fas fa-spinner fa-spin text-3xl text-blue-600"></i>
-                            <p class="text-xs font-bold text-slate-600">Cargando desglose de la venta...</p>
+                        <!-- ESTADO CARGANDO (SKELETON ESTRUCTURAL) -->
+                        <div x-show="cargandoDetalle">
+                            <?php if (isset($component)) { $__componentOriginale9d5d542df57601608f2d578e153aecc = $component; } ?>
+<?php if (isset($attributes)) { $__attributesOriginale9d5d542df57601608f2d578e153aecc = $attributes; } ?>
+<?php $component = Illuminate\View\AnonymousComponent::resolve(['view' => 'components.skeleton-modal-detalle','data' => []] + (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag ? $attributes->all() : [])); ?>
+<?php $component->withName('skeleton-modal-detalle'); ?>
+<?php if ($component->shouldRender()): ?>
+<?php $__env->startComponent($component->resolveView(), $component->data()); ?>
+<?php if (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag): ?>
+<?php $attributes = $attributes->except(\Illuminate\View\AnonymousComponent::ignoredParameterNames()); ?>
+<?php endif; ?>
+<?php $component->withAttributes([]); ?>
+<?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::processComponentKey($component); ?>
+
+<?php echo $__env->renderComponent(); ?>
+<?php endif; ?>
+<?php if (isset($__attributesOriginale9d5d542df57601608f2d578e153aecc)): ?>
+<?php $attributes = $__attributesOriginale9d5d542df57601608f2d578e153aecc; ?>
+<?php unset($__attributesOriginale9d5d542df57601608f2d578e153aecc); ?>
+<?php endif; ?>
+<?php if (isset($__componentOriginale9d5d542df57601608f2d578e153aecc)): ?>
+<?php $component = $__componentOriginale9d5d542df57601608f2d578e153aecc; ?>
+<?php unset($__componentOriginale9d5d542df57601608f2d578e153aecc); ?>
+<?php endif; ?>
                         </div>
 
                         <!-- CONTENIDO DE LA VENTA -->
@@ -1848,7 +1940,18 @@
                             </span>
                         </div>
 
-                        <!-- SECCIÓN DINÁMICA: EVIDENCIA PAQUETERÍA (EN RUTA) -->
+                        <!-- ALERTA INFORMATIVA: EN RUTA -->
+                        <template x-if="estadoModalData.estadoActual === 'En ruta'">
+                            <div class="p-3.5 bg-amber-50 border border-amber-200 rounded-xl text-xs text-amber-900 flex items-start gap-2.5 shadow-2xs">
+                                <i class="fas fa-truck-fast text-amber-600 mt-0.5 text-base shrink-0"></i>
+                                <div>
+                                    <p class="font-bold text-amber-950 leading-snug">Envío en camino con paquetería</p>
+                                    <p class="text-[11px] text-amber-800 mt-0.5 leading-relaxed">
+                                        Este paquete está en tránsito hacia el cliente. No se puede cancelar de forma directa; si el cliente <strong>no lo recibió o rechazó la entrega</strong>, selecciona <strong>Devolución</strong> para reingresar los artículos al stock de tienda y registrar la evidencia física del paquete.
+                                    </p>
+                                </div>
+                            </div>
+                        </template>
                         <div
                             id="seccion-foto-paquete"
                             x-show="nuevoEstadoSeleccionado === 'En ruta'"
@@ -2023,13 +2126,13 @@
                             </span>
                         </div>
 
+                        <!-- SECCIÓN DINÁMICA: EVIDENCIA PAQUETERÍA (EN RUTA) -->
                         <!-- ADVERTENCIA DE SEGURIDAD / IMPACTO -->
                         <div class="p-3 bg-amber-50 border border-amber-200 rounded-xl flex items-start gap-2.5 text-amber-900">
                             <i class="fas fa-circle-exclamation text-amber-600 text-sm mt-0.5 shrink-0"></i>
                             <div class="text-[11px]">
                                 <span class="font-bold block">Acción con impacto en inventario y comisiones:</span>
-                                <span class="text-amber-800">
-                                    Si cancelas la venta, el stock de las variantes se devolverá automáticamente a la bodega y se anularán las comisiones asociadas.
+                                <span class="text-amber-800" x-text="nuevoEstadoSeleccionado === 'Devolución' ? 'Si procesas la devolución por paquete no recibido, los productos retornarán al stock activo de tienda y se anularán las comisiones del pedido (deduciendo el 50% del costo de envío al vendedor).' : 'Si cancelas la venta, el stock de las variantes se devolverá automáticamente a la tienda y se anularán las comisiones asociadas.'">
                                 </span>
                             </div>
                         </div>
@@ -2434,13 +2537,100 @@
     <script>
         function gestorVentasIndex() {
             return {
+                init() {
+                    const id = window.location.hash.match(/^#venta-([1-9][0-9]*)$/)?.[1];
+                    if (id) this.abrirDetalle(id);
+                },
+
                 modalDetalleAbierto: false,
                 cargandoDetalle: false,
+                cargandoTabla: false,
                 ventaSeleccionada: null,
                 comprobanteZoomUrl: null,
                 comprobanteZoomNombre: '',
                 comprobanteZoomTitulo: '',
                 openDevolucionModal: false,
+
+                // --- ESTADO REACTIVO DE FILTROS Y PESTAÑAS ---
+                estadoTabActual: '<?php echo e($estadoTab); ?>',
+                filtroBusqueda: '<?php echo e($busqueda ?? ''); ?>',
+                filtroDesde: '<?php echo e($desde); ?>',
+                filtroHasta: '<?php echo e($hasta); ?>',
+                filtroVendedor: '<?php echo e($vendedorId ?? ''); ?>',
+                filtroProducto: '<?php echo e($productoId ?? ''); ?>',
+                conteos: {
+                    todos: <?php echo e($conteoEstados['todos'] ?? 0); ?>,
+                    Entregada: <?php echo e($conteoEstados['Entregada'] ?? 0); ?>,
+                    'Devolución': <?php echo e($conteoEstados['Devolución'] ?? 0); ?>,
+                    Cambio: <?php echo e($conteoEstados['Cambio'] ?? 0); ?>
+
+                },
+
+                async cambiarTab(tab) {
+                    if (this.estadoTabActual === tab && !this.cargandoTabla) return;
+                    this.estadoTabActual = tab;
+                    await this.recargarTablaIndex();
+                },
+
+                async filtrarVentasIndex() {
+                    await this.recargarTablaIndex();
+                },
+
+                async limpiarFiltrosIndex() {
+                    this.filtroBusqueda = '';
+                    this.filtroVendedor = '';
+                    this.filtroProducto = '';
+                    await this.recargarTablaIndex();
+                },
+
+                async recargarTablaIndex(paginaUrl = null) {
+                    this.cargandoTabla = true;
+                    try {
+                        let url;
+                        if (paginaUrl) {
+                            url = new URL(paginaUrl, window.location.origin);
+                        } else {
+                            url = new URL('<?php echo e(route('ventas.index')); ?>', window.location.origin);
+                            if (this.filtroBusqueda) url.searchParams.set('q', this.filtroBusqueda);
+                            if (this.filtroDesde) url.searchParams.set('desde', this.filtroDesde);
+                            if (this.filtroHasta) url.searchParams.set('hasta', this.filtroHasta);
+                            if (this.filtroVendedor) url.searchParams.set('vendedor_id', this.filtroVendedor);
+                            if (this.filtroProducto) url.searchParams.set('producto_id', this.filtroProducto);
+                            if (this.estadoTabActual) url.searchParams.set('tab', this.estadoTabActual);
+                        }
+
+                        const res = await fetch(url.toString(), {
+                            headers: {
+                                'X-Requested-With': 'XMLHttpRequest',
+                                'Accept': 'application/json'
+                            }
+                        });
+
+                        if (res.ok) {
+                            const data = await res.json();
+                            if (data.html) {
+                                const contenedor = document.getElementById('contenedorTablaVentasIndex');
+                                if (contenedor) {
+                                    contenedor.innerHTML = data.html;
+                                    // Interceptar clics en enlaces de paginación para recargar vía AJAX sin refrescar toda la pantalla
+                                    contenedor.querySelectorAll('a[href*="page="]').forEach(enlace => {
+                                        enlace.addEventListener('click', (e) => {
+                                            e.preventDefault();
+                                            this.recargarTablaIndex(enlace.getAttribute('href'));
+                                        });
+                                    });
+                                }
+                            }
+                            if (data.conteos) {
+                                this.conteos = data.conteos;
+                            }
+                        }
+                    } catch (err) {
+                        console.error('Error al recargar tabla de ventas:', err);
+                    } finally {
+                        this.cargandoTabla = false;
+                    }
+                },
 
                 // --- MODAL DE CAMBIO DE ESTADO (MÁQUINA DE ESTADOS) ---
                 modalCambiarEstadoAbierto: false,
@@ -2474,13 +2664,27 @@
                 errorObservacionesEstadoMensaje: '',
 
                 abrirModalCambiarEstado(id, estadoActual, tipoVenta, puedeDevolver, estadosPermitidos, diasRestantes, textoGarantia, fechaLimite) {
+                    let permitidosFiltrados = Array.isArray(estadosPermitidos) 
+                        ? estadosPermitidos.filter(s => {
+                            if (estadoActual === 'En ruta') {
+                                return s !== 'Cambio' && s !== 'Cancelada';
+                            }
+                            return s !== 'Devolución' && s !== 'Cambio';
+                        }) 
+                        : [];
+
+                    // Regla de despacho: un envío en ruta nunca puede cancelarse
+                    if (estadoActual === 'En ruta') {
+                        permitidosFiltrados = permitidosFiltrados.filter(s => s !== 'Cancelada');
+                    }
+
                     this.estadoModalData = {
                         id: id,
                         folio: '#VNT-' + String(id).padStart(5, '0'),
                         estadoActual: estadoActual,
                         tipoVenta: tipoVenta,
                         puedeDevolver: puedeDevolver,
-                        estadosPermitidos: Array.isArray(estadosPermitidos) ? estadosPermitidos.filter(s => s !== 'Devolución' && s !== 'Cambio') : [],
+                        estadosPermitidos: permitidosFiltrados,
                         diasRestantes: diasRestantes || 0,
                         textoGarantia: textoGarantia || '',
                         fechaLimite: fechaLimite || ''
@@ -2541,9 +2745,9 @@
                         case 'Entregada':
                             return 'Entregado al cliente exitosamente.';
                         case 'Cancelada':
-                            return 'Cancela la venta. Reintegra stock a bodega y anula comisiones.';
+                            return 'Cancela la venta. Reintegra stock a la tienda y anula comisiones.';
                         case 'Devolución':
-                            return 'Paquete no recibido por el cliente en ruta. Requiere motivo y foto del paquete.';
+                            return 'Paquete no recibido por el cliente en ruta. Retorna stock a tienda.';
                         case 'Cambio':
                             return 'Retorno por garantía. Requiere justificación y foto del paquete.';
                         default:
@@ -2752,12 +2956,10 @@
                                 text: data.message,
                                 timer: 1600,
                                 showConfirmButton: false
-                            }).then(() => {
-                                window.location.reload();
                             });
-                        } else {
-                            window.location.reload();
                         }
+
+                        await this.recargarTablaIndex();
 
                     } catch (err) {
                         console.error('Error al actualizar estado:', err);
@@ -3264,6 +3466,143 @@
                 }
             };
         }
+
+        // Dropdowns con Buscador Interno para Vendedor y Producto
+        function initSearchableVentasSelects() {
+            const containers = document.querySelectorAll('[data-searchable-select]');
+
+            containers.forEach(container => {
+                const toggle = container.querySelector('[data-toggle]');
+                const menu = container.querySelector('[data-menu]');
+                const arrow = container.querySelector('[data-arrow]');
+                const labelSpan = container.querySelector('[data-label]');
+                const iconEl = container.querySelector('[data-icon]');
+                const hiddenInput = container.querySelector('input[type="hidden"]');
+                const searchInput = container.querySelector('[data-search-input]');
+                const options = container.querySelectorAll('[data-option]');
+                const emptyMsg = container.querySelector('[data-empty-msg]');
+
+                function openMenu() {
+                    document.querySelectorAll('[data-searchable-select] [data-menu]').forEach(m => {
+                        if (m !== menu) {
+                            m.classList.add('hidden');
+                            const p = m.closest('[data-searchable-select]');
+                            p?.querySelector('[data-arrow]')?.classList.remove('rotate-180');
+                            p?.querySelector('[data-toggle]')?.setAttribute('aria-expanded', 'false');
+                        }
+                    });
+                    menu.classList.remove('hidden');
+                    arrow?.classList.add('rotate-180');
+                    toggle.setAttribute('aria-expanded', 'true');
+                    if (searchInput) {
+                        setTimeout(() => searchInput.focus(), 50);
+                    }
+                }
+
+                function closeMenu() {
+                    menu.classList.add('hidden');
+                    arrow?.classList.remove('rotate-180');
+                    toggle.setAttribute('aria-expanded', 'false');
+                    if (searchInput) {
+                        searchInput.value = '';
+                        options.forEach(opt => opt.style.display = '');
+                        if (emptyMsg) emptyMsg.classList.add('hidden');
+                    }
+                }
+
+                toggle.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    if (menu.classList.contains('hidden')) {
+                        openMenu();
+                    } else {
+                        closeMenu();
+                    }
+                });
+
+                if (searchInput) {
+                    searchInput.addEventListener('click', (e) => e.stopPropagation());
+                    searchInput.addEventListener('input', () => {
+                        const q = searchInput.value.toLowerCase().trim();
+                        let matches = 0;
+                        options.forEach(opt => {
+                            const lbl = (opt.dataset.label || '').toLowerCase();
+                            if (opt.dataset.value === '') {
+                                opt.style.display = q === '' ? '' : 'none';
+                                if (q === '') matches++;
+                                return;
+                            }
+                            if (lbl.includes(q)) {
+                                opt.style.display = '';
+                                matches++;
+                            } else {
+                                opt.style.display = 'none';
+                            }
+                        });
+                        if (emptyMsg) {
+                            emptyMsg.classList.toggle('hidden', matches > 0);
+                        }
+                    });
+                }
+
+                options.forEach(opt => {
+                    opt.addEventListener('click', (e) => {
+                        e.stopPropagation();
+                        const val = opt.dataset.value;
+                        const lbl = opt.dataset.label;
+                        const icn = opt.dataset.icon;
+
+                        hiddenInput.value = val;
+                        if (labelSpan) labelSpan.textContent = lbl;
+                        if (iconEl && icn) iconEl.className = icn;
+
+                        options.forEach(o => {
+                            const isSelected = o === opt;
+                            o.classList.toggle('bg-blue-50', isSelected);
+                            o.classList.toggle('text-blue-700', isSelected);
+                            o.classList.toggle('text-slate-700', !isSelected);
+                            const check = o.querySelector('[data-check]');
+                            if (check) check.classList.toggle('hidden', !isSelected);
+                        });
+
+                        closeMenu();
+                    });
+                });
+            });
+
+            document.addEventListener('click', (e) => {
+                if (!e.target.closest('[data-searchable-select]')) {
+                    document.querySelectorAll('[data-searchable-select]').forEach(container => {
+                        container.querySelector('[data-menu]')?.classList.add('hidden');
+                        container.querySelector('[data-arrow]')?.classList.remove('rotate-180');
+                        container.querySelector('[data-toggle]')?.setAttribute('aria-expanded', 'false');
+                        const sIn = container.querySelector('[data-search-input]');
+                        if (sIn) {
+                            sIn.value = '';
+                            container.querySelectorAll('[data-option]').forEach(opt => opt.style.display = '');
+                            container.querySelector('[data-empty-msg]')?.classList.add('hidden');
+                        }
+                    });
+                }
+            });
+
+            document.addEventListener('keydown', (e) => {
+                if (e.key === 'Escape') {
+                    document.querySelectorAll('[data-searchable-select]').forEach(container => {
+                        container.querySelector('[data-menu]')?.classList.add('hidden');
+                        container.querySelector('[data-arrow]')?.classList.remove('rotate-180');
+                        container.querySelector('[data-toggle]')?.setAttribute('aria-expanded', 'false');
+                        const sIn = container.querySelector('[data-search-input]');
+                        if (sIn) {
+                            sIn.value = '';
+                            container.querySelectorAll('[data-option]').forEach(opt => opt.style.display = '');
+                            container.querySelector('[data-empty-msg]')?.classList.add('hidden');
+                        }
+                    });
+                }
+            });
+        }
+
+        document.addEventListener('DOMContentLoaded', initSearchableVentasSelects);
     </script>
  <?php echo $__env->renderComponent(); ?>
 <?php endif; ?>
@@ -3274,4 +3613,5 @@
 <?php if (isset($__componentOriginal7ae6b45c011e855a5545a671a7f3568e)): ?>
 <?php $component = $__componentOriginal7ae6b45c011e855a5545a671a7f3568e; ?>
 <?php unset($__componentOriginal7ae6b45c011e855a5545a671a7f3568e); ?>
-<?php endif; ?><?php /**PATH /home/edwin/Desktop/UES II-2026/Diseño II/Proyecto/Dise-o_Sistemas2/resources/views/ventas/index.blade.php ENDPATH**/ ?>
+<?php endif; ?>
+<?php /**PATH /home/edwin/Desktop/UES II-2026/Diseño II/Proyecto/Dise-o_Sistemas2/resources/views/ventas/index.blade.php ENDPATH**/ ?>

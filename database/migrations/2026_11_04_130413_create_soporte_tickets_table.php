@@ -11,6 +11,10 @@ return new class extends Migration
      */
     public function up(): void
     {
+        if (Schema::hasTable('soporte_tickets')) {
+            return;
+        }
+
         Schema::create('soporte_tickets', function (Blueprint $table) {
             $table->id();
             $table->string('codigo_ticket', 25)->unique()->index();

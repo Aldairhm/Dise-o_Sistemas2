@@ -29,11 +29,6 @@
                         <?php echo e($ticket->estado); ?>
 
                     </span>
-                    <span class="px-2.5 py-1 rounded-full text-xs font-bold 
-                        <?php echo e($ticket->prioridad === 'Urgente' ? 'bg-rose-100 text-rose-800' : ($ticket->prioridad === 'Alta' ? 'bg-amber-100 text-amber-800' : 'bg-slate-100 text-slate-700')); ?>">
-                        <?php echo e($ticket->prioridad); ?>
-
-                    </span>
                 </div>
                 <h1 class="text-base sm:text-lg font-bold text-slate-700 mt-1">
                     <?php echo e($ticket->titulo ?? 'Consulta sobre ' . $ticket->modulo); ?>
@@ -43,17 +38,33 @@
 
             <!-- Acciones según Rol -->
             <div class="flex flex-wrap items-center gap-2">
-                <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php endif; ?><?php if(Auth::user()->isAdmin() && !in_array($ticket->estado, ['Escalada', 'Resuelta', 'Cancelada'])): ?>
+                <?php
+                    $esCreador = ($ticket->id_usuario === Auth::id());
+                    $puedeGestionar = (Auth::user()->isSuperAdmin() || (Auth::user()->isAdmin() && !$esCreador))
+                        && (!in_array($ticket->estado, ['Resuelta', 'Cancelada']) || Auth::user()->isSuperAdmin());
+                    $puedeEscalar = Auth::user()->isAdmin() 
+                        && !$esCreador 
+                        && $ticket->nivel_escalamiento !== 'super_admin'
+                        && !in_array($ticket->estado, ['Escalada', 'Resuelta', 'Cancelada']);
+                    $puedeCancelarPropio = $esCreador && in_array($ticket->estado, ['Pendiente', 'En proceso']);
+                ?>
+
+                <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php endif; ?><?php if($puedeEscalar): ?>
                     <button type="button" onclick="document.getElementById('modalEscalar').classList.remove('hidden')" class="px-4 py-2 rounded-xl text-xs font-bold bg-amber-500 hover:bg-amber-600 text-white transition-colors shadow-sm flex items-center gap-1.5">
                         <i class="fas fa-arrow-up-right-from-square"></i>
                         <span>Escalar a Super Admin</span>
                     </button>
                 <?php endif; ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php endif; ?>
 
-                <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php endif; ?><?php if(!in_array($ticket->estado, ['Resuelta', 'Cancelada']) || Auth::user()->isSuperAdmin()): ?>
+                <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php endif; ?><?php if($puedeGestionar): ?>
                     <button type="button" onclick="document.getElementById('modalCambiarEstado').classList.remove('hidden')" class="px-4 py-2 rounded-xl text-xs font-bold bg-slate-800 hover:bg-slate-700 text-white transition-colors shadow-sm flex items-center gap-1.5">
                         <i class="fas fa-sliders"></i>
                         <span>Cambiar Estado</span>
+                    </button>
+                <?php elseif($puedeCancelarPropio): ?>
+                    <button type="button" onclick="document.getElementById('modalCambiarEstado').classList.remove('hidden')" class="px-4 py-2 rounded-xl text-xs font-bold bg-rose-600 hover:bg-rose-700 text-white transition-colors shadow-sm flex items-center gap-1.5">
+                        <i class="fas fa-ban"></i>
+                        <span>Cancelar Mi Duda</span>
                     </button>
                 <?php else: ?>
                     <span class="px-3 py-1.5 rounded-xl text-xs font-bold bg-slate-100 text-slate-500 border border-slate-200">
@@ -296,21 +307,32 @@
                 </button>
             </div>
 
-            <form method="POST" action="<?php echo e(route('ayuda.tickets.estado', $ticket->id)); ?>" class="p-6 space-y-4 text-xs">
+            <form id="formCambiarEstadoTicket" method="POST" action="<?php echo e(route('ayuda.tickets.estado', $ticket->id)); ?>" novalidate class="p-6 space-y-4 text-xs">
                 <?php echo csrf_field(); ?>
                 <?php echo method_field('PATCH'); ?>
                 <div>
                     <label class="block font-bold text-slate-700 mb-1">Nuevo Estado <span class="text-rose-500">*</span></label>
-                    <select name="estado" required class="w-full p-2.5 rounded-xl border border-slate-200 focus:outline-none focus:border-blue-500 text-xs">
-                        <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::openLoop(); ?><?php endif; ?><?php $__currentLoopData = \App\Models\SoporteTicket::ESTADOS; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $st): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::startLoopIteration(); ?><?php endif; ?>
-                            <option value="<?php echo e($st); ?>" <?php echo e($ticket->estado === $st ? 'selected' : ''); ?>><?php echo e($st); ?></option>
-                        <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::endLoop(); ?><?php endif; ?><?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::closeLoop(); ?><?php endif; ?>
+                    <select name="estado" id="selectNuevoEstado" class="w-full p-2.5 rounded-xl border border-slate-200 focus:outline-none focus:border-blue-500 text-xs">
+                        <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php endif; ?><?php if($esCreador && !Auth::user()->isSuperAdmin()): ?>
+                            <option value="Cancelada">Cancelada (Cancelar mi propia duda)</option>
+                        <?php else: ?>
+                            <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::openLoop(); ?><?php endif; ?><?php $__currentLoopData = \App\Models\SoporteTicket::ESTADOS; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $st): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::startLoopIteration(); ?><?php endif; ?>
+                                <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php endif; ?><?php if($st === 'Escalada' && $ticket->nivel_escalamiento === 'super_admin'): ?>
+                                    <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php endif; ?><?php continue; ?>
+                                <?php endif; ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php endif; ?>
+                                <option value="<?php echo e($st); ?>" <?php echo e($ticket->estado === $st ? 'selected' : ''); ?>><?php echo e($st); ?></option>
+                            <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::endLoop(); ?><?php endif; ?><?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::closeLoop(); ?><?php endif; ?>
+                        <?php endif; ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php endif; ?>
                     </select>
                 </div>
 
                 <div>
-                    <label class="block font-bold text-slate-700 mb-1">Resolución o Motivo del Cambio</label>
-                    <textarea name="resolucion" rows="3" placeholder="Detalla la solución brindada o razón del cambio de estado..." class="w-full p-3 rounded-xl border border-slate-200 focus:outline-none focus:border-blue-500 text-xs"><?php echo e($ticket->resolucion); ?></textarea>
+                    <label class="block font-bold text-slate-700 mb-1">Resolución o Motivo del Cambio <span class="text-rose-500">*</span></label>
+                    <textarea name="resolucion" id="textareaResolucionModal" rows="3" placeholder="Detalla obligatoriamente la solución brindada o razón del cambio de estado..." class="w-full p-3 rounded-xl border border-slate-200 focus:outline-none focus:border-blue-500 text-xs transition-all resize-none"><?php echo e($ticket->resolucion); ?></textarea>
+                    <p id="errorResolucionModal" class="hidden text-[11px] font-bold text-rose-600 flex items-center gap-1 mt-1 pl-1">
+                        <i class="fas fa-circle-exclamation text-[10px]"></i>
+                        <span>Debes ingresar la resolución o motivo del cambio (mínimo 5 caracteres).</span>
+                    </p>
                 </div>
 
                 <div class="pt-2 flex items-center justify-end gap-2 border-t border-slate-100">
@@ -324,6 +346,35 @@
             </form>
         </div>
     </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            const form = document.getElementById('formCambiarEstadoTicket');
+            const textarea = document.getElementById('textareaResolucionModal');
+            const errorMsg = document.getElementById('errorResolucionModal');
+
+            if (form && textarea && errorMsg) {
+                textarea.addEventListener('input', function () {
+                    if (this.value.trim().length >= 5) {
+                        this.classList.remove('border-rose-500', 'bg-rose-50/40', 'ring-1', 'ring-rose-400');
+                        this.classList.add('border-slate-200');
+                        errorMsg.classList.add('hidden');
+                    }
+                });
+
+                form.addEventListener('submit', function (e) {
+                    const val = textarea.value.trim();
+                    if (val.length < 5) {
+                        e.preventDefault();
+                        textarea.classList.remove('border-slate-200');
+                        textarea.classList.add('border-rose-500', 'bg-rose-50/40', 'ring-1', 'ring-rose-400');
+                        errorMsg.classList.remove('hidden');
+                        textarea.focus();
+                    }
+                });
+            }
+        });
+    </script>
  <?php echo $__env->renderComponent(); ?>
 <?php endif; ?>
 <?php if (isset($__attributesOriginal7ae6b45c011e855a5545a671a7f3568e)): ?>

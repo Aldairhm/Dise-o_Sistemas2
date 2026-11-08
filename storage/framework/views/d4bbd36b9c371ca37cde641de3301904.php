@@ -32,6 +32,9 @@
         
         <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8">
             <div>
+                <a href="<?php echo e(route('home')); ?>" class="inline-flex items-center gap-2 text-xs font-bold uppercase tracking-widest text-slate-400 hover:text-blue-600 transition-colors mb-3">
+                    <i class="fas fa-arrow-left"></i> Volver al inicio
+                </a>
                 <div class="flex items-center gap-2 text-xs font-bold text-blue-600 uppercase tracking-widest mb-1.5">
                     <i class="fas fa-boxes-stacked"></i>
                     <span>Módulo de Inventario</span>
@@ -126,46 +129,132 @@
                     </button>
                 </div>
 
-                <!-- Filtros Dropdowns -->
+                <!-- Filtros Dropdowns Personalizados -->
                 <div class="flex flex-wrap items-center gap-3">
-                    <!-- Filtro por Categoría -->
-                    <div class="flex items-center gap-2">
-                        <span class="text-xs font-bold text-slate-500 uppercase tracking-wider hidden sm:inline">Categoría:</span>
-                        <select id="categoriaFilter" 
-                                onchange="applyFilters()" 
-                                class="bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-xs font-bold text-slate-700 focus:border-blue-600 focus:ring-2 focus:ring-blue-600/20 focus:outline-none cursor-pointer max-w-[150px] truncate">
-                            <option value="todos">Todas</option>
-                            <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::openLoop(); ?><?php endif; ?><?php $__currentLoopData = $categorias; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $cat): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::startLoopIteration(); ?><?php endif; ?>
-                                <option value="<?php echo e(strtolower($cat->nombre)); ?>"><?php echo e($cat->nombre); ?></option>
-                            <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::endLoop(); ?><?php endif; ?><?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::closeLoop(); ?><?php endif; ?>
-                        </select>
+                    
+                    <div class="relative" data-custom-producto-select="categoria">
+                        <label class="mb-1.5 flex items-center gap-1.5 text-xs font-bold text-slate-700 tracking-tight">
+                            <i class="fas fa-layer-group text-blue-600 text-xs"></i>
+                            <span>Categoría</span>
+                        </label>
+                        <input type="hidden" id="categoriaFilter" value="todos">
+                        <button type="button" class="h-10 min-w-[150px] max-w-[210px] rounded-xl border border-slate-200 bg-slate-50/90 px-3.5 text-xs font-bold text-slate-700 shadow-sm transition hover:border-slate-300 hover:bg-white focus:border-blue-500 focus:bg-white focus:outline-none focus:ring-4 focus:ring-blue-500/10 flex items-center justify-between gap-2 cursor-pointer text-left" data-toggle aria-expanded="false">
+                            <span class="flex items-center gap-2 truncate">
+                                <i class="fas fa-border-all text-slate-400" data-icon></i>
+                                <span class="truncate" data-label>Todas</span>
+                            </span>
+                            <i class="fas fa-chevron-down text-[10px] text-slate-400 transition-transform duration-200" data-arrow></i>
+                        </button>
+                        <div class="hidden absolute left-0 top-full z-50 mt-1.5 w-full min-w-[180px] rounded-2xl border border-slate-200 bg-white p-1.5 shadow-2xl max-h-64 overflow-y-auto" data-menu>
+                            <div class="space-y-0.5">
+                                <button type="button" data-option data-value="todos" data-label="Todas" data-icon="fas fa-border-all text-slate-400"
+                                    class="w-full flex items-center justify-between rounded-xl px-3 py-2 text-xs font-bold transition-colors text-left bg-blue-50 text-blue-700">
+                                    <span class="flex items-center gap-2 truncate">
+                                        <i class="fas fa-border-all text-slate-400"></i>
+                                        <span>Todas</span>
+                                    </span>
+                                    <i class="fas fa-check text-blue-600 text-[10px]" data-check></i>
+                                </button>
+                                <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::openLoop(); ?><?php endif; ?><?php $__currentLoopData = $categorias; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $cat): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::startLoopIteration(); ?><?php endif; ?>
+                                    <button type="button" data-option data-value="<?php echo e(strtolower($cat->nombre)); ?>" data-label="<?php echo e($cat->nombre); ?>" data-icon="fas fa-tag text-blue-500"
+                                        class="w-full flex items-center justify-between rounded-xl px-3 py-2 text-xs font-bold transition-colors text-left text-slate-700 hover:bg-slate-50 hover:text-slate-900">
+                                        <span class="flex items-center gap-2 truncate">
+                                            <i class="fas fa-tag text-blue-500"></i>
+                                            <span><?php echo e($cat->nombre); ?></span>
+                                        </span>
+                                        <i class="fas fa-check text-blue-600 text-[10px] hidden" data-check></i>
+                                    </button>
+                                <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::endLoop(); ?><?php endif; ?><?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::closeLoop(); ?><?php endif; ?>
+                            </div>
+                        </div>
                     </div>
 
-                    <!-- Filtro por Estado -->
-                    <div class="flex items-center gap-2">
-                        <span class="text-xs font-bold text-slate-500 uppercase tracking-wider hidden sm:inline">Estado:</span>
-                        <select id="statusFilter" 
-                                onchange="applyFilters()" 
-                                class="bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-xs font-bold text-slate-700 focus:border-blue-600 focus:ring-2 focus:ring-blue-600/20 focus:outline-none cursor-pointer">
-                            <option value="todos">Todos</option>
-                            <option value="1">Activos</option>
-                            <option value="0">Inactivos</option>
-                        </select>
+                    
+                    <div class="relative" data-custom-producto-select="estado">
+                        <label class="mb-1.5 flex items-center gap-1.5 text-xs font-bold text-slate-700 tracking-tight">
+                            <i class="fas fa-toggle-on text-blue-600 text-xs"></i>
+                            <span>Estado</span>
+                        </label>
+                        <input type="hidden" id="statusFilter" value="todos">
+                        <button type="button" class="h-10 min-w-[130px] rounded-xl border border-slate-200 bg-slate-50/90 px-3.5 text-xs font-bold text-slate-700 shadow-sm transition hover:border-slate-300 hover:bg-white focus:border-blue-500 focus:bg-white focus:outline-none focus:ring-4 focus:ring-blue-500/10 flex items-center justify-between gap-2 cursor-pointer text-left" data-toggle aria-expanded="false">
+                            <span class="flex items-center gap-2 truncate">
+                                <i class="fas fa-layer-group text-slate-400" data-icon></i>
+                                <span class="truncate" data-label>Todos</span>
+                            </span>
+                            <i class="fas fa-chevron-down text-[10px] text-slate-400 transition-transform duration-200" data-arrow></i>
+                        </button>
+                        <div class="hidden absolute left-0 top-full z-50 mt-1.5 w-full min-w-[160px] rounded-2xl border border-slate-200 bg-white p-1.5 shadow-2xl" data-menu>
+                            <div class="space-y-0.5">
+                                <button type="button" data-option data-value="todos" data-label="Todos" data-icon="fas fa-layer-group text-slate-400"
+                                    class="w-full flex items-center justify-between rounded-xl px-3 py-2 text-xs font-bold transition-colors text-left bg-blue-50 text-blue-700">
+                                    <span class="flex items-center gap-2 truncate">
+                                        <i class="fas fa-layer-group text-slate-400"></i>
+                                        <span>Todos</span>
+                                    </span>
+                                    <i class="fas fa-check text-blue-600 text-[10px]" data-check></i>
+                                </button>
+                                <button type="button" data-option data-value="1" data-label="Activos" data-icon="fas fa-circle-check text-emerald-500"
+                                    class="w-full flex items-center justify-between rounded-xl px-3 py-2 text-xs font-bold transition-colors text-left text-slate-700 hover:bg-slate-50 hover:text-slate-900">
+                                    <span class="flex items-center gap-2 truncate">
+                                        <i class="fas fa-circle-check text-emerald-500"></i>
+                                        <span>Activos</span>
+                                    </span>
+                                    <i class="fas fa-check text-blue-600 text-[10px] hidden" data-check></i>
+                                </button>
+                                <button type="button" data-option data-value="0" data-label="Inactivos" data-icon="fas fa-ban text-rose-500"
+                                    class="w-full flex items-center justify-between rounded-xl px-3 py-2 text-xs font-bold transition-colors text-left text-slate-700 hover:bg-slate-50 hover:text-slate-900">
+                                    <span class="flex items-center gap-2 truncate">
+                                        <i class="fas fa-ban text-rose-500"></i>
+                                        <span>Inactivos</span>
+                                    </span>
+                                    <i class="fas fa-check text-blue-600 text-[10px] hidden" data-check></i>
+                                </button>
+                            </div>
+                        </div>
                     </div>
 
-                    <!-- Boton Restablecer -->
-                    <button type="button" 
-                            onclick="resetAllFilters()" 
-                            class="p-2 text-slate-400 hover:text-blue-600 rounded-xl hover:bg-slate-100 transition-colors cursor-pointer"
-                            title="Restablecer filtros">
-                        <i class="fas fa-rotate-right text-xs"></i>
-                    </button>
+                    
+                    <div class="flex items-end">
+                        <button type="button" 
+                                onclick="resetAllFilters()" 
+                                class="h-10 rounded-xl border border-slate-200 hover:bg-red-50 hover:text-red-600 hover:border-red-200 text-slate-500 px-3 text-xs font-bold transition-all cursor-pointer flex items-center justify-center gap-1.5 shadow-sm"
+                                title="Restablecer filtros">
+                            <i class="fas fa-rotate-left text-xs"></i>
+                            <span class="hidden sm:inline">Limpiar</span>
+                        </button>
+                    </div>
                 </div>
             </div>
         </div>
 
         
         <div class="bg-white rounded-2xl border border-slate-200/80 shadow-xs overflow-hidden relative" id="productsContainer">
+            <!-- Skeleton Shimmer de Tabla de Productos -->
+            <div id="tableSkeletonProductos" class="hidden p-5">
+                <?php if (isset($component)) { $__componentOriginalb3a7e296665e2f58ea67cad97892cbe7 = $component; } ?>
+<?php if (isset($attributes)) { $__attributesOriginalb3a7e296665e2f58ea67cad97892cbe7 = $attributes; } ?>
+<?php $component = Illuminate\View\AnonymousComponent::resolve(['view' => 'components.skeleton-table','data' => ['rows' => 6,'cols' => 7,'avatarCol' => 1]] + (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag ? $attributes->all() : [])); ?>
+<?php $component->withName('skeleton-table'); ?>
+<?php if ($component->shouldRender()): ?>
+<?php $__env->startComponent($component->resolveView(), $component->data()); ?>
+<?php if (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag): ?>
+<?php $attributes = $attributes->except(\Illuminate\View\AnonymousComponent::ignoredParameterNames()); ?>
+<?php endif; ?>
+<?php $component->withAttributes(['rows' => 6,'cols' => 7,'avatarCol' => 1]); ?>
+<?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::processComponentKey($component); ?>
+
+<?php echo $__env->renderComponent(); ?>
+<?php endif; ?>
+<?php if (isset($__attributesOriginalb3a7e296665e2f58ea67cad97892cbe7)): ?>
+<?php $attributes = $__attributesOriginalb3a7e296665e2f58ea67cad97892cbe7; ?>
+<?php unset($__attributesOriginalb3a7e296665e2f58ea67cad97892cbe7); ?>
+<?php endif; ?>
+<?php if (isset($__componentOriginalb3a7e296665e2f58ea67cad97892cbe7)): ?>
+<?php $component = $__componentOriginalb3a7e296665e2f58ea67cad97892cbe7; ?>
+<?php unset($__componentOriginalb3a7e296665e2f58ea67cad97892cbe7); ?>
+<?php endif; ?>
+            </div>
+
             <!-- Vista Tabla -->
             <div id="productsTableWrapper">
                 <?php echo $__env->make('productos.partials.table', ['productos' => $productos], array_diff_key(get_defined_vars(), ['__data' => 1, '__path' => 1]))->render(); ?>
@@ -225,11 +314,13 @@
         }
     }
 
+    let filterDebounceTimer = null;
+
     function applyFilters() {
         const searchInput = document.getElementById('searchInput');
         const clearBtn = document.getElementById('clearSearchBtn');
-        const query = searchInput.value.toLowerCase().trim();
-        const categoria = document.getElementById('categoriaFilter').value;
+        const query = (searchInput.value || '').trim().toLowerCase();
+        const categoria = document.getElementById('categoriaFilter').value.trim().toLowerCase();
         const status = document.getElementById('statusFilter').value;
 
         // Mostrar/ocultar boton X
@@ -239,12 +330,39 @@
             clearBtn.classList.add('hidden');
         }
 
+        // Mostrar skeleton sutil de transición
+        const skeleton = document.getElementById('tableSkeletonProductos');
+        const tableWrapper = document.getElementById('productsTableWrapper');
+        const cardsWrapper = document.getElementById('productsCardsWrapper');
+
+        if (skeleton) {
+            skeleton.classList.remove('hidden');
+            if (tableWrapper) tableWrapper.classList.add('hidden');
+            if (cardsWrapper) cardsWrapper.classList.add('hidden');
+        }
+
+        clearTimeout(filterDebounceTimer);
+        filterDebounceTimer = setTimeout(() => {
+            filtrarLocalmente(query, categoria, status);
+
+            if (skeleton) {
+                skeleton.classList.add('hidden');
+                setView(currentView, false);
+            }
+        }, 120);
+    }
+
+    function filtrarLocalmente(query, categoria, status) {
         // Filtrar tabla
         let visibleRows = 0;
         document.querySelectorAll('.producto-row').forEach(row => {
-            const matchName = row.dataset.nombre.includes(query);
-            const matchCat = categoria === 'todos' || row.dataset.categoria === categoria;
-            const matchStatus = status === 'todos' || row.dataset.estado === status;
+            const rowNombre = (row.dataset.nombre || '').toLowerCase();
+            const rowCat = (row.dataset.categoria || '').toLowerCase().trim();
+            const rowEstado = String(row.dataset.estado);
+
+            const matchName = !query || rowNombre.includes(query);
+            const matchCat = categoria === 'todos' || rowCat === categoria || rowCat.includes(categoria);
+            const matchStatus = status === 'todos' || rowEstado === String(status);
 
             if (matchName && matchCat && matchStatus) {
                 row.style.display = '';
@@ -263,9 +381,13 @@
         // Filtrar tarjetas
         let visibleCards = 0;
         document.querySelectorAll('.producto-card').forEach(card => {
-            const matchName = card.dataset.nombre.includes(query);
-            const matchCat = categoria === 'todos' || card.dataset.categoria === categoria;
-            const matchStatus = status === 'todos' || card.dataset.estado === status;
+            const cardNombre = (card.dataset.nombre || '').toLowerCase();
+            const cardCat = (card.dataset.categoria || '').toLowerCase().trim();
+            const cardEstado = String(card.dataset.estado);
+
+            const matchName = !query || cardNombre.includes(query);
+            const matchCat = categoria === 'todos' || cardCat === categoria || cardCat.includes(categoria);
+            const matchStatus = status === 'todos' || cardEstado === String(status);
 
             if (matchName && matchCat && matchStatus) {
                 card.style.display = '';
@@ -297,6 +419,9 @@
         document.getElementById('searchInput').value = '';
         document.getElementById('categoriaFilter').value = 'todos';
         document.getElementById('statusFilter').value = 'todos';
+        if (window.resetProductoCustomSelects) {
+            window.resetProductoCustomSelects();
+        }
         applyFilters();
     }
 
@@ -459,6 +584,124 @@
             await toggleProductoStatus(id, nombre, estadoActual);
         }
     });
+
+    // Custom Selects para Categoría y Estado
+    function initProductoCustomSelects() {
+        const containers = document.querySelectorAll('[data-custom-producto-select]');
+        
+        containers.forEach(container => {
+            const toggle = container.querySelector('[data-toggle]');
+            const menu = container.querySelector('[data-menu]');
+            const arrow = container.querySelector('[data-arrow]');
+            const labelSpan = container.querySelector('[data-label]');
+            const iconEl = container.querySelector('[data-icon]');
+            const hiddenInput = container.querySelector('input[type="hidden"]');
+            const options = container.querySelectorAll('[data-option]');
+
+            function openMenu() {
+                document.querySelectorAll('[data-custom-producto-select] [data-menu]').forEach(m => {
+                    if (m !== menu) {
+                        m.classList.add('hidden');
+                        const p = m.closest('[data-custom-producto-select]');
+                        p?.querySelector('[data-arrow]')?.classList.remove('rotate-180');
+                        p?.querySelector('[data-toggle]')?.setAttribute('aria-expanded', 'false');
+                    }
+                });
+                menu.classList.remove('hidden');
+                arrow?.classList.add('rotate-180');
+                toggle.setAttribute('aria-expanded', 'true');
+            }
+
+            function closeMenu() {
+                menu.classList.add('hidden');
+                arrow?.classList.remove('rotate-180');
+                toggle.setAttribute('aria-expanded', 'false');
+            }
+
+            toggle.addEventListener('click', (e) => {
+                e.stopPropagation();
+                if (menu.classList.contains('hidden')) {
+                    openMenu();
+                } else {
+                    closeMenu();
+                }
+            });
+
+            options.forEach(opt => {
+                opt.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    const val = opt.dataset.value;
+                    const lbl = opt.dataset.label;
+                    const icn = opt.dataset.icon;
+
+                    hiddenInput.value = val;
+                    if (labelSpan) labelSpan.textContent = lbl;
+                    if (iconEl && icn) iconEl.className = icn;
+
+                    options.forEach(o => {
+                        const isSelected = o === opt;
+                        o.classList.toggle('bg-blue-50', isSelected);
+                        o.classList.toggle('text-blue-700', isSelected);
+                        o.classList.toggle('text-slate-700', !isSelected);
+                        const check = o.querySelector('[data-check]');
+                        if (check) check.classList.toggle('hidden', !isSelected);
+                    });
+
+                    closeMenu();
+                    applyFilters();
+                });
+            });
+        });
+
+        document.addEventListener('click', (e) => {
+            if (!e.target.closest('[data-custom-producto-select]')) {
+                document.querySelectorAll('[data-custom-producto-select]').forEach(container => {
+                    container.querySelector('[data-menu]')?.classList.add('hidden');
+                    container.querySelector('[data-arrow]')?.classList.remove('rotate-180');
+                    container.querySelector('[data-toggle]')?.setAttribute('aria-expanded', 'false');
+                });
+            }
+        });
+
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') {
+                document.querySelectorAll('[data-custom-producto-select]').forEach(container => {
+                    container.querySelector('[data-menu]')?.classList.add('hidden');
+                    container.querySelector('[data-arrow]')?.classList.remove('rotate-180');
+                    container.querySelector('[data-toggle]')?.setAttribute('aria-expanded', 'false');
+                });
+            }
+        });
+
+        window.resetProductoCustomSelects = function() {
+            containers.forEach(container => {
+                const hiddenInput = container.querySelector('input[type="hidden"]');
+                const defaultOption = container.querySelector('[data-option][data-value="todos"]');
+                if (defaultOption && hiddenInput) {
+                    hiddenInput.value = 'todos';
+                    const labelSpan = container.querySelector('[data-label]');
+                    const iconEl = container.querySelector('[data-icon]');
+                    if (labelSpan) labelSpan.textContent = defaultOption.dataset.label;
+                    if (iconEl && defaultOption.dataset.icon) iconEl.className = defaultOption.dataset.icon;
+
+                    const options = container.querySelectorAll('[data-option]');
+                    options.forEach(o => {
+                        const isDefault = o === defaultOption;
+                        o.classList.toggle('bg-blue-50', isDefault);
+                        o.classList.toggle('text-blue-700', isDefault);
+                        o.classList.toggle('text-slate-700', !isDefault);
+                        const check = o.querySelector('[data-check]');
+                        if (check) check.classList.toggle('hidden', !isDefault);
+                    });
+                }
+                container.querySelector('[data-menu]')?.classList.add('hidden');
+                container.querySelector('[data-arrow]')?.classList.remove('rotate-180');
+                container.querySelector('[data-toggle]')?.setAttribute('aria-expanded', 'false');
+            });
+        };
+    }
+
+    document.addEventListener('DOMContentLoaded', initProductoCustomSelects);
 </script>
 
 <style>

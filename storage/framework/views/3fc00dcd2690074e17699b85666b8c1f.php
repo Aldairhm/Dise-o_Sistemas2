@@ -77,6 +77,56 @@
             </button>
         </div>
 
+        <!-- SKELETON GENERAL DE CAMBIO ENTRE PESTAÑAS (ANIMACIÓN SUAVE) -->
+        <div id="perfil-tab-skeleton" class="hidden mb-6">
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                <!-- Skeleton Card Avatar Lateral -->
+                <div class="lg:col-span-1 rounded-2xl border bg-white p-6 shadow-sm space-y-4" style="border-color: var(--border, #e2e8f0); background: var(--bg-card, #fff);">
+                    <div class="flex flex-col items-center space-y-3">
+                        <div class="w-24 h-24 rounded-2xl ax-skeleton-shimmer"></div>
+                        <div class="h-4 w-32 rounded-md ax-skeleton-shimmer"></div>
+                        <div class="h-3 w-40 rounded ax-skeleton-shimmer"></div>
+                        <div class="h-5 w-20 rounded-full ax-skeleton-shimmer"></div>
+                    </div>
+                    <div class="pt-4 border-t space-y-2" style="border-color: var(--border, #e2e8f0);">
+                        <div class="flex justify-between">
+                            <div class="h-3 w-16 rounded ax-skeleton-shimmer"></div>
+                            <div class="h-3 w-20 rounded ax-skeleton-shimmer"></div>
+                        </div>
+                        <div class="flex justify-between">
+                            <div class="h-3 w-16 rounded ax-skeleton-shimmer"></div>
+                            <div class="h-3 w-24 rounded ax-skeleton-shimmer"></div>
+                        </div>
+                    </div>
+                </div>
+                <!-- Skeleton Card Formulario Principal -->
+                <div class="lg:col-span-2">
+                    <?php if (isset($component)) { $__componentOriginal861c1a511aff075b53711c51dd06033d = $component; } ?>
+<?php if (isset($attributes)) { $__attributesOriginal861c1a511aff075b53711c51dd06033d = $attributes; } ?>
+<?php $component = Illuminate\View\AnonymousComponent::resolve(['view' => 'components.skeleton-form','data' => ['fields' => 3]] + (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag ? $attributes->all() : [])); ?>
+<?php $component->withName('skeleton-form'); ?>
+<?php if ($component->shouldRender()): ?>
+<?php $__env->startComponent($component->resolveView(), $component->data()); ?>
+<?php if (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag): ?>
+<?php $attributes = $attributes->except(\Illuminate\View\AnonymousComponent::ignoredParameterNames()); ?>
+<?php endif; ?>
+<?php $component->withAttributes(['fields' => 3]); ?>
+<?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::processComponentKey($component); ?>
+
+<?php echo $__env->renderComponent(); ?>
+<?php endif; ?>
+<?php if (isset($__attributesOriginal861c1a511aff075b53711c51dd06033d)): ?>
+<?php $attributes = $__attributesOriginal861c1a511aff075b53711c51dd06033d; ?>
+<?php unset($__attributesOriginal861c1a511aff075b53711c51dd06033d); ?>
+<?php endif; ?>
+<?php if (isset($__componentOriginal861c1a511aff075b53711c51dd06033d)): ?>
+<?php $component = $__componentOriginal861c1a511aff075b53711c51dd06033d; ?>
+<?php unset($__componentOriginal861c1a511aff075b53711c51dd06033d); ?>
+<?php endif; ?>
+                </div>
+            </div>
+        </div>
+
         <!-- ══════════════════════════════════════════════════════ -->
         <!-- TAB 1: INFORMACIÓN PERSONAL                            -->
         <!-- ══════════════════════════════════════════════════════ -->
@@ -88,15 +138,15 @@
                     <div class="rounded-2xl border shadow-sm overflow-hidden" style="background: var(--bg-card, #fff); border-color: var(--border, #e2e8f0);">
                         <div class="h-1.5 bg-gradient-to-r from-blue-500 via-cyan-400 to-indigo-500"></div>
                         <div class="p-6 flex flex-col items-center text-center">
-                            <div class="profile-avatar w-24 h-24 rounded-2xl bg-gradient-to-tr from-blue-600 to-cyan-500 text-white flex items-center justify-center text-4xl font-black shadow-lg shadow-blue-500/25 mb-4">
+                            <div id="perfil-avatar-preview" class="profile-avatar w-24 h-24 rounded-2xl bg-gradient-to-tr from-blue-600 to-cyan-500 text-white flex items-center justify-center text-4xl font-black shadow-lg shadow-blue-500/25 mb-4">
                                 <?php echo e(strtoupper(substr(auth()->user()->nombre_real ?? auth()->user()->username, 0, 1))); ?>
 
                             </div>
-                            <h2 class="text-base font-black mb-0.5" style="color: var(--text-main, #0f172a);">
+                            <h2 id="perfil-card-name" class="text-base font-black mb-0.5" style="color: var(--text-main, #0f172a);">
                                 <?php echo e(auth()->user()->nombre_real ?? auth()->user()->username); ?>
 
                             </h2>
-                            <p class="text-xs font-mono mb-3" style="color: var(--text-muted, #64748b);"><?php echo e(auth()->user()->username); ?></p>
+                            <p id="perfil-card-email" class="text-xs font-mono mb-3" style="color: var(--text-muted, #64748b);"><?php echo e(auth()->user()->username); ?></p>
                             <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-bold
                                 <?php echo e(auth()->user()->rol === 'admin' ? 'bg-purple-100 text-purple-700' : 'bg-blue-100 text-blue-700'); ?>">
                                 <i class="fas <?php echo e(auth()->user()->rol === 'admin' ? 'fa-shield-halved' : 'fa-tag'); ?> text-[9px]"></i>
@@ -112,12 +162,10 @@
 
                                     </span>
                                 </div>
-                                <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php endif; ?><?php if(auth()->user()->telefono): ?>
-                                <div class="flex justify-between">
+                                <div class="flex justify-between" id="perfil-card-tel-row" style="<?php echo e(auth()->user()->telefono ? '' : 'display: none;'); ?>">
                                     <span style="color: var(--text-muted, #64748b);">Teléfono:</span>
-                                    <span class="font-bold" style="color: var(--text-main, #0f172a);"><?php echo e(auth()->user()->telefono); ?></span>
+                                    <span id="perfil-card-telefono" class="font-bold" style="color: var(--text-main, #0f172a);"><?php echo e(auth()->user()->telefono); ?></span>
                                 </div>
-                                <?php endif; ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php endif; ?>
                             </div>
                         </div>
                     </div>
@@ -190,8 +238,13 @@
                             <!-- Botón -->
                             <div class="flex justify-end pt-2">
                                 <button type="submit" id="btn-save-personal"
-                                        class="inline-flex items-center gap-2 px-6 py-2.5 rounded-xl font-black text-sm text-white shadow-lg transition-all duration-300 hover:scale-[1.02] cursor-pointer bg-slate-900 shadow-slate-900/20">
-                                    <i class="fas fa-check"></i> GUARDAR CAMBIOS
+                                        class="relative inline-flex items-center justify-center gap-2 px-6 py-2.5 rounded-xl font-black text-sm text-white shadow-lg transition-all duration-300 hover:scale-[1.02] active:scale-[0.98] cursor-pointer bg-slate-900 shadow-slate-900/20 disabled:opacity-75 disabled:cursor-not-allowed">
+                                    <span class="btn-text inline-flex items-center gap-2">
+                                        <i class="fas fa-check"></i> GUARDAR CAMBIOS
+                                    </span>
+                                    <span class="btn-spinner hidden items-center gap-2">
+                                        <i class="fas fa-circle-notch fa-spin text-sm"></i> Guardando...
+                                    </span>
                                 </button>
                             </div>
                         </form>
@@ -290,8 +343,13 @@
 
                         <div class="flex justify-end pt-1">
                             <button type="submit" id="btn-save-password"
-                                    class="inline-flex items-center gap-2 px-6 py-2.5 rounded-xl font-black text-sm text-white shadow-lg transition-all duration-300 hover:scale-[1.02] cursor-pointer bg-slate-900 shadow-slate-900/20">
-                                <i class="fas fa-check"></i> CAMBIAR CONTRASEÑA
+                                    class="relative inline-flex items-center justify-center gap-2 px-6 py-2.5 rounded-xl font-black text-sm text-white shadow-lg transition-all duration-300 hover:scale-[1.02] active:scale-[0.98] cursor-pointer bg-slate-900 shadow-slate-900/20 disabled:opacity-75 disabled:cursor-not-allowed">
+                                <span class="btn-text inline-flex items-center gap-2">
+                                    <i class="fas fa-check"></i> CAMBIAR CONTRASEÑA
+                                </span>
+                                <span class="btn-spinner hidden items-center gap-2">
+                                    <i class="fas fa-circle-notch fa-spin text-sm"></i> Cambiando...
+                                </span>
                             </button>
                         </div>
                     </form>
@@ -305,13 +363,19 @@
         <div id="tab-apariencia" class="profile-tab-content">
             <div class="max-w-xl mx-auto">
                 <div class="rounded-2xl border shadow-sm" style="background: var(--bg-card, #fff); border-color: var(--border, #e2e8f0);">
-                    <div class="px-6 py-4 border-b flex items-center gap-2.5" style="border-color: var(--border, #e2e8f0);">
-                        <div class="w-8 h-8 rounded-lg bg-purple-100 text-purple-600 flex items-center justify-center">
-                            <i class="fas fa-palette text-sm"></i>
+                    <div class="px-6 py-4 border-b flex items-center justify-between gap-2.5" style="border-color: var(--border, #e2e8f0);">
+                        <div class="flex items-center gap-2.5">
+                            <div class="w-8 h-8 rounded-lg bg-purple-100 text-purple-600 flex items-center justify-center">
+                                <i class="fas fa-palette text-sm"></i>
+                            </div>
+                            <div>
+                                <h3 class="text-sm font-black" style="color: var(--text-main, #0f172a);">Apariencia</h3>
+                                <p class="text-[11px]" style="color: var(--text-muted, #64748b);">Elige cómo se ve el panel de control</p>
+                            </div>
                         </div>
-                        <div>
-                            <h3 class="text-sm font-black" style="color: var(--text-main, #0f172a);">Apariencia</h3>
-                            <p class="text-[11px]" style="color: var(--text-muted, #64748b);">Elige cómo se ve el panel de control</p>
+                        <div id="tema-spinner-indicator" class="hidden items-center gap-1.5 text-xs text-purple-600 font-bold">
+                            <i class="fas fa-circle-notch fa-spin text-xs"></i>
+                            <span>Aplicando...</span>
                         </div>
                     </div>
 
