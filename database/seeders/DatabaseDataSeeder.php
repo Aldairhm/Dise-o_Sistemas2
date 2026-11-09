@@ -36,8 +36,10 @@ class DatabaseDataSeeder extends Seeder
             return;
         }
 
-        // Orden de limpieza respetando dependencias de clave foránea
+        // Orden de limpieza respetando dependencias de clave foránea.
         $tablesTruncate = [
+            'notification_deliveries',
+            'notification_events',
             'bitacora',
             'auditoria_sesiones',
             'soporte_ticket_historial',
@@ -64,48 +66,69 @@ class DatabaseDataSeeder extends Seeder
             'usuario',
         ];
 
+        // El JSON exportado es la fuente de verdad del seeder. Mantener un
+        // único flujo evita que los datos manuales y los exportados se pisen.
+        $tablesInsertOrder = [
+            'usuario',
+            'proveedors',
+            'categoria',
+            'atributo',
+            'producto',
+            'catalogos',
+            'productoatributo',
+            'variante',
+            'variante_imagen',
+            'variantevalor',
+            'compra',
+            'compra_detalle',
+            'movimiento_bodega',
+            'venta',
+            'detalleventa',
+            'salida',
+            'comision_vendedor',
+            'devoluciones',
+            'devolucion_detalles',
+            'soporte_tickets',
+            'soporte_ticket_mensajes',
+            'soporte_ticket_historial',
+            'auditoria_sesiones',
+            'bitacora',
+        ];
+
         Schema::disableForeignKeyConstraints();
 
-        foreach ($tablesTruncate as $tbl) {
-            try {
-                DB::table($tbl)->truncate();
-            } catch (\Throwable $e) {
-                // Continuar si la tabla no existe o ya está limpia
+        try {
+            foreach ($tablesTruncate as $table) {
+                if (Schema::hasTable($table)) {
+                    DB::table($table)->truncate();
+                }
             }
+
+            foreach ($tablesInsertOrder as $table) {
+                $rows = $data[$table] ?? [];
+                if (!is_array($rows) || $rows === []) {
+                    continue;
+                }
+
+                // Ignorar columnas que existan en una exportación anterior
+                // pero ya no estén presentes en el esquema actual.
+                $columns = array_flip(Schema::getColumnListing($table));
+                $rows = array_map(
+                    static fn (array $row): array => array_intersect_key($row, $columns),
+                    $rows
+                );
+
+                foreach (array_chunk($rows, 100) as $chunk) {
+                    DB::table($table)->insert($chunk);
+                }
+
+                $this->command->info("  -> {$table}: " . count($rows) . ' registros.');
+            }
+
+            $this->resetPostgresSequences();
+        } finally {
+            Schema::enableForeignKeyConstraints();
         }
-
-        // 1. Sembrar Proveedores (≥ 15)
-        $this->seedProveedores();
-
-        foreach ($tablesInsertOrder as $table) {
-            if (!isset($data[$table]) || empty($data[$table])) {
-                continue;
-            }
-
-        // 3. Sembrar Catálogo base (Categorías, Atributos, Productos, Variantes)
-        $this->seedCategoria();
-        $this->seedAtributo();
-        $this->seedProducto();
-        $this->seedCatalogos();
-        $this->seedProductoatributo();
-        $this->seedVariante();
-        $this->seedVarianteImagen();
-        $this->seedVariantevalor();
-
-        // 4. Sembrar Compras y Movimientos de Entrada (≥ 15)
-        $this->seedCompras();
-
-            // Insertar por lotes de 100 para optimizar rendimiento y memoria
-            $chunks = array_chunk($rows, 100);
-            foreach ($chunks as $chunk) {
-                DB::table($table)->insert($chunk);
-            }
-        }
-
-        // Actualizar todas las secuencias seriales en PostgreSQL
-        $this->resetPostgresSequences();
-
-        Schema::enableForeignKeyConstraints();
 
         $this->command->info('DatabaseDataSeeder finalizado exitosamente con datos reales.');
     }
