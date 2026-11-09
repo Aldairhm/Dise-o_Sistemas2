@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Support\CloudStorage;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
@@ -60,15 +61,15 @@ class Variante extends Model
     {
         $img = $this->imagenes?->firstWhere('es_principal', 1) ?? $this->imagenes?->first();
         if ($img && !empty($img->ruta_imagen)) {
-            return asset('storage/' . $img->ruta_imagen);
+            return CloudStorage::url($img->ruta_imagen);
         }
 
         if (!empty($this->imagen)) {
-            return asset('storage/' . $this->imagen);
+            return CloudStorage::url($this->imagen);
         }
 
         if ($this->producto && !empty($this->producto->imagen_principal)) {
-            return asset('storage/' . $this->producto->imagen_principal);
+            return CloudStorage::url($this->producto->imagen_principal);
         }
 
         return null;

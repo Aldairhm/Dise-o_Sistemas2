@@ -1,7 +1,7 @@
 <x-app title="Manejo de inventario | AXStore">
     <meta name="transferencia-tienda-url" content="{{ route('movimientos-bodega.transferencia-tienda') }}">
 
-    <div class="max-w-[1440px] mx-auto space-y-6" x-data="{ inventarioTab: @js($movimientoId > 0 || request()->has('tipo') ? 'kardex' : 'transferir') }">
+    <div class="max-w-[1440px] mx-auto space-y-6" x-data="gestionMovimientosKardex()">
         <div>
             <a href="{{ route('home') }}" class="inline-flex items-center gap-2 text-xs font-bold uppercase tracking-widest text-slate-400 hover:text-blue-600 mb-4"><i class="fas fa-arrow-left"></i> Volver al inicio</a>
             <p class="text-xs font-black uppercase tracking-[0.18em] text-blue-600 mb-1">Inventario</p>
@@ -169,119 +169,6 @@
                     <i class="fas fa-clock-rotate-left text-xl text-amber-500"></i>
                 </div>
             </div>
-            <div class="overflow-x-auto">
-                <table class="w-full min-w-[760px] text-left text-sm">
-                    <thead class="border-b border-slate-200 bg-slate-50 text-[10px] uppercase tracking-widest text-slate-500">
-                        <tr>
-                            <th class="px-5 py-4">Fecha</th>
-                            <th class="px-5 py-4">Tipo</th>
-                            <th class="px-5 py-4">Producto / variante</th>
-                            <th class="px-5 py-4 text-center">Cantidad</th>
-                            <th class="px-5 py-4">Origen</th>
-                            <th class="px-5 py-4 text-right">Detalle</th>
-                        </tr>
-                    </thead>
-                    <tbody class="divide-y divide-slate-100">
-                        @forelse ($movimientos as $movimiento)
-                        @php
-                        $imagenMovimiento = $movimiento->variante?->imagenes?->firstWhere('es_principal', 1) ?? $movimiento->variante?->imagenes?->first();
-                        $esDevolucion = $movimiento->devolucion_id || in_array($movimiento->tipo, ['devolucion_cliente', 'devolucion_proveedor']) || str_contains(strtolower($movimiento->observacion ?? ''), 'devolu');
-                        $etiquetaTipo = match ($movimiento->tipo) {
-                        'transferencia_tienda' => 'Transferencia',
-                        'compra_recibida' => 'Compra recibida',
-                        'devolucion_cliente' => 'Devolución cliente',
-                        'devolucion_proveedor' => 'Devolución proveedor',
-                        'Entrada', 'entrada' => 'Entrada',
-                        'Salida', 'salida' => 'Salida',
-                        default => $movimiento->tipo,
-                        };
-                        @endphp
-                        <tr class="hover:bg-slate-50/60">
-                            <td class="px-5 py-4 whitespace-nowrap text-xs text-slate-500">{{ $movimiento->created_at?->format('d/m/Y H:i') }}</td>
-                            <td class="px-5 py-4">
-                                <span class="inline-flex whitespace-nowrap rounded-lg border px-2.5 py-1 text-[11px] font-bold {{ $esDevolucion ? 'border-red-200 bg-red-50 text-red-700' : 'border-slate-200 bg-slate-50 text-slate-700' }}">
-                                    {{ $etiquetaTipo }}
-                                </span>
-                            </td>
-                            <td class="px-5 py-4">
-                                <div class="flex items-center gap-3">
-                                    <div class="h-10 w-10 shrink-0 overflow-hidden rounded-lg border border-slate-200 bg-slate-50">
-                                        @if ($imagenMovimiento)
-                                        <img src="{{ str_starts_with($imagenMovimiento->ruta_imagen, 'http') ? $imagenMovimiento->ruta_imagen : \Illuminate\Support\Facades\Storage::disk('s3')->url($imagenMovimiento->ruta_imagen) }}" alt="{{ $movimiento->variante?->nombre_variante ?? 'Producto' }}" class="h-full w-full object-cover">
-                                        @else
-                                        <div class="flex h-full items-center justify-center text-slate-300"><i class="fas fa-image text-xs"></i></div>
-                                        @endif
-                                    </div>
-                                    <div class="min-w-0">
-                                        <p class="font-bold text-slate-800">{{ $movimiento->variante?->producto?->nombre ?? 'Producto' }}</p>
-                                        <p class="text-xs text-slate-500">{{ $movimiento->variante?->nombre_variante ?? 'Variante sin nombre' }}</p>
-                                    </div>
-                                </div>
-                            </td>
-                            <td class="px-5 py-4 text-center font-black text-amber-700">{{ $movimiento->cantidad }}</td>
-                            <td class="px-5 py-4 whitespace-nowrap text-slate-600">
-                                @if ($movimiento->devolucion)
-                                <span class="font-bold text-blue-600">DEV-{{ str_pad($movimiento->devolucion_id, 5, '0', STR_PAD_LEFT) }}</span>
-                                @elseif ($movimiento->compra)
-                                <span>Compra #{{ $movimiento->id_compra }}</span>
-                                @else
-                                <span class="text-slate-400">Inventario</span>
-                                @endif
-                            </td>
-                            <td class="px-5 py-4 text-right">
-                                <button type="button" onclick="document.getElementById('movimiento-detalle-{{ $movimiento->id }}').showModal()" class="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-xs font-bold text-blue-600 shadow-sm hover:bg-blue-50">
-                                    <i class="fas fa-eye"></i> Ver detalle
-                                </button>
-                            </td>
-                        </tr>
-                        <dialog id="movimiento-detalle-{{ $movimiento->id }}" class="m-auto w-[min(620px,calc(100vw-2rem))] max-w-none rounded-2xl border border-slate-200 bg-white p-0 text-left shadow-2xl backdrop:bg-slate-900/50">
-                            <div class="p-5">
-                                <div class="mb-5 flex items-start justify-between gap-4 border-b border-slate-100 pb-4">
-                                    <div>
-                                        <p class="text-xs font-black uppercase tracking-widest text-blue-600">Movimiento #{{ $movimiento->id }}</p>
-                                        <h3 class="mt-1 text-lg font-black text-slate-900">{{ $movimiento->variante?->producto?->nombre ?? 'Producto' }}</h3>
-                                        <p class="text-sm text-slate-500">{{ $movimiento->variante?->nombre_variante ?? 'Variante' }} · {{ $movimiento->created_at?->format('d/m/Y H:i') }}</p>
-                                    </div>
-                                    <button type="button" onclick="this.closest('dialog').close()" class="h-8 w-8 rounded-lg text-slate-400 hover:bg-slate-100 hover:text-slate-700" title="Cerrar"><i class="fas fa-xmark"></i></button>
-                                </div>
-                                <div class="mb-5 grid grid-cols-2 gap-3 sm:grid-cols-4">
-                                    <div class="rounded-xl bg-slate-50 p-3">
-                                        <p class="text-[10px] font-bold uppercase tracking-wider text-slate-400">Tipo</p>
-                                        <p class="mt-1 text-sm font-black text-slate-800">{{ $etiquetaTipo }}</p>
-                                    </div>
-                                    <div class="rounded-xl bg-slate-50 p-3">
-                                        <p class="text-[10px] font-bold uppercase tracking-wider text-slate-400">Cantidad</p>
-                                        <p class="mt-1 text-sm font-black text-amber-700">{{ $movimiento->cantidad }}</p>
-                                    </div>
-                                    <div class="rounded-xl bg-slate-50 p-3">
-                                        <p class="text-[10px] font-bold uppercase tracking-wider text-slate-400">SKU</p>
-                                        <p class="mt-1 truncate text-sm font-black text-slate-800">{{ $movimiento->variante?->sku ?: 'Sin SKU' }}</p>
-                                    </div>
-                                    <div class="rounded-xl bg-slate-50 p-3">
-                                        <p class="text-[10px] font-bold uppercase tracking-wider text-slate-400">Origen</p>
-                                        <p class="mt-1 text-sm font-black text-slate-800">{{ $movimiento->devolucion ? 'DEV-' . str_pad($movimiento->devolucion_id, 5, '0', STR_PAD_LEFT) : ($movimiento->compra ? 'Compra #' . $movimiento->id_compra : 'Inventario') }}</p>
-                                    </div>
-                                </div>
-                                <div class="overflow-hidden rounded-xl border border-slate-200">
-                                    <div class="grid grid-cols-3 border-b border-slate-200 bg-slate-50 px-4 py-3 text-[10px] font-black uppercase tracking-wider text-slate-500"><span>Ubicación</span><span class="text-center">Antes</span><span class="text-center">Después</span></div>
-                                    <div class="grid grid-cols-3 border-b border-slate-100 px-4 py-3 text-sm"><span class="font-bold text-slate-700">Reserva</span><span class="text-center text-slate-600">{{ $movimiento->reserva_anterior }}</span><span class="text-center font-bold text-slate-800">{{ $movimiento->reserva_nueva }}</span></div>
-                                    <div class="grid grid-cols-3 border-b border-slate-100 px-4 py-3 text-sm"><span class="font-bold text-slate-700">Tienda</span><span class="text-center text-slate-600">{{ $movimiento->stock_anterior }}</span><span class="text-center font-bold text-slate-800">{{ $movimiento->stock_nuevo }}</span></div>
-                                    <div class="grid grid-cols-3 px-4 py-3 text-sm"><span class="font-bold text-slate-700">Cuarentena</span><span class="text-center text-slate-600">{{ $movimiento->stock_cuarentena_anterior ?? 0 }}</span><span class="text-center font-bold text-slate-800">{{ $movimiento->stock_cuarentena_nuevo ?? 0 }}</span></div>
-                                </div>
-                                <div class="mt-4 rounded-xl border border-slate-100 bg-slate-50 p-4">
-                                    <p class="text-[10px] font-black uppercase tracking-wider text-slate-400">Observación</p>
-                                    <p class="mt-1 text-sm text-slate-600">{{ $movimiento->observacion ?: 'Sin observación' }}</p>
-                                </div>
-                            </div>
-                        </dialog>
-                        @empty
-                        <tr>
-                            <td colspan="6" class="px-5 py-16 text-center text-sm text-slate-400"><i class="fas fa-boxes-stacked mb-3 block text-2xl"></i>No hay movimientos para el filtro seleccionado.</td>
-                        </tr>
-                        @endforelse
-                    </tbody>
-                </table>
-
                 <!-- Skeleton Table idéntica en dimensiones al contenido real -->
                 <div x-show="cargandoKardex" class="p-5">
                     <x-skeleton-table :rows="8" :cols="6" :avatarCol="2" />

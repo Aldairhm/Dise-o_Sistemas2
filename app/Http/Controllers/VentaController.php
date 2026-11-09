@@ -257,6 +257,13 @@ class VentaController extends Controller
         $vendedores = User::where('estado', 1)->orderBy('nombre_real')->get(['id', 'nombre_real', 'username', 'rol']);
         $productos = Producto::where('estado', 1)->orderBy('nombre')->get(['id', 'nombre']);
 
+        if ($request->ajax()) {
+            return response()->json([
+                'html' => view('ventas.tabla-index', compact('ventas', 'estadoTab'))->render(),
+                'conteos' => $conteoEstados,
+            ]);
+        }
+
         return view('ventas.index', compact(
             'ventas',
             'desde',
