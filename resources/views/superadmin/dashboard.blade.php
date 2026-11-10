@@ -182,7 +182,7 @@
                                 </div>
                             </div>
                             @if($aud->estado === 'activa')
-                                <form id="formRevocarDash{{ $aud->id }}" action="{{ route('superadmin.auditorias.revocar', $aud->id) }}" method="POST">
+                                <form data-loading-label="Revocando..." id="formRevocarDash{{ $aud->id }}" action="{{ route('superadmin.auditorias.revocar', $aud->id) }}" method="POST">
                                     @csrf
                                     <button type="button" onclick="confirmarRevocacionDash({{ $aud->id }})" class="px-2.5 py-1 rounded-lg text-[11px] font-bold bg-rose-50 text-rose-600 hover:bg-rose-100 transition-colors cursor-pointer">
                                         Revocar
@@ -281,7 +281,10 @@
                 reverseButtons: true
             }).then((result) => {
                 if (result.isConfirmed) {
-                    document.getElementById('formRevocarDash' + id).submit();
+                    const form = document.getElementById('formRevocarDash' + id);
+                    if (!form) return;
+                    if (window.AxLoading?.beginForm?.(form, form.querySelector('button')) === false) return;
+                    form.submit();
                 }
             });
         }

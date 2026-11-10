@@ -16,33 +16,35 @@
     ];
 
     $classes = $baseStyles . ' ' . ($variants[$variant] ?? $variants['primary']);
+    $loadingExpression = $attributes->get('x-show-loading');
+    $disabledExpression = $attributes->get('x-bind:disabled', $attributes->get(':disabled', 'false'));
+    $buttonAttributes = $attributes->except(['x-show-loading', 'x-bind:disabled', ':disabled']);
 @endphp
 
-<button 
-    type="{{ $type }}" 
-    {{ $attributes->merge(['class' => $classes]) }}
-    :disabled="{{ $attributes->has('x-bind:disabled') ? $attributes->get('x-bind:disabled') : ($loading ? 'true' : 'false') }}"
+<button
+    type="{{ $type }}"
+    {{ $buttonAttributes->merge(['class' => $classes]) }}
+    @if($loadingExpression)
+        x-bind:disabled="({{ $loadingExpression }}) || ({{ $disabledExpression }})"
+        x-bind:aria-busy="({{ $loadingExpression }}) ? 'true' : 'false'"
+    @else
+        @disabled($loading)
+        aria-busy="{{ $loading ? 'true' : 'false' }}"
+        @if($disabledExpression !== 'false') x-bind:disabled="{{ $disabledExpression }}" @endif
+    @endif
 >
-    <!-- Contenido normal / Slot -->
-    <span class="inline-flex items-center gap-2" :class="{ 'invisible': {{ $attributes->has('x-show-loading') ? $attributes->get('x-show-loading') : ($loading ? 'true' : 'false') }} }">
+    <span class="inline-flex items-center gap-2 {{ !$loadingExpression && $loading ? 'invisible' : '' }}"
+        @if($loadingExpression) x-bind:class="{ 'invisible': {{ $loadingExpression }} }" @endif>
         {{ $slot }}
     </span>
 
-    <!-- Spinner localizado y texto de carga centrado para prevenir layout shift -->
-    <span 
-        class="absolute inset-0 flex items-center justify-center gap-2"
-        style="display: none;"
-        @if($attributes->has('x-show-loading'))
-            x-show="{{ $attributes->get('x-show-loading') }}"
-        @elseif($loading)
-            x-show="true"
-        @endif
-    >
-        <svg class="animate-spin h-4 w-4 text-current" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+    <span class="absolute inset-0 {{ !$loadingExpression && !$loading ? 'hidden' : 'flex' }} items-center justify-center gap-2"
+        @if($loadingExpression) x-cloak x-show="{{ $loadingExpression }}" @endif
+        role="status">
+        <svg class="ax-spinner h-4 w-4 text-current" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" aria-hidden="true">
             <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
             <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
         </svg>
         <span class="text-xs font-semibold">{{ $loadingText }}</span>
     </span>
 </button>
-

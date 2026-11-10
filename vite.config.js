@@ -8,6 +8,7 @@ export default defineConfig({
             input: [
                 'resources/css/app.css',
                 'resources/js/app.js',
+                'resources/js/loading-states.js',
                 'resources/css/home.css',
                 'resources/css/login.css',
                 'resources/js/login.js',

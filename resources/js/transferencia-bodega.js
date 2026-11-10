@@ -10,6 +10,8 @@ document.addEventListener('alpine:init', () => {
         error: '',
         buscando: false,
         timeoutBusqueda: null,
+        solicitudBusqueda: 0,
+        errorBusqueda: '',
 
         init() {
             this.$watch('busqueda', (value) => {
@@ -21,15 +23,19 @@ document.addEventListener('alpine:init', () => {
         },
 
         async buscarEnServidor(termino) {
+            const solicitud = ++this.solicitudBusqueda;
             this.buscando = true;
+            this.errorBusqueda = '';
             try {
                 const response = await fetch(`/compras/buscar-variantes?q=${encodeURIComponent(termino)}`);
+                if (!response.ok) throw new Error('No se pudieron cargar las variantes.');
                 const result = await response.json();
+                if (solicitud !== this.solicitudBusqueda) return;
                 this.variantes = result.data || []; 
             } catch (error) {
-                console.error("Error buscando variantes", error);
+                if (solicitud === this.solicitudBusqueda) this.errorBusqueda = error.message;
             } finally {
-                this.buscando = false;
+                if (solicitud === this.solicitudBusqueda) this.buscando = false;
             }
         },
 
@@ -49,7 +55,7 @@ document.addEventListener('alpine:init', () => {
         },
 
         async enviar() {
-            if (!this.varianteSeleccionada || this.cantidad < 1 || this.cantidad > this.varianteSeleccionada.reserva) {
+            if (this.enviando || !this.varianteSeleccionada || this.cantidad < 1 || this.cantidad > this.varianteSeleccionada.reserva) {
                 return;
             }
 

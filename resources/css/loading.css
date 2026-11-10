@@ -1,0 +1,59 @@
+.ax-skeleton-shimmer {
+    background: linear-gradient(100deg, #e2e8f0 25%, #f8fafc 45%, #e2e8f0 65%);
+    background-size: 200% 100%;
+    animation: ax-skeleton-shimmer 1.4s ease-in-out infinite;
+}
+
+html.dark .ax-skeleton-shimmer {
+    background-image: linear-gradient(100deg, #334155 25%, #475569 45%, #334155 65%);
+}
+
+.ax-spinner {
+    display: inline-block;
+    width: 1em;
+    height: 1em;
+    flex-shrink: 0;
+    vertical-align: middle;
+    animation: ax-spinner-turn 0.8s linear infinite;
+}
+
+/* Keep existing loading icons visible even before the external icon font loads. */
+.fa-spinner.fa-spin,
+.fa-circle-notch.fa-spin {
+    display: inline-block;
+    box-sizing: border-box;
+    width: 1em;
+    height: 1em;
+    border: 0.15em solid currentColor;
+    border-right-color: transparent;
+    border-radius: 50%;
+    vertical-align: -0.125em;
+    animation: ax-spinner-turn 0.8s linear infinite;
+}
+
+.fa-spinner.fa-spin::before,
+.fa-circle-notch.fa-spin::before {
+    content: none;
+}
+
+[data-ax-button-busy] {
+    cursor: wait;
+}
+
+@keyframes ax-skeleton-shimmer {
+    from { background-position: 100% 0; }
+    to { background-position: -100% 0; }
+}
+
+@keyframes ax-spinner-turn {
+    to { transform: rotate(360deg); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .ax-skeleton-shimmer,
+    .ax-spinner,
+    .fa-spinner.fa-spin,
+    .fa-circle-notch.fa-spin {
+        animation: none;
+    }
+}

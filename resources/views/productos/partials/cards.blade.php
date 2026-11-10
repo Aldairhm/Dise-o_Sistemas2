@@ -101,11 +101,11 @@
         </a>
 
         {{-- Eliminar --}}
-        <form action="{{ route('productos.destroy', $prod->id) }}" method="POST" class="inline" id="form-delete-card-{{ $prod->id }}">
+        <form data-loading-form data-loading-label="Eliminando..." action="{{ route('productos.destroy', $prod->id) }}" method="POST" class="inline" id="form-delete-card-{{ $prod->id }}">
             @csrf
             @method('DELETE')
             <button type="button"
-                    onclick="confirmarEliminar({{ $prod->id }}, '{{ addslashes($prod->nombre) }}')"
+                    onclick="confirmarEliminar({{ $prod->id }}, '{{ addslashes($prod->nombre) }}', this)"
                     class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md bg-rose-50 hover:bg-rose-100 text-rose-600 font-semibold text-xs transition-colors border border-rose-200"
                     title="Eliminar Producto">
                 <i class="fas fa-trash-can"></i> Eliminar

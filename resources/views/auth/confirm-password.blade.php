@@ -15,7 +15,7 @@
                 Esta es un área segura de la aplicación. Por favor, confirma tu contraseña antes de continuar.
             </p>
 
-            <form method="POST" action="{{ route('password.confirm') }}">
+            <form data-loading-form data-loading-label="Confirmando..." method="POST" action="{{ route('password.confirm') }}">
                 @csrf
 
                 <div class="mb-5">

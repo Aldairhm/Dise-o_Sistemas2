@@ -59,7 +59,7 @@
             $selectedProductoNombre = $selectedProductoObj ? $selectedProductoObj->nombre : 'Todos';
         @endphp
         <section class="bg-white border border-slate-200/80 rounded-2xl p-4 sm:p-5 shadow-xs">
-            <form method="GET" action="{{ route('ventas.index') }}" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-12 gap-3.5 items-end">
+            <form data-loading-form data-loading-label="Filtrando..." data-loading-target="#contenedorTablaVentasIndex" data-loading-skeleton="#ventasFilterSkeleton" method="GET" action="{{ route('ventas.index') }}" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-12 gap-3.5 items-end">
                 <input type="hidden" name="tab" value="{{ $estadoTab }}">
 
                 <!-- BÚSQUEDA RÁPIDA -->
@@ -530,6 +530,12 @@
                     </div>
                 </div>
 
+            <div id="ventasFilterSkeleton" class="hidden p-6">
+                <x-skeleton-table :rows="6" :cols="8" />
+            </div>
+            <div x-show="cargandoTabla" x-cloak class="p-6">
+                <x-skeleton-table :rows="6" :cols="8" />
+            </div>
             <div x-show="!cargandoTabla" id="contenedorTablaVentasIndex">
                 @include('ventas.tabla-index')
             </div>
@@ -1431,7 +1437,7 @@
                         <div class="flex items-center gap-2">
                             <button
                                 type="button"
-                                @click="descargarImagenActual()"
+                                @click="descargarImagenActual($event.currentTarget)"
                                 class="text-xs text-white hover:bg-white/20 bg-white/10 flex items-center gap-1.5 font-bold transition-all px-3 py-1.5 rounded-xl cursor-pointer"
                                 title="Descargar imagen con folio y fecha de venta">
                                 <i class="fas fa-download"></i>
@@ -1866,7 +1872,7 @@
                         </button>
                     </div>
                     
-                    <form action="/devoluciones/venta" method="POST" enctype="multipart/form-data" novalidate class="p-6 space-y-6" @click.stop onsubmit="event.preventDefault(); if (!this.checkValidity()) { let errorMsg = 'Por favor, completa todos los campos requeridos.'; this.querySelectorAll('input[type=number]').forEach(i => { if(i.validity.rangeOverflow) errorMsg = 'No puedes devolver más unidades de las que vendiste.'; }); Swal.fire({ toast: true, position: 'top-end', showConfirmButton: false, timer: 5000, timerProgressBar: true, icon: 'error', title: 'Datos inválidos', text: errorMsg }); return; } Swal.fire({ title: '¿Estás seguro?', text: 'Verifica que las cantidades sean correctas antes de procesar.', icon: 'warning', showCancelButton: true, confirmButtonColor: '#3085d6', cancelButtonColor: '#d33', confirmButtonText: 'Sí, procesar', cancelButtonText: 'Cancelar' }).then((result) => { if (result.isConfirmed) { this.submit(); } });">
+                    <form action="/devoluciones/venta" method="POST" data-loading-form data-loading-label="Procesando..." enctype="multipart/form-data" novalidate class="p-6 space-y-6" @click.stop onsubmit="event.preventDefault(); if (!this.checkValidity()) { let errorMsg = 'Por favor, completa todos los campos requeridos.'; this.querySelectorAll('input[type=number]').forEach(i => { if(i.validity.rangeOverflow) errorMsg = 'No puedes devolver más unidades de las que vendiste.'; }); Swal.fire({ toast: true, position: 'top-end', showConfirmButton: false, timer: 5000, timerProgressBar: true, icon: 'error', title: 'Datos inválidos', text: errorMsg }); return; } Swal.fire({ title: '¿Estás seguro?', text: 'Verifica que las cantidades sean correctas antes de procesar.', icon: 'warning', showCancelButton: true, confirmButtonColor: '#3085d6', cancelButtonColor: '#d33', confirmButtonText: 'Sí, procesar', cancelButtonText: 'Cancelar' }).then((result) => { if (result.isConfirmed && window.AxLoading.beginForm(this)) { this.submit(); } });">
                         @csrf
                         <input type="hidden" name="venta_id" :value="ventaSeleccionada?.id">
 
@@ -2255,6 +2261,7 @@
                 },
 
                 async recargarTablaIndex(paginaUrl = null) {
+                    const solicitud = this.solicitudTabla = (this.solicitudTabla || 0) + 1;
                     this.cargandoTabla = true;
                     try {
                         let url;
@@ -2277,8 +2284,10 @@
                             }
                         });
 
-                        if (res.ok) {
+                        if (!res.ok) throw new Error('No se pudo cargar la lista de ventas.');
+                        if (solicitud === this.solicitudTabla) {
                             const data = await res.json();
+                        if (solicitud !== this.solicitudTabla) return;
                             if (data.html) {
                                 const contenedor = document.getElementById('contenedorTablaVentasIndex');
                                 if (contenedor) {
@@ -2299,7 +2308,7 @@
                     } catch (err) {
                         console.error('Error al recargar tabla de ventas:', err);
                     } finally {
-                        this.cargandoTabla = false;
+                        if (solicitud === this.solicitudTabla) this.cargandoTabla = false;
                     }
                 },
 
@@ -2658,15 +2667,16 @@
                     this.comprobanteZoomTitulo = '';
                 },
 
-                descargarImagenActual() {
+                descargarImagenActual(button) {
                     if (!this.comprobanteZoomUrl) return;
+                    if (button && !window.AxLoading.setButton(button, true, 'Descargando...')) return;
                     const url = this.comprobanteZoomUrl;
                     const extMatch = url.match(/\.([a-zA-Z0-9]+)(?:\?|#|$)/);
                     const ext = extMatch ? extMatch[1] : 'jpg';
                     const filename = (this.comprobanteZoomNombre || 'VNT_comprobante') + '.' + ext;
 
                     fetch(url)
-                        .then(res => res.blob())
+                        .then(res => { if (!res.ok) throw new Error('No se pudo descargar la imagen.'); return res.blob(); })
                         .then(blob => {
                             const blobUrl = window.URL.createObjectURL(blob);
                             const a = document.createElement('a');
@@ -2686,7 +2696,8 @@
                             document.body.appendChild(a);
                             a.click();
                             document.body.removeChild(a);
-                        });
+                        })
+                        .finally(() => { if (button) window.AxLoading.setButton(button, false); });
                 },
 
                 nombreComprobanteVenta(tipo) {
@@ -2717,6 +2728,7 @@
                 aplicaRetencion1: false,
 
                 async abrirDetalle(id) {
+                    const solicitud = this.solicitudDetalle = (this.solicitudDetalle || 0) + 1;
                     this.modalDetalleAbierto = true;
                     this.cargandoDetalle = true;
                     this.ventaSeleccionada = null;
@@ -2728,7 +2740,9 @@
                                 'X-Requested-With': 'XMLHttpRequest'
                             }
                         });
+                        if (!response.ok) throw new Error('No se pudo cargar la información de la venta.');
                         const data = await response.json();
+                        if (solicitud !== this.solicitudDetalle) return;
                         if (data.success && data.venta) {
                             this.ventaSeleccionada = data.venta;
                         } else {
@@ -2736,17 +2750,20 @@
                             this.modalDetalleAbierto = false;
                         }
                     } catch (e) {
+                        if (solicitud !== this.solicitudDetalle) return;
                         console.error('Error al cargar detalle:', e);
                         alert('Ocurrió un error al cargar la información de la venta.');
                         this.modalDetalleAbierto = false;
                     } finally {
-                        this.cargandoDetalle = false;
+                        if (solicitud === this.solicitudDetalle) this.cargandoDetalle = false;
                     }
                 },
 
                 impresionDesdeDetalle: false,
 
                 cerrarDetalle() {
+                    this.solicitudDetalle = (this.solicitudDetalle || 0) + 1;
+                    this.cargandoDetalle = false;
                     this.modalDetalleAbierto = false;
                     this.ventaSeleccionada = null;
                     this.impresionDesdeDetalle = false;

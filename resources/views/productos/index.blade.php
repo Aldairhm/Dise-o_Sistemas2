@@ -293,7 +293,6 @@
         }
     }
 
-    let filterDebounceTimer = null;
 
     function applyFilters() {
         const searchInput = document.getElementById('searchInput');
@@ -309,26 +308,7 @@
             clearBtn.classList.add('hidden');
         }
 
-        // Mostrar skeleton sutil de transición
-        const skeleton = document.getElementById('tableSkeletonProductos');
-        const tableWrapper = document.getElementById('productsTableWrapper');
-        const cardsWrapper = document.getElementById('productsCardsWrapper');
-
-        if (skeleton) {
-            skeleton.classList.remove('hidden');
-            if (tableWrapper) tableWrapper.classList.add('hidden');
-            if (cardsWrapper) cardsWrapper.classList.add('hidden');
-        }
-
-        clearTimeout(filterDebounceTimer);
-        filterDebounceTimer = setTimeout(() => {
-            filtrarLocalmente(query, categoria, status);
-
-            if (skeleton) {
-                skeleton.classList.add('hidden');
-                setView(currentView, false);
-            }
-        }, 120);
+        filtrarLocalmente(query, categoria, status);
     }
 
     function filtrarLocalmente(query, categoria, status) {
@@ -404,7 +384,8 @@
         applyFilters();
     }
 
-    function confirmarEliminar(id, nombre) {
+    function confirmarEliminar(id, nombre, button) {
+        if (button?.getAttribute('aria-busy') === 'true') return;
         Swal.fire({
             title: '¿Eliminar producto?',
             html: `Estás a punto de eliminar <strong>"${nombre}"</strong> y todas sus variantes. Esta acción no se puede deshacer.`,
@@ -425,7 +406,8 @@
             },
         }).then((result) => {
             if (result.isConfirmed) {
-                document.getElementById('form-delete-' + id).submit();
+                const form = button?.closest('form') ?? document.getElementById('form-delete-' + id);
+                if (window.AxLoading?.beginForm(form, button)) form.submit();
             }
         });
     }
@@ -443,7 +425,7 @@
         customClass: { popup: 'swal-axstore' },
     });
 
-    async function toggleProductoStatus(id, nombre, estadoActual) {
+    async function toggleProductoStatus(id, nombre, estadoActual, button) {
         const nuevoEstado = (estadoActual === 1) ? 0 : 1;
         const actionText = nuevoEstado === 1 ? 'activar' : 'desactivar';
         const actionIcon = nuevoEstado === 1 ? 'fa-check' : 'fa-ban';
@@ -466,7 +448,8 @@
             reverseButtons: true,
         });
 
-        if (!result.isConfirmed) return;
+        if (!result.isConfirmed || button?.disabled) return;
+        window.AxLoading?.setButton(button, true, 'Actualizando...');
 
         try {
             const res = await fetch(`/productos/${id}/toggle-status`, {
@@ -478,6 +461,7 @@
                 },
             });
             const data = await res.json();
+            window.AxLoading?.setButton(button, false);
 
             if (res.ok && data.success) {
                 Toast.fire({ icon: 'success', title: data.message });
@@ -551,6 +535,8 @@
                 text: 'Error de red al intentar cambiar el estado.',
                 customClass: { popup: 'swal-axstore' }
             });
+        } finally {
+            window.AxLoading?.setButton(button, false);
         }
     }
 
@@ -560,7 +546,7 @@
             const id = btnToggle.dataset.id;
             const nombre = btnToggle.dataset.nombre || 'este producto';
             const estadoActual = parseInt(btnToggle.dataset.estado ?? '1');
-            await toggleProductoStatus(id, nombre, estadoActual);
+            await toggleProductoStatus(id, nombre, estadoActual, btnToggle);
         }
     });
 

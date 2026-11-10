@@ -16,52 +16,50 @@ document.addEventListener('DOMContentLoaded', () => {
     const errorMsg       = document.getElementById('modalVarianteErrorMsg');
 
     let archivosImagenes = [];
+    let variantDetailsSequence = 0;
 
     // ─── Rutas y CSRF ─────────────────────────────────────────────
     const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
     const ROUTES    = window.PRODUCTOS_ROUTES || {};
 
     // ─── Helpers: Swal unificados ──────────────────────────────────
+    let variantsRequest = null;
     async function recargarVariantesAjax() {
+        variantsRequest?.abort();
+        const request = new AbortController();
+        variantsRequest = request;
         const skeleton = document.getElementById('tableSkeletonVariantes');
+        const container = document.getElementById('variantsContainer');
         const wrapper = document.getElementById('variantsTableWrapper');
-        if (skeleton && wrapper) {
-            skeleton.classList.remove('hidden');
-            wrapper.classList.add('hidden');
-        }
-
+        const cards = document.getElementById('variantsCardsWrapper');
+        container?.setAttribute('aria-busy', 'true');
+        skeleton?.classList.remove('hidden');
+        wrapper?.classList.add('hidden');
+        cards?.classList.add('hidden');
         try {
             const res = await fetch(window.location.href, {
-                headers: {
-                    'X-Requested-With': 'XMLHttpRequest',
-                    'Accept': 'application/json'
-                }
+                signal: request.signal,
+                headers: { 'X-Requested-With': 'XMLHttpRequest', 'Accept': 'application/json' },
             });
-
-            if (res.ok) {
-                const data = await res.json();
-                if (data.table_html) {
-                    const tbody = document.getElementById('tablaVariantes')?.querySelector('tbody');
-                    if (tbody) {
-                        tbody.innerHTML = data.table_html;
-                    }
-                }
-                if (data.cards_html) {
-                    const grid = document.getElementById('variantsCardsGrid');
-                    if (grid) {
-                        grid.innerHTML = data.cards_html;
-                    }
-                }
-                if (typeof window.applyFiltersVar === 'function') {
-                    window.applyFiltersVar();
-                }
-            }
+            if (!res.ok) throw new Error('No se pudieron recargar las variantes.');
+            const data = await res.json();
+            if (variantsRequest !== request) return;
+            const tbody = document.getElementById('tablaVariantes')?.querySelector('tbody');
+            const grid = document.getElementById('variantsCardsGrid');
+            if (typeof data.table_html === 'string' && tbody) tbody.innerHTML = data.table_html;
+            if (typeof data.cards_html === 'string' && grid) grid.innerHTML = data.cards_html;
+            window.applyFiltersVar?.();
         } catch (err) {
-            console.error('Error al recargar variantes:', err);
+            if (err.name !== 'AbortError' && variantsRequest === request) {
+                Toast.fire({ icon: 'error', title: 'No se pudieron recargar las variantes. Intenta de nuevo.' });
+            }
         } finally {
-            if (skeleton && wrapper) {
-                skeleton.classList.add('hidden');
-                wrapper.classList.remove('hidden');
+            if (variantsRequest === request) {
+                variantsRequest = null;
+                container?.removeAttribute('aria-busy');
+                skeleton?.classList.add('hidden');
+                if (window.restoreVariantsView) window.restoreVariantsView();
+                else wrapper?.classList.remove('hidden');
             }
         }
     }
@@ -136,6 +134,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function closeModal() {
+        variantDetailsSequence++;
         modalEl.classList.remove('modal-open');
         document.body.style.overflow = '';
         setTimeout(() => modalEl.classList.add('hidden'), 300);
@@ -446,6 +445,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // ─── Abrir modal (Nueva) ───────────────────────────────────────
     btnAgregar?.addEventListener('click', () => {
+        if (document.getElementById('btnGuardarVariante')?.disabled) return;
+        variantDetailsSequence++;
         clearModal();
         openModal();
     });
@@ -453,6 +454,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // ─── Submit: guardar / actualizar ─────────────────────────────
     formVariante?.addEventListener('submit', async (e) => {
         e.preventDefault();
+        if (document.getElementById('btnGuardarVariante')?.disabled) return;
         hideModalError();
 
         const varianteId = document.getElementById('variante_id').value;
@@ -494,8 +496,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (isEdit) formData.append('_method', 'PUT');
 
         const btnGuardar = document.getElementById('btnGuardarVariante');
-        btnGuardar.disabled = true;
-        btnGuardar.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i> Guardando...';
+        window.AxLoading?.setButton(btnGuardar, true, 'Guardando...');
 
         try {
             const res  = await fetch(url, {
@@ -518,13 +519,13 @@ document.addEventListener('DOMContentLoaded', () => {
         } catch {
             showModalError('Error de red. Intenta de nuevo.');
         } finally {
-            btnGuardar.disabled = false;
-            btnGuardar.innerHTML = '<i class="fas fa-check mr-2"></i><span id="btnGuardarTexto">GUARDAR VARIANTE</span>';
+            window.AxLoading?.setButton(btnGuardar, false);
         }
     });
 
     // ─── Activar / Desactivar Variante ───────────────────────────
-    async function toggleVarianteStatus(id, nombre, estadoActual) {
+    async function toggleVarianteStatus(id, nombre, estadoActual, button) {
+        if (button?.disabled) return;
         const nuevoEstado = (estadoActual === 1) ? 0 : 1;
         const actionText = nuevoEstado === 1 ? 'activar' : 'desactivar';
         const actionIcon = nuevoEstado === 1 ? 'fa-check' : 'fa-ban';
@@ -547,7 +548,8 @@ document.addEventListener('DOMContentLoaded', () => {
             reverseButtons: true,
         });
 
-        if (!result.isConfirmed) return;
+        if (!result.isConfirmed || button?.disabled) return;
+        window.AxLoading?.setButton(button, true, 'Actualizando...');
 
         try {
             const url = `${ROUTES.toggleVariante || '/variantes'}/${id}/toggle-status`;
@@ -560,6 +562,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 },
             });
             const data = await res.json();
+            window.AxLoading?.setButton(button, false);
 
             if (res.ok && data.success) {
                 Toast.fire({ icon: 'success', title: data.message });
@@ -625,6 +628,8 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         } catch {
             alertErr('Error de red al intentar cambiar el estado.');
+        } finally {
+            window.AxLoading?.setButton(button, false);
         }
     }
 
@@ -641,7 +646,7 @@ document.addEventListener('DOMContentLoaded', () => {
             const id           = btnToggle.dataset.id;
             const nombre       = btnToggle.dataset.nombre || 'esta variante';
             const estadoActual = parseInt(btnToggle.dataset.estado ?? '1');
-            await toggleVarianteStatus(id, nombre, estadoActual);
+            await toggleVarianteStatus(id, nombre, estadoActual, btnToggle);
             return;
         }
 
@@ -658,7 +663,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 '¿Eliminar variante?',
                 `Estás a punto de eliminar <strong class="text-slate-800">${nombre}</strong>. Esta acción no se puede deshacer.`
             );
-            if (!result.isConfirmed) return;
+            if (!result.isConfirmed || btnEliminar.disabled) return;
+            window.AxLoading?.setButton(btnEliminar, true, 'Eliminando...');
 
             try {
                 const res  = await fetch(`${ROUTES.getVariante}/${id}`, {
@@ -677,6 +683,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
             } catch {
                 alertErr('Error de red. Intenta de nuevo.');
+            } finally {
+                window.AxLoading?.setButton(btnEliminar, false);
             }
             return;
         }
@@ -685,6 +693,10 @@ document.addEventListener('DOMContentLoaded', () => {
         if (btnEditar || btnDuplicar) {
             const id        = (btnEditar ?? btnDuplicar).dataset.id;
             const isDuplicar = !!btnDuplicar;
+            const button = btnEditar ?? btnDuplicar;
+            if (button.disabled || document.getElementById('btnGuardarVariante')?.disabled) return;
+            const sequence = ++variantDetailsSequence;
+            window.AxLoading?.setButton(button, true, 'Cargando...');
 
             try {
                 const res  = await fetch(`${ROUTES.getVariante}/${id}`, {
@@ -692,7 +704,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 });
                 const data = await res.json();
 
-                if (data.success) {
+                if (sequence !== variantDetailsSequence) return;
+                if (res.ok && data.success) {
                     clearModal();
                     fillModal(data.variante, isDuplicar);
                     openModal();
@@ -701,6 +714,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
             } catch {
                 alertErr('Error de red al cargar la variante.');
+            } finally {
+                window.AxLoading?.setButton(button, false);
             }
         }
     });

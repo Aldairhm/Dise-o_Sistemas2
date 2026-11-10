@@ -17,12 +17,6 @@ function applyTheme(theme) {
 }
 
 function setTheme(theme) {
-    const indicator = document.getElementById('tema-spinner-indicator');
-    if (indicator) {
-        indicator.classList.remove('hidden');
-        indicator.classList.add('inline-flex');
-    }
-
     localStorage.setItem('ax_theme', theme);
     applyTheme(theme);
 
@@ -31,13 +25,7 @@ function setTheme(theme) {
         btn.classList.toggle('selected', btn.dataset.theme === theme);
     });
 
-    setTimeout(() => {
-        if (indicator) {
-            indicator.classList.add('hidden');
-            indicator.classList.remove('inline-flex');
-        }
-        Toast.fire({ icon: 'success', title: 'Tema actualizado' });
-    }, 250);
+    Toast.fire({ icon: 'success', title: 'Tema actualizado' });
 }
 
 // Exponer para uso global 
@@ -58,16 +46,9 @@ function switchTab(tabId) {
 
     if (btn) btn.classList.add('active');
 
-    // Mostrar skeleton brevemente (180ms) para dar feedback visual sin bloquear ni saltar de layout
-    if (skeleton && targetContent) {
-        skeleton.classList.remove('hidden');
-        setTimeout(() => {
-            skeleton.classList.add('hidden');
-            targetContent.classList.add('active');
-        }, 180);
-    } else if (targetContent) {
-        targetContent.classList.add('active');
-    }
+    // Los paneles ya están cargados; no simular una petición con temporizadores.
+    skeleton?.classList.add('hidden');
+    targetContent?.classList.add('active');
 }
 
 // VALIDACION TELEFONO 
@@ -176,10 +157,12 @@ async function savePersonalInfo(event) {
     data.append('_method', 'PUT');
 
     const btn = document.getElementById('btn-save-personal');
+    if (btn.disabled) return;
     const btnText = btn.querySelector('.btn-text');
     const btnSpinner = btn.querySelector('.btn-spinner');
 
     btn.disabled = true;
+    btn.setAttribute('aria-busy', 'true');
     if (btnText && btnSpinner) {
         btnText.classList.add('hidden');
         btnSpinner.classList.remove('hidden');
@@ -230,6 +213,7 @@ async function savePersonalInfo(event) {
         Toast.fire({ icon: 'error', title: 'Error de conexión al guardar el perfil.' });
     } finally {
         btn.disabled = false;
+        btn.removeAttribute('aria-busy');
         if (btnText && btnSpinner) {
             btnText.classList.remove('hidden');
             btnSpinner.classList.add('hidden');
@@ -252,10 +236,12 @@ async function savePassword(event) {
     }
 
     const btn = document.getElementById('btn-save-password');
+    if (btn.disabled) return;
     const btnText = btn.querySelector('.btn-text');
     const btnSpinner = btn.querySelector('.btn-spinner');
 
     btn.disabled = true;
+    btn.setAttribute('aria-busy', 'true');
     if (btnText && btnSpinner) {
         btnText.classList.add('hidden');
         btnSpinner.classList.remove('hidden');
@@ -283,6 +269,7 @@ async function savePassword(event) {
         Toast.fire({ icon: 'error', title: 'Error de conexión.' });
     } finally {
         btn.disabled = false;
+        btn.removeAttribute('aria-busy');
         if (btnText && btnSpinner) {
             btnText.classList.remove('hidden');
             btnSpinner.classList.add('hidden');

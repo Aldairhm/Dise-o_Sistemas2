@@ -13,6 +13,7 @@
     <!-- FontAwesome -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     @vite(['resources/css/reset-password.css'])
+    @vite(['resources/js/loading-states.js'])
 </head>
 <body>
 
@@ -43,7 +44,7 @@
         @endif
 
         <!-- Formulario -->
-        <form method="POST" action="{{ route('password.update') }}" id="resetPasswordForm">
+        <form data-loading-form data-loading-label="Guardando..." method="POST" action="{{ route('password.update') }}" id="resetPasswordForm">
             @csrf
             <input type="hidden" name="token" value="{{ $token }}">
 

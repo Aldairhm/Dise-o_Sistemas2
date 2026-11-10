@@ -1,4 +1,5 @@
 import './bootstrap';
+import './loading-states';
 import './cart';
 import './proveedores';
 import './compras';

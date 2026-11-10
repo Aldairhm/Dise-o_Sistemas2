@@ -113,7 +113,7 @@
                                     @if($devolucion->estado === 'pendiente')
                                         <button type="button" onclick="document.getElementById('resolver-proveedor-{{ $devolucion->id }}').showModal()" class="inline-flex items-center gap-1.5 rounded-lg bg-amber-500 px-3 py-1.5 text-xs font-black text-white hover:bg-amber-600"><i class="fas fa-check"></i> Resolver</button>
                                         <dialog id="resolver-proveedor-{{ $devolucion->id }}" class="m-auto w-[min(440px,calc(100vw-2rem))] rounded-2xl border border-slate-200 bg-white p-0 text-left shadow-2xl backdrop:bg-slate-900/50">
-                                            <form method="POST" action="{{ route('devoluciones.compra.resolver', $devolucion->id) }}" class="p-5">
+                                            <form data-loading-form data-loading-label="Aplicando resolución..." method="POST" action="{{ route('devoluciones.compra.resolver', $devolucion->id) }}" class="p-5">
                                                 @csrf @method('PATCH')
                                                 <div class="mb-4 flex items-center justify-between border-b border-slate-100 pb-3">
                                                     <div>

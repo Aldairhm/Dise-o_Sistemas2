@@ -19,6 +19,8 @@
                     
                     <!-- Contenedor Imagen Principal -->
                     <div class="flex-1 flex items-center justify-center w-full relative z-10 min-h-[200px] md:min-h-[300px] mb-4">
+                        <div id="v-modal-image-loading" class="hidden absolute inset-0 rounded-2xl ax-skeleton-shimmer" role="status" aria-label="Cargando imagen del producto..."></div>
+                        <span id="v-modal-image-error" class="hidden text-sm text-slate-500" role="status">Imagen no disponible</span>
                         <img id="v-modal-img" src="" alt="Product" class="max-h-[200px] md:max-h-[300px] object-contain drop-shadow-xl transform transition-transform duration-700">
                         <!-- Botón Descargar Imagen Principal -->
                         <a id="v-modal-download" href="#" download="imagen.jpg" class="absolute bottom-2 left-1/2 transform -translate-x-1/2 z-20 bg-white/95 backdrop-blur text-gray-800 hover:text-blue-600 hover:bg-white font-bold py-2 px-5 rounded-full shadow-[0_8px_30px_rgb(0,0,0,0.12)] md:opacity-0 md:group-hover:opacity-100 transition-all duration-300 flex items-center gap-2 text-xs sm:text-sm border border-gray-100 whitespace-nowrap" title="Descargar Imagen">
@@ -153,6 +155,37 @@
         let currentProductData = null;
         let currentSelectedVariant = null;
 
+        let productImageRequest = 0;
+        function loadProductModalImage(source) {
+            const request = ++productImageRequest;
+            const image = document.getElementById('v-modal-img');
+            const skeleton = document.getElementById('v-modal-image-loading');
+            const error = document.getElementById('v-modal-image-error');
+            const download = document.getElementById('v-modal-download');
+            image.style.visibility = 'hidden';
+            image.parentElement.setAttribute('aria-busy', source ? 'true' : 'false');
+            skeleton.classList.toggle('hidden', !source);
+            error.classList.toggle('hidden', !!source);
+            download.style.display = 'none';
+            if (!source) { image.removeAttribute('src'); return; }
+            const pending = new Image();
+            pending.onload = () => {
+                if (request !== productImageRequest) return;
+                image.src = source;
+                image.style.visibility = '';
+                skeleton.classList.add('hidden');
+                image.parentElement.setAttribute('aria-busy', 'false');
+                download.style.display = '';
+            };
+            pending.onerror = () => {
+                if (request !== productImageRequest) return;
+                skeleton.classList.add('hidden');
+                error.classList.remove('hidden');
+                image.parentElement.setAttribute('aria-busy', 'false');
+            };
+            pending.src = source;
+        }
+
         function openModal(btn) {
             // Extraer los datos básicos del botón
             const name = btn.getAttribute('data-name') || '';
@@ -269,7 +302,7 @@
                     gallery.innerHTML = '';
                     
                     if (variant.imagenes && variant.imagenes.length > 0) {
-                        mainImg.src = variant.imagenes[0];
+                        loadProductModalImage(variant.imagenes[0]);
                         downloadBtn.href = variant.imagenes[0];
                         
                         if (variant.imagenes.length > 1) {
@@ -279,7 +312,7 @@
                                 thumb.className = `w-14 h-14 rounded-xl object-cover cursor-pointer border-2 transition-all duration-300 shadow-sm ${index === 0 ? 'border-blue-500 scale-105' : 'border-transparent hover:border-blue-300 opacity-60 hover:opacity-100'}`;
                                 
                                 thumb.onclick = () => {
-                                    mainImg.src = imgUrl;
+                                    loadProductModalImage(imgUrl);
                                     downloadBtn.href = imgUrl;
                                     
                                     Array.from(gallery.children).forEach(c => {
@@ -293,10 +326,10 @@
                             });
                         }
                     } else if (variant.imgUrl) {
-                        mainImg.src = variant.imgUrl;
+                        loadProductModalImage(variant.imgUrl);
                         downloadBtn.href = variant.imgUrl;
                     } else {
-                        mainImg.src = '';
+                        loadProductModalImage('');
                         downloadBtn.href = '#';
                     }
                 };
@@ -350,10 +383,10 @@
                 const downloadBtn = document.getElementById('v-modal-download');
                 const img = btn.getAttribute('data-image') || '';
                 if(img) {
-                    mainImg.src = img;
+                    loadProductModalImage(img);
                     downloadBtn.href = img;
                 } else {
-                    mainImg.src = '';
+                    loadProductModalImage('');
                     downloadBtn.href = '#';
                 }
                 document.getElementById('v-modal-gallery').innerHTML = '';
@@ -387,6 +420,9 @@
         }
 
         function closeModal() {
+            ++productImageRequest;
+            document.getElementById('v-modal-image-loading').classList.add('hidden');
+            document.getElementById('v-modal-img').parentElement.setAttribute('aria-busy', 'false');
             const modal = document.getElementById('modal');
             modal.classList.add('hidden');
             // Restaurar scroll

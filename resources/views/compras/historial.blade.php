@@ -3,8 +3,10 @@
         modalDetalleAbierto: false,
         cargandoDetalle: false,
         compraSeleccionada: null,
+        solicitudDetalle: 0,
 
         async verDetalle(id) {
+            const solicitud = ++this.solicitudDetalle;
             this.modalDetalleAbierto = true;
             this.cargandoDetalle = true;
             this.compraSeleccionada = null;
@@ -16,7 +18,9 @@
                         'X-Requested-With': 'XMLHttpRequest'
                     }
                 });
+                if (!res.ok) throw new Error('No se pudo cargar la compra.');
                 const data = await res.json();
+                if (solicitud !== this.solicitudDetalle) return;
                 if (data.success && data.compra) {
                     this.compraSeleccionada = data.compra;
                 } else {
@@ -28,6 +32,7 @@
                     this.modalDetalleAbierto = false;
                 }
             } catch (err) {
+                if (solicitud !== this.solicitudDetalle) return;
                 console.error('Error al cargar detalle de compra:', err);
                 Swal.fire({
                     icon: 'error',
@@ -36,11 +41,13 @@
                 });
                 this.modalDetalleAbierto = false;
             } finally {
-                this.cargandoDetalle = false;
+                if (solicitud === this.solicitudDetalle) this.cargandoDetalle = false;
             }
         },
 
         cerrarDetalle() {
+            ++this.solicitudDetalle;
+            this.cargandoDetalle = false;
             this.modalDetalleAbierto = false;
             this.compraSeleccionada = null;
         }
@@ -91,7 +98,7 @@
 
             @foreach ($compras as $compra)
                 <dialog id="compra-devolucion-{{ $compra->id }}" class="m-auto w-[min(820px,calc(100vw-2rem))] max-w-none rounded-2xl border border-slate-200 bg-white p-0 text-left shadow-2xl backdrop:bg-slate-900/50" x-data="{ cantidades: {}, excede(id, max) { const c = this.cantidades[id] || {}; return (Number(c.stock || 0) + Number(c.reserva || 0) + Number(c.cuarentena || 0)) > max; } }">
-                    <form method="POST" action="{{ route('devoluciones.compra.store') }}" novalidate class="p-6" 
+                    <form data-loading-form data-loading-label="Registrando devolución..." method="POST" action="{{ route('devoluciones.compra.store') }}" novalidate class="p-6"
                         onsubmit="
                             event.preventDefault(); 
                             let dialog = this.closest('dialog');
@@ -126,7 +133,7 @@
                                 confirmButtonText: 'Sí, procesar', 
                                 cancelButtonText: 'Cancelar' 
                             }).then((result) => { 
-                                if (result.isConfirmed) { this.submit(); } 
+                                if (result.isConfirmed && window.AxLoading.beginForm(this)) { this.submit(); }
                             });
                         ">
                         @csrf
@@ -187,7 +194,7 @@
                 </div>
 
                 <!-- Skeleton de Carga adaptado a Compras para evitar Layout Shift -->
-                <div x-show="cargandoDetalle" class="p-5 overflow-y-auto space-y-4">
+                <div x-show="cargandoDetalle" role="status" aria-label="Cargando compra" style="display:none;" class="p-5 overflow-y-auto space-y-4">
                     <div class="flex items-center justify-between rounded-xl bg-slate-50 px-4 py-3 border border-slate-100">
                         <div class="h-4 w-32 rounded ax-skeleton-shimmer"></div>
                         <div class="h-6 w-24 rounded-md ax-skeleton-shimmer"></div>

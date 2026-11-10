@@ -30,6 +30,7 @@ let sortableTable = null;
 let sortableCards = null;
 let currentEditProductosCount = 0;
 let currentEditOriginalNombre = "";
+let categoriesRequest = null;
 
 function setView(view) {
     currentView = view;
@@ -50,6 +51,10 @@ function setView(view) {
         cw.classList.remove("hidden");
         bc.classList.add("active");
         bt.classList.remove("active");
+    }
+    if (categoriesRequest) {
+        tw.classList.add('hidden');
+        cw.classList.add('hidden');
     }
     filterItems();
 }
@@ -99,6 +104,8 @@ function initSortable() {
         },
     };
 
+    sortableTable?.destroy();
+    sortableCards?.destroy();
     if (tbody) sortableTable = new Sortable(tbody, options);
     if (grid) sortableCards = new Sortable(grid, options);
 }
@@ -343,7 +350,7 @@ document
     .addEventListener("submit", async function (e) {
         e.preventDefault();
 
-        if (!validarFormulario()) return;
+        if (document.getElementById("btnSubmitModal")?.disabled || !validarFormulario()) return;
 
         clearErrors();
 
@@ -400,7 +407,8 @@ document
         }
     });
 
-async function toggleStatus(id, nombre, estadoActivo) {
+async function toggleStatus(id, nombre, estadoActivo, button) {
+    if (button?.disabled) return;
     const actionText = estadoActivo ? "habilitar" : "deshabilitar";
     const actionIcon = estadoActivo ? "fa-check" : "fa-ban";
     const btnColor = estadoActivo ? "#22c55e" : "#f97316";
@@ -422,7 +430,8 @@ async function toggleStatus(id, nombre, estadoActivo) {
         reverseButtons: true,
     });
 
-    if (!result.isConfirmed) return;
+    if (!result.isConfirmed || button?.disabled) return;
+    window.AxLoading?.setButton(button, true, 'Actualizando...');
 
     try {
         const res = await fetch(ROUTES.toggleStatus(id), {
@@ -440,6 +449,8 @@ async function toggleStatus(id, nombre, estadoActivo) {
         }
     } catch {
         Toast.fire({ icon: "error", title: "No se pudo conectar al servidor." });
+    } finally {
+        window.AxLoading?.setButton(button, false);
     }
 }
 
@@ -476,35 +487,44 @@ function clearSearch() {
 }
 
 async function refreshContent() {
+    categoriesRequest?.abort();
+    const request = new AbortController();
+    categoriesRequest = request;
     const tw = document.getElementById("tableWrapper");
     const cw = document.getElementById("cardsWrapper");
     const sk = document.getElementById("tableSkeletonCategorias");
-
-    if (tw) tw.classList.add("hidden");
-    if (cw) cw.classList.add("hidden");
-    if (sk) sk.classList.remove("hidden");
+    [tw, cw].forEach(element => {
+        element?.classList.add('hidden');
+        element?.setAttribute('aria-busy', 'true');
+    });
+    sk?.classList.remove('hidden');
 
     try {
         const url = `${ROUTES.index}?estado=${currentEstado}`;
-        const res = await fetch(url, { headers: { "X-Requested-With": "XMLHttpRequest" } });
+        const res = await fetch(url, { signal: request.signal, headers: { "X-Requested-With": "XMLHttpRequest" } });
+        if (!res.ok) throw new Error('No se pudieron cargar las categorías.');
         const data = await res.json();
-
+        if (categoriesRequest !== request) return;
+        if (typeof data.table !== 'string' || typeof data.cards !== 'string') throw new Error('Respuesta de categorías inválida.');
         if (tw) tw.innerHTML = data.table;
         if (cw) cw.innerHTML = data.cards;
-
         if (data.stats) {
             document.getElementById("kpiTotal").textContent = data.stats.total;
-            document.getElementById("kpiActivas").textContent =
-                data.stats.activas;
-            document.getElementById("kpiInactivos").textContent =
-                data.stats.inactivos;
+            document.getElementById("kpiActivas").textContent = data.stats.activas;
+            document.getElementById("kpiInactivos").textContent = data.stats.inactivos;
         }
-
-        // Re-inicializar drag&drop sobre los nuevos elementos del DOM
         initSortable();
+    } catch (error) {
+        if (error.name !== 'AbortError' && categoriesRequest === request) {
+            Toast.fire({ icon: 'error', title: 'No se pudieron cargar las categorías. Intenta de nuevo.' });
+        }
     } finally {
-        if (sk) sk.classList.add("hidden");
-        setView(currentView);
+        if (categoriesRequest === request) {
+            categoriesRequest = null;
+            sk?.classList.add('hidden');
+            [tw, cw].forEach(element => element?.removeAttribute('aria-busy'));
+            setView(currentView);
+        }
     }
 }
 

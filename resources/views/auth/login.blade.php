@@ -19,6 +19,7 @@
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
     @vite(['resources/css/login.css', 'resources/js/login.js'])
+    @vite(['resources/js/loading-states.js'])
 </head>
 <body>
 
@@ -99,7 +100,7 @@
             @endif
 
             <!-- Formulario -->
-            <form method="POST" action="{{ route('login.post') }}">
+            <form data-loading-form data-loading-label="Ingresando..." method="POST" action="{{ route('login.post') }}">
                 @csrf
 
                 <!-- Campo Usuario -->

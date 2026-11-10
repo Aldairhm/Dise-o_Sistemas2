@@ -1,4 +1,5 @@
 @import 'tailwindcss';
+@import './loading.css';
 @import './filter-selects.css';
 @import './date-picker.css';
 

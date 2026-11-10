@@ -8,6 +8,7 @@
     const status = root.querySelector('[data-bell-status]');
     const list = root.querySelector('[data-bell-items]');
     const all = root.querySelector('[data-bell-read-all]');
+    const loading = root.querySelector('[data-bell-loading]');
     const csrf = document.querySelector('meta[name="csrf-token"]')?.content;
     const channel = typeof BroadcastChannel !== 'undefined' ? new BroadcastChannel('axstore-notifications') : null;
 
@@ -28,10 +29,29 @@
         critica: { label: 'Crítica', bg: '#fee2e2', text: '#991b1b' }
     };
 
-    let timer, busy = false, stopped = false, delay = 30000;
+    let timer, busy = false, stopped = false, delay = 30000, lastUnread = 0, markingAll = false;
+    let refreshFinished = Promise.resolve();
     const close = () => { panel.hidden = true; toggle.setAttribute('aria-expanded', 'false'); };
     const sync = () => { channel?.postMessage('refresh'); localStorage.setItem('axstore-notifications-sync', String(Date.now())); };
     const announce = (text) => { status.textContent = text; status.hidden = !text; };
+
+    function setPending(button, pending, label = 'Guardando...') {
+        if (pending) {
+            button.dataset.idleContent = button.innerHTML;
+            button.disabled = true;
+            button.setAttribute('aria-busy', 'true');
+            button.replaceChildren();
+            const spinner = document.createElement('i');
+            spinner.className = 'fas fa-spinner fa-spin';
+            spinner.setAttribute('aria-hidden', 'true');
+            button.append(spinner, document.createTextNode(' ' + label));
+        } else {
+            button.innerHTML = button.dataset.idleContent;
+            delete button.dataset.idleContent;
+            button.disabled = false;
+            button.removeAttribute('aria-busy');
+        }
+    }
 
     function relative(iso) {
         const minutes = Math.max(0, Math.floor((Date.now() - Date.parse(iso)) / 60000));
@@ -141,8 +161,9 @@
 
                 readBtn.addEventListener('click', async (e) => {
                     e.stopPropagation();
-                    readBtn.disabled = true;
-                    try { await mark(readUrl); await refresh(); } catch (err) { announce(err.message); } finally { readBtn.disabled = false; }
+                    if (readBtn.disabled) return;
+                    setPending(readBtn, true);
+                    try { await mark(readUrl); await refresh(true); } catch (err) { announce(err.message); } finally { setPending(readBtn, false); }
                 });
 
                 actionsBox.append(readBtn);
@@ -178,25 +199,41 @@
         }
     }
 
-    async function refresh() {
+    async function refresh(force = false) {
         clearTimeout(timer);
-        if (stopped || busy || document.hidden) return;
+        if (stopped || document.hidden) return;
+        if (busy) {
+            if (force === true) {
+                await refreshFinished;
+                return refresh();
+            }
+            return refreshFinished;
+        }
         busy = true;
+        let finishRefresh;
+        refreshFinished = new Promise(resolve => { finishRefresh = resolve; });
+        list.setAttribute('aria-busy', 'true');
+        if (loading) loading.hidden = list.children.length > 0;
+        if (!list.children.length) announce('');
         try {
             const response = await fetch(root.dataset.feed, {credentials:'same-origin', cache:'no-store', headers:{Accept:'application/json'}});
             if (response.redirected || [401,403,419].includes(response.status)) {
-                stopped = true; list.replaceChildren(); count.hidden = true; announce('La sesión cambió o terminó. Actualiza la página para continuar.'); return;
+                stopped = true; all.disabled = true; list.replaceChildren(); count.hidden = true; announce('La sesión cambió o terminó. Actualiza la página para continuar.'); return;
             }
             if (!response.ok) throw new Error();
             const data = await response.json();
             count.textContent = data.unread > 99 ? '99+' : String(data.unread); count.hidden = !data.unread;
             toggle.setAttribute('aria-label', `Notificaciones: ${data.unread} sin leer`);
-            all.disabled = !data.unread;
+            lastUnread = data.unread;
+            if (!markingAll) all.disabled = !lastUnread;
             render(data.items); announce(data.items.length ? '' : 'No tienes notificaciones recientes.'); delay = 30000;
         } catch (_) {
             delay = Math.min(delay * 2, 300000); announce('No se pudieron actualizar los avisos. Reintentaremos automáticamente.');
         } finally {
             busy = false;
+            list.removeAttribute('aria-busy');
+            if (loading) loading.hidden = true;
+            finishRefresh();
             if (!stopped) timer = setTimeout(refresh, delay);
         }
     }
@@ -205,8 +242,14 @@
     document.addEventListener('click', (e) => { if (!root.contains(e.target)) close(); });
     document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && !panel.hidden) { close(); toggle.focus(); } });
     all.addEventListener('click', async () => {
-        all.disabled = true;
-        try { await mark(root.dataset.readAll); await refresh(); } catch (e) { announce(e.message); all.disabled = false; }
+        if (all.disabled || markingAll) return;
+        markingAll = true;
+        setPending(all, true);
+        try { await mark(root.dataset.readAll); await refresh(true); } catch (e) { announce(e.message); } finally {
+            markingAll = false;
+            setPending(all, false);
+            all.disabled = !lastUnread || stopped;
+        }
     });
     document.addEventListener('visibilitychange', () => { if (document.hidden) clearTimeout(timer); else refresh(); });
     window.addEventListener('online', refresh);

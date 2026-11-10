@@ -109,7 +109,7 @@
                 </button>
 
                 <button type="button"
-                        onclick="toggleStatus({{ $categoria->id }}, '{{ addslashes($categoria->nombre) }}', 0)"
+                        onclick="toggleStatus({{ $categoria->id }}, '{{ addslashes($categoria->nombre) }}', 0, this)"
                         class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md {{ $tieneProductos ? 'bg-slate-100 text-slate-300 cursor-not-allowed' : 'bg-red-50 hover:bg-red-100 text-red-600 cursor-pointer' }} font-semibold text-xs transition-colors"
                         title="{{ $tieneProductos ? 'No se puede deshabilitar: tiene productos asociados' : 'Deshabilitar categoría' }}"
                         {{ $tieneProductos ? 'disabled' : '' }}>
@@ -118,7 +118,7 @@
                 </button>
             @else
                 <button type="button"
-                        onclick="toggleStatus({{ $categoria->id }}, '{{ addslashes($categoria->nombre) }}', 1)"
+                        onclick="toggleStatus({{ $categoria->id }}, '{{ addslashes($categoria->nombre) }}', 1, this)"
                         class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md bg-emerald-50 hover:bg-emerald-100 text-emerald-600 font-semibold text-xs transition-colors cursor-pointer">
                     <i class="fas fa-check"></i>
                     <span>Habilitar</span>

@@ -135,9 +135,11 @@
                         <input x-model="busqueda" type="search" placeholder="Escribe producto, variante o SKU..." class="w-full rounded-xl border border-slate-300 bg-slate-50 py-3.5 pl-11 pr-4 text-sm text-slate-800 placeholder:text-slate-400 focus:border-blue-500 focus:bg-white focus:outline-none focus:ring-4 focus:ring-blue-500/10 transition-all shadow-inner">
                     </div>
                     
-                    <div class="grid sm:grid-cols-2 gap-3 mt-4 max-h-60 overflow-y-auto pr-2">
+                    <p x-show="errorBusqueda" x-text="errorBusqueda" role="alert" class="mt-3 text-sm text-rose-600" style="display:none;"></p>
+                    <div x-show="buscando" style="display:none;" class="grid sm:grid-cols-2 gap-3 mt-4" role="status" aria-label="Cargando variantes"><x-skeleton-card :lines="2" /><x-skeleton-card :lines="2" /></div>
+                    <div x-show="!buscando" :aria-busy="buscando" class="grid sm:grid-cols-2 gap-3 mt-4 max-h-60 overflow-y-auto pr-2">
                         <template x-for="variante in variantesDisponibles" :key="variante.id">
-                            <button type="button" @click="agregarVariante(variante)" class="text-left rounded-xl border border-slate-200 bg-white hover:border-blue-400 hover:shadow-md hover:shadow-blue-500/5 px-4 py-3 transition-all group">
+                            <button type="button" @click="agregarVariante(variante)" :disabled="buscando || guardando" class="text-left rounded-xl border border-slate-200 bg-white hover:border-blue-400 hover:shadow-md hover:shadow-blue-500/5 px-4 py-3 transition-all group">
                                 <div class="flex items-center justify-between gap-3">
                                     <div class="min-w-0">
                                         <div class="mb-2 h-12 w-12 overflow-hidden rounded-lg border border-slate-200 bg-slate-50">
@@ -155,7 +157,7 @@
                                 </div>
                             </button>
                         </template>
-                        <p x-show="variantesDisponibles.length === 0 && !buscando" class="sm:col-span-2 text-sm font-medium text-slate-400 py-6 text-center" style="display:none;">No se encontraron resultados.</p>
+                        <p x-show="variantesDisponibles.length === 0 && !buscando && !errorBusqueda" class="sm:col-span-2 text-sm font-medium text-slate-400 py-6 text-center" style="display:none;">No se encontraron resultados.</p>
                     </div>
                 </div>
 
@@ -260,8 +262,8 @@
                         </div>
                     </div>
                     
-                    <button type="button" @click="Swal.fire({ title: '¿Estás seguro?', text: 'Verifica que las cantidades sean correctas antes de confirmar la recepción.', icon: 'warning', showCancelButton: true, confirmButtonColor: '#3085d6', cancelButtonColor: '#d33', confirmButtonText: 'Sí, confirmar', cancelButtonText: 'Cancelar' }).then((result) => { if (result.isConfirmed) { guardarCompra(); } })" :disabled="!formularioValido()" class="w-full mt-8 rounded-xl bg-blue-600 hover:bg-blue-700 disabled:bg-slate-100 disabled:text-slate-400 disabled:border border-slate-200 disabled:cursor-not-allowed py-3.5 text-sm font-extrabold text-white transition-all shadow-lg shadow-blue-500/25 disabled:shadow-none flex items-center justify-center gap-2 cursor-pointer hover:scale-[1.01] active:scale-[0.99]">
-                        <i class="fas fa-check"></i> Confirmar recepción
+                    <button type="button" @click="Swal.fire({ title: '¿Estás seguro?', text: 'Verifica que las cantidades sean correctas antes de confirmar la recepción.', icon: 'warning', showCancelButton: true, confirmButtonColor: '#3085d6', cancelButtonColor: '#d33', confirmButtonText: 'Sí, confirmar', cancelButtonText: 'Cancelar' }).then((result) => { if (result.isConfirmed) { guardarCompra(); } })" :disabled="guardando || !formularioValido()" :aria-busy="guardando" class="w-full mt-8 rounded-xl bg-blue-600 hover:bg-blue-700 disabled:bg-slate-100 disabled:text-slate-400 disabled:border border-slate-200 disabled:cursor-not-allowed py-3.5 text-sm font-extrabold text-white transition-all shadow-lg shadow-blue-500/25 disabled:shadow-none flex items-center justify-center gap-2 cursor-pointer hover:scale-[1.01] active:scale-[0.99]">
+                        <i :class="guardando ? 'fas fa-spinner fa-spin' : 'fas fa-check'" aria-hidden="true"></i> <span x-text="guardando ? 'Guardando recepción...' : 'Confirmar recepción'"></span>
                     </button>
                 </section>
             </aside>

@@ -207,11 +207,11 @@
                                                 title="Editar proveedor">
                                                 <i class="fas fa-pencil text-xs"></i>
                                             </button>
-                                            <button type="button" @click="cambiarEstado(proveedor)"
+                                            <button type="button" @click="cambiarEstado(proveedor)" :disabled="cambiosEstado.includes(proveedor.id)" :aria-busy="cambiosEstado.includes(proveedor.id)"
                                                 class="w-8 h-8 rounded-lg flex items-center justify-center transition-colors cursor-pointer"
                                                 :class="proveedor.deleted_at ? 'bg-slate-100 hover:bg-emerald-100 text-slate-500 hover:text-emerald-600' : 'bg-slate-100 hover:bg-amber-100 text-slate-500 hover:text-amber-600'"
                                                 :title="proveedor.deleted_at ? 'Habilitar' : 'Deshabilitar'">
-                                                <i class="fas text-xs" :class="proveedor.deleted_at ? 'fa-check' : 'fa-ban'"></i>
+                                                <i class="fas text-xs" :class="cambiosEstado.includes(proveedor.id) ? 'fa-spinner fa-spin' : (proveedor.deleted_at ? 'fa-check' : 'fa-ban')"></i>
                                             </button>
                                         </div>
                                     </td>
@@ -297,11 +297,11 @@
                                     <span>Editar</span>
                                 </button>
 
-                                <button type="button" @click="cambiarEstado(proveedor)"
+                                <button type="button" @click="cambiarEstado(proveedor)" :disabled="cambiosEstado.includes(proveedor.id)" :aria-busy="cambiosEstado.includes(proveedor.id)"
                                     class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md font-semibold text-xs transition-colors cursor-pointer"
                                     :class="proveedor.deleted_at ? 'bg-emerald-50 hover:bg-emerald-100 text-emerald-600' : 'bg-red-50 hover:bg-red-100 text-red-600'">
-                                    <i class="fas" :class="proveedor.deleted_at ? 'fa-check-circle' : 'fa-ban'"></i>
-                                    <span x-text="proveedor.deleted_at ? 'Habilitar' : 'Deshabilitar'"></span>
+                                    <i class="fas" :class="cambiosEstado.includes(proveedor.id) ? 'fa-spinner fa-spin' : (proveedor.deleted_at ? 'fa-check-circle' : 'fa-ban')"></i>
+                                    <span x-text="cambiosEstado.includes(proveedor.id) ? 'Procesando...' : (proveedor.deleted_at ? 'Habilitar' : 'Deshabilitar')"></span>
                                 </button>
                             </div>
                         </div>
@@ -341,7 +341,7 @@
             <div class="flex items-end justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:items-center sm:p-0">
                 <span class="hidden sm:inline-block sm:align-middle sm:h-screen" aria-hidden="true">&#8203;</span>
 
-                <div x-show="openModal" @click.away="openModal = false" x-transition:enter="ease-out duration-300"
+                <div x-show="openModal" @click.away="if (!loading) openModal = false" x-transition:enter="ease-out duration-300"
                     x-transition:enter-start="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95"
                     x-transition:enter-end="opacity-100 translate-y-0 sm:scale-100"
                     x-transition:leave="ease-in duration-200"
@@ -358,7 +358,7 @@
                             </h3>
                             <p class="text-xs text-blue-100 mt-0.5">Completa los campos para registrar un proveedor</p>
                         </div>
-                        <button @click="openModal = false" type="button"
+                        <button @click="openModal = false" :disabled="loading" type="button"
                             class="w-8 h-8 rounded-lg bg-white/10 hover:bg-white/20 text-white flex items-center justify-center transition-all cursor-pointer">
                             <i class="fas fa-times"></i>
                         </button>
@@ -517,7 +517,7 @@
 
                         <!-- Footer -->
                         <div class="px-6 md:px-8 py-5 bg-slate-50 border-t border-slate-100 flex items-center justify-end gap-3 rounded-b-2xl">
-                            <button @click="openModal = false" type="button"
+                            <button @click="openModal = false" :disabled="loading" type="button"
                                 class="w-full sm:w-auto px-6 py-2.5 rounded-xl font-bold text-sm text-slate-600 bg-white border border-slate-200 hover:bg-slate-100 hover:text-slate-800 transition-colors shadow-sm cursor-pointer">
                                 CANCELAR
                             </button>

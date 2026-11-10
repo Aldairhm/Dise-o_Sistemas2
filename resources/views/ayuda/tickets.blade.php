@@ -171,7 +171,7 @@
         </div>
 
         <!-- Contenedor Asíncrono de Tickets -->
-        <div id="contenedorListaTickets" x-show="!cargandoTickets">
+        <div id="contenedorListaTickets" x-show="!cargandoTickets" :aria-busy="cargandoTickets">
             @include('ayuda.tabla-tickets', ['tickets' => $tickets])
         </div>
     </div>
@@ -369,6 +369,7 @@
                 filtroQ: '{{ request('q') }}',
                 filtroModulo: '{{ request('modulo') }}',
                 cargandoTickets: false,
+                solicitudTickets: 0,
 
                 async cambiarEstado(estado) {
                     if (this.estadoTab === estado && !this.cargandoTickets) return;
@@ -416,9 +417,9 @@
                 },
 
                 async cargarTickets(urlDestino = null) {
+                    const solicitud = ++this.solicitudTickets;
                     this.cargandoTickets = true;
                     const url = urlDestino || this.construirUrl(1);
-                    window.history.pushState({}, '', url);
 
                     try {
                         const res = await fetch(url, {
@@ -427,8 +428,12 @@
                                 'X-Requested-With': 'XMLHttpRequest'
                             }
                         });
+                        if (!res.ok || res.redirected) throw new Error('No se pudieron cargar los tickets.');
                         const data = await res.json();
-                        if (data.success && data.html) {
+                        if (solicitud !== this.solicitudTickets) return;
+                        if (!data.success || typeof data.html !== 'string') throw new Error(data.message || 'Respuesta de tickets inválida.');
+                        window.history.pushState({}, '', url);
+                        if (data.success) {
                             const contenedor = document.getElementById('contenedorListaTickets');
                             if (contenedor) {
                                 contenedor.innerHTML = data.html;
@@ -442,9 +447,11 @@
                             }
                         }
                     } catch (err) {
+                        if (solicitud !== this.solicitudTickets) return;
+                        window.Swal?.fire({ icon: 'error', title: 'No se pudieron cargar los tickets', text: 'Inténtalo de nuevo. Se conserva la lista anterior.' });
                         console.error('Error al cargar tickets:', err);
                     } finally {
-                        this.cargandoTickets = false;
+                        if (solicitud === this.solicitudTickets) this.cargandoTickets = false;
                     }
                 },
 

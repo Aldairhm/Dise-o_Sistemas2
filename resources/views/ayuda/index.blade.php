@@ -363,6 +363,8 @@
         const CSRF_TOKEN = "{{ csrf_token() }}";
 
         let urlEvidenciaSubida = '';
+        let solicitudFoto = 0;
+        let enviandoTicket = false;
         let subiendoFoto = false;
         let currentTicketId = '';
 
@@ -405,9 +407,13 @@
                 return;
             }
 
+            const solicitud = ++solicitudFoto;
+            urlEvidenciaSubida = '';
+
             // Mostrar preview local
             const reader = new FileReader();
             reader.onload = function(event) {
+                if (solicitud !== solicitudFoto) return;
                 document.getElementById('waFotoThumb').src = event.target.result;
             };
             reader.readAsDataURL(file);
@@ -433,7 +439,9 @@
                     body: formData
                 });
 
+                if (!response.ok || response.redirected) throw new Error('No se pudo subir la evidencia.');
                 const data = await response.json();
+                if (solicitud !== solicitudFoto) return;
                 if (data.success && data.url) {
                     urlEvidenciaSubida = data.url;
                     document.getElementById('waFotoSubiendoText').innerHTML = '<i class="fas fa-check-circle"></i> Enlace listo para el ticket';
@@ -443,15 +451,18 @@
                     throw new Error(data.message || 'Error al subir');
                 }
             } catch (err) {
+                if (solicitud !== solicitudFoto) return;
                 console.error(err);
                 document.getElementById('waFotoSubiendoText').innerHTML = '<i class="fas fa-exclamation-circle text-rose-500"></i> No se pudo subir el enlace';
                 document.getElementById('waFotoSubiendoText').className = 'text-[10px] text-rose-600 font-medium flex items-center gap-1';
             } finally {
-                subiendoFoto = false;
+                if (solicitud === solicitudFoto) subiendoFoto = false;
             }
         }
 
         function quitarFotoEvidencia() {
+            ++solicitudFoto;
+            subiendoFoto = false;
             urlEvidenciaSubida = '';
             document.getElementById('waFotoInput').value = '';
             document.getElementById('waUploadArea').classList.remove('hidden');
@@ -507,6 +518,7 @@
         }
 
         async function enviarAWhatsapp() {
+            if (enviandoTicket) return;
             if (subiendoFoto) {
                 Swal.fire({
                     icon: 'info',
@@ -538,15 +550,17 @@
             const btnText = document.getElementById('btnEnviarWhatsappText');
             const btnSpinner = document.getElementById('btnEnviarWhatsappSpinner');
 
+            enviandoTicket = true;
             if (btnEnviar && btnText && btnSpinner) {
                 btnEnviar.disabled = true;
+                btnEnviar.setAttribute('aria-busy', 'true');
                 btnText.classList.add('invisible');
                 btnSpinner.style.display = 'flex';
             }
 
             try {
                 // Registrar ticket en base de datos y bitácora
-                await fetch(STORE_TICKET_ROUTE, {
+                const response = await fetch(STORE_TICKET_ROUTE, {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
@@ -561,11 +575,14 @@
                         evidencia_url: urlEvidenciaSubida || null
                     })
                 });
+                if (!response.ok || response.redirected) throw new Error('No se pudo registrar el ticket.');
             } catch (err) {
                 console.error('No se pudo registrar en la bitacora de tickets:', err);
             } finally {
+                enviandoTicket = false;
                 if (btnEnviar && btnText && btnSpinner) {
                     btnEnviar.disabled = false;
+                    btnEnviar.removeAttribute('aria-busy');
                     btnText.classList.remove('invisible');
                     btnSpinner.style.display = 'none';
                 }

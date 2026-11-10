@@ -99,7 +99,7 @@
                                     <button type="button" onclick="openModal('edit', {{ $atributo->id }}, '{{ $atributo->nombre }}')" class="p-2 w-8 h-8 rounded-lg bg-blue-50 text-blue-600 hover:bg-blue-600 hover:text-white transition-colors flex items-center justify-center cursor-pointer" title="Editar">
                                         <i class="fas fa-pen text-xs"></i>
                                     </button>
-                                    <form action="{{ route('atributos.destroy', $atributo->id) }}" method="POST" class="inline" onsubmit="return confirm('¿Seguro que deseas eliminar este atributo?');">
+                                    <form data-loading-form data-loading-label="Eliminando..." action="{{ route('atributos.destroy', $atributo->id) }}" method="POST" class="inline" onsubmit="return confirm('¿Seguro que deseas eliminar este atributo?');">
                                         @csrf
                                         @method('DELETE')
                                         <button type="submit" class="p-2 w-8 h-8 rounded-lg bg-red-50 text-red-600 hover:bg-red-600 hover:text-white transition-colors flex items-center justify-center cursor-pointer" title="Eliminar">
@@ -138,7 +138,7 @@
                             <i class="fas fa-times"></i>
                         </button>
                     </div>
-                    <form id="formAtributo" method="POST" action="{{ route('atributos.store') }}" class="p-6">
+                    <form data-loading-form data-loading-label="Guardando..." id="formAtributo" method="POST" action="{{ route('atributos.store') }}" class="p-6">
                         @csrf
                         <div id="methodContainer"></div>
                         

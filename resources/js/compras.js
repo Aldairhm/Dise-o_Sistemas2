@@ -9,8 +9,11 @@ document.addEventListener("alpine:init", () => {
         busqueda: "",
         lineas: [],
         guardado: false,
+        guardando: false,
         buscando: false,
         timeoutBusqueda: null,
+        solicitudBusqueda: 0,
+        errorBusqueda: '',
 
         init() {
             this.$watch('busqueda', (value) => {
@@ -22,16 +25,20 @@ document.addEventListener("alpine:init", () => {
         },
 
         async buscarEnServidor(termino) {
+            const solicitud = ++this.solicitudBusqueda;
             this.buscando = true;
+            this.errorBusqueda = '';
             try {
                 const response = await fetch(`/compras/buscar-variantes?q=${encodeURIComponent(termino)}`);
+                if (!response.ok) throw new Error('No se pudieron cargar las variantes.');
                 const result = await response.json();
+                if (solicitud !== this.solicitudBusqueda) return;
                 // Si es un paginador de Laravel, los datos están en result.data
                 this.variantes = result.data || []; 
             } catch (error) {
-                console.error("Error buscando variantes", error);
+                if (solicitud === this.solicitudBusqueda) this.errorBusqueda = error.message;
             } finally {
-                this.buscando = false;
+                if (solicitud === this.solicitudBusqueda) this.buscando = false;
             }
         },
 
@@ -83,7 +90,8 @@ document.addEventListener("alpine:init", () => {
         },
 
         async guardarCompra() {
-            if (!this.formularioValido()) return;
+            if (this.guardando || !this.formularioValido()) return;
+            this.guardando = true;
 
             const token = document.querySelector('meta[name="csrf-token"]')?.content;
             const payload = {
@@ -120,6 +128,8 @@ document.addEventListener("alpine:init", () => {
                 window.setTimeout(() => { this.guardado = false; }, 4500);
             } catch (error) {
                 window.alert(error.message);
+            } finally {
+                this.guardando = false;
             }
         },
     }));

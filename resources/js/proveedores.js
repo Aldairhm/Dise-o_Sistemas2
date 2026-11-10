@@ -16,6 +16,7 @@ document.addEventListener("alpine:init", () => {
         proveedores: proveedoresIniciales,
         openModal: false,
         loading: false,
+        cambiosEstado: [],
         errors: {},
         editando: false,
         archivo: null,
@@ -29,12 +30,8 @@ document.addEventListener("alpine:init", () => {
         loadingLista: false,
 
         setEstado(estado) {
-            this.loadingLista = true;
             this.estadoFiltro = estado;
             this.paginaActual = 1;
-            setTimeout(() => {
-                this.loadingLista = false;
-            }, 300);
         },
 
         setVista(vista) {
@@ -42,12 +39,8 @@ document.addEventListener("alpine:init", () => {
         },
 
         clearSearch() {
-            this.loadingLista = true;
             this.busqueda = "";
             this.paginaActual = 1;
-            setTimeout(() => {
-                this.loadingLista = false;
-            }, 300);
         },
 
         // ---------- KPIs (igual que las tarjetas de métricas de Categorías) ----------
@@ -226,7 +219,7 @@ document.addEventListener("alpine:init", () => {
         },
 
         async guardarProveedor() {
-            if (!this.formularioValido()) return;
+            if (this.loading || !this.formularioValido()) return;
 
             this.loading = true;
             this.errors = {};
@@ -286,6 +279,7 @@ document.addEventListener("alpine:init", () => {
         },
 
         async cambiarEstado(proveedor) {
+            if (this.cambiosEstado.includes(proveedor.id)) return;
             let esActivo = !proveedor.deleted_at;
             let accion = esActivo ? "deshabilitar" : "habilitar";
             let colorBoton = esActivo ? "#d33" : "#10b981";
@@ -305,6 +299,8 @@ document.addEventListener("alpine:init", () => {
 
             if (!confirmacion.isConfirmed) return;
 
+            if (this.cambiosEstado.includes(proveedor.id)) return;
+            this.cambiosEstado.push(proveedor.id);
             try {
                 let response = esActivo
                     ? await axios.delete(`/proveedores/${proveedor.id}`)
@@ -326,6 +322,8 @@ document.addEventListener("alpine:init", () => {
                     icon: "error",
                     title: "No se pudo cambiar el estado del proveedor.",
                 });
+            } finally {
+                this.cambiosEstado = this.cambiosEstado.filter(id => id !== proveedor.id);
             }
         },
 
@@ -353,6 +351,8 @@ document.addEventListener("alpine:init", () => {
 
             // 2. Variables de estado para el modal y el formulario
             modalCatalogo: false,
+            guardandoCatalogo: false,
+            eliminandoCatalogos: [],
             archivoSeleccionado: null,
 
             formCatalogo: {
@@ -363,6 +363,7 @@ document.addEventListener("alpine:init", () => {
 
             // 3. Funciones de la interfaz
             abrirModalCatalogo() {
+                if (this.guardandoCatalogo) return;
                 // Limpiamos el formulario antes de abrir
                 this.formCatalogo = {
                     nombre_referencia: "",
@@ -375,6 +376,7 @@ document.addEventListener("alpine:init", () => {
 
             // 4. Lógica para guardar (Soporta archivos y texto gracias a FormData)
             async guardarCatalogo() {
+                if (this.guardandoCatalogo) return;
                 if (!this.formCatalogo.nombre_referencia) {
                     Toast.fire({
                         icon: "warning",
@@ -410,6 +412,7 @@ document.addEventListener("alpine:init", () => {
                     return;
                 }
 
+                this.guardandoCatalogo = true;
                 try {
                     // Ajusta esta ruta a como la tengas en tu web.php
                     const response = await axios.post(
@@ -437,11 +440,14 @@ document.addEventListener("alpine:init", () => {
                         icon: "error",
                         title: "Error al guardar el recurso",
                     });
+                } finally {
+                    this.guardandoCatalogo = false;
                 }
             },
 
             // 5. Lógica para eliminar
             async eliminarCatalogo(id) {
+                if (this.eliminandoCatalogos.includes(id)) return;
                 let confirmacion = await Swal.fire({
                     customClass: { popup: "swal-axstore" },
                     title: "¿Eliminar recurso?",
@@ -457,6 +463,8 @@ document.addEventListener("alpine:init", () => {
 
                 if (!confirmacion.isConfirmed) return;
 
+                if (this.eliminandoCatalogos.includes(id)) return;
+                this.eliminandoCatalogos.push(id);
                 try {
                     // Ajusta esta ruta a tu backend
                     await axios.delete(`/proveedores/catalogos/${id}`);
@@ -473,6 +481,8 @@ document.addEventListener("alpine:init", () => {
                         icon: "error",
                         title: "No se pudo eliminar",
                     });
+                } finally {
+                    this.eliminandoCatalogos = this.eliminandoCatalogos.filter(pendingId => pendingId !== id);
                 }
             },
         }),

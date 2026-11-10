@@ -88,7 +88,7 @@
                     <td class="py-3 px-4 text-center whitespace-nowrap">
                         <div class="flex items-center justify-center gap-1.5">
                             @if($aud->estado === 'activa' && $aud->expira_en > now())
-                                <form id="formRevocar{{ $aud->id }}" action="{{ route('superadmin.auditorias.revocar', $aud->id) }}" method="POST" class="inline">
+                                <form data-loading-label="Revocando..." id="formRevocar{{ $aud->id }}" action="{{ route('superadmin.auditorias.revocar', $aud->id) }}" method="POST" class="inline">
                                     @csrf
                                     <button type="button"
                                             onclick="confirmarRevocacion({{ $aud->id }})"

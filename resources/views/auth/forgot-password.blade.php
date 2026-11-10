@@ -14,6 +14,7 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 
     @vite(['resources/css/forgot-password.css'])
+    @vite(['resources/js/loading-states.js'])
 </head>
 <body>
 
@@ -54,7 +55,7 @@
         @endif
 
         <!-- Formulario -->
-        <form method="POST" action="{{ route('password.email') }}">
+        <form data-loading-form data-loading-label="Enviando..." method="POST" action="{{ route('password.email') }}">
             @csrf
 
             <div class="form-group">

@@ -29,12 +29,13 @@
         </div>
 
         <!-- Skeleton Loading Inteligente para Historial de Auditorías -->
+        <p x-show="errorCarga" x-cloak x-text="errorCarga" role="alert" class="mb-4 rounded-xl border border-rose-200 bg-rose-50 p-3 text-sm text-rose-700"></p>
         <div x-show="cargandoAuditorias" style="display: none;" class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden p-2">
             <x-skeleton-table :rows="5" :cols="8" :avatarCol="null" />
         </div>
 
         <!-- Tabla de Auditorías -->
-        <div id="contenedorTablaHistorialAuditorias" x-show="!cargandoAuditorias" class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+        <div id="contenedorTablaHistorialAuditorias" x-show="!cargandoAuditorias" :aria-busy="cargandoAuditorias" class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
             @include('superadmin.tabla-historial-auditorias', ['auditorias' => $auditorias])
         </div>
 
@@ -44,10 +45,13 @@
         function gestionHistorialAuditorias() {
             return {
                 cargandoAuditorias: false,
+                solicitudCarga: 0,
+                errorCarga: '',
 
                 async cargarAuditorias(urlDestino) {
+                    const solicitud = ++this.solicitudCarga;
                     this.cargandoAuditorias = true;
-                    window.history.pushState({}, '', urlDestino);
+                    this.errorCarga = '';
 
                     try {
                         const res = await fetch(urlDestino, {
@@ -56,8 +60,14 @@
                                 'X-Requested-With': 'XMLHttpRequest'
                             }
                         });
+                        if (!res.ok) throw new Error('No se pudo completar la solicitud.');
                         const data = await res.json();
-                        if (data.success && data.html) {
+                        if (solicitud !== this.solicitudCarga) return;
+                        if (!data.success || typeof data.html !== 'string') {
+                            throw new Error('La respuesta no contiene los datos esperados.');
+                        }
+                        if (data.success) {
+                            window.history.pushState({}, '', urlDestino);
                             const contenedor = document.getElementById('contenedorTablaHistorialAuditorias');
                             if (contenedor) {
                                 contenedor.innerHTML = data.html;
@@ -65,9 +75,11 @@
                             }
                         }
                     } catch (err) {
+                        if (solicitud !== this.solicitudCarga) return;
+                        this.errorCarga = 'No se pudo cargar el historial de auditorías. Intenta de nuevo.';
                         console.error('Error al cargar historial de auditorías:', err);
                     } finally {
-                        this.cargandoAuditorias = false;
+                        if (solicitud === this.solicitudCarga) this.cargandoAuditorias = false;
                     }
                 },
 
@@ -104,7 +116,10 @@
                 reverseButtons: true
             }).then((result) => {
                 if (result.isConfirmed) {
-                    document.getElementById('formRevocar' + id).submit();
+                    const form = document.getElementById('formRevocar' + id);
+                    if (!form) return;
+                    if (window.AxLoading?.beginForm?.(form, form.querySelector('button')) === false) return;
+                    form.submit();
                 }
             });
         }

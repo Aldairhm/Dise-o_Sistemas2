@@ -39,9 +39,9 @@
                 </button>
 
                 {{-- Botón Generar Respaldo --}}
-                <div x-data="{ loading: false }">
+                <div x-data="{ loading: false }" @pageshow.window="loading = false">
                     <form action="{{ route('backups.create') }}" method="POST"
-                        @submit="loading = true">
+                        @submit="if (loading) { $event.preventDefault(); } else { loading = true; }">
                         @csrf
                         <button type="submit"
                             :disabled="loading"
@@ -479,6 +479,7 @@
                 },
 
                 confirmRestoreAction() {
+                    if (this.restoreLoading) return;
                     const form = document.getElementById('restoreForm');
                     if (!form) return;
 

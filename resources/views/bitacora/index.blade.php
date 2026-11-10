@@ -279,12 +279,13 @@
         </div>
 
         <!-- Skeleton Loading Inteligente para Bitácora -->
+        <p x-show="errorCarga" x-cloak x-text="errorCarga" role="alert" class="mb-4 rounded-xl border border-rose-200 bg-rose-50 p-3 text-sm text-rose-700"></p>
         <div x-show="cargandoBitacora" style="display: none;" class="bg-white rounded-2xl border border-slate-200/80 shadow-sm overflow-hidden mb-6 p-2">
             <x-skeleton-table :rows="8" :cols="7" :avatarCol="1" />
         </div>
 
         <!-- TABLA DE MOVIMIENTOS -->
-        <div id="contenedorTablaBitacora" x-show="!cargandoBitacora" class="bg-white rounded-2xl border border-slate-200/80 shadow-sm overflow-hidden mb-6">
+        <div id="contenedorTablaBitacora" x-show="!cargandoBitacora" :aria-busy="cargandoBitacora" class="bg-white rounded-2xl border border-slate-200/80 shadow-sm overflow-hidden mb-6">
             @include('bitacora.tabla-bitacora', ['registros' => $registros])
         </div>
 
@@ -419,6 +420,8 @@
                 filtroHasta: config.hasta || '',
                 auditoriaId: config.auditoria_id || '',
                 cargandoBitacora: false,
+                solicitudCarga: 0,
+                errorCarga: '',
 
                 async ejecutarFiltro() {
                     await this.cargarBitacora();
@@ -467,9 +470,10 @@
                 },
 
                 async cargarBitacora(urlDestino = null) {
+                    const solicitud = ++this.solicitudCarga;
                     this.cargandoBitacora = true;
+                    this.errorCarga = '';
                     const url = urlDestino || this.construirUrl(1);
-                    window.history.pushState({}, '', url);
 
                     try {
                         const res = await fetch(url, {
@@ -478,8 +482,14 @@
                                 'X-Requested-With': 'XMLHttpRequest'
                             }
                         });
+                        if (!res.ok) throw new Error('No se pudo completar la solicitud.');
                         const data = await res.json();
-                        if (data.success && data.html) {
+                        if (solicitud !== this.solicitudCarga) return;
+                        if (!data.success || typeof data.html !== 'string') {
+                            throw new Error('La respuesta no contiene los datos esperados.');
+                        }
+                        if (data.success) {
+                            window.history.pushState({}, '', url);
                             const contenedor = document.getElementById('contenedorTablaBitacora');
                             if (contenedor) {
                                 contenedor.innerHTML = data.html;
@@ -487,9 +497,11 @@
                             }
                         }
                     } catch (err) {
+                        if (solicitud !== this.solicitudCarga) return;
+                        this.errorCarga = 'No se pudo cargar la bitácora. Intenta de nuevo.';
                         console.error('Error al cargar bitácora:', err);
                     } finally {
-                        this.cargandoBitacora = false;
+                        if (solicitud === this.solicitudCarga) this.cargandoBitacora = false;
                     }
                 },
 

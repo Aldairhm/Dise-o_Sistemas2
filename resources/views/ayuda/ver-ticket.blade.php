@@ -168,7 +168,7 @@
 
             <!-- Formulario de Respuesta o Aviso de Ticket Cerrado -->
             @if(!in_array($ticket->estado, ['Resuelta', 'Cancelada']))
-                <form method="POST" action="{{ route('ayuda.tickets.responder', $ticket->id) }}" class="p-5 bg-slate-50 border-t border-slate-200 space-y-3">
+                <form data-loading-form data-loading-label="Procesando..." method="POST" action="{{ route('ayuda.tickets.responder', $ticket->id) }}" class="p-5 bg-slate-50 border-t border-slate-200 space-y-3">
                     @csrf
                     <div>
                         <textarea name="mensaje" required rows="3" placeholder="Escribe tu respuesta o información adicional..." class="w-full p-3.5 rounded-2xl border border-slate-200 text-xs text-slate-700 focus:outline-none focus:border-blue-500 bg-white"></textarea>
@@ -253,7 +253,7 @@
                 </button>
             </div>
 
-            <form method="POST" action="{{ route('ayuda.tickets.escalar', $ticket->id) }}" class="p-6 space-y-4 text-xs">
+            <form data-loading-form data-loading-label="Procesando..." method="POST" action="{{ route('ayuda.tickets.escalar', $ticket->id) }}" class="p-6 space-y-4 text-xs">
                 @csrf
                 <div>
                     <label class="block font-bold text-slate-700 mb-1">
@@ -292,7 +292,7 @@
                 </button>
             </div>
 
-            <form id="formCambiarEstadoTicket" method="POST" action="{{ route('ayuda.tickets.estado', $ticket->id) }}" novalidate class="p-6 space-y-4 text-xs">
+            <form data-loading-form data-loading-label="Procesando..." id="formCambiarEstadoTicket" method="POST" action="{{ route('ayuda.tickets.estado', $ticket->id) }}" novalidate class="p-6 space-y-4 text-xs">
                 @csrf
                 @method('PATCH')
                 <div>

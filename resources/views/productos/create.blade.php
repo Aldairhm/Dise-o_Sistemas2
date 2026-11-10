@@ -62,7 +62,7 @@
 
         {{-- FORMULARIO --}}
         <div class="bg-white rounded-2xl shadow-sm border border-slate-200/80 p-6 sm:p-8">
-            <form action="{{ route('productos.store') }}" method="POST" class="p-6 md:p-8" enctype="multipart/form-data" novalidate>
+            <form data-loading-form data-loading-label="Guardando..." action="{{ route('productos.store') }}" method="POST" class="p-6 md:p-8" enctype="multipart/form-data" novalidate>
                 @csrf
 
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">

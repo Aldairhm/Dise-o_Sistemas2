@@ -111,7 +111,7 @@
         <button type="button"
                 data-id="{{ $user->id }}"
                 data-name="{{ $user->nombre_real ?? $user->username }}"
-                onclick="confirmDeleteUser(this.dataset.id, this.dataset.name)"
+                onclick="confirmDeleteUser(this.dataset.id, this.dataset.name, this)"
                 class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md bg-rose-50 hover:bg-rose-100 text-rose-600 font-semibold text-xs transition-colors cursor-pointer"
                 title="Eliminar Usuario">
             <i class="fas fa-trash-can"></i>

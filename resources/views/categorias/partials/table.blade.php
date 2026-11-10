@@ -101,7 +101,7 @@
                             @if($isBaja)
                                 <!-- Habilitar -->
                                 <button type="button"
-                                        onclick="toggleStatus({{ $categoria->id }}, '{{ addslashes($categoria->nombre) }}', 1)"
+                                        onclick="toggleStatus({{ $categoria->id }}, '{{ addslashes($categoria->nombre) }}', 1, this)"
                                         class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-emerald-50 hover:bg-emerald-100 text-emerald-600 font-bold text-xs transition-colors cursor-pointer border border-emerald-100"
                                         title="Habilitar categoría">
                                     <i class="fas fa-check text-xs"></i>
@@ -110,7 +110,7 @@
                             @else
                                 <!-- Deshabilitar -->
                                 <button type="button"
-                                        onclick="toggleStatus({{ $categoria->id }}, '{{ addslashes($categoria->nombre) }}', 0)"
+                                        onclick="toggleStatus({{ $categoria->id }}, '{{ addslashes($categoria->nombre) }}', 0, this)"
                                         class="w-8 h-8 rounded-lg {{ $tieneProductos ? 'bg-slate-100 text-slate-300 cursor-not-allowed' : 'bg-slate-100 hover:bg-amber-100 text-slate-500 hover:text-amber-600 cursor-pointer' }} flex items-center justify-center transition-colors"
                                         title="{{ $tieneProductos ? 'No se puede deshabilitar: tiene productos asociados' : 'Deshabilitar' }}"
                                         {{ $tieneProductos ? 'disabled' : '' }}>

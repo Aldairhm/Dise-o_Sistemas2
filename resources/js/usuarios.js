@@ -1,6 +1,7 @@
 const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
 let searchTimeout = null;
 let currentView = localStorage.getItem('usr_view') ?? 'table';
+let usersRequest = null;
 
 // ─── TOGGLE VISTA TABLA / TARJETAS ───
 function setView(view) {
@@ -18,6 +19,10 @@ function setView(view) {
     } else {
         tw.classList.add('hidden'); cw.classList.remove('hidden');
         bc.classList.add('usr-view-active'); bt.classList.remove('usr-view-active');
+    }
+    if (usersRequest) {
+        tw.classList.add('hidden');
+        cw.classList.add('hidden');
     }
 }
 
@@ -206,6 +211,7 @@ function hideModalAlert() {
 // ─── ENVIO DEL FORMULARIO ───
 async function handleUserSubmit(event) {
     event.preventDefault();
+    if (document.getElementById('btnSubmitModal')?.disabled) return;
     hideModalAlert();
 
     const userId = document.getElementById('userId').value;
@@ -216,13 +222,6 @@ async function handleUserSubmit(event) {
     const submitBtn = document.getElementById('btnSubmitModal');
     const submitContent = document.getElementById('btnSubmitContent');
     const submitSpinner = document.getElementById('btnSubmitSpinner');
-
-    if (submitBtn) submitBtn.disabled = true;
-    if (submitContent) submitContent.classList.add('invisible');
-    if (submitSpinner) {
-        submitSpinner.classList.remove('hidden');
-        submitSpinner.classList.add('flex');
-    }
 
     const payload = {
         _token: csrfToken,
@@ -235,8 +234,6 @@ async function handleUserSubmit(event) {
     
     if (payload.telefono && !/^[267]\d{3}-\d{4}$/.test(payload.telefono)) {
         showModalAlert('El teléfono ingresado no tiene un formato válido para El Salvador (XXXX-XXXX).');
-        submitBtn.disabled = false;
-        submitBtn.classList.remove('opacity-75');
         return;
     }
 
@@ -246,6 +243,15 @@ async function handleUserSubmit(event) {
         payload.password = pwd;
         payload.password_confirmation = pwdConf;
     }
+
+    if (submitBtn) submitBtn.disabled = true;
+    if (submitContent) submitContent.classList.add('invisible');
+    if (submitSpinner) {
+        submitSpinner.classList.remove('hidden');
+        submitSpinner.classList.add('flex');
+    }
+
+    submitBtn?.setAttribute('aria-busy', 'true');
 
     try {
         const response = await fetch(url, {
@@ -294,6 +300,7 @@ async function handleUserSubmit(event) {
         console.error(err);
         showModalAlert('Ocurrió un error inesperado al conectar con el servidor.');
     } finally {
+        submitBtn?.removeAttribute('aria-busy');
         if (submitBtn) submitBtn.disabled = false;
         if (submitContent) submitContent.classList.remove('invisible');
         if (submitSpinner) {
@@ -334,63 +341,63 @@ function resetAllFilters() {
     applyFilters();
 }
 
-async function applyFilters() {
+async function applyFilters(page = null) {
     const search = document.getElementById('searchInput').value.trim();
     const rol = document.getElementById('roleFilter').value;
     const estado = document.getElementById('statusFilter').value;
-
     const params = new URLSearchParams();
+    if (page) params.append('page', page);
     if (search) params.append('search', search);
     if (rol !== 'todos') params.append('rol', rol);
     if (estado !== 'todos') params.append('estado', estado);
 
+    usersRequest?.abort();
+    const request = new AbortController();
+    usersRequest = request;
     const skeleton = document.getElementById('tableSkeleton');
     const tableWrapper = document.getElementById('usersTableWrapper');
     const cardsWrapper = document.getElementById('usersCardsWrapper');
-
-    if (skeleton && tableWrapper) {
-        skeleton.classList.remove('hidden');
-        tableWrapper.classList.add('hidden');
-        if (cardsWrapper) cardsWrapper.classList.add('hidden');
-    }
+    skeleton?.classList.remove('hidden');
+    [tableWrapper, cardsWrapper].forEach(element => {
+        element?.classList.add('hidden');
+        element?.setAttribute('aria-busy', 'true');
+    });
 
     try {
         const response = await fetch(`/usuarios?${params.toString()}`, {
-            headers: {
-                'X-Requested-With': 'XMLHttpRequest',
-                'Accept': 'application/json',
-            }
+            signal: request.signal,
+            headers: { 'X-Requested-With': 'XMLHttpRequest', 'Accept': 'application/json' },
         });
-
+        if (!response.ok) throw new Error('No se pudieron cargar los usuarios.');
         const data = await response.json();
-        if (data.success) {
-            tableWrapper.innerHTML = data.html;
-            document.getElementById('usersCardsGrid').innerHTML = data.cards ?? '';
-
-            // Actualizar KPIs
-            if (data.stats) {
-                document.getElementById('kpiTotal').textContent = data.stats.total;
-                document.getElementById('kpiAdmins').textContent = data.stats.admins;
-                document.getElementById('kpiVendedores').textContent = data.stats.vendedores;
-                document.getElementById('kpiActivos').textContent = data.stats.activos;
-            }
+        if (usersRequest !== request) return;
+        if (!data.success) throw new Error(data.message || 'No se pudieron cargar los usuarios.');
+        tableWrapper.innerHTML = data.html;
+        document.getElementById('usersCardsGrid').innerHTML = data.cards ?? '';
+        if (data.stats) {
+            document.getElementById('kpiTotal').textContent = data.stats.total;
+            document.getElementById('kpiAdmins').textContent = data.stats.admins;
+            document.getElementById('kpiVendedores').textContent = data.stats.vendedores;
+            document.getElementById('kpiActivos').textContent = data.stats.activos;
         }
     } catch (err) {
-        console.error('Error al filtrar usuarios:', err);
+        if (err.name !== 'AbortError' && usersRequest === request) {
+            console.error('Error al cargar usuarios:', err);
+            Swal.fire({ icon: 'error', title: 'No se pudieron cargar los usuarios', text: 'Intenta de nuevo.', customClass: { popup: 'swal-axstore' } });
+        }
     } finally {
-        if (skeleton && tableWrapper) {
-            skeleton.classList.add('hidden');
-            if (currentView === 'cards') {
-                if (cardsWrapper) cardsWrapper.classList.remove('hidden');
-            } else {
-                tableWrapper.classList.remove('hidden');
-            }
+        if (usersRequest === request) {
+            usersRequest = null;
+            skeleton?.classList.add('hidden');
+            [tableWrapper, cardsWrapper].forEach(element => element?.removeAttribute('aria-busy'));
+            setView(currentView);
         }
     }
 }
 
 // ─── ALTERNAR ESTADO ───
 async function toggleUserStatus(userId, btnElement) {
+    if (btnElement.disabled) return;
     const currentState = parseInt(btnElement.dataset.current);
     const estadoActivo = (currentState === 0);
     const nombre = btnElement.dataset.name || 'el usuario';
@@ -415,7 +422,8 @@ async function toggleUserStatus(userId, btnElement) {
         reverseButtons: true,
     });
 
-    if (!result.isConfirmed) return;
+    if (!result.isConfirmed || btnElement.disabled) return;
+    window.AxLoading?.setButton(btnElement, true, 'Actualizando...');
 
     try {
         const response = await fetch(`/usuarios/${userId}/toggle-status`, {
@@ -452,15 +460,19 @@ async function toggleUserStatus(userId, btnElement) {
             title: data.message
         });
 
-        applyFilters();
+        await applyFilters();
 
     } catch (err) {
         console.error(err);
+        Swal.fire({ icon: 'error', title: 'No se pudo actualizar el usuario', text: 'Intenta de nuevo.' });
+    } finally {
+        window.AxLoading?.setButton(btnElement, false);
     }
 }
 
 // ─── ELIMINAR USUARIO (Soft Delete) ───
-function confirmDeleteUser(userId, userName) {
+function confirmDeleteUser(userId, userName, button) {
+    if (button?.disabled) return;
     Swal.fire({
         title: '¿Eliminar Usuario?',
         html: `¿Estás seguro de que deseas eliminar al usuario <b>${userName}</b> de la lista? El registro se conservará en la base de datos.`,
@@ -474,7 +486,8 @@ function confirmDeleteUser(userId, userName) {
             popup: 'swal-axstore'
         }
     }).then(async (result) => {
-        if (result.isConfirmed) {
+        if (result.isConfirmed && !button?.disabled) {
+            window.AxLoading?.setButton(button, true, 'Eliminando...');
             try {
                 const response = await fetch(`/usuarios/${userId}`, {
                     method: 'DELETE',
@@ -506,59 +519,25 @@ function confirmDeleteUser(userId, userName) {
                     customClass: { popup: 'swal-axstore' }
                 });
 
-                applyFilters();
+                await applyFilters();
 
             } catch (err) {
                 console.error(err);
+                Swal.fire({ icon: 'error', title: 'No se pudo eliminar el usuario', text: 'Intenta de nuevo.' });
+            } finally {
+                window.AxLoading?.setButton(button, false);
             }
         }
     });
 }
 
-// ─── PAGINACION ───
+// La paginación comparte el mismo skeleton y control de solicitudes que los filtros.
 document.getElementById('usersTableWrapper').addEventListener('click', function (e) {
     const link = e.target.closest('.pagination-link');
     if (!link) return;
     e.preventDefault();
-
-    const url = new URL(link.href);
-    const page = url.searchParams.get('page');
-    if (!page) return;
-
-    const search = document.getElementById('searchInput').value.trim();
-    const rol = document.getElementById('roleFilter').value;
-    const estado = document.getElementById('statusFilter').value;
-
-    const params = new URLSearchParams();
-    params.append('page', page);
-    if (search) params.append('search', search);
-    if (rol !== 'todos') params.append('rol', rol);
-    if (estado !== 'todos') params.append('estado', estado);
-
-    const loader = document.getElementById('tableLoading');
-    loader.classList.remove('hidden');
-
-    fetch(`/usuarios?${params.toString()}`, {
-        headers: {
-            'X-Requested-With': 'XMLHttpRequest',
-            'Accept': 'application/json',
-        }
-    })
-        .then(res => res.json())
-        .then(data => {
-            if (data.success) {
-                document.getElementById('usersTableWrapper').innerHTML = data.html;
-                document.getElementById('usersCardsGrid').innerHTML = data.cards ?? '';
-                if (data.stats) {
-                    document.getElementById('kpiTotal').textContent = data.stats.total;
-                    document.getElementById('kpiAdmins').textContent = data.stats.admins;
-                    document.getElementById('kpiVendedores').textContent = data.stats.vendedores;
-                    document.getElementById('kpiActivos').textContent = data.stats.activos;
-                }
-            }
-        })
-        .catch(err => console.error('Error al paginar:', err))
-        .finally(() => loader.classList.add('hidden'));
+    const page = new URL(link.href).searchParams.get('page');
+    if (page) applyFilters(page);
 });
 
 

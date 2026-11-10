@@ -60,7 +60,7 @@
             $selectedProductoNombre = $selectedProductoObj ? $selectedProductoObj->nombre : 'Todos';
         @endphp
         <section class="bg-white border border-slate-200/80 rounded-2xl p-4 sm:p-5 shadow-xs">
-            <form method="GET" action="{{ route('ventas.pedidos') }}" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-12 gap-3.5 items-end">
+            <form data-loading-form data-loading-label="Filtrando..." data-loading-target="#pedidosFilterContent" data-loading-skeleton="#pedidosFilterSkeleton" method="GET" action="{{ route('ventas.pedidos') }}" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-12 gap-3.5 items-end">
                 
                 <!-- BÚSQUEDA RÁPIDA -->
                 <div class="sm:col-span-2 md:col-span-3 lg:col-span-3">
@@ -346,11 +346,11 @@
         <section class="bg-white border border-slate-200 rounded-2xl shadow-sm overflow-hidden relative">
             
             <!-- SKELETON LOADER PARA TRANSICIÓN DE APARTADOS Y FILTRADO -->
-            <div x-show="cargandoFiltros" class="p-6">
+            <div id="pedidosFilterSkeleton" class="hidden p-6">
                 <x-skeleton-table :rows="6" :cols="7" />
             </div>
 
-            <div x-show="!cargandoFiltros">
+            <div id="pedidosFilterContent">
             <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-5 border-b border-slate-100 bg-slate-50/60">
                 <div class="flex items-center gap-3">
                     <div class="w-9 h-9 rounded-xl flex items-center justify-center font-bold text-sm shadow-xs"
@@ -1574,7 +1574,7 @@
                         </button>
                     </div>
                     
-                    <form action="/devoluciones/venta" method="POST" enctype="multipart/form-data" novalidate class="p-6 space-y-6" @click.stop onsubmit="event.preventDefault(); if (!this.checkValidity()) { let errorMsg = 'Por favor, completa todos los campos requeridos.'; this.querySelectorAll('input[type=number]').forEach(i => { if(i.validity.rangeOverflow) errorMsg = 'No puedes devolver más unidades de las que vendiste.'; }); Swal.fire({ toast: true, position: 'top-end', showConfirmButton: false, timer: 5000, timerProgressBar: true, icon: 'error', title: 'Datos inválidos', text: errorMsg }); return; } Swal.fire({ title: '¿Estás seguro?', text: 'Verifica que las cantidades sean correctas antes de procesar.', icon: 'warning', showCancelButton: true, confirmButtonColor: '#3085d6', cancelButtonColor: '#d33', confirmButtonText: 'Sí, procesar', cancelButtonText: 'Cancelar' }).then((result) => { if (result.isConfirmed) { this.submit(); } });">
+                    <form action="/devoluciones/venta" method="POST" data-loading-form data-loading-label="Procesando..." enctype="multipart/form-data" novalidate class="p-6 space-y-6" @click.stop onsubmit="event.preventDefault(); if (!this.checkValidity()) { let errorMsg = 'Por favor, completa todos los campos requeridos.'; this.querySelectorAll('input[type=number]').forEach(i => { if(i.validity.rangeOverflow) errorMsg = 'No puedes devolver más unidades de las que vendiste.'; }); Swal.fire({ toast: true, position: 'top-end', showConfirmButton: false, timer: 5000, timerProgressBar: true, icon: 'error', title: 'Datos inválidos', text: errorMsg }); return; } Swal.fire({ title: '¿Estás seguro?', text: 'Verifica que las cantidades sean correctas antes de procesar.', icon: 'warning', showCancelButton: true, confirmButtonColor: '#3085d6', cancelButtonColor: '#d33', confirmButtonText: 'Sí, procesar', cancelButtonText: 'Cancelar' }).then((result) => { if (result.isConfirmed && window.AxLoading.beginForm(this)) { this.submit(); } });">
                         @csrf
                         <input type="hidden" name="venta_id" :value="ventaSeleccionada?.id">
 
@@ -2352,7 +2352,7 @@
                         <div class="flex items-center gap-2">
                             <button 
                                 type="button" 
-                                @click="descargarImagenActual()" 
+                                @click="descargarImagenActual($event.currentTarget)"
                                 class="text-xs text-white hover:bg-white/20 bg-white/10 flex items-center gap-1.5 font-bold transition-all px-3 py-1.5 rounded-xl cursor-pointer"
                                 title="Descargar imagen con folio y fecha de venta"
                             >
@@ -2376,7 +2376,7 @@
                         <div class="flex items-center gap-2">
                             <button 
                                 type="button" 
-                                @click="descargarImagenActual()" 
+                                @click="descargarImagenActual($event.currentTarget)"
                                 class="px-3.5 py-1.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-bold transition-colors cursor-pointer flex items-center gap-1.5"
                             >
                                 <i class="fas fa-download text-[11px]"></i>
@@ -2463,27 +2463,17 @@
                 errorObservacionesEstadoMensaje: '',
 
                 iniciarFiltrado(event) {
-                    setTimeout(() => {
-                        this.cargandoFiltros = true;
-                    }, 50);
+                    this.cargandoFiltros = true;
                 },
 
                 cambiarTab(tab) {
                     if (this.tabActiva === tab) return;
-                    this.cargandoFiltros = true;
                     this.tabActiva = tab;
-                    setTimeout(() => {
-                        this.cargandoFiltros = false;
-                    }, 120);
                 },
 
                 cambiarSubFiltro(sub) {
                     if (this.subFiltroPendiente === sub) return;
-                    this.cargandoFiltros = true;
                     this.subFiltroPendiente = sub;
-                    setTimeout(() => {
-                        this.cargandoFiltros = false;
-                    }, 100);
                 },
 
                 nombreTabActual() {
@@ -2837,6 +2827,7 @@
                 },
 
                 async abrirDetalle(id) {
+                    const solicitud = this.solicitudDetalle = (this.solicitudDetalle || 0) + 1;
                     this.cargandoDetalle = true;
                     this.ventaSeleccionada = null;
                     this.modalDetalleAbierto = true;
@@ -2851,8 +2842,10 @@
                         if (!response.ok) throw new Error('No se pudo cargar la información de la venta.');
 
                         const data = await response.json();
+                        if (solicitud !== this.solicitudDetalle) return;
                         this.ventaSeleccionada = data.venta;
                     } catch (error) {
+                        if (solicitud !== this.solicitudDetalle) return;
                         console.error('Error al obtener detalle:', error);
                         Swal.fire({
                             icon: 'error',
@@ -2861,7 +2854,7 @@
                         });
                         this.modalDetalleAbierto = false;
                     } finally {
-                        this.cargandoDetalle = false;
+                        if (solicitud === this.solicitudDetalle) this.cargandoDetalle = false;
                     }
                 },
 
@@ -2877,15 +2870,16 @@
                     this.comprobanteZoomTitulo = '';
                 },
 
-                descargarImagenActual() {
+                descargarImagenActual(button) {
                     if (!this.comprobanteZoomUrl) return;
+                    if (button && !window.AxLoading.setButton(button, true, 'Descargando...')) return;
                     const url = this.comprobanteZoomUrl;
                     const extMatch = url.match(/\.([a-zA-Z0-9]+)(?:\?|#|$)/);
                     const ext = extMatch ? extMatch[1] : 'jpg';
                     const filename = (this.comprobanteZoomNombre || 'VNT_comprobante') + '.' + ext;
 
                     fetch(url)
-                        .then(res => res.blob())
+                        .then(res => { if (!res.ok) throw new Error('No se pudo descargar la imagen.'); return res.blob(); })
                         .then(blob => {
                             const blobUrl = window.URL.createObjectURL(blob);
                             const a = document.createElement('a');
@@ -2905,7 +2899,8 @@
                             document.body.appendChild(a);
                             a.click();
                             document.body.removeChild(a);
-                        });
+                        })
+                        .finally(() => { if (button) window.AxLoading.setButton(button, false); });
                 },
 
                 nombreComprobanteVenta(tipo) {
@@ -2937,6 +2932,8 @@
                 impresionDesdeDetalle: false,
 
                 cerrarDetalle() {
+                    this.solicitudDetalle = (this.solicitudDetalle || 0) + 1;
+                    this.cargandoDetalle = false;
                     this.modalDetalleAbierto = false;
                     this.ventaSeleccionada = null;
                     this.impresionDesdeDetalle = false;

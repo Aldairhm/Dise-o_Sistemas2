@@ -13,9 +13,13 @@
                 </span>
                 <strong class="text-sm font-bold text-gray-900">Notificaciones</strong>
             </div>
-            <button type="button" data-bell-read-all class="text-xs font-semibold text-blue-600 hover:text-blue-800 hover:underline transition">Marcar todas como leídas</button>
+            <button type="button" data-bell-read-all disabled class="text-xs font-semibold text-blue-600 hover:text-blue-800 hover:underline transition">Marcar todas como leídas</button>
         </div>
         <p data-bell-status role="status" class="p-4 text-center text-xs text-gray-500">Cargando notificaciones…</p>
+        <div data-bell-loading class="space-y-3 p-3" role="status" aria-label="Cargando notificaciones...">
+            <x-skeleton-card />
+            <x-skeleton-card />
+        </div>
         <ul data-bell-items></ul>
         <a href="{{ route('notifications.index') }}" class="block border-t border-gray-100 p-3 text-center text-xs font-bold text-blue-700 hover:bg-blue-50 transition sticky bottom-0 bg-white">Ver todas las notificaciones</a>
     </section>
