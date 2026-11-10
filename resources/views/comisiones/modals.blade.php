@@ -234,7 +234,6 @@
                         class="w-full py-2.5 px-3.5 bg-slate-50 border border-slate-200 focus:border-emerald-500 rounded-xl text-sm font-semibold text-slate-700 focus:ring-2 focus:ring-emerald-500/20 focus:outline-none transition-all">
                     <option value="Efectivo">Efectivo</option>
                     <option value="Transferencia Bancaria">Transferencia Bancaria</option>
-                    <option value="Compensación de Saldo" id="optCompensacionSaldo" class="hidden">Compensación de Saldo (Neto $0.00)</option>
                 </select>
             </div>
 
@@ -968,11 +967,6 @@ function handleMetodoPagoLiquidar(metodo) {
         container.classList.remove('hidden');
         if (labelRef) labelRef.innerHTML = 'N° de Referencia Bancaria <span class="text-slate-400 font-normal normal-case">(opcional)</span>';
         if (inputRef) inputRef.placeholder = 'Ej: Transferencia #984213, Cuenta origen/destino...';
-    } else if (metodo === 'Compensación de Saldo') {
-        container.classList.add('hidden');
-        input.value = '';
-        if (labelRef) labelRef.innerHTML = 'N° de Referencia / Comprobante de Cruce <span class="text-slate-400 font-normal normal-case">(opcional)</span>';
-        if (inputRef) inputRef.placeholder = 'Ej: Compensación mutua de saldos #001';
     } else {
         container.classList.add('hidden');
         input.value = '';
@@ -1161,7 +1155,10 @@ async function verDetalleComision(id) {
         if (c.estado === 'Pagada') {
             pagoCard?.classList.remove('hidden');
             const mPago = document.getElementById('detMetodoPago');
-            if (mPago) mPago.innerHTML = `<i class="fas ${c.metodo_pago === 'Transferencia Bancaria' ? 'fa-university text-blue-600' : (c.metodo_pago === 'Compensación de Saldo' ? 'fa-scale-balanced text-indigo-600' : (c.metodo_pago === 'Efectivo' ? 'fa-money-bill-wave text-emerald-600' : 'fa-wallet text-indigo-600'))} mr-1"></i> ${c.metodo_pago || 'Efectivo'}`;
+            if (mPago) {
+                const pagoIcon = c.metodo_pago === 'Transferencia Bancaria' ? 'fa-university text-blue-600' : (c.metodo_pago === 'Efectivo' ? 'fa-money-bill-wave text-emerald-600' : 'fa-wallet text-indigo-600');
+                mPago.innerHTML = `<i class="fas ${pagoIcon} mr-1"></i> ${c.metodo_pago || 'Efectivo'}`;
+            }
             const rPago = document.getElementById('detReferenciaPago');
             if (rPago) rPago.textContent = c.referencia_pago ? `Ref: ${c.referencia_pago}` : 'Sin referencia bancaria';
             const fLiq = document.getElementById('detFechaLiquidacion');

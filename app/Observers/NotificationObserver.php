@@ -52,17 +52,41 @@ class NotificationObserver
 
             $seller = $model->usuario()->first();
             $ids = $seller?->isVendedor() ? [$seller->id] : [];
-            $notifyAdmins = $shipping ? $model->estado === 'Entregada' : $created;
+            // Los administradores son notificados de todas las ventas creadas (especialmente pendientes de envío para confirmar),
+            // y en envíos cuando se marcan como entregadas.
+            $notifyAdmins = $created || ($shipping && $model->estado === 'Entregada');
             if ($notifyAdmins) {
                 $ids = array_merge($ids, $service->roles('admin'));
             }
             $old = $created ? null : $model->getRawOriginal('estado');
             $channel = $shipping ? 'por envío' : 'en punto de venta';
-            $title = $shipping ? "Venta #{$model->id}: {$model->estado}" : "Venta #{$model->id} realizada";
+            
+            if ($created) {
+                if ($shipping && $model->estado === 'Pendiente') {
+                    $title = "Nueva venta por envío #{$model->id} (Pendiente)";
+                    $priority = 'importante';
+                } else {
+                    $title = "Venta #{$model->id} realizada";
+                    $priority = 'informativa';
+                }
+            } else {
+                $title = "Venta #{$model->id}: {$model->estado}";
+                $priority = in_array($model->estado, ['Cancelada', 'Devolución']) ? 'importante' : 'informativa';
+            }
+
             $sellerName = $seller?->nombre_real ?? "Usuario #{$model->id_usuario}";
-            $emit($created ? 'venta_creada' : 'venta_estado', 'ventas', in_array($model->estado, ['Cancelada', 'Devolución']) ? 'importante' : 'informativa',
+            if ($created) {
+                $amount = '$'.number_format($model->total, 2);
+                $message = ($shipping && $model->estado === 'Pendiente')
+                    ? "Se registró la venta por envío #{$model->id} de {$sellerName} por {$amount}. Requiere confirmación."
+                    : "Se registró la venta {$channel} #{$model->id} de {$sellerName} por {$amount}.";
+            } else {
+                $message = "La venta por envío #{$model->id} cambió de {$old} a {$model->estado}.";
+            }
+
+            $emit($created ? 'venta_creada' : 'venta_estado', 'ventas', $priority,
                 $title,
-                $created ? "Se registró la venta {$channel} #{$model->id} de {$sellerName} por $".number_format($model->total, 2)."." : "La venta por envío #{$model->id} cambió de {$old} a {$model->estado}.",
+                $message,
                 'venta', $model->id, $ids, ['previous_state' => $old, 'state' => $model->estado], true);
         } elseif ($model instanceof ComisionVendedor && ($created || $model->wasChanged(['estado', 'monto', 'porcentaje', 'concepto']))) {
             if (!$model->vendedor()->where('rol', 'vendedor')->exists()) {

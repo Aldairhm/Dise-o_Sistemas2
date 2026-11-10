@@ -7,6 +7,8 @@ use App\Models\ComisionVendedor;
 use App\Models\Devolucion;
 use App\Models\Salida;
 use App\Models\User;
+use App\Models\NotificationDelivery;
+use App\Models\NotificationEvent;
 use App\Models\Venta;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Auth;
@@ -130,25 +132,21 @@ class ComisionService
 
             $sumaTotal = round((float) $comisiones->sum('monto'), 2);
 
-            if ($comisiones->isEmpty() || $sumaTotal < 0) {
+            if ($comisiones->isEmpty() || $sumaTotal <= 0) {
                 return collect();
             }
 
             $adminId = Auth::id();
             $ahora = now();
-            $esCompensacion = ($sumaTotal == 0.0);
-            $metodoFinal = $esCompensacion ? 'Compensación de Saldo' : $metodoPago;
 
             foreach ($comisiones as $comision) {
                 $notasComision = (float) $comision->monto < 0
                     ? trim(($comision->notas ? $comision->notas . ' | ' : '') . 'Ajuste negativo aplicado en liquidación.')
-                    : ($esCompensacion
-                        ? trim(($comision->notas ? $comision->notas . ' | ' : '') . 'Liquidada por compensación mutua de saldo ($0.00).')
-                        : $notasFin);
+                    : $notasFin;
 
                 $comision->update([
                     'estado'             => 'Pagada',
-                    'metodo_pago'        => $metodoFinal,
+                    'metodo_pago'        => $metodoPago,
                     'referencia_pago'    => $referenciaPago,
                     'comprobante_pago'   => $comprobantePath ?? $comision->comprobante_pago,
                     'liquidado_por'      => $adminId,
@@ -175,6 +173,33 @@ class ComisionService
         }
 
         return $comisiones->count();
+    }
+
+    /**
+     * Archiva las notificaciones "liquidación pendiente" del admin para el vendedor dado,
+     * dado que ya se pagaron sus comisiones/bonos.
+     */
+    public function archivarAvisosLiquidacion(int $idVendedor): void
+    {
+        $adminIds = User::where('rol', 'admin')->where('estado', 1)->pluck('id');
+        if ($adminIds->isEmpty()) {
+            return;
+        }
+
+        // Buscar eventos tipo liquidacion_pendiente o comision_envio_entregado para este vendedor
+        $eventIds = NotificationEvent::whereIn('type', ['liquidacion_pendiente', 'comision_envio_entregado'])
+            ->where('resource_type', 'liquidacion')
+            ->where('resource_id', $idVendedor)
+            ->pluck('id');
+
+        if ($eventIds->isEmpty()) {
+            return;
+        }
+
+        NotificationDelivery::whereIn('event_id', $eventIds)
+            ->whereIn('user_id', $adminIds)
+            ->whereNull('archived_at')
+            ->update(['archived_at' => now(), 'read_at' => now()]);
     }
 
     /**

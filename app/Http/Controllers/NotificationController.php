@@ -109,8 +109,14 @@ class NotificationController extends Controller
             case 'venta':
                 $sale = Venta::find($resourceId);
                 if ($sale && ($user->rol === 'admin' || (int) $sale->id_usuario === (int) $user->id)) {
-                    $history = $user->rol === 'admin' ? 'ventas.index' : 'ventas.mis-ventas';
-                    $destination = route($history).'#venta-'.$sale->id;
+                    if ($user->rol === 'admin') {
+                        // Si la venta está pendiente o en curso, llevar al gestor de pedidos; si ya finalizó, al histórico
+                        $destination = in_array($sale->estado, ['Pendiente', 'Confirmada', 'En ruta'])
+                            ? route('ventas.pedidos', ['tab' => $sale->estado === 'Pendiente' ? 'Pendiente' : 'todos']).'#venta-'.$sale->id
+                            : route('ventas.index').'#venta-'.$sale->id;
+                    } else {
+                        $destination = route('ventas.mis-ventas').'#venta-'.$sale->id;
+                    }
                 }
                 break;
             case 'comision':

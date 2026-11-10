@@ -806,9 +806,6 @@
         total = Math.round(total * 100) / 100;
         const totalEl = document.getElementById('liquidarTotalMonto');
         const btnSubmit = document.getElementById('btnConfirmLiquidar');
-        const metodoSelect = document.getElementById('liquidarMetodoPago');
-        const optCompensacion = document.getElementById('optCompensacionSaldo');
-
         if (total < 0) {
             totalEl.textContent = '-$' + formatNum(Math.abs(total));
             totalEl.className = 'text-2xl font-black text-rose-600 mt-0.5';
@@ -816,24 +813,12 @@
                 btnSubmit.disabled = true;
                 btnSubmit.title = 'El saldo neto no puede ser negativo.';
             }
-            if (optCompensacion) optCompensacion.classList.add('hidden');
         } else if (total === 0) {
             totalEl.textContent = '$0.00';
             totalEl.className = 'text-2xl font-black text-indigo-600 mt-0.5';
-            if (checkboxes.length > 0) {
-                if (btnSubmit) {
-                    btnSubmit.disabled = false;
-                    btnSubmit.title = 'Liquidación por compensación mutua de saldos ($0.00)';
-                }
-                if (optCompensacion) {
-                    optCompensacion.classList.remove('hidden');
-                    optCompensacion.selected = true;
-                    if (typeof handleMetodoPagoLiquidar === 'function') {
-                        handleMetodoPagoLiquidar('Compensación de Saldo');
-                    }
-                }
-            } else {
-                if (btnSubmit) btnSubmit.disabled = true;
+            if (btnSubmit) {
+                btnSubmit.disabled = checkboxes.length === 0;
+                btnSubmit.title = '';
             }
         } else {
             totalEl.textContent = '$' + formatNum(total);
@@ -841,15 +826,6 @@
             if (btnSubmit) {
                 btnSubmit.disabled = false;
                 btnSubmit.title = '';
-            }
-            if (optCompensacion) {
-                optCompensacion.classList.add('hidden');
-                if (metodoSelect && metodoSelect.value === 'Compensación de Saldo') {
-                    metodoSelect.value = 'Efectivo';
-                    if (typeof handleMetodoPagoLiquidar === 'function') {
-                        handleMetodoPagoLiquidar('Efectivo');
-                    }
-                }
             }
         }
 
@@ -1067,12 +1043,7 @@
         document.getElementById('reviewCantidad').textContent = `${checkboxes.length} comisión${checkboxes.length !== 1 ? 'es' : ''}`;
 
         // Método
-        let metodoBadge = 'Efectivo';
-        if (metodoPago === 'Transferencia Bancaria') {
-            metodoBadge = 'Transferencia Bancaria';
-        } else if (metodoPago === 'Compensación de Saldo') {
-            metodoBadge = 'Compensación de Saldo (Neto $0.00)';
-        }
+        const metodoBadge = metodoPago === 'Transferencia Bancaria' ? 'Transferencia Bancaria' : 'Efectivo';
         document.getElementById('reviewMetodo').textContent = metodoBadge;
 
         // Referencia

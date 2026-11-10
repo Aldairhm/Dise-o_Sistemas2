@@ -570,7 +570,7 @@ class ComisionVendedorController extends Controller
 
         $validated = $request->validate([
             'id_vendedor'      => ['required', 'integer', 'exists:usuario,id'],
-            'metodo_pago'      => ['required', 'string', 'in:Efectivo,Transferencia Bancaria,Compensación de Saldo'],
+            'metodo_pago'      => ['required', 'string', 'in:Efectivo,Transferencia Bancaria'],
             'referencia_pago'  => ['nullable', 'string', 'max:100'],
             'comisiones_ids'   => ['nullable', 'array'],
             'comisiones_ids.*' => ['integer', 'exists:comision_vendedor,id'],
@@ -586,7 +586,7 @@ class ComisionVendedorController extends Controller
         ], [
             'id_vendedor.required'      => 'Debes seleccionar un vendedor.',
             'metodo_pago.required'      => 'Debes seleccionar el método de pago.',
-            'metodo_pago.in'            => 'El método de pago debe ser Efectivo, Transferencia Bancaria o Compensación de Saldo.',
+            'metodo_pago.in'            => 'El método de pago debe ser Efectivo o Transferencia Bancaria.',
             'comprobante_pago.required' => 'El comprobante o recibo es obligatorio para pagos por Transferencia Bancaria.',
             'comprobante_pago.mimes'    => 'El comprobante debe ser una imagen (JPG, PNG, WEBP) o un documento PDF.',
             'comprobante_pago.max'      => 'El comprobante no debe superar los 5MB.',
@@ -618,6 +618,9 @@ class ComisionVendedorController extends Controller
         }
 
         $metodoDesc = $validated['metodo_pago'];
+
+        // ── Archivar avisos de liquidación pendiente del admin para este vendedor ──
+        $this->comisionService->archivarAvisosLiquidacion((int) $validated['id_vendedor']);
 
         // ── Bitácora ──
         $vendedor = User::find($validated['id_vendedor']);

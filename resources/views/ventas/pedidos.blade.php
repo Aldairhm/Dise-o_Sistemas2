@@ -509,6 +509,7 @@
                             @endphp
 
                             <tr 
+                                id="venta-{{ $venta->id }}"
                                 x-show="ventaVisible('{{ $estado }}', '{{ addslashes($deptoVenta) }}')" 
                                 class="hover:bg-slate-50/70 transition-colors"
                             >
