@@ -422,16 +422,10 @@ class AyudaController extends Controller
     public function escalarTicket(Request $request, SoporteTicket $ticket)
     {
         $user = Auth::user();
-        if (isset($ticket)) {
-            abort_unless(app(\App\Services\NotificationService::class)->canSeeTicket($user, $ticket), 403);
-        }
+        $notifications = app(\App\Services\NotificationService::class);
 
-        if (!$user->isAdmin()) {
-            abort(403, 'Solo un administrador puede escalar dudas al Super Administrador.');
-        }
-
-        if ($ticket->nivel_escalamiento === 'super_admin') {
-            return back()->with('error', 'Esta duda ya está dirigida directamente al nivel de Super Administrador.');
+        if (!$notifications->canEscalateTicket($user, $ticket)) {
+            return back()->with('error', 'Este ticket no puede escalarse con tu rol, su estado actual o su nivel de atención.');
         }
 
         $request->validate([

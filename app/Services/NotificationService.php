@@ -97,8 +97,21 @@ class NotificationService
 
     public function canSeeTicket(User $user, SoporteTicket $ticket): bool
     {
+        $ticketLevel = strtolower(trim((string) $ticket->nivel_escalamiento));
+        $ticketRole = strtolower(trim((string) $ticket->rol_usuario));
+
         return $user->isSuperAdmin() || (int) $ticket->id_usuario === (int) $user->id
-            || ($user->rol === 'admin' && $ticket->nivel_escalamiento === 'admin' && $ticket->rol_usuario === 'vendedor');
+            || ($user->rol === 'admin' && $ticketLevel === 'admin' && $ticketRole === 'vendedor');
+    }
+
+    public function canEscalateTicket(User $user, SoporteTicket $ticket): bool
+    {
+        return $user->isAdmin()
+            && !$user->isSuperAdmin()
+            && (int) $ticket->id_usuario !== (int) $user->id
+            && strtolower(trim((string) $ticket->nivel_escalamiento)) === 'admin'
+            && strtolower(trim((string) $ticket->rol_usuario)) === 'vendedor'
+            && in_array($ticket->estado, ['Pendiente', 'En proceso'], true);
     }
 
     public function ticketRecipients(SoporteTicket $ticket, bool $internal = false): array

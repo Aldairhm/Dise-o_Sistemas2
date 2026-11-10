@@ -42,10 +42,7 @@
                     $esCreador = ($ticket->id_usuario === Auth::id());
                     $puedeGestionar = (Auth::user()->isSuperAdmin() || (Auth::user()->isAdmin() && !$esCreador))
                         && (!in_array($ticket->estado, ['Resuelta', 'Cancelada']) || Auth::user()->isSuperAdmin());
-                    $puedeEscalar = Auth::user()->isAdmin() 
-                        && !$esCreador 
-                        && $ticket->nivel_escalamiento !== 'super_admin'
-                        && !in_array($ticket->estado, ['Escalada', 'Resuelta', 'Cancelada']);
+                    $puedeEscalar = app(\App\Services\NotificationService::class)->canEscalateTicket(Auth::user(), $ticket);
                     $puedeCancelarPropio = $esCreador && in_array($ticket->estado, ['Pendiente', 'En proceso']);
                 ?>
 
