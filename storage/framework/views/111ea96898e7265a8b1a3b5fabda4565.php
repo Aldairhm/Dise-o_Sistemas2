@@ -50,9 +50,9 @@
                 </button>
 
                 
-                <div x-data="{ loading: false }">
+                <div x-data="{ loading: false }" @pageshow.window="loading = false">
                     <form action="<?php echo e(route('backups.create')); ?>" method="POST"
-                        @submit="loading = true">
+                        @submit="if (loading) { $event.preventDefault(); } else { loading = true; }">
                         <?php echo csrf_field(); ?>
                         <button type="submit"
                             :disabled="loading"
@@ -493,6 +493,7 @@
                 },
 
                 confirmRestoreAction() {
+                    if (this.restoreLoading) return;
                     const form = document.getElementById('restoreForm');
                     if (!form) return;
 

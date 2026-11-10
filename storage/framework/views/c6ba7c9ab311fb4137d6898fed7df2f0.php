@@ -160,7 +160,7 @@
 
         <!-- 1. BARRA DE FILTROS Y BÚSQUEDA -->
         <section class="bg-white border border-slate-200/80 rounded-2xl p-4 sm:p-5 shadow-xs">
-            <form method="GET" action="<?php echo e(route('ventas.mis-ventas')); ?>" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-12 gap-3.5 items-end">
+            <form data-loading-form data-loading-label="Filtrando..." data-loading-target="#contenedorTablaMisVentas" data-loading-skeleton="#ventasFilterSkeleton" method="GET" action="<?php echo e(route('ventas.mis-ventas')); ?>" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-12 gap-3.5 items-end">
                 
                 <!-- BÚSQUEDA RÁPIDA -->
                 <div class="lg:col-span-6">
@@ -409,6 +409,30 @@
             </div>
 
             <!-- SKELETON LOADER AL FILTRAR O CAMBIAR PESTAÑA -->
+            <div id="ventasFilterSkeleton" class="hidden p-6">
+                <?php if (isset($component)) { $__componentOriginalb3a7e296665e2f58ea67cad97892cbe7 = $component; } ?>
+<?php if (isset($attributes)) { $__attributesOriginalb3a7e296665e2f58ea67cad97892cbe7 = $attributes; } ?>
+<?php $component = Illuminate\View\AnonymousComponent::resolve(['view' => 'components.skeleton-table','data' => ['rows' => 6,'cols' => 8]] + (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag ? $attributes->all() : [])); ?>
+<?php $component->withName('skeleton-table'); ?>
+<?php if ($component->shouldRender()): ?>
+<?php $__env->startComponent($component->resolveView(), $component->data()); ?>
+<?php if (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag): ?>
+<?php $attributes = $attributes->except(\Illuminate\View\AnonymousComponent::ignoredParameterNames()); ?>
+<?php endif; ?>
+<?php $component->withAttributes(['rows' => 6,'cols' => 8]); ?>
+<?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::processComponentKey($component); ?>
+
+<?php echo $__env->renderComponent(); ?>
+<?php endif; ?>
+<?php if (isset($__attributesOriginalb3a7e296665e2f58ea67cad97892cbe7)): ?>
+<?php $attributes = $__attributesOriginalb3a7e296665e2f58ea67cad97892cbe7; ?>
+<?php unset($__attributesOriginalb3a7e296665e2f58ea67cad97892cbe7); ?>
+<?php endif; ?>
+<?php if (isset($__componentOriginalb3a7e296665e2f58ea67cad97892cbe7)): ?>
+<?php $component = $__componentOriginalb3a7e296665e2f58ea67cad97892cbe7; ?>
+<?php unset($__componentOriginalb3a7e296665e2f58ea67cad97892cbe7); ?>
+<?php endif; ?>
+            </div>
             <div x-show="cargandoTabla" style="display:none;" class="p-6">
                 <?php if (isset($component)) { $__componentOriginalb3a7e296665e2f58ea67cad97892cbe7 = $component; } ?>
 <?php if (isset($attributes)) { $__attributesOriginalb3a7e296665e2f58ea67cad97892cbe7 = $attributes; } ?>
@@ -884,11 +908,8 @@
                 procesandoCancelacion: false,
 
                 cambiarTab(tab) {
-                    this.cargandoTabla = true;
+                    // Los tabs filtran los registros ya presentes; no hay solicitud que esperar.
                     this.tabActiva = tab;
-                    setTimeout(() => {
-                        this.cargandoTabla = false;
-                    }, 250);
                 },
 
                 nombreTabActual() {
@@ -933,6 +954,7 @@
 
                 // Detalle
                 async abrirDetalle(id) {
+                    const solicitud = this.solicitudDetalle = (this.solicitudDetalle || 0) + 1;
                     this.modalDetalleAbierto = true;
                     this.cargandoDetalle = true;
                     this.ventaSeleccionada = null;
@@ -944,13 +966,16 @@
                                 'X-Requested-With': 'XMLHttpRequest'
                             }
                         });
+                        if (!response.ok) throw new Error('No se pudo cargar la información de la venta.');
                         const data = await response.json();
+                        if (solicitud !== this.solicitudDetalle) return;
                         if (data.success && data.venta) {
                             this.ventaSeleccionada = data.venta;
                         } else {
                             throw new Error(data.message || 'Error al obtener la venta');
                         }
                     } catch (e) {
+                        if (solicitud !== this.solicitudDetalle) return;
                         console.error('Error al cargar detalle:', e);
                         if (typeof Swal !== 'undefined') {
                             Swal.fire({
@@ -962,11 +987,13 @@
                         }
                         this.cerrarDetalle();
                     } finally {
-                        this.cargandoDetalle = false;
+                        if (solicitud === this.solicitudDetalle) this.cargandoDetalle = false;
                     }
                 },
 
                 cerrarDetalle() {
+                    this.solicitudDetalle = (this.solicitudDetalle || 0) + 1;
+                    this.cargandoDetalle = false;
                     this.modalDetalleAbierto = false;
                     this.ventaSeleccionada = null;
                 },
@@ -1091,6 +1118,7 @@
                 },
 
                 async recargarTablaMisVentas() {
+                    const solicitud = this.solicitudTabla = (this.solicitudTabla || 0) + 1;
                     this.cargandoTabla = true;
                     try {
                         const params = new URLSearchParams();
@@ -1105,7 +1133,9 @@
                             }
                         });
 
+                        if (!response.ok) throw new Error('No se pudo cargar la lista de ventas.');
                         const data = await response.json();
+                        if (solicitud !== this.solicitudTabla) return;
                         if (data.success) {
                             const contenedor = document.getElementById('contenedorTablaMisVentas');
                             if (contenedor) {
@@ -1121,7 +1151,7 @@
                     } catch (error) {
                         console.error('Error al actualizar tabla de mis ventas:', error);
                     } finally {
-                        this.cargandoTabla = false;
+                        if (solicitud === this.solicitudTabla) this.cargandoTabla = false;
                     }
                 }
             };

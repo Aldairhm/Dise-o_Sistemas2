@@ -74,7 +74,7 @@
                 <i class="fas fa-info-circle text-blue-500"></i>
                 Información General
             </h2>
-            <form action="<?php echo e(route('productos.update', $producto->id)); ?>" method="POST" enctype="multipart/form-data" novalidate>
+            <form data-loading-form data-loading-label="Guardando..." action="<?php echo e(route('productos.update', $producto->id)); ?>" method="POST" enctype="multipart/form-data" novalidate>
                 <?php echo csrf_field(); ?>
                 <?php echo method_field('PUT'); ?>
 
@@ -504,9 +504,12 @@ unset($__errorArgs, $__bag); ?>"
                 wrapperTable.classList.add('hidden');
                 wrapperCards.classList.remove('hidden');
             }
+            if (document.getElementById('variantsContainer')?.getAttribute('aria-busy') === 'true') {
+                wrapperTable.classList.add('hidden');
+                wrapperCards.classList.add('hidden');
+            }
         }
 
-        let filterDebounceTimerVar = null;
 
         function applyFiltersVar() {
             const searchInput = document.getElementById('searchVarInput');
@@ -521,26 +524,7 @@ unset($__errorArgs, $__bag); ?>"
                 clearBtn.classList.add('hidden');
             }
 
-            // Mostrar skeleton sutil de transición
-            const skeleton = document.getElementById('tableSkeletonVariantes');
-            const tableWrapper = document.getElementById('variantsTableWrapper');
-            const cardsWrapper = document.getElementById('variantsCardsWrapper');
-
-            if (skeleton) {
-                skeleton.classList.remove('hidden');
-                if (tableWrapper) tableWrapper.classList.add('hidden');
-                if (cardsWrapper) cardsWrapper.classList.add('hidden');
-            }
-
-            clearTimeout(filterDebounceTimerVar);
-            filterDebounceTimerVar = setTimeout(() => {
-                filtrarVariantesLocalmente(query, status);
-
-                if (skeleton) {
-                    skeleton.classList.add('hidden');
-                    setViewVar(currentViewVar, false);
-                }
-            }, 120);
+            filtrarVariantesLocalmente(query, status);
         }
 
         function filtrarVariantesLocalmente(query, status) {
@@ -723,6 +707,7 @@ unset($__errorArgs, $__bag); ?>"
         document.addEventListener('DOMContentLoaded', initVarianteCustomSelects);
 
         window.applyFiltersVar = applyFiltersVar;
+        window.restoreVariantsView = () => setViewVar(currentViewVar, false);
     </script>
 </body>
 </html>

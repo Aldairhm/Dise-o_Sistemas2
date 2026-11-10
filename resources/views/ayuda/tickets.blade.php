@@ -23,7 +23,7 @@
                     Seguimiento de consultas enviadas por el equipo, estado de resolución y registro de auditoría.
                 </p>
             </div>
-            <div class="flex items-center gap-2">
+            <div class="flex w-full sm:w-auto flex-col sm:flex-row items-stretch sm:items-center gap-2">
                 <a href="{{ route('ayuda.index') }}" class="px-4 py-2 rounded-xl text-xs font-bold text-slate-700 bg-white border border-slate-200 hover:bg-slate-50 transition-colors shadow-sm">
                     <i class="fas fa-book-open mr-1.5 text-slate-400"></i>
                     Ver Guías
@@ -66,18 +66,18 @@
 
             <!-- Selector de Ámbito (Mis Dudas vs Bandeja de Equipo) para roles con permisos administrativos -->
             @if(auth()->user()->isAdmin())
-                <div class="inline-flex items-center p-1 rounded-xl bg-slate-100 border border-slate-200 shrink-0">
+                <div class="flex w-full sm:w-auto flex-col min-[420px]:flex-row items-stretch p-1 rounded-xl bg-slate-100 border border-slate-200 shrink-0">
                     <button type="button"
                        @click="cambiarAmbito(false)"
                        :class="!soloMisDudas ? 'bg-white text-slate-800 shadow-sm' : 'text-slate-500 hover:text-slate-800'"
-                       class="px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer">
+                       class="flex-1 px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer">
                         <i class="fas fa-inbox mr-1 text-[11px]"></i>
                         <span>Bandeja de Equipo</span>
                     </button>
                     <button type="button"
                        @click="cambiarAmbito(true)"
                        :class="soloMisDudas ? 'bg-blue-600 text-white shadow-sm' : 'text-slate-500 hover:text-slate-800'"
-                       class="px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer">
+                       class="flex-1 px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer">
                         <i class="fas fa-user mr-1 text-[11px]"></i>
                         <span>Mis Dudas</span>
                         <span class="ml-1 px-1.5 py-0.2 rounded-full text-[10px] font-black"
@@ -91,7 +91,7 @@
         </div>
 
         <template x-if="soloMisDudas">
-            <div class="p-3.5 rounded-xl bg-blue-50/80 border border-blue-200 text-blue-900 flex items-center justify-between text-xs">
+            <div class="p-3.5 rounded-xl bg-blue-50/80 border border-blue-200 text-blue-900 flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-xs">
                 <div class="flex items-center gap-2.5">
                     <i class="fas fa-filter text-blue-600 text-sm"></i>
                     <span>Mostrando <strong>exclusivamente tus dudas personales</strong> registradas en el sistema.</span>
@@ -476,4 +476,3 @@
         }
     </script>
 </x-app>
-

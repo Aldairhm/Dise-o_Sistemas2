@@ -6,8 +6,14 @@
             ? $whatsappDestino
             : "https://wa.me/" . preg_replace('/[^0-9]/', '', $whatsappDestino) . "?text={$mensajeWa}";
     @endphp
-    <style>@media (min-width: 768px) { .ayuda-modulos { grid-template-columns: minmax(235px, 285px) minmax(0, 1fr); } }</style>
-    <div class="mx-auto max-w-6xl space-y-6">
+    <style>
+        @media (min-width: 768px) { .ayuda-modulos { grid-template-columns: minmax(235px, 285px) minmax(0, 1fr); } }
+        @media (max-width: 639px) {
+            .ayuda-modal-scroll { max-height: calc(100dvh - 1rem); }
+            .ayuda-modal-header h3 { max-width: 14rem; }
+        }
+    </style>
+    <div class="mx-auto max-w-6xl min-w-0 space-y-6">
         <div>
             <a href="{{ route('home') }}" class="inline-flex items-center gap-2 text-xs font-bold uppercase tracking-widest text-slate-400 hover:text-blue-600 transition-colors">
                 <i class="fas fa-arrow-left"></i> Volver al inicio
@@ -21,7 +27,7 @@
             </div>
             <div>
                 <a href="{{ route('ayuda.tickets.index') }}"
-                   class="inline-flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-bold text-slate-700 bg-white border border-slate-200 hover:bg-slate-50 hover:border-slate-300 shadow-sm transition-all">
+                   class="inline-flex w-full sm:w-auto justify-center items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-bold text-slate-700 bg-white border border-slate-200 hover:bg-slate-50 hover:border-slate-300 shadow-sm transition-all">
                     <i class="fas fa-ticket text-emerald-600"></i>
                     <span>Control de Dudas y Tickets</span>
                 </a>
@@ -42,7 +48,7 @@
                        :aria-describedby="busquedaInvalida ? 'ayuda-busqueda-error' : null"
                        @input="if ($event.target.value.trim()) busquedaInvalida = false"
                        class="min-w-0 flex-1 rounded-lg border border-slate-300 px-4 py-3 text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 aria-invalid:border-rose-500 aria-invalid:focus:border-rose-500 aria-invalid:focus:ring-rose-500/20">
-                <button type="submit" class="rounded-lg bg-blue-700 px-5 py-3 text-sm font-bold text-white">Buscar</button>
+                <button type="submit" class="w-full sm:w-auto rounded-lg bg-blue-700 px-5 py-3 text-sm font-bold text-white">Buscar</button>
             </div>
             <p id="ayuda-busqueda-error" x-show="busquedaInvalida" role="alert" style="display: none;"
                class="flex items-center gap-2 rounded-lg border border-rose-200 bg-rose-50 px-3 py-2 text-xs font-semibold text-rose-700">
@@ -91,7 +97,7 @@
             </nav>
             <div>
         @if ($guide)
-            <article class="rounded-xl border p-6" style="background:#f8fafc;color:#172334">
+            <article class="min-w-0 rounded-xl border p-4 sm:p-6 break-words" style="background:#f8fafc;color:#172334">
                 <a href="{{ route('ayuda.index') }}" class="text-sm font-semibold underline" style="color:#1745a3">Volver a las tareas</a>
                 <p class="mt-5 text-sm font-bold">{{ $guide['module'] }}</p>
                 <h2 class="mt-1 text-2xl font-bold">{{ $topic === 'venta' ? 'Ventas en tienda y por envío' : $guide['title'] }}</h2>
@@ -109,7 +115,7 @@
                         @foreach ($cases as $caseTitle => $case)
                             <details class="rounded-lg border p-4">
                                 <summary class="cursor-pointer font-bold">{{ $caseTitle }}</summary>
-                <ol class="mt-5 list-decimal space-y-3 pl-6 leading-relaxed">
+                <ol class="mt-5 list-decimal space-y-3 pl-6 leading-relaxed break-words">
                     @foreach ($case['steps'] as $step)
                         <li class="pl-1">{{ $step }}</li>
                     @endforeach
@@ -281,11 +287,11 @@
                         <label class="block text-xs font-bold text-slate-700">
                             Foto o captura de evidencia <span class="text-slate-400 font-normal">(opcional)</span>
                         </label>
-                        <span id="waFotoStatus" class="text-[10px] text-slate-400">Máx. 5MB</span>
+                        <span id="waFotoStatus" class="text-[10px] text-slate-400">Máx. 10MB</span>
                     </div>
 
                     <!-- Input file oculto -->
-                    <input type="file" id="waFotoInput" accept="image/jpeg,image/png,image/jpg,image/webp" class="hidden" onchange="procesarFotoEvidencia(event)">
+                    <input type="file" id="waFotoInput" accept="image/*,.heic,.heif" class="hidden" onchange="procesarFotoEvidencia(event)">
 
                     <!-- Área de selección si no hay foto -->
                     <div id="waUploadArea"
@@ -400,9 +406,9 @@
             const file = e.target.files[0];
             if (!file) return;
 
-            // Validar peso máximo 5MB
-            if (file.size > 5 * 1024 * 1024) {
-                alert('La imagen no debe superar los 5MB.');
+            // Las fotos de iPhone pueden superar 5MB y llegar como HEIC/HEIF.
+            if (file.size > 10 * 1024 * 1024) {
+                alert('La imagen no debe superar los 10MB.');
                 e.target.value = '';
                 return;
             }
@@ -439,8 +445,14 @@
                     body: formData
                 });
 
-                if (!response.ok || response.redirected) throw new Error('No se pudo subir la evidencia.');
-                const data = await response.json();
+                const contentType = response.headers.get('content-type') || '';
+                const data = contentType.includes('application/json')
+                    ? await response.json()
+                    : null;
+                if (!response.ok || response.redirected) {
+                    const message = data?.message || data?.errors?.evidencia?.[0] || 'No se pudo subir la evidencia.';
+                    throw new Error(message);
+                }
                 if (solicitud !== solicitudFoto) return;
                 if (data.success && data.url) {
                     urlEvidenciaSubida = data.url;
@@ -453,7 +465,7 @@
             } catch (err) {
                 if (solicitud !== solicitudFoto) return;
                 console.error(err);
-                document.getElementById('waFotoSubiendoText').innerHTML = '<i class="fas fa-exclamation-circle text-rose-500"></i> No se pudo subir el enlace';
+                document.getElementById('waFotoSubiendoText').innerHTML = `<i class="fas fa-exclamation-circle text-rose-500"></i> ${err.message}`;
                 document.getElementById('waFotoSubiendoText').className = 'text-[10px] text-rose-600 font-medium flex items-center gap-1';
             } finally {
                 if (solicitud === solicitudFoto) subiendoFoto = false;
@@ -625,9 +637,6 @@
         });
     </script>
 </x-app>
-
-
-
 
 
 

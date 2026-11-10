@@ -13,7 +13,7 @@
     <!-- Chart.js CDN -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
 
-    <div class="max-w-[1440px] mx-auto space-y-6" x-data="adminDashboard()">
+    <div class="max-w-[1440px] mx-auto space-y-6" x-data="adminDashboard()" :aria-busy="cargando">
 
         <!-- 1. ENCABEZADO PRINCIPAL -->
         <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
@@ -544,6 +544,7 @@
         function adminDashboard() {
             return {
                 cargando: false,
+                solicitudActual: 0,
                 filtros: {
                     preset: '<?php echo e($filtros['preset'] ?? 'este_mes'); ?>',
                     desde: '<?php echo e($filtros['desde']); ?>',
@@ -582,7 +583,7 @@
                 },
 
                 aplicarFiltros() {
-                    if (this.cargando) return;
+                    const solicitud = ++this.solicitudActual;
                     this.cargando = true;
 
                     const params = new URLSearchParams();
@@ -593,17 +594,19 @@
 
                     const urlDestino = `<?php echo e(route('admin.dashboard')); ?>?${params.toString()}`;
 
-                    fetch(urlDestino, {
+                    return fetch(urlDestino, {
                         headers: {
                             'X-Requested-With': 'XMLHttpRequest',
                             'Accept': 'application/json'
                         }
                     })
                     .then(response => {
-                        if (!response.ok) throw new Error('Error al consultar métricas del dashboard');
+                        if (!response.ok || response.redirected) throw new Error('Error al consultar métricas del dashboard');
                         return response.json();
                     })
                     .then(data => {
+                        if (solicitud !== this.solicitudActual) return;
+                        if (!data.success) throw new Error(data.message || 'No se pudieron actualizar los datos.');
                         if (data.success) {
                             // 1. Actualizar KPIs reactivamente
                             if (data.kpis) {
@@ -626,10 +629,12 @@
                         }
                     })
                     .catch(err => {
+                        if (solicitud !== this.solicitudActual) return;
+                        window.Swal?.fire({ icon: 'error', title: 'No se pudo actualizar', text: 'Inténtalo de nuevo. Se conservan los datos anteriores.' });
                         console.error('Error al actualizar el dashboard:', err);
                     })
                     .finally(() => {
-                        this.cargando = false;
+                        if (solicitud === this.solicitudActual) this.cargando = false;
                     });
                 }
             };

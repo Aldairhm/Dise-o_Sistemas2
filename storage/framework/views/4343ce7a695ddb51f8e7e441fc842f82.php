@@ -658,12 +658,14 @@
         <script>
             function descargarArchivoVenta(url, nombreBase) {
                 if (!url) return;
+                const button = document.activeElement?.closest('button');
+                if (button && !window.AxLoading.setButton(button, true, 'Descargando...')) return;
                 const extMatch = url.match(/\.([a-zA-Z0-9]+)(?:\?|#|$)/);
                 const ext = extMatch ? extMatch[1] : 'jpg';
                 const filename = (nombreBase || 'VNT_comprobante') + '.' + ext;
 
                 fetch(url)
-                    .then(res => res.blob())
+                    .then(res => { if (!res.ok) throw new Error('No se pudo descargar el archivo.'); return res.blob(); })
                     .then(blob => {
                         const blobUrl = window.URL.createObjectURL(blob);
                         const a = document.createElement('a');
@@ -683,7 +685,8 @@
                         document.body.appendChild(a);
                         a.click();
                         document.body.removeChild(a);
-                    });
+                    })
+                    .finally(() => { if (button) window.AxLoading.setButton(button, false); });
             }
         </script>
  <?php echo $__env->renderComponent(); ?>

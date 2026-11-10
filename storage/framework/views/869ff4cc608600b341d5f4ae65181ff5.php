@@ -13,14 +13,60 @@
                 </span>
                 <strong class="text-sm font-bold text-gray-900">Notificaciones</strong>
             </div>
-            <button type="button" data-bell-read-all class="text-xs font-semibold text-blue-600 hover:text-blue-800 hover:underline transition">Marcar todas como leídas</button>
+            <button type="button" data-bell-read-all disabled class="text-xs font-semibold text-blue-600 hover:text-blue-800 hover:underline transition">Marcar todas como leídas</button>
         </div>
         <p data-bell-status role="status" class="p-4 text-center text-xs text-gray-500">Cargando notificaciones…</p>
+        <div data-bell-loading class="space-y-3 p-3" role="status" aria-label="Cargando notificaciones...">
+            <?php if (isset($component)) { $__componentOriginalfd3a6f8f1730f577643b0c9e9ee5a212 = $component; } ?>
+<?php if (isset($attributes)) { $__attributesOriginalfd3a6f8f1730f577643b0c9e9ee5a212 = $attributes; } ?>
+<?php $component = Illuminate\View\AnonymousComponent::resolve(['view' => 'components.skeleton-card','data' => []] + (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag ? $attributes->all() : [])); ?>
+<?php $component->withName('skeleton-card'); ?>
+<?php if ($component->shouldRender()): ?>
+<?php $__env->startComponent($component->resolveView(), $component->data()); ?>
+<?php if (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag): ?>
+<?php $attributes = $attributes->except(\Illuminate\View\AnonymousComponent::ignoredParameterNames()); ?>
+<?php endif; ?>
+<?php $component->withAttributes([]); ?>
+<?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::processComponentKey($component); ?>
+
+<?php echo $__env->renderComponent(); ?>
+<?php endif; ?>
+<?php if (isset($__attributesOriginalfd3a6f8f1730f577643b0c9e9ee5a212)): ?>
+<?php $attributes = $__attributesOriginalfd3a6f8f1730f577643b0c9e9ee5a212; ?>
+<?php unset($__attributesOriginalfd3a6f8f1730f577643b0c9e9ee5a212); ?>
+<?php endif; ?>
+<?php if (isset($__componentOriginalfd3a6f8f1730f577643b0c9e9ee5a212)): ?>
+<?php $component = $__componentOriginalfd3a6f8f1730f577643b0c9e9ee5a212; ?>
+<?php unset($__componentOriginalfd3a6f8f1730f577643b0c9e9ee5a212); ?>
+<?php endif; ?>
+            <?php if (isset($component)) { $__componentOriginalfd3a6f8f1730f577643b0c9e9ee5a212 = $component; } ?>
+<?php if (isset($attributes)) { $__attributesOriginalfd3a6f8f1730f577643b0c9e9ee5a212 = $attributes; } ?>
+<?php $component = Illuminate\View\AnonymousComponent::resolve(['view' => 'components.skeleton-card','data' => []] + (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag ? $attributes->all() : [])); ?>
+<?php $component->withName('skeleton-card'); ?>
+<?php if ($component->shouldRender()): ?>
+<?php $__env->startComponent($component->resolveView(), $component->data()); ?>
+<?php if (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag): ?>
+<?php $attributes = $attributes->except(\Illuminate\View\AnonymousComponent::ignoredParameterNames()); ?>
+<?php endif; ?>
+<?php $component->withAttributes([]); ?>
+<?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::processComponentKey($component); ?>
+
+<?php echo $__env->renderComponent(); ?>
+<?php endif; ?>
+<?php if (isset($__attributesOriginalfd3a6f8f1730f577643b0c9e9ee5a212)): ?>
+<?php $attributes = $__attributesOriginalfd3a6f8f1730f577643b0c9e9ee5a212; ?>
+<?php unset($__attributesOriginalfd3a6f8f1730f577643b0c9e9ee5a212); ?>
+<?php endif; ?>
+<?php if (isset($__componentOriginalfd3a6f8f1730f577643b0c9e9ee5a212)): ?>
+<?php $component = $__componentOriginalfd3a6f8f1730f577643b0c9e9ee5a212; ?>
+<?php unset($__componentOriginalfd3a6f8f1730f577643b0c9e9ee5a212); ?>
+<?php endif; ?>
+        </div>
         <ul data-bell-items></ul>
         <a href="<?php echo e(route('notifications.index')); ?>" class="block border-t border-gray-100 p-3 text-center text-xs font-bold text-blue-700 hover:bg-blue-50 transition sticky bottom-0 bg-white">Ver todas las notificaciones</a>
     </section>
 </div>
-<?php if (! $__env->hasRenderedOnce('90af474b-eb6d-4c6e-9d94-fbd13b13b822')): $__env->markAsRenderedOnce('90af474b-eb6d-4c6e-9d94-fbd13b13b822'); ?>
+<?php if (! $__env->hasRenderedOnce('4efce3d2-62f7-4c00-b441-05dc7dbb0204')): $__env->markAsRenderedOnce('4efce3d2-62f7-4c00-b441-05dc7dbb0204'); ?>
 <style>
 .notification-bell [data-bell-items]:not(:empty) { display: flex; flex-direction: column; gap: 10px; padding: 12px; }
 .notification-bell .notification-preview {

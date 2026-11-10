@@ -85,7 +85,7 @@ unset($__defined_vars, $__key, $__value); ?>
                     <?php endif; ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php endif; ?>
                 </div>
 
-                <form id="formFinalizarAuditoria" method="POST" action="<?php echo e(route('superadmin.auditorias.finalizar')); ?>" class="shrink-0 w-full sm:w-auto">
+                <form id="formFinalizarAuditoria" data-loading-form data-loading-label="Finalizando..." method="POST" action="<?php echo e(route('superadmin.auditorias.finalizar')); ?>" class="shrink-0 w-full sm:w-auto">
                     <?php echo csrf_field(); ?>
                     <input type="hidden" name="notas_cierre" id="inputNotasCierreAuditoria" value="Auditoría completada exitosamente.">
                     <button type="button" onclick="confirmarSalidaAuditoria()" class="w-full sm:w-auto justify-center inline-flex items-center gap-1.5 px-3 py-1 rounded-lg bg-slate-800 hover:bg-rose-600 hover:text-white text-slate-300 border border-slate-700 hover:border-rose-600 font-bold text-xs transition-all shadow-sm cursor-pointer">
@@ -167,7 +167,8 @@ unset($__defined_vars, $__key, $__value); ?>
             }).then((result) => {
                 if (result.isConfirmed) {
                     document.getElementById('inputNotasCierreAuditoria').value = result.value.trim();
-                    document.getElementById('formFinalizarAuditoria').submit();
+                    const form = document.getElementById('formFinalizarAuditoria');
+                    if (window.AxLoading.beginForm(form, form.querySelector('button'))) form.submit();
                 }
             });
         }

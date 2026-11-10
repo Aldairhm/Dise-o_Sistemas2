@@ -15,8 +15,8 @@
             $puedeCancelarPropio = $esMio && in_array($ticket->estado, ['Pendiente', 'En proceso']);
         ?>
 
-        <div class="bg-white rounded-3xl border border-slate-200/90 shadow-sm p-6 hover:border-blue-200 hover:shadow-md transition-all flex flex-col md:flex-row md:items-start justify-between gap-6">
-            <div class="space-y-3 flex-1">
+        <div class="bg-white rounded-3xl border border-slate-200/90 shadow-sm p-4 sm:p-6 hover:border-blue-200 hover:shadow-md transition-all flex flex-col md:flex-row md:items-start justify-between gap-6 min-w-0">
+            <div class="space-y-3 flex-1 min-w-0">
                 <!-- Badges Superiores -->
                 <div class="flex flex-wrap items-center gap-2">
                     <span class="font-mono text-xs font-black text-blue-900 bg-blue-50 px-2.5 py-1 rounded-lg border border-blue-100">
@@ -43,7 +43,7 @@
                         <?php echo e($ticket->titulo ?? 'Consulta sobre ' . $ticket->modulo); ?>
 
                     </h2>
-                    <p class="text-xs text-slate-600 mt-1.5 leading-relaxed whitespace-pre-line">
+                    <p class="text-xs text-slate-600 mt-1.5 leading-relaxed whitespace-pre-line break-words">
                         <?php echo e($ticket->duda); ?>
 
                     </p>
@@ -67,7 +67,7 @@
                 <?php endif; ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php endif; ?>
 
                 <!-- Metadata Inferior: Creador, Fecha, Evidencia -->
-                <div class="flex flex-wrap items-center gap-4 text-[11px] text-slate-400 pt-2 border-t border-slate-100">
+                <div class="flex flex-wrap items-center gap-3 sm:gap-4 text-[11px] text-slate-400 pt-2 border-t border-slate-100 break-words">
                     <span class="flex items-center gap-1.5">
                         <i class="fas fa-user text-slate-300"></i>
                         Creador: <strong class="text-slate-700 font-semibold"><?php echo e($ticket->nombre_usuario); ?></strong> (<?php echo e($ticket->rol_usuario ?? 'usuario'); ?>)
@@ -89,9 +89,9 @@
             </div>
 
             <!-- Botones de Acción Laterales -->
-            <div class="flex flex-row md:flex-col items-center sm:items-end md:items-stretch gap-2 shrink-0">
+            <div class="flex flex-col sm:flex-row md:flex-col items-stretch sm:items-center md:items-stretch gap-2 shrink-0 w-full md:w-auto">
                 <a href="<?php echo e(route('ayuda.tickets.show', $ticket->id)); ?>"
-                   class="inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl text-xs font-bold text-white bg-blue-600 hover:bg-blue-700 transition-all shadow-sm hover:scale-[1.02] active:scale-[0.98]">
+                   class="inline-flex w-full md:w-auto items-center justify-center gap-2 px-5 py-2.5 rounded-xl text-xs font-bold text-white bg-blue-600 hover:bg-blue-700 transition-all shadow-sm hover:scale-[1.02] active:scale-[0.98]">
                     <i class="fas fa-comments text-xs"></i>
                     <span>Ver Conversación</span>
                 </a>
@@ -153,5 +153,4 @@
         </div>
     <?php endif; ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php endif; ?>
 </div>
-
 <?php /**PATH /home/edwin/Desktop/UES II-2026/Diseño II/Proyecto/Dise-o_Sistemas2/resources/views/ayuda/tabla-tickets.blade.php ENDPATH**/ ?>

@@ -19,6 +19,7 @@
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
     <?php echo app('Illuminate\Foundation\Vite')(['resources/css/login.css', 'resources/js/login.js']); ?>
+    <?php echo app('Illuminate\Foundation\Vite')(['resources/js/loading-states.js']); ?>
 </head>
 <body>
 
@@ -99,26 +100,28 @@
             <?php endif; ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php endif; ?>
 
             <!-- Formulario -->
-            <form method="POST" action="<?php echo e(route('login.post')); ?>">
+            <form id="loginForm" data-loading-form data-loading-label="Ingresando..." method="POST" action="<?php echo e(route('login.post')); ?>" autocomplete="off">
                 <?php echo csrf_field(); ?>
+                <input type="hidden" name="username" id="username" value="<?php echo e(old('username')); ?>">
 
                 <!-- Campo Usuario -->
                 <div class="form-group">
-                    <label class="form-label" for="username">
+                    <label class="form-label" for="login_field">
                         <i class="fas fa-envelope"></i>
                         <span>Correo Electrónico o Usuario</span>
                     </label>
                     <div class="input-container">
                         <input 
                             type="text" 
-                            id="username" 
-                            name="username" 
+                            id="login_field" 
+                            name="login_field" 
+                            autocomplete="one-time-code"
+                            readonly
                             class="custom-input <?php echo e($errors->has('username') ? 'is-error' : ''); ?>" 
                             placeholder="nombre@empresa.com o tu usuario"
-                            value="<?php echo e(old('username', $savedUsername ?? '')); ?>"
+                            value="<?php echo e(old('username')); ?>"
                             required 
-                            <?php echo e(empty($savedUsername) ? 'autofocus' : ''); ?>
-
+                            autofocus
                         >
                     </div>
                 </div>
@@ -134,11 +137,10 @@
                             type="password" 
                             id="password" 
                             name="password" 
+                            autocomplete="new-password"
                             class="custom-input <?php echo e($errors->has('password') ? 'is-error' : ''); ?>" 
                             placeholder="••••••••" 
                             required
-                            <?php echo e(!empty($savedUsername) ? 'autofocus' : ''); ?>
-
                         >
                         <button type="button" class="btn-toggle-eye" id="togglePasswordBtn" onclick="togglePassVisibility()" title="Mostrar/ocultar contraseña">
                             <i class="fas fa-eye" id="eyeIcon"></i>
@@ -146,12 +148,8 @@
                     </div>
                 </div>
 
-                <!--Recordarme / Olvido contraseña -->
+                <!-- Olvido contraseña -->
                 <div class="form-options">
-                    <label class="remember-label">
-                        <input type="checkbox" name="remember" id="remember" <?php echo e(old('remember', !empty($savedUsername ?? '')) ? 'checked' : ''); ?>>
-                        <span>Recordarme</span>
-                    </label>
                     <a href="<?php echo e(route('password.request')); ?>" class="forgot-link">
                         ¿Olvidó su contraseña?
                     </a>

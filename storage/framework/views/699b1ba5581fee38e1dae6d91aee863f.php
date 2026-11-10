@@ -26,7 +26,7 @@
                 Esta es un área segura de la aplicación. Por favor, confirma tu contraseña antes de continuar.
             </p>
 
-            <form method="POST" action="<?php echo e(route('password.confirm')); ?>">
+            <form data-loading-form data-loading-label="Confirmando..." method="POST" action="<?php echo e(route('password.confirm')); ?>">
                 <?php echo csrf_field(); ?>
 
                 <div class="mb-5">

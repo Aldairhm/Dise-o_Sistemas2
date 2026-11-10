@@ -95,9 +95,53 @@
                         <input x-model="busqueda" type="search" placeholder="Escribe producto, variante o SKU..."
                             class="w-full rounded-xl border border-slate-300 bg-slate-50 py-3.5 pl-11 pr-4 text-sm focus:border-blue-500 focus:bg-white focus:outline-none focus:ring-4 focus:ring-blue-500/10 transition-all shadow-inner">
                     </div>
-                    <div class="grid sm:grid-cols-2 gap-3 mt-4 max-h-60 overflow-y-auto pr-2">
+                    <p x-show="errorBusqueda" x-text="errorBusqueda" role="alert" class="mt-3 text-sm text-rose-600" style="display:none;"></p>
+                    <div x-show="buscando" style="display:none;" class="grid sm:grid-cols-2 gap-3 mt-4" role="status" aria-label="Cargando variantes"><?php if (isset($component)) { $__componentOriginalfd3a6f8f1730f577643b0c9e9ee5a212 = $component; } ?>
+<?php if (isset($attributes)) { $__attributesOriginalfd3a6f8f1730f577643b0c9e9ee5a212 = $attributes; } ?>
+<?php $component = Illuminate\View\AnonymousComponent::resolve(['view' => 'components.skeleton-card','data' => ['lines' => 2]] + (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag ? $attributes->all() : [])); ?>
+<?php $component->withName('skeleton-card'); ?>
+<?php if ($component->shouldRender()): ?>
+<?php $__env->startComponent($component->resolveView(), $component->data()); ?>
+<?php if (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag): ?>
+<?php $attributes = $attributes->except(\Illuminate\View\AnonymousComponent::ignoredParameterNames()); ?>
+<?php endif; ?>
+<?php $component->withAttributes(['lines' => 2]); ?>
+<?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::processComponentKey($component); ?>
+
+<?php echo $__env->renderComponent(); ?>
+<?php endif; ?>
+<?php if (isset($__attributesOriginalfd3a6f8f1730f577643b0c9e9ee5a212)): ?>
+<?php $attributes = $__attributesOriginalfd3a6f8f1730f577643b0c9e9ee5a212; ?>
+<?php unset($__attributesOriginalfd3a6f8f1730f577643b0c9e9ee5a212); ?>
+<?php endif; ?>
+<?php if (isset($__componentOriginalfd3a6f8f1730f577643b0c9e9ee5a212)): ?>
+<?php $component = $__componentOriginalfd3a6f8f1730f577643b0c9e9ee5a212; ?>
+<?php unset($__componentOriginalfd3a6f8f1730f577643b0c9e9ee5a212); ?>
+<?php endif; ?><?php if (isset($component)) { $__componentOriginalfd3a6f8f1730f577643b0c9e9ee5a212 = $component; } ?>
+<?php if (isset($attributes)) { $__attributesOriginalfd3a6f8f1730f577643b0c9e9ee5a212 = $attributes; } ?>
+<?php $component = Illuminate\View\AnonymousComponent::resolve(['view' => 'components.skeleton-card','data' => ['lines' => 2]] + (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag ? $attributes->all() : [])); ?>
+<?php $component->withName('skeleton-card'); ?>
+<?php if ($component->shouldRender()): ?>
+<?php $__env->startComponent($component->resolveView(), $component->data()); ?>
+<?php if (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag): ?>
+<?php $attributes = $attributes->except(\Illuminate\View\AnonymousComponent::ignoredParameterNames()); ?>
+<?php endif; ?>
+<?php $component->withAttributes(['lines' => 2]); ?>
+<?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::processComponentKey($component); ?>
+
+<?php echo $__env->renderComponent(); ?>
+<?php endif; ?>
+<?php if (isset($__attributesOriginalfd3a6f8f1730f577643b0c9e9ee5a212)): ?>
+<?php $attributes = $__attributesOriginalfd3a6f8f1730f577643b0c9e9ee5a212; ?>
+<?php unset($__attributesOriginalfd3a6f8f1730f577643b0c9e9ee5a212); ?>
+<?php endif; ?>
+<?php if (isset($__componentOriginalfd3a6f8f1730f577643b0c9e9ee5a212)): ?>
+<?php $component = $__componentOriginalfd3a6f8f1730f577643b0c9e9ee5a212; ?>
+<?php unset($__componentOriginalfd3a6f8f1730f577643b0c9e9ee5a212); ?>
+<?php endif; ?></div>
+                    <div x-show="!buscando" class="grid sm:grid-cols-2 gap-3 mt-4 max-h-60 overflow-y-auto pr-2">
                         <template x-for="variante in variantesFiltradas" :key="variante.id">
-                            <button type="button" @click="seleccionar(variante)" :disabled="variante.reserva <= 0"
+                            <button type="button" @click="seleccionar(variante)" :disabled="buscando || enviando || variante.reserva <= 0"
                                 class="text-left rounded-xl border border-slate-200 bg-white hover:border-amber-400 hover:shadow-md px-4 py-3 transition-all group disabled:cursor-not-allowed disabled:opacity-60 disabled:hover:border-slate-200 disabled:hover:shadow-none">
                                 <div class="flex items-center justify-between gap-3">
                                     <div class="min-w-0">
@@ -117,7 +161,7 @@
                                 </div>
                             </button>
                         </template>
-                        <p x-show="variantesFiltradas.length === 0 && !buscando" class="sm:col-span-2 text-sm font-medium text-slate-400 py-6 text-center" style="display:none;">
+                        <p x-show="variantesFiltradas.length === 0 && !buscando && !errorBusqueda" class="sm:col-span-2 text-sm font-medium text-slate-400 py-6 text-center" style="display:none;">
                             No hay variantes que coincidan con la búsqueda.
                         </p>
                     </div>
@@ -181,7 +225,7 @@
                 </div>
             </div>
                 <!-- Skeleton Table idéntica en dimensiones al contenido real -->
-                <div x-show="cargandoKardex" class="p-5">
+                <div x-show="cargandoKardex" style="display:none;" role="status" aria-label="Cargando movimientos" class="p-5">
                     <?php if (isset($component)) { $__componentOriginalb3a7e296665e2f58ea67cad97892cbe7 = $component; } ?>
 <?php if (isset($attributes)) { $__attributesOriginalb3a7e296665e2f58ea67cad97892cbe7 = $attributes; } ?>
 <?php $component = Illuminate\View\AnonymousComponent::resolve(['view' => 'components.skeleton-table','data' => ['rows' => 8,'cols' => 6,'avatarCol' => 2]] + (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag ? $attributes->all() : [])); ?>
@@ -249,7 +293,7 @@
                 </div>
 
                 <!-- Skeleton de Carga del Modal -->
-                <div x-show="cargandoDetalleMovimiento" class="p-6 space-y-5">
+                <div x-show="cargandoDetalleMovimiento" style="display:none;" role="status" aria-label="Cargando movimiento" class="p-6 space-y-5">
                     <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
                         <div class="rounded-xl border border-slate-100 bg-slate-50 p-3 space-y-2">
                             <div class="h-3 w-12 rounded ax-skeleton-shimmer"></div>
@@ -342,8 +386,11 @@
                 modalMovimientoAbierto: false,
                 cargandoDetalleMovimiento: false,
                 movimientoSeleccionado: null,
+                solicitudDetalleMovimiento: 0,
+                solicitudKardex: 0,
 
                 async abrirDetalleMovimiento(id) {
+                    const solicitud = ++this.solicitudDetalleMovimiento;
                     this.modalMovimientoAbierto = true;
                     this.cargandoDetalleMovimiento = true;
                     this.movimientoSeleccionado = null;
@@ -355,7 +402,9 @@
                                 'X-Requested-With': 'XMLHttpRequest'
                             }
                         });
+                        if (!res.ok) throw new Error('No se pudo cargar el movimiento.');
                         const data = await res.json();
+                        if (solicitud !== this.solicitudDetalleMovimiento) return;
                         if (data.success && data.movimiento) {
                             this.movimientoSeleccionado = data.movimiento;
                         } else {
@@ -367,6 +416,7 @@
                             this.modalMovimientoAbierto = false;
                         }
                     } catch (err) {
+                        if (solicitud !== this.solicitudDetalleMovimiento) return;
                         console.error('Error al cargar detalle movimiento:', err);
                         Swal.fire({
                             icon: 'error',
@@ -375,71 +425,56 @@
                         });
                         this.modalMovimientoAbierto = false;
                     } finally {
-                        this.cargandoDetalleMovimiento = false;
+                        if (solicitud === this.solicitudDetalleMovimiento) this.cargandoDetalleMovimiento = false;
                     }
                 },
 
                 cerrarDetalleMovimiento() {
+                    ++this.solicitudDetalleMovimiento;
+                    this.cargandoDetalleMovimiento = false;
                     this.modalMovimientoAbierto = false;
                     this.movimientoSeleccionado = null;
                 },
 
                 async filtrarKardex(tipo) {
-                    this.filtroMovimiento = tipo;
-                    this.cargandoKardex = true;
-                    const url = `<?php echo e(route('compras.movimientos')); ?>?tipo=${tipo}`;
-                    window.history.pushState({}, '', url);
+                    return this.cargarKardex(`<?php echo e(route('compras.movimientos')); ?>?tipo=${encodeURIComponent(tipo)}`, tipo);
+                },
 
+                async cargarKardex(url, tipo = this.filtroMovimiento) {
+                    const solicitud = ++this.solicitudKardex;
+                    this.cargandoKardex = true;
                     try {
                         const res = await fetch(url, {
-                            headers: {
-                                'Accept': 'application/json',
-                                'X-Requested-With': 'XMLHttpRequest'
-                            }
+                            headers: { 'Accept': 'application/json', 'X-Requested-With': 'XMLHttpRequest' }
                         });
+                        if (!res.ok) throw new Error('No se pudieron cargar los movimientos.');
                         const data = await res.json();
-                        if (data.success && data.html) {
-                            const contenedor = document.getElementById('contenedorTablaKardex');
-                            if (contenedor) {
-                                contenedor.innerHTML = data.html;
-                                this.atarPaginacionKardex();
-                            }
+                        if (solicitud !== this.solicitudKardex) return;
+                        if (!data.success || typeof data.html !== 'string') throw new Error('Respuesta de movimientos no válida.');
+                        const contenedor = document.getElementById('contenedorTablaKardex');
+                        if (contenedor) {
+                            contenedor.innerHTML = data.html;
+                            this.filtroMovimiento = tipo;
+                            window.history.pushState({}, '', url);
+                            this.atarPaginacionKardex();
                         }
                     } catch (err) {
-                        console.error('Error al filtrar kardex:', err);
+                        if (solicitud === this.solicitudKardex) {
+                            Swal.fire({ icon: 'error', title: 'No se pudieron cargar los movimientos', text: err.message });
+                        }
                     } finally {
-                        this.cargandoKardex = false;
+                        if (solicitud === this.solicitudKardex) this.cargandoKardex = false;
                     }
                 },
 
                 atarPaginacionKardex() {
                     const contenedor = document.getElementById('contenedorTablaKardex');
                     if (!contenedor) return;
-                    const links = contenedor.querySelectorAll('a[href*="page="]');
-                    links.forEach(link => {
-                        link.addEventListener('click', async (e) => {
+                    contenedor.querySelectorAll('a[href*="page="]').forEach(link => {
+                        link.addEventListener('click', (e) => {
                             e.preventDefault();
                             const href = link.getAttribute('href');
-                            if (!href) return;
-                            this.cargandoKardex = true;
-                            window.history.pushState({}, '', href);
-                            try {
-                                const res = await fetch(href, {
-                                    headers: {
-                                        'Accept': 'application/json',
-                                        'X-Requested-With': 'XMLHttpRequest'
-                                    }
-                                });
-                                const data = await res.json();
-                                if (data.success && data.html) {
-                                    contenedor.innerHTML = data.html;
-                                    this.atarPaginacionKardex();
-                                }
-                            } catch (err) {
-                                console.error('Error en paginación kardex:', err);
-                            } finally {
-                                this.cargandoKardex = false;
-                            }
+                            if (href) this.cargarKardex(href);
                         });
                     });
                 },

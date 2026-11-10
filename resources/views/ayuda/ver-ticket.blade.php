@@ -1,5 +1,5 @@
 <x-app title="Detalle del Ticket #{{ $ticket->codigo_ticket }} | AXStore">
-    <div class="mx-auto max-w-5xl space-y-6 pb-12">
+    <div class="mx-auto max-w-5xl min-w-0 space-y-6 pb-12">
         
         <!-- Header -->
         <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
@@ -8,7 +8,7 @@
                     <i class="fas fa-arrow-left"></i>
                     <span>Volver al Listado de Dudas</span>
                 </a>
-                <div class="flex items-center gap-3">
+                <div class="flex flex-wrap items-center gap-3">
                     <span class="font-mono text-xl sm:text-2xl font-black text-slate-800">
                         #{{ $ticket->codigo_ticket }}
                     </span>
@@ -112,7 +112,7 @@
                 <span class="text-xs text-slate-400 font-mono">{{ $mensajes->count() }} mensajes</span>
             </div>
 
-            <div class="p-6 space-y-4 max-h-[600px] overflow-y-auto">
+            <div class="p-4 sm:p-6 space-y-4 max-h-[600px] overflow-y-auto">
                 @foreach($mensajes as $index => $msg)
                     @php
                         $esMio = $msg->id_usuario === Auth::id();
@@ -120,8 +120,8 @@
                         $esPrimerMensaje = ($index === 0);
                     @endphp
                     <div class="flex flex-col {{ $esMio ? 'items-end' : 'items-start' }}">
-                        <div class="max-w-xl rounded-2xl p-4 text-xs shadow-sm {{ $esInterno ? 'bg-amber-50 border border-amber-200 text-amber-950' : ($esMio ? 'bg-blue-600 text-white' : 'bg-slate-100 text-slate-800') }}">
-                            <div class="flex items-center justify-between gap-3 mb-1 text-[10px] {{ $esMio && !$esInterno ? 'text-blue-100' : 'text-slate-400' }}">
+                        <div class="max-w-full sm:max-w-xl rounded-2xl p-4 text-xs shadow-sm break-words {{ $esInterno ? 'bg-amber-50 border border-amber-200 text-amber-950' : ($esMio ? 'bg-blue-600 text-white' : 'bg-slate-100 text-slate-800') }}">
+                            <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-1 sm:gap-3 mb-1 text-[10px] {{ $esMio && !$esInterno ? 'text-blue-100' : 'text-slate-400' }}">
                                 <span class="font-bold {{ $esInterno ? 'text-amber-800' : '' }}">
                                     {{ $msg->nombre_usuario }} ({{ ucfirst($msg->rol_usuario) }})
                                     @if($esInterno)
@@ -140,7 +140,7 @@
 
                             @if($esPrimerMensaje)
                                 <!-- Tarjeta de Contexto Rápido del Ticket -->
-                                <div class="my-2 p-2.5 rounded-xl {{ $esMio ? 'bg-white/10 border border-white/20' : 'bg-white border border-slate-200' }} grid grid-cols-2 gap-2 text-[11px]">
+                                <div class="my-2 p-2.5 rounded-xl {{ $esMio ? 'bg-white/10 border border-white/20' : 'bg-white border border-slate-200' }} grid grid-cols-1 sm:grid-cols-2 gap-2 text-[11px]">
                                     <div>
                                         <span class="{{ $esMio ? 'text-blue-200' : 'text-slate-400' }} block text-[10px] uppercase font-bold">Módulo:</span>
                                         <span class="font-bold {{ $esMio ? 'text-white' : 'text-slate-800' }}">{{ $ticket->modulo }}</span>
@@ -174,7 +174,7 @@
                         <textarea name="mensaje" required rows="3" placeholder="Escribe tu respuesta o información adicional..." class="w-full p-3.5 rounded-2xl border border-slate-200 text-xs text-slate-700 focus:outline-none focus:border-blue-500 bg-white"></textarea>
                     </div>
 
-                    <div class="flex flex-wrap items-center justify-between gap-3">
+                    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
                         <div class="flex items-center gap-4">
                             @if(Auth::user()->isAdmin() || Auth::user()->isSuperAdmin())
                                 <label class="inline-flex items-center gap-2 text-xs text-amber-900 font-bold cursor-pointer">
@@ -215,7 +215,7 @@
             <h3 class="text-xs font-black text-slate-400 uppercase tracking-wider">Historial de Transiciones de Estado</h3>
             <div class="divide-y divide-slate-100 text-xs">
                 @foreach($historial as $h)
-                    <div class="py-2.5 flex items-center justify-between gap-4">
+                    <div class="py-2.5 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 sm:gap-4">
                         <div class="space-y-0.5">
                             <span class="font-bold text-slate-800">
                                 {{ $h->estado_anterior ? "'{$h->estado_anterior}' → " : '' }}'{{ $h->estado_nuevo }}'
@@ -361,4 +361,3 @@
         });
     </script>
 </x-app>
-

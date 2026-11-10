@@ -17,6 +17,8 @@
                 filtroRol: config.rol || 'todos',
                 filtroEstado: config.estado || 'todos',
                 cargandoUsuarios: false,
+                solicitudCarga: 0,
+                errorCarga: '',
 
                 async ejecutarFiltro() {
                     await this.cargarUsuarios();
@@ -49,9 +51,10 @@
                 },
 
                 async cargarUsuarios(urlDestino = null) {
+                    const solicitud = ++this.solicitudCarga;
                     this.cargandoUsuarios = true;
+                    this.errorCarga = '';
                     const url = urlDestino || this.construirUrl(1);
-                    window.history.pushState({}, '', url);
 
                     try {
                         const res = await fetch(url, {
@@ -60,8 +63,14 @@
                                 'X-Requested-With': 'XMLHttpRequest'
                             }
                         });
+                        if (!res.ok) throw new Error('No se pudo completar la solicitud.');
                         const data = await res.json();
-                        if (data.success && data.html) {
+                        if (solicitud !== this.solicitudCarga) return;
+                        if (!data.success || typeof data.html !== 'string') {
+                            throw new Error('La respuesta no contiene los datos esperados.');
+                        }
+                        if (data.success) {
+                            window.history.pushState({}, '', url);
                             const contenedor = document.getElementById('contenedorTablaSuperAdminUsuarios');
                             if (contenedor) {
                                 contenedor.innerHTML = data.html;
@@ -69,9 +78,11 @@
                             }
                         }
                     } catch (err) {
+                        if (solicitud !== this.solicitudCarga) return;
+                        this.errorCarga = 'No se pudieron cargar los usuarios. Intenta de nuevo.';
                         console.error('Error al cargar usuarios super admin:', err);
                     } finally {
-                        this.cargandoUsuarios = false;
+                        if (solicitud === this.solicitudCarga) this.cargandoUsuarios = false;
                     }
                 },
 
@@ -176,6 +187,7 @@
         </form>
 
         <!-- Skeleton Loading Inteligente para Tabla de Usuarios Super Admin -->
+        <p x-show="errorCarga" x-cloak x-text="errorCarga" role="alert" class="mb-4 rounded-xl border border-rose-200 bg-rose-50 p-3 text-sm text-rose-700"></p>
         <div x-show="cargandoUsuarios" style="display: none;" class="bg-white rounded-3xl border border-slate-200 shadow-sm overflow-hidden p-2">
             <?php if (isset($component)) { $__componentOriginalb3a7e296665e2f58ea67cad97892cbe7 = $component; } ?>
 <?php if (isset($attributes)) { $__attributesOriginalb3a7e296665e2f58ea67cad97892cbe7 = $attributes; } ?>
@@ -202,7 +214,7 @@
         </div>
 
         <!-- Tabla de Usuarios -->
-        <div id="contenedorTablaSuperAdminUsuarios" x-show="!cargandoUsuarios" class="bg-white rounded-3xl border border-slate-200 shadow-sm overflow-hidden">
+        <div id="contenedorTablaSuperAdminUsuarios" x-show="!cargandoUsuarios" :aria-busy="cargandoUsuarios" class="bg-white rounded-3xl border border-slate-200 shadow-sm overflow-hidden">
             <?php echo $__env->make('superadmin.tabla-usuarios', ['users' => $users], array_diff_key(get_defined_vars(), ['__data' => 1, '__path' => 1]))->render(); ?>
         </div>
 
@@ -226,7 +238,7 @@
                 </button>
             </div>
 
-            <form id="formAuditoria" method="POST" action="" class="p-6 space-y-4 text-xs">
+            <form id="formAuditoria" data-loading-form data-loading-label="Iniciando..." method="POST" action="" class="p-6 space-y-4 text-xs">
                 <?php echo csrf_field(); ?>
                 <div class="p-3 bg-purple-50 rounded-xl border border-purple-200 text-purple-900">
                     <span class="font-bold block">Cuenta a auditar:</span>
@@ -273,7 +285,6 @@
                         Cancelar
                     </button>
                     <button type="submit" 
-                            onclick="const b = this; setTimeout(() => { b.disabled = true; b.querySelector('.btn-text').classList.add('invisible'); b.querySelector('.btn-spinner').style.display = 'flex'; }, 10);"
                             class="relative inline-flex items-center justify-center px-4 py-2 rounded-xl bg-purple-600 hover:bg-purple-700 text-white font-bold transition-colors shadow-sm cursor-pointer disabled:opacity-60 disabled:cursor-not-allowed">
                         <span class="btn-text">Iniciar Sesión de Auditoría</span>
                         <span class="btn-spinner absolute inset-0 flex items-center justify-center gap-1.5" style="display: none;">
@@ -312,7 +323,7 @@
                 </div>
 
                 <!-- Formulario -->
-                <form method="POST" action="<?php echo e(route('superadmin.crear')); ?>">
+                <form method="POST" data-loading-form data-loading-label="Registrando..." action="<?php echo e(route('superadmin.crear')); ?>">
                     <?php echo csrf_field(); ?>
 
                     <div class="p-6 sm:p-8 grid grid-cols-1 md:grid-cols-12 gap-6 sm:gap-8 max-h-[75vh] overflow-y-auto custom-scrollbar">
@@ -565,7 +576,7 @@
                 </div>
 
                 <!-- Formulario -->
-                <form id="formEditarSuperAdmin" method="POST" action="">
+                <form id="formEditarSuperAdmin" data-loading-form data-loading-label="Guardando..." method="POST" action="">
                     <?php echo csrf_field(); ?>
                     <?php echo method_field('PUT'); ?>
 

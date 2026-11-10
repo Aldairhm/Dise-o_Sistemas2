@@ -25,7 +25,7 @@
                 </nav>
 
                  <!-- Icons -->
-                <div class="flex items-center gap-4">
+                <div class="header-action-icons flex items-center gap-4">
                     @include('notifications.bell')
                     <!-- WhatsApp Dropdown -->
                     <div class="wa-dropdown">

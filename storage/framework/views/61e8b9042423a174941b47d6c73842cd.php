@@ -92,7 +92,7 @@
                     <td class="py-3 px-4 text-center whitespace-nowrap">
                         <div class="flex items-center justify-center gap-1.5">
                             <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php endif; ?><?php if($aud->estado === 'activa' && $aud->expira_en > now()): ?>
-                                <form id="formRevocar<?php echo e($aud->id); ?>" action="<?php echo e(route('superadmin.auditorias.revocar', $aud->id)); ?>" method="POST" class="inline">
+                                <form data-loading-label="Revocando..." id="formRevocar<?php echo e($aud->id); ?>" action="<?php echo e(route('superadmin.auditorias.revocar', $aud->id)); ?>" method="POST" class="inline">
                                     <?php echo csrf_field(); ?>
                                     <button type="button"
                                             onclick="confirmarRevocacion(<?php echo e($aud->id); ?>)"

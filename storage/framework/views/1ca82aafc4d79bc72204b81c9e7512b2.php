@@ -17,8 +17,14 @@
             ? $whatsappDestino
             : "https://wa.me/" . preg_replace('/[^0-9]/', '', $whatsappDestino) . "?text={$mensajeWa}";
     ?>
-    <style>@media (min-width: 768px) { .ayuda-modulos { grid-template-columns: minmax(235px, 285px) minmax(0, 1fr); } }</style>
-    <div class="mx-auto max-w-6xl space-y-6">
+    <style>
+        @media (min-width: 768px) { .ayuda-modulos { grid-template-columns: minmax(235px, 285px) minmax(0, 1fr); } }
+        @media (max-width: 639px) {
+            .ayuda-modal-scroll { max-height: calc(100dvh - 1rem); }
+            .ayuda-modal-header h3 { max-width: 14rem; }
+        }
+    </style>
+    <div class="mx-auto max-w-6xl min-w-0 space-y-6">
         <div>
             <a href="<?php echo e(route('home')); ?>" class="inline-flex items-center gap-2 text-xs font-bold uppercase tracking-widest text-slate-400 hover:text-blue-600 transition-colors">
                 <i class="fas fa-arrow-left"></i> Volver al inicio
@@ -32,7 +38,7 @@
             </div>
             <div>
                 <a href="<?php echo e(route('ayuda.tickets.index')); ?>"
-                   class="inline-flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-bold text-slate-700 bg-white border border-slate-200 hover:bg-slate-50 hover:border-slate-300 shadow-sm transition-all">
+                   class="inline-flex w-full sm:w-auto justify-center items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-bold text-slate-700 bg-white border border-slate-200 hover:bg-slate-50 hover:border-slate-300 shadow-sm transition-all">
                     <i class="fas fa-ticket text-emerald-600"></i>
                     <span>Control de Dudas y Tickets</span>
                 </a>
@@ -53,7 +59,7 @@
                        :aria-describedby="busquedaInvalida ? 'ayuda-busqueda-error' : null"
                        @input="if ($event.target.value.trim()) busquedaInvalida = false"
                        class="min-w-0 flex-1 rounded-lg border border-slate-300 px-4 py-3 text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 aria-invalid:border-rose-500 aria-invalid:focus:border-rose-500 aria-invalid:focus:ring-rose-500/20">
-                <button type="submit" class="rounded-lg bg-blue-700 px-5 py-3 text-sm font-bold text-white">Buscar</button>
+                <button type="submit" class="w-full sm:w-auto rounded-lg bg-blue-700 px-5 py-3 text-sm font-bold text-white">Buscar</button>
             </div>
             <p id="ayuda-busqueda-error" x-show="busquedaInvalida" role="alert" style="display: none;"
                class="flex items-center gap-2 rounded-lg border border-rose-200 bg-rose-50 px-3 py-2 text-xs font-semibold text-rose-700">
@@ -103,7 +109,7 @@
             </nav>
             <div>
         <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php endif; ?><?php if($guide): ?>
-            <article class="rounded-xl border p-6" style="background:#f8fafc;color:#172334">
+            <article class="min-w-0 rounded-xl border p-4 sm:p-6 break-words" style="background:#f8fafc;color:#172334">
                 <a href="<?php echo e(route('ayuda.index')); ?>" class="text-sm font-semibold underline" style="color:#1745a3">Volver a las tareas</a>
                 <p class="mt-5 text-sm font-bold"><?php echo e($guide['module']); ?></p>
                 <h2 class="mt-1 text-2xl font-bold"><?php echo e($topic === 'venta' ? 'Ventas en tienda y por envío' : $guide['title']); ?></h2>
@@ -121,7 +127,7 @@
                         <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::openLoop(); ?><?php endif; ?><?php $__currentLoopData = $cases; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $caseTitle => $case): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::startLoopIteration(); ?><?php endif; ?>
                             <details class="rounded-lg border p-4">
                                 <summary class="cursor-pointer font-bold"><?php echo e($caseTitle); ?></summary>
-                <ol class="mt-5 list-decimal space-y-3 pl-6 leading-relaxed">
+                <ol class="mt-5 list-decimal space-y-3 pl-6 leading-relaxed break-words">
                     <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::openLoop(); ?><?php endif; ?><?php $__currentLoopData = $case['steps']; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $step): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::startLoopIteration(); ?><?php endif; ?>
                         <li class="pl-1"><?php echo e($step); ?></li>
                     <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::endLoop(); ?><?php endif; ?><?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::closeLoop(); ?><?php endif; ?>
@@ -296,11 +302,11 @@
                         <label class="block text-xs font-bold text-slate-700">
                             Foto o captura de evidencia <span class="text-slate-400 font-normal">(opcional)</span>
                         </label>
-                        <span id="waFotoStatus" class="text-[10px] text-slate-400">Máx. 5MB</span>
+                        <span id="waFotoStatus" class="text-[10px] text-slate-400">Máx. 10MB</span>
                     </div>
 
                     <!-- Input file oculto -->
-                    <input type="file" id="waFotoInput" accept="image/jpeg,image/png,image/jpg,image/webp" class="hidden" onchange="procesarFotoEvidencia(event)">
+                    <input type="file" id="waFotoInput" accept="image/*,.heic,.heif" class="hidden" onchange="procesarFotoEvidencia(event)">
 
                     <!-- Área de selección si no hay foto -->
                     <div id="waUploadArea"
@@ -378,6 +384,8 @@
         const CSRF_TOKEN = "<?php echo e(csrf_token()); ?>";
 
         let urlEvidenciaSubida = '';
+        let solicitudFoto = 0;
+        let enviandoTicket = false;
         let subiendoFoto = false;
         let currentTicketId = '';
 
@@ -413,16 +421,20 @@
             const file = e.target.files[0];
             if (!file) return;
 
-            // Validar peso máximo 5MB
-            if (file.size > 5 * 1024 * 1024) {
-                alert('La imagen no debe superar los 5MB.');
+            // Las fotos de iPhone pueden superar 5MB y llegar como HEIC/HEIF.
+            if (file.size > 10 * 1024 * 1024) {
+                alert('La imagen no debe superar los 10MB.');
                 e.target.value = '';
                 return;
             }
 
+            const solicitud = ++solicitudFoto;
+            urlEvidenciaSubida = '';
+
             // Mostrar preview local
             const reader = new FileReader();
             reader.onload = function(event) {
+                if (solicitud !== solicitudFoto) return;
                 document.getElementById('waFotoThumb').src = event.target.result;
             };
             reader.readAsDataURL(file);
@@ -448,7 +460,15 @@
                     body: formData
                 });
 
-                const data = await response.json();
+                const contentType = response.headers.get('content-type') || '';
+                const data = contentType.includes('application/json')
+                    ? await response.json()
+                    : null;
+                if (!response.ok || response.redirected) {
+                    const message = data?.message || data?.errors?.evidencia?.[0] || 'No se pudo subir la evidencia.';
+                    throw new Error(message);
+                }
+                if (solicitud !== solicitudFoto) return;
                 if (data.success && data.url) {
                     urlEvidenciaSubida = data.url;
                     document.getElementById('waFotoSubiendoText').innerHTML = '<i class="fas fa-check-circle"></i> Enlace listo para el ticket';
@@ -458,15 +478,18 @@
                     throw new Error(data.message || 'Error al subir');
                 }
             } catch (err) {
+                if (solicitud !== solicitudFoto) return;
                 console.error(err);
-                document.getElementById('waFotoSubiendoText').innerHTML = '<i class="fas fa-exclamation-circle text-rose-500"></i> No se pudo subir el enlace';
+                document.getElementById('waFotoSubiendoText').innerHTML = `<i class="fas fa-exclamation-circle text-rose-500"></i> ${err.message}`;
                 document.getElementById('waFotoSubiendoText').className = 'text-[10px] text-rose-600 font-medium flex items-center gap-1';
             } finally {
-                subiendoFoto = false;
+                if (solicitud === solicitudFoto) subiendoFoto = false;
             }
         }
 
         function quitarFotoEvidencia() {
+            ++solicitudFoto;
+            subiendoFoto = false;
             urlEvidenciaSubida = '';
             document.getElementById('waFotoInput').value = '';
             document.getElementById('waUploadArea').classList.remove('hidden');
@@ -522,6 +545,7 @@
         }
 
         async function enviarAWhatsapp() {
+            if (enviandoTicket) return;
             if (subiendoFoto) {
                 Swal.fire({
                     icon: 'info',
@@ -553,15 +577,17 @@
             const btnText = document.getElementById('btnEnviarWhatsappText');
             const btnSpinner = document.getElementById('btnEnviarWhatsappSpinner');
 
+            enviandoTicket = true;
             if (btnEnviar && btnText && btnSpinner) {
                 btnEnviar.disabled = true;
+                btnEnviar.setAttribute('aria-busy', 'true');
                 btnText.classList.add('invisible');
                 btnSpinner.style.display = 'flex';
             }
 
             try {
                 // Registrar ticket en base de datos y bitácora
-                await fetch(STORE_TICKET_ROUTE, {
+                const response = await fetch(STORE_TICKET_ROUTE, {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
@@ -576,11 +602,14 @@
                         evidencia_url: urlEvidenciaSubida || null
                     })
                 });
+                if (!response.ok || response.redirected) throw new Error('No se pudo registrar el ticket.');
             } catch (err) {
                 console.error('No se pudo registrar en la bitacora de tickets:', err);
             } finally {
+                enviandoTicket = false;
                 if (btnEnviar && btnText && btnSpinner) {
                     btnEnviar.disabled = false;
+                    btnEnviar.removeAttribute('aria-busy');
                     btnText.classList.remove('invisible');
                     btnSpinner.style.display = 'none';
                 }
@@ -632,9 +661,6 @@
 <?php $component = $__componentOriginal7ae6b45c011e855a5545a671a7f3568e; ?>
 <?php unset($__componentOriginal7ae6b45c011e855a5545a671a7f3568e); ?>
 <?php endif; ?>
-
-
-
 
 
 

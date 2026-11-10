@@ -231,7 +231,6 @@
                         class="w-full py-2.5 px-3.5 bg-slate-50 border border-slate-200 focus:border-emerald-500 rounded-xl text-sm font-semibold text-slate-700 focus:ring-2 focus:ring-emerald-500/20 focus:outline-none transition-all">
                     <option value="Efectivo">Efectivo</option>
                     <option value="Transferencia Bancaria">Transferencia Bancaria</option>
-                    <option value="Compensación de Saldo" id="optCompensacionSaldo" class="hidden">Compensación de Saldo (Neto $0.00)</option>
                 </select>
             </div>
 
@@ -774,6 +773,36 @@
 </div>
 
 <script>
+
+// Una solicitud por sección: una respuesta anterior no debe ocultar la carga actual.
+const solicitudesComisiones = new Map();
+function iniciarSolicitudComision(seccion) {
+    solicitudesComisiones.get(seccion)?.abort();
+    const controller = new AbortController();
+    solicitudesComisiones.set(seccion, controller);
+    return { signal: controller.signal, vigente: () => solicitudesComisiones.get(seccion) === controller && !controller.signal.aborted };
+}
+function cancelarSolicitudComision(seccion) {
+    solicitudesComisiones.get(seccion)?.abort();
+    solicitudesComisiones.delete(seccion);
+}
+function iniciarCargaFormularioComision(form, texto = 'Guardando...') {
+    if (form.dataset.enviando === 'true') return null;
+    const botones = [...form.querySelectorAll('button[type="submit"]')];
+    const anteriores = botones.map(button => ({ button, html: button.innerHTML, disabled: button.disabled }));
+    form.dataset.enviando = 'true';
+    form.setAttribute('aria-busy', 'true');
+    botones.forEach(button => {
+        button.disabled = true;
+        button.innerHTML = '<i class="fas fa-spinner fa-spin mr-2" aria-hidden="true"></i>' + texto;
+    });
+    return () => {
+        anteriores.forEach(({ button, html, disabled }) => { button.innerHTML = html; button.disabled = disabled; });
+        delete form.dataset.enviando;
+        form.removeAttribute('aria-busy');
+    };
+}
+
 /**
  * ─── VALIDACIÓN INLINE DE CAMPOS ─────────────────────────────────────────────
  */
@@ -852,6 +881,7 @@ function deseleccionarVendedorLiquidar() {
         return; // REGLA: No se permite cambiar de vendedor si la liquidación se abrió desde el botón de ese vendedor
     }
 
+    cancelarSolicitudComision('pendientes');
     const inputHidden = document.getElementById('liquidarVendedor');
     if (inputHidden) inputHidden.value = '';
 
@@ -983,11 +1013,6 @@ function handleMetodoPagoLiquidar(metodo) {
         container.classList.remove('hidden');
         if (labelRef) labelRef.innerHTML = 'N° de Referencia Bancaria <span class="text-slate-400 font-normal normal-case">(opcional)</span>';
         if (inputRef) inputRef.placeholder = 'Ej: Transferencia #984213, Cuenta origen/destino...';
-    } else if (metodo === 'Compensación de Saldo') {
-        container.classList.add('hidden');
-        input.value = '';
-        if (labelRef) labelRef.innerHTML = 'N° de Referencia / Comprobante de Cruce <span class="text-slate-400 font-normal normal-case">(opcional)</span>';
-        if (inputRef) inputRef.placeholder = 'Ej: Compensación mutua de saldos #001';
     } else {
         container.classList.add('hidden');
         input.value = '';
@@ -1001,6 +1026,7 @@ function formatNum(n) {
 }
 
 async function verDetalleComision(id) {
+    const solicitud = iniciarSolicitudComision('detalle');
     const modal = document.getElementById('modalDetalleComision');
     const skeleton = document.getElementById('detLoadingSkeleton');
     const content = document.getElementById('detContentContainer');
@@ -1009,6 +1035,7 @@ async function verDetalleComision(id) {
         return;
     }
 
+    document.getElementById('detErrorCarga')?.remove();
     modal.classList.remove('hidden');
     modal.style.display = 'flex';
     skeleton?.classList.remove('hidden');
@@ -1019,6 +1046,7 @@ async function verDetalleComision(id) {
             ? ROUTES.update
             : "<?php echo e(url('comisiones')); ?>";
         const response = await fetch(`${baseEndpoint}/${id}`, {
+            signal: solicitud.signal,
             headers: {
                 'Accept': 'application/json',
                 'X-Requested-With': 'XMLHttpRequest'
@@ -1026,6 +1054,7 @@ async function verDetalleComision(id) {
         });
         if (!response.ok) throw new Error('No se pudo cargar la información de la comisión.');
         const res = await response.json();
+        if (!solicitud.vigente()) return;
         if (!res.success || !res.comision) throw new Error(res.message || 'Error al obtener datos.');
 
         const c = res.comision;
@@ -1176,7 +1205,10 @@ async function verDetalleComision(id) {
         if (c.estado === 'Pagada') {
             pagoCard?.classList.remove('hidden');
             const mPago = document.getElementById('detMetodoPago');
-            if (mPago) mPago.innerHTML = `<i class="fas ${c.metodo_pago === 'Transferencia Bancaria' ? 'fa-university text-blue-600' : (c.metodo_pago === 'Compensación de Saldo' ? 'fa-scale-balanced text-indigo-600' : (c.metodo_pago === 'Efectivo' ? 'fa-money-bill-wave text-emerald-600' : 'fa-wallet text-indigo-600'))} mr-1"></i> ${c.metodo_pago || 'Efectivo'}`;
+            if (mPago) {
+                const pagoIcon = c.metodo_pago === 'Transferencia Bancaria' ? 'fa-university text-blue-600' : (c.metodo_pago === 'Efectivo' ? 'fa-money-bill-wave text-emerald-600' : 'fa-wallet text-indigo-600');
+                mPago.innerHTML = `<i class="fas ${pagoIcon} mr-1"></i> ${c.metodo_pago || 'Efectivo'}`;
+            }
             const rPago = document.getElementById('detReferenciaPago');
             if (rPago) rPago.textContent = c.referencia_pago ? `Ref: ${c.referencia_pago}` : 'Sin referencia bancaria';
             const fLiq = document.getElementById('detFechaLiquidacion');
@@ -1225,23 +1257,23 @@ async function verDetalleComision(id) {
         content?.classList.remove('hidden');
 
     } catch (err) {
-        if (skeleton) skeleton.classList.add('hidden');
-        if (content) {
-            content.classList.remove('hidden');
-            content.innerHTML = `
-                <div class="py-12 text-center text-slate-500">
-                    <i class="fas fa-exclamation-triangle text-amber-500 text-3xl mb-2"></i>
-                    <p class="font-bold text-sm text-slate-800">${err.message || 'Error al cargar detalle de comisión'}</p>
-                    <button type="button" onclick="closeDetalleModal()" class="mt-4 px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs rounded-xl transition-all">
-                        Cerrar
-                    </button>
-                </div>
-            `;
-        }
+        if (!solicitud.vigente() || err.name === 'AbortError') return;
+        // Conservar los nodos del detalle para que abrir de nuevo permita reintentar.
+        const error = document.createElement('div');
+        error.id = 'detErrorCarga';
+        error.className = 'p-8 text-center text-slate-600';
+        error.setAttribute('role', 'alert');
+        error.textContent = err.message || 'Error al cargar detalle de comisión. Cierra y vuelve a intentar.';
+        content?.after(error);
+    } finally {
+        if (solicitud.vigente()) skeleton?.classList.add('hidden');
     }
 }
 
 function closeDetalleModal() {
+    cancelarSolicitudComision('detalle');
+    document.getElementById('detLoadingSkeleton')?.classList.add('hidden');
+    document.getElementById('detErrorCarga')?.remove();
     const modal = document.getElementById('modalDetalleComision');
     if (modal) {
         modal.classList.add('hidden');

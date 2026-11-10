@@ -94,6 +94,7 @@
         </form>
 
         <!-- Skeleton Loading Dinámico para Super Admin -->
+        <p x-show="errorCarga" x-cloak x-text="errorCarga" role="alert" class="mb-4 rounded-xl border border-rose-200 bg-rose-50 p-3 text-sm text-rose-700"></p>
         <div x-show="cargandoTickets" style="display: none;" class="space-y-4 select-none" role="status" aria-label="Cargando dudas...">
             <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::openLoop(); ?><?php endif; ?><?php for($i = 0; $i < 3; $i++): ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::startLoopIteration(); ?><?php endif; ?>
                 <div class="bg-white rounded-3xl border border-slate-200 shadow-sm p-6 flex flex-col md:flex-row md:items-start justify-between gap-6">
@@ -122,7 +123,7 @@
         </div>
 
         <!-- Contenedor de Tickets -->
-        <div id="contenedorListaSuperAdminTickets" x-show="!cargandoTickets">
+        <div id="contenedorListaSuperAdminTickets" x-show="!cargandoTickets" :aria-busy="cargandoTickets">
             <?php echo $__env->make('superadmin.tabla-tickets', ['tickets' => $tickets], array_diff_key(get_defined_vars(), ['__data' => 1, '__path' => 1]))->render(); ?>
         </div>
 
@@ -135,6 +136,8 @@
                 conteoEstados: config.conteoEstados || {},
                 filtroSearch: '<?php echo e(request('search')); ?>',
                 cargandoTickets: false,
+                solicitudCarga: 0,
+                errorCarga: '',
 
                 async cambiarEstado(estado) {
                     if (this.estadoTab === estado && !this.cargandoTickets) return;
@@ -169,9 +172,10 @@
                 },
 
                 async cargarTickets(urlDestino = null) {
+                    const solicitud = ++this.solicitudCarga;
                     this.cargandoTickets = true;
+                    this.errorCarga = '';
                     const url = urlDestino || this.construirUrl(1);
-                    window.history.pushState({}, '', url);
 
                     try {
                         const res = await fetch(url, {
@@ -180,8 +184,14 @@
                                 'X-Requested-With': 'XMLHttpRequest'
                             }
                         });
+                        if (!res.ok) throw new Error('No se pudo completar la solicitud.');
                         const data = await res.json();
-                        if (data.success && data.html) {
+                        if (solicitud !== this.solicitudCarga) return;
+                        if (!data.success || typeof data.html !== 'string') {
+                            throw new Error('La respuesta no contiene los datos esperados.');
+                        }
+                        if (data.success) {
+                            window.history.pushState({}, '', url);
                             const contenedor = document.getElementById('contenedorListaSuperAdminTickets');
                             if (contenedor) {
                                 contenedor.innerHTML = data.html;
@@ -192,9 +202,11 @@
                             }
                         }
                     } catch (err) {
+                        if (solicitud !== this.solicitudCarga) return;
+                        this.errorCarga = 'No se pudieron cargar las dudas. Intenta de nuevo.';
                         console.error('Error al cargar tickets super admin:', err);
                     } finally {
-                        this.cargandoTickets = false;
+                        if (solicitud === this.solicitudCarga) this.cargandoTickets = false;
                     }
                 },
 

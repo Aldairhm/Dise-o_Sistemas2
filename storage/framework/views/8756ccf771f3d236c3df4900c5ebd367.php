@@ -13,6 +13,7 @@
     <!-- FontAwesome -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <?php echo app('Illuminate\Foundation\Vite')(['resources/css/reset-password.css']); ?>
+    <?php echo app('Illuminate\Foundation\Vite')(['resources/js/loading-states.js']); ?>
 </head>
 <body>
 
@@ -43,7 +44,7 @@
         <?php endif; ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php endif; ?>
 
         <!-- Formulario -->
-        <form method="POST" action="<?php echo e(route('password.update')); ?>" id="resetPasswordForm">
+        <form data-loading-form data-loading-label="Guardando..." method="POST" action="<?php echo e(route('password.update')); ?>" id="resetPasswordForm">
             <?php echo csrf_field(); ?>
             <input type="hidden" name="token" value="<?php echo e($token); ?>">
 

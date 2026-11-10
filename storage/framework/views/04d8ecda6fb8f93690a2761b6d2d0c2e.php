@@ -201,7 +201,7 @@
 
                 
                 <div class="lg:col-span-1 flex items-center gap-2">
-                    <button type="button" onclick="aplicarFiltros()"
+                    <button id="btnFiltrarComisiones" type="submit"
                             class="h-10 w-full rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-3 text-xs transition-all shadow-md shadow-blue-600/20 active:scale-95 flex items-center justify-center gap-1.5 cursor-pointer"
                             title="Aplicar filtros">
                         <i class="fas fa-filter text-xs"></i>
@@ -339,6 +339,7 @@
             return;
         }
 
+        const solicitud = iniciarSolicitudComision('tabla');
         const skeleton = document.getElementById('tableSkeletonComisiones');
         const wrapper = document.getElementById('tableWrapper');
         const btnFiltrar = document.getElementById('btnFiltrarComisiones');
@@ -367,9 +368,12 @@
 
         try {
             const res = await fetch(`${ROUTES.index}?${params.toString()}`, {
+                signal: solicitud.signal,
                 headers: { 'X-Requested-With': 'XMLHttpRequest' }
             });
+            if (!res.ok) throw new Error('No se pudo cargar la lista de comisiones.');
             const data = await res.json();
+            if (!solicitud.vigente()) return;
             if (data.success) {
                 document.getElementById('tableWrapper').innerHTML = data.table;
                 atarPaginacionComisiones();
@@ -381,8 +385,10 @@
                 }
             }
         } catch(e) {
+            if (!solicitud.vigente()) return;
             console.error(e);
         } finally {
+            if (!solicitud.vigente()) return;
             if (btnFiltrar) {
                 btnFiltrar.disabled = false;
                 btnFiltrar.innerHTML = '<i class="fas fa-filter text-[11px]"></i> <span>Filtrar</span>';
@@ -409,17 +415,22 @@
     }
 
     async function cargarPaginaComisiones(url) {
+        const solicitud = iniciarSolicitudComision('tabla');
         const skeleton = document.getElementById('tableSkeletonComisiones');
         const wrapper = document.getElementById('tableWrapper');
+        const btnFiltrar = document.getElementById('btnFiltrarComisiones');
         if (skeleton && wrapper) {
             skeleton.classList.remove('hidden');
             wrapper.classList.add('hidden');
         }
         try {
             const res = await fetch(url, {
+                signal: solicitud.signal,
                 headers: { 'X-Requested-With': 'XMLHttpRequest' }
             });
+            if (!res.ok) throw new Error('No se pudo cargar la lista de comisiones.');
             const data = await res.json();
+            if (!solicitud.vigente()) return;
             if (data.success) {
                 wrapper.innerHTML = data.table;
                 atarPaginacionComisiones();
@@ -431,8 +442,12 @@
                 }
             }
         } catch(e) {
+            if (!solicitud.vigente()) return;
             console.error('Error al paginar comisiones:', e);
+            Swal.fire({ icon: 'error', title: 'No se pudo cargar la información', text: 'Intenta de nuevo. Se conservaron los datos anteriores.' });
         } finally {
+            if (!solicitud.vigente()) return;
+            if (btnFiltrar) { btnFiltrar.disabled = false; btnFiltrar.innerHTML = '<i class="fas fa-filter text-[11px]"></i> <span>Filtrar</span>'; }
             if (skeleton && wrapper) {
                 skeleton.classList.add('hidden');
                 wrapper.classList.remove('hidden');
@@ -464,6 +479,7 @@
     // ── Cargar pendientes dinámicos al seleccionar vendedor para liquidar ──
 
     async function cargarPendientesVendedor(vendedorId) {
+        const solicitud = iniciarSolicitudComision('pendientes');
         const resumenBox = document.getElementById('liquidarResumenBox');
         const emptyBox   = document.getElementById('liquidarEmptyBox');
         const loadingBox = document.getElementById('liquidarLoadingBox');
@@ -475,6 +491,8 @@
         lista.classList.add('hidden');
         lista.innerHTML = '';
 
+        loadingBox.classList.add('hidden');
+        if (btnSubmit) btnSubmit.disabled = true;
         if (!vendedorId) return;
 
         loadingBox.classList.remove('hidden');
@@ -489,9 +507,12 @@
             }
             const queryString = params.toString();
             const res = await fetch(`${ROUTES.pendientes}/${vendedorId}${queryString ? `?${queryString}` : ''}`, {
+                signal: solicitud.signal,
                 headers: { 'X-Requested-With': 'XMLHttpRequest' }
             });
+            if (!res.ok) throw new Error('No se pudieron cargar las comisiones pendientes.');
             const data = await res.json();
+            if (!solicitud.vigente()) return;
 
             loadingBox.classList.add('hidden');
 
@@ -570,8 +591,12 @@
                 if (btnSubmit) btnSubmit.disabled = true;
             }
         } catch (e) {
+            if (!solicitud.vigente() || e.name === 'AbortError') return;
             loadingBox.classList.add('hidden');
             console.error(e);
+            Swal.fire({ icon: 'error', title: 'Error al cargar', text: 'No se pudieron cargar las comisiones pendientes. Vuelve a seleccionar el vendedor para reintentar.' });
+        } finally {
+            if (solicitud.vigente()) loadingBox.classList.add('hidden');
         }
     }
 
@@ -593,9 +618,6 @@
         total = Math.round(total * 100) / 100;
         const totalEl = document.getElementById('liquidarTotalMonto');
         const btnSubmit = document.getElementById('btnConfirmLiquidar');
-        const metodoSelect = document.getElementById('liquidarMetodoPago');
-        const optCompensacion = document.getElementById('optCompensacionSaldo');
-
         if (total < 0) {
             totalEl.textContent = '-$' + formatNum(Math.abs(total));
             totalEl.className = 'text-2xl font-black text-rose-600 mt-0.5';
@@ -603,24 +625,12 @@
                 btnSubmit.disabled = true;
                 btnSubmit.title = 'El saldo neto no puede ser negativo.';
             }
-            if (optCompensacion) optCompensacion.classList.add('hidden');
         } else if (total === 0) {
             totalEl.textContent = '$0.00';
             totalEl.className = 'text-2xl font-black text-indigo-600 mt-0.5';
-            if (checkboxes.length > 0) {
-                if (btnSubmit) {
-                    btnSubmit.disabled = false;
-                    btnSubmit.title = 'Liquidación por compensación mutua de saldos ($0.00)';
-                }
-                if (optCompensacion) {
-                    optCompensacion.classList.remove('hidden');
-                    optCompensacion.selected = true;
-                    if (typeof handleMetodoPagoLiquidar === 'function') {
-                        handleMetodoPagoLiquidar('Compensación de Saldo');
-                    }
-                }
-            } else {
-                if (btnSubmit) btnSubmit.disabled = true;
+            if (btnSubmit) {
+                btnSubmit.disabled = checkboxes.length === 0;
+                btnSubmit.title = '';
             }
         } else {
             totalEl.textContent = '$' + formatNum(total);
@@ -628,15 +638,6 @@
             if (btnSubmit) {
                 btnSubmit.disabled = false;
                 btnSubmit.title = '';
-            }
-            if (optCompensacion) {
-                optCompensacion.classList.add('hidden');
-                if (metodoSelect && metodoSelect.value === 'Compensación de Saldo') {
-                    metodoSelect.value = 'Efectivo';
-                    if (typeof handleMetodoPagoLiquidar === 'function') {
-                        handleMetodoPagoLiquidar('Efectivo');
-                    }
-                }
             }
         }
 
@@ -659,6 +660,8 @@
 
     document.getElementById('formEdit')?.addEventListener('submit', async function(e) {
         e.preventDefault();
+        const finalizarCarga = iniciarCargaFormularioComision(this);
+        if (!finalizarCarga) return;
         const id = document.getElementById('editComisionId').value;
         const body = {
             monto:    document.getElementById('editMonto').value,
@@ -683,6 +686,8 @@
             }
         } catch(e) {
             Swal.fire({ icon: 'error', title: 'Error', text: 'No se pudo actualizar la comisión.' });
+        } finally {
+            finalizarCarga();
         }
     });
 
@@ -769,6 +774,10 @@
     }
 
     function closeLiquidarModal() {
+        cancelarSolicitudComision('pendientes');
+        document.getElementById('liquidarLoadingBox')?.classList.add('hidden');
+        const siguiente = document.getElementById('btnConfirmLiquidar');
+        if (siguiente) siguiente.disabled = true;
         window._vendedorLiquidarBloqueado = false;
         document.getElementById('modalLiquidar').classList.add('hidden');
         if (document.getElementById('liquidarFechaDesde')) document.getElementById('liquidarFechaDesde').value = '';
@@ -851,12 +860,7 @@
         document.getElementById('reviewCantidad').textContent = `${checkboxes.length} comisión${checkboxes.length !== 1 ? 'es' : ''}`;
 
         // Método
-        let metodoBadge = 'Efectivo';
-        if (metodoPago === 'Transferencia Bancaria') {
-            metodoBadge = 'Transferencia Bancaria';
-        } else if (metodoPago === 'Compensación de Saldo') {
-            metodoBadge = 'Compensación de Saldo (Neto $0.00)';
-        }
+        const metodoBadge = metodoPago === 'Transferencia Bancaria' ? 'Transferencia Bancaria' : 'Efectivo';
         document.getElementById('reviewMetodo').textContent = metodoBadge;
 
         // Referencia
@@ -919,6 +923,7 @@
     }
 
     async function ejecutarLiquidacion() {
+        if (document.getElementById('btnFinalConfirmLiquidar')?.disabled) return;
         const vendedorId = document.getElementById('liquidarVendedor').value;
         const metodoPago = document.getElementById('liquidarMetodoPago').value;
         const comprobante = document.getElementById('liquidarComprobante').files[0];
@@ -1029,6 +1034,8 @@
         }
         if (!valid) return;
 
+        const finalizarCarga = iniciarCargaFormularioComision(this);
+        if (!finalizarCarga) return;
         const body = {
             id_vendedor: idVendedor,
             concepto:    concepto,
@@ -1052,6 +1059,8 @@
             }
         } catch(e) {
             Swal.fire({ icon: 'error', title: 'Error', text: 'No se pudo registrar la comisión.' });
+        } finally {
+            finalizarCarga();
         }
     });
 

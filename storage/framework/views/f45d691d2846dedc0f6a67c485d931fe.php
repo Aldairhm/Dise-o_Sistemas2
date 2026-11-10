@@ -88,7 +88,7 @@
                             <button type="button" 
                                     data-id="<?php echo e($user->id); ?>"
                                     data-name="<?php echo e($user->nombre_real ?? $user->username); ?>"
-                                    onclick="confirmDeleteUser(this.dataset.id, this.dataset.name)"
+                                    onclick="confirmDeleteUser(this.dataset.id, this.dataset.name, this)"
                                     class="w-8 h-8 rounded-lg bg-gray-100 hover:bg-rose-100 text-gray-600 hover:text-rose-600 flex items-center justify-center transition-colors cursor-pointer"
                                     title="Eliminar Usuario">
                                 <i class="fas fa-trash-can text-xs"></i>

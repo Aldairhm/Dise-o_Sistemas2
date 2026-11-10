@@ -103,11 +103,11 @@
         </a>
 
         
-        <form action="<?php echo e(route('productos.destroy', $prod->id)); ?>" method="POST" class="inline" id="form-delete-card-<?php echo e($prod->id); ?>">
+        <form data-loading-form data-loading-label="Eliminando..." action="<?php echo e(route('productos.destroy', $prod->id)); ?>" method="POST" class="inline" id="form-delete-card-<?php echo e($prod->id); ?>">
             <?php echo csrf_field(); ?>
             <?php echo method_field('DELETE'); ?>
             <button type="button"
-                    onclick="confirmarEliminar(<?php echo e($prod->id); ?>, '<?php echo e(addslashes($prod->nombre)); ?>')"
+                    onclick="confirmarEliminar(<?php echo e($prod->id); ?>, '<?php echo e(addslashes($prod->nombre)); ?>', this)"
                     class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md bg-rose-50 hover:bg-rose-100 text-rose-600 font-semibold text-xs transition-colors border border-rose-200"
                     title="Eliminar Producto">
                 <i class="fas fa-trash-can"></i> Eliminar

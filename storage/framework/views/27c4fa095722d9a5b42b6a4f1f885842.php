@@ -74,12 +74,12 @@
                             class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold text-blue-600 bg-blue-50 hover:bg-blue-100 border border-blue-200 rounded-lg transition-colors">
                             <i class="fas fa-pencil text-xs"></i> Editar / Variantes
                         </a>
-                        <form action="<?php echo e(route('productos.destroy', $prod->id)); ?>" method="POST"
+                        <form data-loading-form data-loading-label="Eliminando..." action="<?php echo e(route('productos.destroy', $prod->id)); ?>" method="POST"
                                 class="inline" id="form-delete-<?php echo e($prod->id); ?>">
                             <?php echo csrf_field(); ?>
                             <?php echo method_field('DELETE'); ?>
                             <button type="button"
-                                    onclick="confirmarEliminar(<?php echo e($prod->id); ?>, '<?php echo e(addslashes($prod->nombre)); ?>')"
+                                    onclick="confirmarEliminar(<?php echo e($prod->id); ?>, '<?php echo e(addslashes($prod->nombre)); ?>', this)"
                                     class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold text-red-600 bg-red-50 hover:bg-red-100 border border-red-200 rounded-lg transition-colors">
                                 <i class="fas fa-trash text-xs"></i> Eliminar
                             </button>

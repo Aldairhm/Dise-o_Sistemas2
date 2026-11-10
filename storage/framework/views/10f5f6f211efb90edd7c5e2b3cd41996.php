@@ -49,36 +49,38 @@ unset($__defined_vars, $__key, $__value); ?>
     ];
 
     $classes = $baseStyles . ' ' . ($variants[$variant] ?? $variants['primary']);
+    $loadingExpression = $attributes->get('x-show-loading');
+    $disabledExpression = $attributes->get('x-bind:disabled', $attributes->get(':disabled', 'false'));
+    $buttonAttributes = $attributes->except(['x-show-loading', 'x-bind:disabled', ':disabled']);
 ?>
 
-<button 
-    type="<?php echo e($type); ?>" 
-    <?php echo e($attributes->merge(['class' => $classes])); ?>
+<button
+    type="<?php echo e($type); ?>"
+    <?php echo e($buttonAttributes->merge(['class' => $classes])); ?>
 
-    :disabled="<?php echo e($attributes->has('x-bind:disabled') ? $attributes->get('x-bind:disabled') : ($loading ? 'true' : 'false')); ?>"
+    <?php if($loadingExpression): ?>
+        x-bind:disabled="(<?php echo e($loadingExpression); ?>) || (<?php echo e($disabledExpression); ?>)"
+        x-bind:aria-busy="(<?php echo e($loadingExpression); ?>) ? 'true' : 'false'"
+    <?php else: ?>
+        <?php if($loading): echo 'disabled'; endif; ?>
+        aria-busy="<?php echo e($loading ? 'true' : 'false'); ?>"
+        <?php if($disabledExpression !== 'false'): ?> x-bind:disabled="<?php echo e($disabledExpression); ?>" <?php endif; ?>
+    <?php endif; ?>
 >
-    <!-- Contenido normal / Slot -->
-    <span class="inline-flex items-center gap-2" :class="{ 'invisible': <?php echo e($attributes->has('x-show-loading') ? $attributes->get('x-show-loading') : ($loading ? 'true' : 'false')); ?> }">
+    <span class="inline-flex items-center gap-2 <?php echo e(!$loadingExpression && $loading ? 'invisible' : ''); ?>"
+        <?php if($loadingExpression): ?> x-bind:class="{ 'invisible': <?php echo e($loadingExpression); ?> }" <?php endif; ?>>
         <?php echo e($slot); ?>
 
     </span>
 
-    <!-- Spinner localizado y texto de carga centrado para prevenir layout shift -->
-    <span 
-        class="absolute inset-0 flex items-center justify-center gap-2"
-        style="display: none;"
-        <?php if($attributes->has('x-show-loading')): ?>
-            x-show="<?php echo e($attributes->get('x-show-loading')); ?>"
-        <?php elseif($loading): ?>
-            x-show="true"
-        <?php endif; ?>
-    >
-        <svg class="animate-spin h-4 w-4 text-current" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+    <span class="absolute inset-0 <?php echo e(!$loadingExpression && !$loading ? 'hidden' : 'flex'); ?> items-center justify-center gap-2"
+        <?php if($loadingExpression): ?> x-cloak x-show="<?php echo e($loadingExpression); ?>" <?php endif; ?>
+        role="status">
+        <svg class="ax-spinner h-4 w-4 text-current" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" aria-hidden="true">
             <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
             <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
         </svg>
         <span class="text-xs font-semibold"><?php echo e($loadingText); ?></span>
     </span>
 </button>
-
 <?php /**PATH /home/edwin/Desktop/UES II-2026/Diseño II/Proyecto/Dise-o_Sistemas2/resources/views/components/loading-button.blade.php ENDPATH**/ ?>

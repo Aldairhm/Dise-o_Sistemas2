@@ -14,6 +14,7 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 
     <?php echo app('Illuminate\Foundation\Vite')(['resources/css/forgot-password.css']); ?>
+    <?php echo app('Illuminate\Foundation\Vite')(['resources/js/loading-states.js']); ?>
 </head>
 <body>
 
@@ -54,7 +55,7 @@
         <?php endif; ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php endif; ?>
 
         <!-- Formulario -->
-        <form method="POST" action="<?php echo e(route('password.email')); ?>">
+        <form data-loading-form data-loading-label="Enviando..." method="POST" action="<?php echo e(route('password.email')); ?>">
             <?php echo csrf_field(); ?>
 
             <div class="form-group">

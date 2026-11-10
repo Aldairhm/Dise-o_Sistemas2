@@ -15,4 +15,24 @@ function togglePassVisibility() {
     }
 }
 
+function prepareLoginField() {
+    const form = document.getElementById('loginForm');
+    const visibleField = document.getElementById('login_field');
+    const usernameField = document.getElementById('username');
+
+    if (!form || !visibleField || !usernameField) return;
+
+    visibleField.addEventListener('focus', () => {
+        visibleField.removeAttribute('readonly');
+    }, { once: true });
+
+    const syncUsername = () => {
+        usernameField.value = visibleField.value;
+    };
+
+    visibleField.addEventListener('input', syncUsername);
+    form.addEventListener('submit', syncUsername);
+}
+
+document.addEventListener('DOMContentLoaded', prepareLoginField);
 window.togglePassVisibility = togglePassVisibility;

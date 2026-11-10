@@ -101,7 +101,7 @@
                                     <button type="button" onclick="openModal('edit', <?php echo e($atributo->id); ?>, '<?php echo e($atributo->nombre); ?>')" class="p-2 w-8 h-8 rounded-lg bg-blue-50 text-blue-600 hover:bg-blue-600 hover:text-white transition-colors flex items-center justify-center cursor-pointer" title="Editar">
                                         <i class="fas fa-pen text-xs"></i>
                                     </button>
-                                    <form action="<?php echo e(route('atributos.destroy', $atributo->id)); ?>" method="POST" class="inline" onsubmit="return confirm('¿Seguro que deseas eliminar este atributo?');">
+                                    <form data-loading-form data-loading-label="Eliminando..." action="<?php echo e(route('atributos.destroy', $atributo->id)); ?>" method="POST" class="inline" onsubmit="return confirm('¿Seguro que deseas eliminar este atributo?');">
                                         <?php echo csrf_field(); ?>
                                         <?php echo method_field('DELETE'); ?>
                                         <button type="submit" class="p-2 w-8 h-8 rounded-lg bg-red-50 text-red-600 hover:bg-red-600 hover:text-white transition-colors flex items-center justify-center cursor-pointer" title="Eliminar">
@@ -140,7 +140,7 @@
                             <i class="fas fa-times"></i>
                         </button>
                     </div>
-                    <form id="formAtributo" method="POST" action="<?php echo e(route('atributos.store')); ?>" class="p-6">
+                    <form data-loading-form data-loading-label="Guardando..." id="formAtributo" method="POST" action="<?php echo e(route('atributos.store')); ?>" class="p-6">
                         <?php echo csrf_field(); ?>
                         <div id="methodContainer"></div>
                         

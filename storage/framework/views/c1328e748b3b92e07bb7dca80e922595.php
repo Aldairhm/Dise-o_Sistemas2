@@ -22,7 +22,7 @@
                     <p class="text-xs font-semibold text-slate-500 mt-0.5">Avisos del sistema y seguimiento en tiempo real de tus operaciones.</p>
                 </div>
             </div>
-            <form method="POST" action="<?php echo e(route('notifications.read-all')); ?>">
+            <form data-loading-form data-loading-label="Procesando..." method="POST" action="<?php echo e(route('notifications.read-all')); ?>">
                 <?php echo csrf_field(); ?>
                 <button type="submit" class="inline-flex items-center gap-2 px-4 py-2.5 bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold rounded-xl shadow-md shadow-blue-600/20 hover:shadow-blue-600/30 transition-all active:scale-95">
                     <i class="fas fa-check-double text-xs" aria-hidden="true"></i>
@@ -78,7 +78,7 @@
         ?>
 
         
-        <form method="GET" action="<?php echo e(route('notifications.index')); ?>" aria-label="Filtros de notificaciones"
+        <form data-loading-form data-loading-label="Procesando..." method="GET" action="<?php echo e(route('notifications.index')); ?>" aria-label="Filtros de notificaciones"
             class="mb-6 rounded-2xl border border-slate-200/90 bg-white p-5 shadow-sm transition-all hover:shadow-md">
             
             <div class="grid grid-cols-1 items-end gap-3.5 sm:grid-cols-2 lg:grid-cols-12">
@@ -374,7 +374,7 @@
                         <i class="fas fa-chevron-right text-[9px]" aria-hidden="true"></i>
                     </a>
                     <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php endif; ?><?php if (! ($item->read_at)): ?>
-                        <form method="POST" action="<?php echo e(route('notifications.read', $item->id)); ?>">
+                        <form data-loading-form data-loading-label="Procesando..." method="POST" action="<?php echo e(route('notifications.read', $item->id)); ?>">
                             <?php echo csrf_field(); ?>
                             <button type="submit" class="inline-flex w-full items-center justify-center gap-1.5 rounded-xl border border-transparent px-2.5 py-1.5 text-xs font-semibold text-blue-600 hover:bg-blue-50 transition active:scale-95">
                                 <i class="fas fa-check text-xs" aria-hidden="true"></i>
@@ -383,7 +383,7 @@
                         </form>
                     <?php endif; ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php endif; ?>
                     <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php endif; ?><?php if (! ($item->archived_at)): ?>
-                        <form method="POST" action="<?php echo e(route('notifications.archive', $item->id)); ?>">
+                        <form data-loading-form data-loading-label="Procesando..." method="POST" action="<?php echo e(route('notifications.archive', $item->id)); ?>">
                             <?php echo csrf_field(); ?>
                             <button type="submit" class="inline-flex w-full items-center justify-center gap-1.5 rounded-xl border border-transparent px-2.5 py-1.5 text-xs font-semibold text-slate-500 hover:bg-slate-100 hover:text-slate-700 transition active:scale-95">
                                 <i class="fas fa-box-archive text-xs" aria-hidden="true"></i>

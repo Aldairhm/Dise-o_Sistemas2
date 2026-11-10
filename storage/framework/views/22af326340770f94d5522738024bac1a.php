@@ -107,8 +107,8 @@
                                         <a :href="item.tipo === 'enlace' ? item.ruta_destino : item.url" target="_blank" class="px-3 py-1.5 text-xs font-medium text-blue-700 bg-blue-50 hover:bg-blue-100 rounded-md transition-colors">
                                             <i class="fas fa-external-link-alt"></i> Ver
                                         </a>
-                                        <button @click="eliminarCatalogo(item.id)" class="px-3 py-1.5 text-xs font-medium text-red-700 bg-red-50 hover:bg-red-100 rounded-md transition-colors">
-                                            <i class="fas fa-trash-alt"></i> Eliminar
+                                        <button @click="eliminarCatalogo(item.id)" :disabled="eliminandoCatalogos.includes(item.id)" :aria-busy="eliminandoCatalogos.includes(item.id)" class="px-3 py-1.5 text-xs font-medium text-red-700 bg-red-50 hover:bg-red-100 rounded-md transition-colors">
+                                            <i :class="eliminandoCatalogos.includes(item.id) ? 'fas fa-spinner fa-spin' : 'fas fa-trash-alt'" aria-hidden="true"></i> <span x-text="eliminandoCatalogos.includes(item.id) ? 'Eliminando...' : 'Eliminar'"></span>
                                         </button>
                                     </div>
                                 </li>
@@ -165,7 +165,7 @@
             <div x-show="modalCatalogo" x-transition.opacity class="fixed inset-0 bg-slate-900/40 backdrop-blur-sm"></div>
 
             <div class="flex items-center justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:p-0">
-                <div x-show="modalCatalogo" @click.away="modalCatalogo = false" x-transition class="relative z-10 bg-white rounded-2xl text-left overflow-hidden shadow-2xl transform transition-all sm:max-w-lg w-full border border-slate-100">
+                <div x-show="modalCatalogo" @click.away="if (!guardandoCatalogo) modalCatalogo = false" x-transition class="relative z-10 bg-white rounded-2xl text-left overflow-hidden shadow-2xl transform transition-all sm:max-w-lg w-full border border-slate-100">
                     
                     <!-- Header Azul -->
                     <div class="bg-blue-600 px-6 py-4 flex items-center justify-between">
@@ -176,7 +176,7 @@
                             </h3>
                             <p class="text-xs text-blue-100 mt-0.5">Agrega un enlace o sube un archivo (PDF, Excel, Img)</p>
                         </div>
-                        <button type="button" @click="modalCatalogo = false" class="w-8 h-8 rounded-lg bg-white/10 hover:bg-white/20 text-white flex items-center justify-center transition-all cursor-pointer">
+                        <button type="button" @click="modalCatalogo = false" :disabled="guardandoCatalogo" class="w-8 h-8 rounded-lg bg-white/10 hover:bg-white/20 text-white flex items-center justify-center transition-all cursor-pointer">
                             <i class="fas fa-times"></i>
                         </button>
                     </div>
@@ -220,9 +220,9 @@
                         </div>
 
                         <div class="px-6 md:px-8 py-5 bg-slate-50 border-t border-slate-100 flex items-center justify-end gap-3 rounded-b-2xl">
-                            <button type="button" @click="modalCatalogo = false" class="w-full sm:w-auto px-6 py-2.5 rounded-xl font-bold text-sm text-slate-600 bg-white border border-slate-200 hover:bg-slate-100 hover:text-slate-800 transition-colors shadow-sm cursor-pointer">CANCELAR</button>
-                            <button type="submit" class="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-6 py-2.5 rounded-xl font-black text-sm text-white shadow-lg transition-all duration-300 hover:scale-[1.02] cursor-pointer bg-slate-900 shadow-slate-900/20">
-                                <i class="fas fa-check text-xs"></i> GUARDAR CAMBIOS
+                            <button type="button" @click="modalCatalogo = false" :disabled="guardandoCatalogo" class="w-full sm:w-auto px-6 py-2.5 rounded-xl font-bold text-sm text-slate-600 bg-white border border-slate-200 hover:bg-slate-100 hover:text-slate-800 transition-colors shadow-sm cursor-pointer">CANCELAR</button>
+                            <button type="submit" :disabled="guardandoCatalogo" :aria-busy="guardandoCatalogo" class="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-6 py-2.5 rounded-xl font-black text-sm text-white shadow-lg transition-all duration-300 hover:scale-[1.02] cursor-pointer bg-slate-900 shadow-slate-900/20">
+                                <i :class="guardandoCatalogo ? 'fas fa-spinner fa-spin text-xs' : 'fas fa-check text-xs'" aria-hidden="true"></i> <span x-text="guardandoCatalogo ? 'GUARDANDO...' : 'GUARDAR CAMBIOS'"></span>
                             </button>
                         </div>
                     </form>

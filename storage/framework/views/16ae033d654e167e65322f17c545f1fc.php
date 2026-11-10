@@ -544,21 +544,26 @@
             if (!container) return;
 
             const btn = document.getElementById('btnDescargarDocumento');
-            const txt = document.getElementById('textoBtnDescargar');
-            if (btn && txt) {
+            if (btn?.disabled) return;
+            const originalHtml = btn?.innerHTML;
+            if (btn) {
                 btn.disabled = true;
-                txt.textContent = 'Generando...';
+                btn.setAttribute('aria-busy', 'true');
+                btn.innerHTML = '<i class="fas fa-spinner fa-spin" aria-hidden="true"></i> Generando...';
             }
 
             const folio = 'VNT-<?php echo e(str_pad($venta->id, 5, '0', STR_PAD_LEFT)); ?>';
             const fecha = '<?php echo e(\Carbon\Carbon::parse($venta->fecha)->format('Y-m-d')); ?>';
             const nombreArchivo = `${folio}_${fecha}.png`;
 
-            html2canvas(container, {
+            Promise.resolve().then(() => {
+                if (typeof html2canvas !== 'function') throw new Error('El generador de imágenes todavía no está disponible.');
+                return html2canvas(container, {
                 scale: 2,
                 useCORS: true,
                 backgroundColor: '#ffffff',
                 logging: false
+                });
             }).then(canvas => {
                 const link = document.createElement('a');
                 link.download = nombreArchivo;
@@ -570,9 +575,10 @@
                 console.error('Error al generar imagen:', err);
                 alert('No se pudo generar la imagen del documento.');
             }).finally(() => {
-                if (btn && txt) {
+                if (btn) {
                     btn.disabled = false;
-                    txt.textContent = 'Descargar Imagen';
+                    btn.removeAttribute('aria-busy');
+                    btn.innerHTML = originalHtml;
                 }
             });
         }

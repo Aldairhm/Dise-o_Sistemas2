@@ -19,10 +19,9 @@ class AuthController extends Controller
             return $this->redirectByRole(Auth::user()->rol);
         }
 
-        // Leer cookie de usuario recordado si existe
-        $savedUsername = request()->cookie('remember_username', '');
+        Cookie::queue(Cookie::forget('remember_username'));
 
-        return view('auth.login', compact('savedUsername'));
+        return view('auth.login');
     }
 
     /** Procesar el login */
@@ -127,13 +126,6 @@ class AuthController extends Controller
                     'title' => 'Cuenta en Auditoría Activa',
                     'text'  => "Tu cuenta se encuentra actualmente en un proceso formal de auditoría y supervisión por la Dirección / Super Administrador. Por motivos de seguridad e integridad de datos, el acceso directo a esta cuenta está pausado temporalmente hasta que la sesión de auditoría finalice.",
                 ])->withInput();
-            }
-
-            // Gestionar la cookie para recordar ÚNICAMENTE el username
-            if ($request->boolean('remember')) {
-                Cookie::queue('remember_username', $request->username, 60 * 24 * 30); // Guardar 30 días
-            } else {
-                Cookie::queue(Cookie::forget('remember_username'));
             }
 
             // Inicio de sesión exitoso: reiniciar contadores de seguridad
@@ -418,4 +410,3 @@ class AuthController extends Controller
         };
     }
 }
-

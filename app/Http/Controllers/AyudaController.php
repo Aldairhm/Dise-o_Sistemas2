@@ -6,9 +6,9 @@ use App\Models\SoporteTicket;
 use App\Models\SoporteTicketHistorial;
 use App\Models\SoporteTicketMensaje;
 use App\Services\ActivityLogger;
+use App\Support\CloudStorage;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 use Illuminate\View\View;
@@ -91,21 +91,22 @@ class AyudaController extends Controller
     public function subirEvidencia(Request $request)
     {
         $request->validate([
-            'evidencia' => ['required', 'image', 'mimes:jpeg,png,jpg,webp', 'max:5120'],
+            'evidencia' => ['required', 'file', 'mimes:jpeg,png,jpg,webp,heic,heif', 'max:10240'],
         ], [
             'evidencia.required' => 'Debes seleccionar una imagen.',
-            'evidencia.image'    => 'El archivo seleccionado debe ser una imagen válida.',
-            'evidencia.mimes'    => 'Formatos soportados: JPG, PNG o WEBP.',
-            'evidencia.max'      => 'La imagen no puede pesar más de 5MB.',
+            'evidencia.mimes'    => 'Formatos soportados: JPG, PNG, WEBP o HEIC.',
+            'evidencia.max'      => 'La imagen no puede pesar más de 10MB.',
         ]);
 
         $file = $request->file('evidencia');
         $nombre = 'soporte_' . time() . '_' . Str::random(8) . '.' . $file->getClientOriginalExtension();
         $path = $file->storeAs('soporte/evidencias', $nombre, 's3');
 
+        abort_if($path === false, 503, 'No fue posible guardar la evidencia en el almacenamiento cloud.');
+
         return response()->json([
             'success' => true,
-            'url' => Storage::disk('s3')->url($path),
+            'url' => CloudStorage::url($path),
             'filename' => $nombre,
         ]);
     }
