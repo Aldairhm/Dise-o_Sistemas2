@@ -364,7 +364,7 @@
                         </button>
                     </div>
 
-                    <form @submit.prevent="guardarProveedor">
+                    <form @submit.prevent="guardarProveedor" autocomplete="off">
                         <div class="p-6 md:p-8">
                             <div class="grid grid-cols-1 md:grid-cols-12 gap-8">
 
@@ -419,7 +419,7 @@
                                             <label class="block text-sm font-bold text-slate-700 mb-1.5">
                                                 Nombre de la Empresa <span class="text-red-500">*</span>
                                             </label>
-                                            <input type="text" x-model="form.nombre"
+                                            <input type="text" x-model="form.nombre" autocomplete="off"
                                                 class="w-full px-4 py-3 bg-white border border-slate-200 focus:border-blue-500 rounded-xl text-sm text-slate-800 placeholder:text-slate-400 focus:ring-2 focus:ring-blue-500/20 focus:outline-none transition-all shadow-sm"
                                                 placeholder="Ej: Accesorios Eléctricos S.A.">
                                             <p class="mt-1.5 text-xs text-slate-400">Nombre público que verán los usuarios (Campo obligatorio)</p>
@@ -435,7 +435,7 @@
                                                     <i class="fas fa-envelope text-slate-400 mr-1"></i> Correo Electrónico
                                                 </label>
                                                 <div class="relative">
-                                                    <input type="email" x-model="form.correo" @input="validarCorreoLive"
+                                                    <input type="email" x-model="form.correo" autocomplete="off" @input="validarCorreoLive"
                                                         placeholder="ventas@empresa.com"
                                                         class="w-full px-4 py-3 border rounded-xl text-sm outline-none transition-all focus:ring-2 shadow-sm"
                                                         :class="{
@@ -465,7 +465,7 @@
                                                         <img src="https://flagcdn.com/w20/sv.png" alt="SV" class="h-3.5 rounded-sm opacity-90">
                                                         <span>+503</span>
                                                     </div>
-                                                    <input type="text" inputmode="numeric" :value="form.telefono"
+                                                    <input type="text" inputmode="numeric" autocomplete="off" :value="form.telefono"
                                                         @input="formatearTelefono($event)"
                                                         @keydown="if(!/[0-9]/.test($event.key) && !['Backspace', 'Tab', 'ArrowLeft', 'ArrowRight', 'Delete'].includes($event.key)) $event.preventDefault()"
                                                         maxlength="9" placeholder="XXXX-XXXX"
@@ -494,7 +494,7 @@
                                             <label class="block text-sm font-bold text-slate-700 mb-1.5">
                                                 <i class="fas fa-map-marker-alt text-slate-400 mr-1"></i> Dirección
                                             </label>
-                                            <textarea rows="2" x-model="form.direccion"
+                                            <textarea rows="2" x-model="form.direccion" autocomplete="off"
                                                 placeholder="Dirección física o sucursal principal..."
                                                 class="w-full px-4 py-3 bg-white border border-slate-200 focus:border-blue-500 rounded-xl text-sm text-slate-800 placeholder:text-slate-400 focus:ring-2 focus:ring-blue-500/20 focus:outline-none transition-all resize-none shadow-sm"></textarea>
                                             <template x-if="errors.direccion">

@@ -62,7 +62,7 @@
 
         {{-- FORMULARIO --}}
         <div class="bg-white rounded-2xl shadow-sm border border-slate-200/80 p-6 sm:p-8">
-            <form data-loading-form data-loading-label="Guardando..." action="{{ route('productos.store') }}" method="POST" class="p-6 md:p-8" enctype="multipart/form-data" novalidate>
+            <form data-loading-form data-loading-label="Guardando..." action="{{ route('productos.store') }}" method="POST" class="p-6 md:p-8" enctype="multipart/form-data" autocomplete="off" novalidate>
                 @csrf
 
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
@@ -70,7 +70,7 @@
                         <label for="nombre" class="block text-xs font-bold text-slate-500 uppercase tracking-widest mb-1.5">
                             Nombre del Producto <span class="text-red-500">*</span>
                         </label>
-                        <input type="text" name="nombre" id="nombre"
+                        <input type="text" name="nombre" id="nombre" autocomplete="off"
                                class="w-full rounded-xl border border-slate-200 px-4 py-2.5 text-sm text-slate-800 placeholder:text-slate-300 focus:outline-none focus:ring-2 focus:ring-blue-500/30 focus:border-blue-500 transition-all @error('nombre') border-red-400 bg-red-50 @enderror"
                                placeholder="Ej: Camiseta Premium" value="{{ old('nombre') }}">
                     </div>
@@ -88,7 +88,7 @@
                         <label for="marca" class="block text-xs font-bold text-slate-500 uppercase tracking-widest mb-1.5">
                             Marca
                         </label>
-                        <input type="text" name="marca" id="marca"
+                        <input type="text" name="marca" id="marca" autocomplete="off"
                                class="w-full rounded-xl border border-slate-200 px-4 py-2.5 text-sm text-slate-800 placeholder:text-slate-300 focus:outline-none focus:ring-2 focus:ring-blue-500/30 focus:border-blue-500 transition-all @error('marca') border-red-400 bg-red-50 @enderror"
                                placeholder="Ej: Nike" maxlength="100" value="{{ old('marca') }}">
                     </div>
@@ -111,7 +111,7 @@
 
                 <div class="mb-6">
                     <label for="descripcion" class="block text-xs font-bold text-slate-500 uppercase tracking-widest mb-1.5">Descripción</label>
-                    <textarea name="descripcion" id="descripcion" rows="4"
+                    <textarea name="descripcion" id="descripcion" rows="4" autocomplete="off"
                               class="w-full rounded-xl border border-slate-200 px-4 py-2.5 text-sm text-slate-800 placeholder:text-slate-300 focus:outline-none focus:ring-2 focus:ring-blue-500/30 focus:border-blue-500 transition-all resize-none"
                               placeholder="Describe el producto brevemente...">{{ old('descripcion') }}</textarea>
                 </div>
@@ -165,7 +165,7 @@
 
                     <!-- Agregar Atributo Rápido -->
                     <div class="flex items-center gap-2 mt-4 pt-4 border-t border-slate-200">
-                        <input type="text" id="nuevo_atributo_nombre" class="w-full max-w-xs rounded-xl border border-slate-200 px-4 py-2 text-sm text-slate-800 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500/30 focus:border-blue-500 transition-all shadow-sm" placeholder="Ej: Material, Talla...">
+                        <input type="text" id="nuevo_atributo_nombre" autocomplete="off" class="w-full max-w-xs rounded-xl border border-slate-200 px-4 py-2 text-sm text-slate-800 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500/30 focus:border-blue-500 transition-all shadow-sm" placeholder="Ej: Material, Talla...">
                         <button type="button" id="btn_crear_atributo" class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-bold rounded-xl transition-all shadow-sm">
                             <i class="fas fa-plus mr-1"></i> Añadir
                         </button>

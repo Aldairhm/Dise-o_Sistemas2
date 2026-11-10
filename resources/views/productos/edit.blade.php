@@ -74,7 +74,7 @@
                 <i class="fas fa-info-circle text-blue-500"></i>
                 Información General
             </h2>
-            <form data-loading-form data-loading-label="Guardando..." action="{{ route('productos.update', $producto->id) }}" method="POST" enctype="multipart/form-data" novalidate>
+            <form data-loading-form data-loading-label="Guardando..." action="{{ route('productos.update', $producto->id) }}" method="POST" enctype="multipart/form-data" autocomplete="off" novalidate>
                 @csrf
                 @method('PUT')
 
@@ -83,7 +83,7 @@
                         <label for="nombre" class="block text-xs font-bold text-slate-500 uppercase tracking-widest mb-1.5">
                             Nombre del Producto <span class="text-red-500">*</span>
                         </label>
-                        <input type="text" name="nombre" id="nombre"
+                        <input type="text" name="nombre" id="nombre" autocomplete="off"
                                class="w-full rounded-xl border border-slate-200 px-4 py-2.5 text-sm text-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-500/30 focus:border-blue-500 transition-all"
                                value="{{ old('nombre', $producto->nombre) }}">
                     </div>
@@ -98,7 +98,7 @@
                         <label for="marca" class="block text-xs font-bold text-slate-500 uppercase tracking-widest mb-1.5">
                             Marca
                         </label>
-                        <input type="text" name="marca" id="marca" maxlength="100"
+                        <input type="text" name="marca" id="marca" autocomplete="off" maxlength="100"
                                class="w-full rounded-xl border border-slate-200 px-4 py-2.5 text-sm text-slate-800 placeholder:text-slate-300 focus:outline-none focus:ring-2 focus:ring-blue-500/30 focus:border-blue-500 transition-all @error('marca') border-red-400 bg-red-50 @enderror"
                                value="{{ old('marca', $producto->marca) }}">
                     </div>
@@ -130,7 +130,7 @@
                 </div>
                 <div class="mb-6">
                     <label for="descripcion" class="block text-xs font-bold text-slate-500 uppercase tracking-widest mb-1.5">Descripción</label>
-                    <textarea name="descripcion" id="descripcion" rows="3"
+                    <textarea name="descripcion" id="descripcion" rows="3" autocomplete="off"
                               class="w-full rounded-xl border border-slate-200 px-4 py-2.5 text-sm text-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-500/30 focus:border-blue-500 transition-all resize-none">{{ old('descripcion', $producto->descripcion) }}</textarea>
                 </div>
 
@@ -193,7 +193,7 @@
 
                     <!-- Agregar Atributo Rápido -->
                     <div class="flex items-center gap-2 mt-4 pt-4 border-t border-slate-200">
-                        <input type="text" id="nuevo_atributo_nombre" class="w-full max-w-xs rounded-xl border border-slate-200 px-4 py-2 text-sm text-slate-800 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500/30 focus:border-blue-500 transition-all shadow-sm" placeholder="Ej: Material, Talla...">
+                        <input type="text" id="nuevo_atributo_nombre" autocomplete="off" class="w-full max-w-xs rounded-xl border border-slate-200 px-4 py-2 text-sm text-slate-800 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500/30 focus:border-blue-500 transition-all shadow-sm" placeholder="Ej: Material, Talla...">
                         <button type="button" id="btn_crear_atributo" class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-bold rounded-xl transition-all shadow-sm">
                             <i class="fas fa-plus mr-1"></i> Añadir
                         </button>

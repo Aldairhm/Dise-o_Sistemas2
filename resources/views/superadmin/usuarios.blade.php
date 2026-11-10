@@ -291,7 +291,7 @@
                 </div>
 
                 <!-- Formulario -->
-                <form method="POST" data-loading-form data-loading-label="Registrando..." action="{{ route('superadmin.crear') }}">
+                <form method="POST" data-loading-form data-loading-label="Registrando..." action="{{ route('superadmin.crear') }}" autocomplete="off">
                     @csrf
 
                     <div class="p-6 sm:p-8 grid grid-cols-1 md:grid-cols-12 gap-6 sm:gap-8 max-h-[75vh] overflow-y-auto custom-scrollbar">
@@ -367,7 +367,8 @@
                                 </label>
                                 <input type="text" 
                                        id="create_nombre_real" 
-                                       name="nombre_real" 
+                                       name="nombre_real"
+                                       autocomplete="off"
                                        required
                                        placeholder="Ej. Ing. Carlos Mendoza"
                                        class="w-full rounded-xl border border-gray-300 px-3.5 py-2.5 text-sm text-gray-900 placeholder:text-gray-400 focus:border-indigo-600 focus:ring-2 focus:ring-indigo-600/20 focus:outline-none transition-all"
@@ -388,6 +389,7 @@
                                     <input type="text" 
                                            id="create_telefono" 
                                            name="telefono"
+                                           autocomplete="off"
                                            maxlength="9"
                                            placeholder="XXXX-XXXX"
                                            class="w-full rounded-xl border border-gray-300 pr-10 py-2.5 text-sm text-gray-900 placeholder:text-gray-400 focus:border-indigo-600 focus:ring-2 focus:ring-indigo-600/20 focus:outline-none transition-all"
@@ -404,7 +406,9 @@
                                 </label>
                                 <input type="text" 
                                        id="create_username" 
-                                       name="username" 
+                                       name="username"
+                                       autocomplete="one-time-code"
+                                       autocomplete="off"
                                        required
                                        placeholder="Ej. cmendoza@axstore.com"
                                        class="w-full rounded-xl border border-gray-300 px-3.5 py-2.5 text-sm text-gray-900 placeholder:text-gray-400 focus:border-indigo-600 focus:ring-2 focus:ring-indigo-600/20 focus:outline-none transition-all"
@@ -437,7 +441,8 @@
                                     <div class="relative">
                                         <input type="password" 
                                                id="create_password" 
-                                               name="password" 
+                                               name="password"
+                                               autocomplete="new-password"
                                                required
                                                placeholder="••••••••"
                                                class="w-full rounded-xl border border-gray-300 px-3.5 py-2.5 pr-10 text-sm text-gray-900 placeholder:text-gray-400 focus:border-indigo-600 focus:ring-2 focus:ring-indigo-600/20 focus:outline-none transition-all">
@@ -457,7 +462,8 @@
                                     <div class="relative">
                                         <input type="password" 
                                                id="create_password_confirmation" 
-                                               name="password_confirmation" 
+                                               name="password_confirmation"
+                                               autocomplete="new-password"
                                                required
                                                placeholder="••••••••"
                                                class="w-full rounded-xl border border-gray-300 px-3.5 py-2.5 pr-10 text-sm text-gray-900 placeholder:text-gray-400 focus:border-indigo-600 focus:ring-2 focus:ring-indigo-600/20 focus:outline-none transition-all">
@@ -544,7 +550,7 @@
                 </div>
 
                 <!-- Formulario -->
-                <form id="formEditarSuperAdmin" data-loading-form data-loading-label="Guardando..." method="POST" action="">
+                <form id="formEditarSuperAdmin" data-loading-form data-loading-label="Guardando..." method="POST" action="" autocomplete="off">
                     @csrf
                     @method('PUT')
 
@@ -621,7 +627,8 @@
                                 </label>
                                 <input type="text" 
                                        id="editSuperAdminNombre" 
-                                       name="nombre_real" 
+                                       name="nombre_real"
+                                       autocomplete="off"
                                        required
                                        placeholder="Ej. Ing. Carlos Mendoza"
                                        class="w-full rounded-xl border border-gray-300 px-3.5 py-2.5 text-sm text-gray-900 placeholder:text-gray-400 focus:border-indigo-600 focus:ring-2 focus:ring-indigo-600/20 focus:outline-none transition-all"
@@ -642,6 +649,7 @@
                                     <input type="text" 
                                            id="editSuperAdminTelefono" 
                                            name="telefono"
+                                           autocomplete="off"
                                            maxlength="9"
                                            placeholder="XXXX-XXXX"
                                            class="w-full rounded-xl border border-gray-300 pr-10 py-2.5 text-sm text-gray-900 placeholder:text-gray-400 focus:border-indigo-600 focus:ring-2 focus:ring-indigo-600/20 focus:outline-none transition-all"
@@ -658,7 +666,9 @@
                                 </label>
                                 <input type="text" 
                                        id="editSuperAdminUsername" 
-                                       name="username" 
+                                       name="username"
+                                       autocomplete="one-time-code"
+                                       autocomplete="off"
                                        required
                                        placeholder="Ej. cmendoza@axstore.com"
                                        class="w-full rounded-xl border border-gray-300 px-3.5 py-2.5 text-sm text-gray-900 placeholder:text-gray-400 focus:border-indigo-600 focus:ring-2 focus:ring-indigo-600/20 focus:outline-none transition-all"
@@ -691,7 +701,8 @@
                                     <div class="relative">
                                         <input type="password" 
                                                id="edit_password" 
-                                               name="password" 
+                                               name="password"
+                                               autocomplete="new-password"
                                                placeholder="Dejar en blanco para conservar"
                                                class="w-full rounded-xl border border-gray-300 px-3.5 py-2.5 pr-10 text-sm text-gray-900 placeholder:text-gray-400 focus:border-indigo-600 focus:ring-2 focus:ring-indigo-600/20 focus:outline-none transition-all">
                                         <button type="button" 
@@ -710,7 +721,8 @@
                                     <div class="relative">
                                         <input type="password" 
                                                id="edit_password_confirmation" 
-                                               name="password_confirmation" 
+                                               name="password_confirmation"
+                                               autocomplete="new-password"
                                                placeholder="Repite la nueva contraseña"
                                                class="w-full rounded-xl border border-gray-300 px-3.5 py-2.5 pr-10 text-sm text-gray-900 placeholder:text-gray-400 focus:border-indigo-600 focus:ring-2 focus:ring-indigo-600/20 focus:outline-none transition-all">
                                         <button type="button" 
@@ -884,4 +896,3 @@
         }
     </script>
 </x-app>
-

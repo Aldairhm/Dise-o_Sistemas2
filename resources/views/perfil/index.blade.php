@@ -157,14 +157,14 @@
                             </div>
                         </div>
 
-                        <form id="form-personal" onsubmit="savePersonalInfo(event)" class="p-6 space-y-5">
+                        <form id="form-personal" onsubmit="savePersonalInfo(event)" class="p-6 space-y-5" autocomplete="off">
 
                             <!-- Nombre Completo -->
                             <div>
                                 <label class="block text-xs font-bold mb-1.5" style="color: var(--text-main, #0f172a);">
                                     Nombre Completo <span class="text-rose-500">*</span>
                                 </label>
-                                <input type="text" id="perfil_nombre" name="nombre_real"
+                                <input type="text" id="perfil_nombre" name="nombre_real" autocomplete="off"
                                        value="{{ auth()->user()->nombre_real }}"
                                        required
                                        placeholder="Ej. Juan Pérez"
@@ -181,7 +181,7 @@
                                         <img src="https://flagcdn.com/w20/sv.png" alt="SV" class="h-3.5 rounded-sm">
                                         <span>+503</span>
                                     </div>
-                                    <input type="text" id="perfil_telefono" name="telefono"
+                                    <input type="text" id="perfil_telefono" name="telefono" autocomplete="off"
                                            value="{{ auth()->user()->telefono }}"
                                            maxlength="9"
                                            placeholder="XXXX-XXXX"
@@ -200,7 +200,7 @@
                                 <label class="block text-xs font-bold mb-1.5" style="color: var(--text-main, #0f172a);">
                                     Correo Electrónico / Usuario <span class="text-rose-500">*</span>
                                 </label>
-                                <input type="email" id="perfil_email" name="username"
+                                <input type="email" id="perfil_email" name="username" autocomplete="one-time-code"
                                        value="{{ auth()->user()->username }}"
                                        required
                                        placeholder="usuario@empresa.com"
@@ -242,7 +242,7 @@
                         </div>
                     </div>
 
-                    <form id="form-password" onsubmit="savePassword(event)" class="p-6 space-y-5">
+                    <form id="form-password" onsubmit="savePassword(event)" class="p-6 space-y-5" autocomplete="off">
 
                         <!-- Contraseña Actual -->
                         <div>
@@ -250,7 +250,7 @@
                                 Contraseña Actual <span class="text-rose-500">*</span>
                             </label>
                             <div class="relative">
-                                <input type="password" id="current_password" name="current_password"
+                                <input type="password" id="current_password" name="current_password" autocomplete="current-password"
                                        required placeholder="••••••••"
                                        class="profile-input pr-10">
                                 <button type="button" onclick="togglePwdVisibility('current_password', 'eye-current')"
@@ -266,7 +266,7 @@
                                 Nueva Contraseña <span class="text-rose-500">*</span>
                             </label>
                             <div class="relative">
-                                <input type="password" id="new_password" name="password"
+                                <input type="password" id="new_password" name="password" autocomplete="new-password"
                                        required placeholder="••••••••"
                                        class="profile-input pr-10"
                                        oninput="checkPasswordStrength(this, 'pwd-strength-fill', 'pwd-strength-label')">
@@ -293,7 +293,7 @@
                                 Confirmar Contraseña <span class="text-rose-500">*</span>
                             </label>
                             <div class="relative">
-                                <input type="password" id="confirm_password" name="password_confirmation"
+                                <input type="password" id="confirm_password" name="password_confirmation" autocomplete="new-password"
                                        required placeholder="••••••••"
                                        class="profile-input pr-10">
                                 <button type="button" onclick="togglePwdVisibility('confirm_password', 'eye-confirm')"

@@ -44,7 +44,7 @@
         @endif
 
         <!-- Formulario -->
-        <form data-loading-form data-loading-label="Guardando..." method="POST" action="{{ route('password.update') }}" id="resetPasswordForm">
+        <form data-loading-form data-loading-label="Guardando..." method="POST" action="{{ route('password.update') }}" id="resetPasswordForm" autocomplete="off">
             @csrf
             <input type="hidden" name="token" value="{{ $token }}">
 

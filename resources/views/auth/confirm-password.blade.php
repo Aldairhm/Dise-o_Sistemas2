@@ -15,14 +15,14 @@
                 Esta es un área segura de la aplicación. Por favor, confirma tu contraseña antes de continuar.
             </p>
 
-            <form data-loading-form data-loading-label="Confirmando..." method="POST" action="{{ route('password.confirm') }}">
+            <form data-loading-form data-loading-label="Confirmando..." method="POST" action="{{ route('password.confirm') }}" autocomplete="off">
                 @csrf
 
                 <div class="mb-5">
                     <label for="password" class="text-[11px] font-bold text-slate-400 uppercase tracking-wider block mb-2">
                         Contraseña
                     </label>
-                    <input type="password"
+                    <input type="password" autocomplete="current-password"
                            id="password"
                            name="password"
                            required
@@ -47,4 +47,3 @@
     </div>
 
 </x-app>
-

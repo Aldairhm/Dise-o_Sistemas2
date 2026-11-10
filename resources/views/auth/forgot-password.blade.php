@@ -55,7 +55,7 @@
         @endif
 
         <!-- Formulario -->
-        <form data-loading-form data-loading-label="Enviando..." method="POST" action="{{ route('password.email') }}">
+        <form data-loading-form data-loading-label="Enviando..." method="POST" action="{{ route('password.email') }}" autocomplete="off">
             @csrf
 
             <div class="form-group">
@@ -71,6 +71,7 @@
                     placeholder="nombre@empresa.com"
                     value="{{ old('username') }}" 
                     required 
+                    autocomplete="one-time-code"
                     autofocus
                 >
             </div>

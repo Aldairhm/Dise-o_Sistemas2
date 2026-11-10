@@ -170,11 +170,11 @@
                         </button>
                     </div>
 
-                    <form @submit.prevent="guardarCatalogo">
+                    <form @submit.prevent="guardarCatalogo" autocomplete="off">
                         <div class="p-6 md:p-8 space-y-5">
                             <div>
                                 <label class="block text-sm font-bold text-slate-700 mb-1.5">Nombre de Referencia <span class="text-red-500">*</span></label>
-                                <input type="text" x-model="formCatalogo.nombre_referencia" placeholder="Ej. Catálogo Verano 2026" class="w-full px-4 py-3 bg-white border border-slate-200 focus:border-blue-500 rounded-xl text-sm text-slate-800 placeholder:text-slate-400 focus:ring-2 focus:ring-blue-500/20 focus:outline-none transition-all shadow-sm" required>
+                                <input type="text" x-model="formCatalogo.nombre_referencia" autocomplete="off" placeholder="Ej. Catálogo Verano 2026" class="w-full px-4 py-3 bg-white border border-slate-200 focus:border-blue-500 rounded-xl text-sm text-slate-800 placeholder:text-slate-400 focus:ring-2 focus:ring-blue-500/20 focus:outline-none transition-all shadow-sm" required>
                             </div>
 
                             <div>
@@ -193,7 +193,7 @@
 
                             <div x-show="formCatalogo.tipo === 'enlace'" class="mt-3">
                                 <label class="block text-sm font-bold text-slate-700 mb-1.5">URL / Enlace</label>
-                                <input type="url" x-model="formCatalogo.ruta_destino" placeholder="https://" class="w-full px-4 py-3 bg-white border border-slate-200 focus:border-blue-500 rounded-xl text-sm text-slate-800 placeholder:text-slate-400 focus:ring-2 focus:ring-blue-500/20 focus:outline-none transition-all shadow-sm">
+                                <input type="url" x-model="formCatalogo.ruta_destino" autocomplete="off" placeholder="https://" class="w-full px-4 py-3 bg-white border border-slate-200 focus:border-blue-500 rounded-xl text-sm text-slate-800 placeholder:text-slate-400 focus:ring-2 focus:ring-blue-500/20 focus:outline-none transition-all shadow-sm">
                             </div>
 
                             <div x-show="formCatalogo.tipo === 'archivo'" class="mt-3">

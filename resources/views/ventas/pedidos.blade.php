@@ -1574,7 +1574,7 @@
                         </button>
                     </div>
                     
-                    <form action="/devoluciones/venta" method="POST" data-loading-form data-loading-label="Procesando..." enctype="multipart/form-data" novalidate class="p-6 space-y-6" @click.stop onsubmit="event.preventDefault(); if (!this.checkValidity()) { let errorMsg = 'Por favor, completa todos los campos requeridos.'; this.querySelectorAll('input[type=number]').forEach(i => { if(i.validity.rangeOverflow) errorMsg = 'No puedes devolver más unidades de las que vendiste.'; }); Swal.fire({ toast: true, position: 'top-end', showConfirmButton: false, timer: 5000, timerProgressBar: true, icon: 'error', title: 'Datos inválidos', text: errorMsg }); return; } Swal.fire({ title: '¿Estás seguro?', text: 'Verifica que las cantidades sean correctas antes de procesar.', icon: 'warning', showCancelButton: true, confirmButtonColor: '#3085d6', cancelButtonColor: '#d33', confirmButtonText: 'Sí, procesar', cancelButtonText: 'Cancelar' }).then((result) => { if (result.isConfirmed && window.AxLoading.beginForm(this)) { this.submit(); } });">
+                    <form action="/devoluciones/venta" method="POST" data-loading-form data-loading-label="Procesando..." enctype="multipart/form-data" autocomplete="off" novalidate class="p-6 space-y-6" @click.stop onsubmit="event.preventDefault(); if (!this.checkValidity()) { let errorMsg = 'Por favor, completa todos los campos requeridos.'; this.querySelectorAll('input[type=number]').forEach(i => { if(i.validity.rangeOverflow) errorMsg = 'No puedes devolver más unidades de las que vendiste.'; }); Swal.fire({ toast: true, position: 'top-end', showConfirmButton: false, timer: 5000, timerProgressBar: true, icon: 'error', title: 'Datos inválidos', text: errorMsg }); return; } Swal.fire({ title: '¿Estás seguro?', text: 'Verifica que las cantidades sean correctas antes de procesar.', icon: 'warning', showCancelButton: true, confirmButtonColor: '#3085d6', cancelButtonColor: '#d33', confirmButtonText: 'Sí, procesar', cancelButtonText: 'Cancelar' }).then((result) => { if (result.isConfirmed && window.AxLoading.beginForm(this)) { this.submit(); } });">
                         @csrf
                         <input type="hidden" name="venta_id" :value="ventaSeleccionada?.id">
 
@@ -1810,14 +1810,14 @@
                                                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
                                                     <div>
                                                         <label class="block text-[11px] font-bold text-slate-600 mb-1">Destinatario / Cliente <span class="text-red-500">*</span></label>
-                                                        <input type="text" name="envio_nombre_cliente" x-model="envio_nombre" required
+                                                        <input type="text" name="envio_nombre_cliente" x-model="envio_nombre" autocomplete="off" required
                                                                class="w-full text-xs bg-slate-50 border border-slate-300 rounded-lg px-2.5 py-2 text-slate-800 focus:bg-white focus:border-teal-500 focus:ring-1 focus:ring-teal-500 transition-colors placeholder-slate-400"
                                                                placeholder="Nombre completo del destinatario">
                                                     </div>
 
                                                     <div>
                                                         <label class="block text-[11px] font-bold text-slate-600 mb-1">Teléfono de Contacto <span class="text-red-500">*</span></label>
-                                                        <input type="text" name="envio_telefono" x-model="envio_telefono" required
+                                                        <input type="text" name="envio_telefono" x-model="envio_telefono" autocomplete="off" required
                                                                class="w-full text-xs bg-slate-50 border border-slate-300 rounded-lg px-2.5 py-2 text-slate-800 focus:bg-white focus:border-teal-500 focus:ring-1 focus:ring-teal-500 transition-colors placeholder-slate-400"
                                                                placeholder="Ej. 7000-0000">
                                                     </div>
@@ -1850,7 +1850,7 @@
 
                                                 <div>
                                                     <label class="block text-[11px] font-bold text-slate-600 mb-1">Dirección Exacta de Entrega <span class="text-red-500">*</span></label>
-                                                    <textarea name="envio_direccion" x-model="envio_direccion" rows="2" required
+                                                    <textarea name="envio_direccion" x-model="envio_direccion" autocomplete="off" rows="2" required
                                                               class="w-full text-xs bg-slate-50 border border-slate-300 rounded-lg px-2.5 py-2 text-slate-800 focus:bg-white focus:border-teal-500 focus:ring-1 focus:ring-teal-500 transition-colors placeholder-slate-400 resize-none"
                                                               placeholder="Colonia, calle, pasaje, # casa, punto de referencia..."></textarea>
                                                 </div>

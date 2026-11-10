@@ -26,7 +26,7 @@
             </div>
 
             <!-- Formulario Principal -->
-            <form id="userForm" onsubmit="handleUserSubmit(event)">
+            <form id="userForm" onsubmit="handleUserSubmit(event)" autocomplete="off">
                 @csrf
                 <input type="hidden" id="userId" name="user_id" value="">
                 <input type="hidden" id="_method" name="_method" value="POST">
@@ -111,7 +111,8 @@
                             <div class="relative">
                                 <input type="text" 
                                        id="input_nombre_real" 
-                                       name="nombre_real" 
+                                       name="nombre_real"
+                                       autocomplete="off"
                                        required
                                        placeholder="Ej. Juan Pérez"
                                        class="w-full rounded-xl border border-gray-300 px-3.5 py-2.5 text-sm text-gray-900 placeholder:text-gray-400 focus:border-blue-600 focus:ring-2 focus:ring-blue-600/20 focus:outline-none transition-all"
@@ -134,6 +135,7 @@
                                 <input type="text" 
                                        id="input_telefono" 
                                        name="telefono"
+                                       autocomplete="off"
                                        maxlength="9"
                                        placeholder="XXXX-XXXX"
                                        class="w-full rounded-xl border border-gray-300 pr-10 py-2.5 text-sm text-gray-900 placeholder:text-gray-400 focus:border-blue-600 focus:ring-2 focus:ring-blue-600/20 focus:outline-none transition-all"
@@ -152,7 +154,9 @@
                             <div class="relative">
                                 <input type="text" 
                                        id="input_username" 
-                                       name="username" 
+                                       name="username"
+                                       autocomplete="one-time-code"
+                                       autocomplete="off"
                                        required
                                        placeholder="Ej. juan@axstore.com o juanperez"
                                        class="w-full rounded-xl border border-gray-300 px-3.5 py-2.5 text-sm text-gray-900 placeholder:text-gray-400 focus:border-blue-600 focus:ring-2 focus:ring-blue-600/20 focus:outline-none transition-all"
@@ -209,7 +213,8 @@
                                 <div class="relative">
                                     <input type="password" 
                                            id="input_password" 
-                                           name="password" 
+                                           name="password"
+                                           autocomplete="new-password"
                                            required
                                            placeholder="••••••••"
                                            class="w-full rounded-xl border border-gray-300 px-3.5 py-2.5 pr-10 text-sm text-gray-900 placeholder:text-gray-400 focus:border-blue-600 focus:ring-2 focus:ring-blue-600/20 focus:outline-none transition-all">
@@ -230,7 +235,8 @@
                                 <div class="relative">
                                     <input type="password" 
                                            id="input_password_confirmation" 
-                                           name="password_confirmation" 
+                                           name="password_confirmation"
+                                           autocomplete="new-password"
                                            required
                                            placeholder="••••••••"
                                            class="w-full rounded-xl border border-gray-300 px-3.5 py-2.5 pr-10 text-sm text-gray-900 placeholder:text-gray-400 focus:border-blue-600 focus:ring-2 focus:ring-blue-600/20 focus:outline-none transition-all">

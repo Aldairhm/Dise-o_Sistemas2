@@ -25,7 +25,7 @@
                 </div>
 
                 {{-- Formulario --}}
-                <form id="formVariante" enctype="multipart/form-data" novalidate>
+                <form id="formVariante" enctype="multipart/form-data" autocomplete="off" novalidate>
                     <input type="hidden" id="variante_id" name="variante_id" value="">
                     <input type="hidden" id="imagen_principal_index" name="imagen_principal_index" value="-1">
                     <input type="hidden" id="imagen_existente_principal_id" name="imagen_existente_principal_id" value="">
@@ -47,7 +47,7 @@
                                 <label for="nombre_variante" class="block text-sm font-bold text-slate-700 mb-1.5">
                                     Nombre de Variante <span class="text-red-500">*</span>
                                 </label>
-                                <input type="text" id="nombre_variante" name="nombre_variante"
+                                <input type="text" id="nombre_variante" name="nombre_variante" autocomplete="off"
                                        class="w-full px-4 py-3 bg-white border border-slate-200 focus:border-blue-500 rounded-xl text-sm text-slate-800 placeholder:text-slate-400 focus:ring-2 focus:ring-blue-500/20 focus:outline-none transition-all shadow-sm"
                                        placeholder="Ej: Rojo - Talla M">
                                 <p class="mt-1.5 text-xs text-slate-400">Combinación de atributos que identifica esta variante.</p>
@@ -94,7 +94,7 @@
                                 <label for="atributo_{{ $atributo->id }}" class="block text-xs font-bold text-slate-600 mb-1.5">
                                     {{ $atributo->nombre }}
                                 </label>
-                                <input type="text" id="atributo_{{ $atributo->id }}" name="valores[{{ $atributo->id }}]" 
+                                <input type="text" id="atributo_{{ $atributo->id }}" name="valores[{{ $atributo->id }}]" autocomplete="off"
                                        class="atributo-input w-full px-3 py-2 bg-white border border-slate-200 focus:border-blue-500 rounded-lg text-sm text-slate-800 placeholder:text-slate-300 focus:ring-2 focus:ring-blue-500/20 focus:outline-none transition-all shadow-sm"
                                        placeholder="Valor">
                             </div>

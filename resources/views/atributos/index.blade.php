@@ -138,7 +138,7 @@
                             <i class="fas fa-times"></i>
                         </button>
                     </div>
-                    <form data-loading-form data-loading-label="Guardando..." id="formAtributo" method="POST" action="{{ route('atributos.store') }}" class="p-6">
+                    <form data-loading-form data-loading-label="Guardando..." id="formAtributo" method="POST" action="{{ route('atributos.store') }}" class="p-6" autocomplete="off">
                         @csrf
                         <div id="methodContainer"></div>
                         
@@ -146,7 +146,7 @@
                             <label for="nombre" class="block text-sm font-bold text-slate-700 mb-1.5">
                                 Nombre del Atributo <span class="text-red-500">*</span>
                             </label>
-                            <input type="text" name="nombre" id="nombreInput" required placeholder="Ej: Talla, Color, Material"
+                            <input type="text" name="nombre" id="nombreInput" autocomplete="off" required placeholder="Ej: Talla, Color, Material"
                                    class="w-full px-4 py-3 bg-white border border-slate-200 focus:border-blue-500 rounded-xl text-sm text-slate-800 placeholder:text-slate-400 focus:ring-2 focus:ring-blue-500/20 focus:outline-none transition-all shadow-sm">
                         </div>
 
