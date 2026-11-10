@@ -203,7 +203,11 @@ document.addEventListener('DOMContentLoaded', () => {
             dropZone.classList.remove('dragover');
             handleFiles(e.dataTransfer.files);
         });
-        fileInput.addEventListener('change', (e) => handleFiles(e.target.files));
+        fileInput.addEventListener('change', (e) => {
+            handleFiles(e.target.files);
+            // La cola controla los archivos; el selector solo permite agregarlos.
+            e.target.value = '';
+        });
     }
 
     function handleFiles(files) {
@@ -492,6 +496,9 @@ document.addEventListener('DOMContentLoaded', () => {
         skuInput.value = ''; // El servidor asignará el SKU real
 
         const formData = new FormData(formVariante);
+        // FormData ya incluye el selector: sustituirlo por la cola visible evita
+        // subir cada foto dos veces o enviar archivos retirados de la vista previa.
+        formData.delete('imagenes[]');
         archivosImagenes.forEach(f => formData.append('imagenes[]', f));
         if (isEdit) formData.append('_method', 'PUT');
 
