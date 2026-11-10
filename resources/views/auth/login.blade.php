@@ -148,8 +148,12 @@
                     </div>
                 </div>
 
-                <!-- Olvido contraseña -->
+                <!-- Recordarme / Olvido contraseña -->
                 <div class="form-options">
+                    <label class="remember-label">
+                        <input type="checkbox" name="remember" id="remember" value="1" {{ old('remember') ? 'checked' : '' }}>
+                        <span>Recordarme</span>
+                    </label>
                     <a href="{{ route('password.request') }}" class="forgot-link">
                         ¿Olvidó su contraseña?
                     </a>

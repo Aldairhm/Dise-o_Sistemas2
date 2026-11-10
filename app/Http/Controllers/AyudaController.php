@@ -335,7 +335,10 @@ class AyudaController extends Controller
             abort(403, 'No tienes autorización para consultar esta duda privada.');
         }
 
-        if ($user->rol === 'admin' && $ticket->nivel_escalamiento === 'super_admin' && $ticket->id_usuario !== $user->id) {
+        if ($user->rol === 'admin'
+            && $ticket->nivel_escalamiento === 'super_admin'
+            && $ticket->id_usuario !== $user->id
+            && (int) $ticket->escalado_por !== (int) $user->id) {
             abort(403, 'Este ticket corresponde a comunicaciones reservadas del Super Administrador.');
         }
 

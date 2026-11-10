@@ -92,9 +92,10 @@ class AuthController extends Controller
             'username' => $request->username,
             'password' => $request->password,
         ];
+        $remember = $request->boolean('remember');
 
         // Intentar autenticación
-        if (Auth::attempt($credentials)) {
+        if (Auth::attempt($credentials, $remember)) {
             $usuario = Auth::user();
 
             if ($usuario->estado != 1) {

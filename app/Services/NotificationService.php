@@ -101,7 +101,8 @@ class NotificationService
         $ticketRole = strtolower(trim((string) $ticket->rol_usuario));
 
         return $user->isSuperAdmin() || (int) $ticket->id_usuario === (int) $user->id
-            || ($user->rol === 'admin' && $ticketLevel === 'admin' && $ticketRole === 'vendedor');
+            || ($user->rol === 'admin' && $ticketLevel === 'admin' && $ticketRole === 'vendedor')
+            || ($user->rol === 'admin' && (int) $ticket->escalado_por === (int) $user->id);
     }
 
     public function canEscalateTicket(User $user, SoporteTicket $ticket): bool
