@@ -193,31 +193,18 @@ class CompraController extends Controller
             ->orderBy('nombre')
             ->get(['id', 'nombre', 'correo']);
 
-        $variantes = Variante::with(['producto:id,nombre,imagen_principal', 'imagenes'])
-            ->where('estado', 1)
-            ->orderBy('id')
-            ->limit(10)
-            ->get(['id', 'id_producto', 'sku', 'nombre_variante', 'precio_venta'])
-            ->map(fn (Variante $variante) => [
-                'id' => $variante->id,
-                'producto' => $variante->producto?->nombre ?? 'Producto sin nombre',
-                'variante' => $variante->nombre_variante,
-                'sku' => $variante->sku,
-                'imagen' => ($imagen = $variante->imagenes->firstWhere('es_principal', 1) ?? $variante->imagenes->first())
-                    ? CloudStorage::url($imagen->ruta_imagen)
-                    : null,
-                'unidad' => 'unidad',
-                'precio_venta' => $variante->precio_venta,
-            ])
-            ->values();
+        $variantes = $this->catalogoVariantes('', 1);
 
         return view('compras.create', compact('proveedores', 'variantes'));
     }
 
     public function buscarVariantes(Request $request)
     {
-        $busqueda = $request->query('q', '');
+        return response()->json($this->catalogoVariantes($request->query('q', '')));
+    }
 
+    private function catalogoVariantes($busqueda, ?int $pagina = null)
+    {
         $query = Variante::with(['producto:id,nombre,imagen_principal', 'imagenes'])
             ->where('estado', 1);
 
@@ -232,7 +219,7 @@ class CompraController extends Controller
         }
 
         $paginator = $query->orderBy('id')
-            ->paginate(10, ['id', 'id_producto', 'sku', 'nombre_variante', 'precio_venta', 'stock', 'reserva']);
+            ->paginate(10, ['id', 'id_producto', 'sku', 'nombre_variante', 'precio_venta', 'stock', 'reserva'], 'page', $pagina);
 
         $paginator->getCollection()->transform(fn (Variante $variante) => [
             'id' => $variante->id,
@@ -248,7 +235,7 @@ class CompraController extends Controller
             'reserva' => $variante->reserva,
         ]);
 
-        return response()->json($paginator);
+        return $paginator;
     }
 
     public function store(Request $request)

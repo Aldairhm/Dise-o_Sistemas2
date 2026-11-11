@@ -1,7 +1,11 @@
 document.addEventListener("alpine:init", () => {
-    Alpine.data("registroCompra", (proveedoresIniciales = [], variantesIniciales = []) => ({
+    Alpine.data("registroCompra", (proveedoresIniciales, catalogoInicial) => ({
         proveedores: proveedoresIniciales,
-        variantes: variantesIniciales,
+        variantes: catalogoInicial.data,
+        totalVariantes: catalogoInicial.total,
+        paginaVariantes: catalogoInicial.current_page,
+        ultimaPaginaVariantes: catalogoInicial.last_page,
+        terminoVariantes: '',
         proveedorId: "",
         fecha: new Date().toISOString().slice(0, 10),
         referencia: "",
@@ -18,31 +22,28 @@ document.addEventListener("alpine:init", () => {
         init() {
             this.$watch('busqueda', (value) => {
                 clearTimeout(this.timeoutBusqueda);
+                this.solicitudBusqueda++;
+                this.buscando = true;
                 this.timeoutBusqueda = setTimeout(() => {
                     this.buscarEnServidor(value);
                 }, 300);
             });
         },
 
-        async buscarEnServidor(termino) {
+        async buscarEnServidor(termino, pagina = 1) {
             const solicitud = ++this.solicitudBusqueda;
             this.buscando = true;
             this.errorBusqueda = '';
             try {
-                const searchUrl = document.querySelector('meta[name="compras-search-url"]')?.content;
-                if (!searchUrl) throw new Error('No se configuró la búsqueda de productos.');
-
-                const response = await fetch(`${searchUrl}?q=${encodeURIComponent(termino)}`, {
-                    headers: {
-                        Accept: 'application/json',
-                        'X-Requested-With': 'XMLHttpRequest',
-                    },
-                });
+                const response = await fetch(`/compras/buscar-variantes?q=${encodeURIComponent(termino)}&page=${pagina}`);
                 if (!response.ok) throw new Error('No se pudieron cargar las variantes.');
                 const result = await response.json();
                 if (solicitud !== this.solicitudBusqueda) return;
-                if (!Array.isArray(result.data)) throw new Error('La respuesta de productos no es válida.');
-                this.variantes = result.data;
+                this.variantes = pagina === 1 ? result.data : [...this.variantes, ...result.data];
+                this.totalVariantes = result.total;
+                this.paginaVariantes = result.current_page;
+                this.ultimaPaginaVariantes = result.last_page;
+                this.terminoVariantes = termino;
             } catch (error) {
                 if (solicitud === this.solicitudBusqueda) this.errorBusqueda = error.message;
             } finally {

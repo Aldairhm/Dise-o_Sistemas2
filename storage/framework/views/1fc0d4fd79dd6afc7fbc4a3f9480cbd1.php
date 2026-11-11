@@ -11,6 +11,7 @@
 <?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::processComponentKey($component); ?>
 
     <meta name="compras-store-url" content="<?php echo e(route('compras.store')); ?>">
+    <meta name="compras-search-url" content="<?php echo e(route('compras.buscar-variantes')); ?>">
     <div x-data="registroCompra(<?php echo e(Js::from($proveedores)); ?>, <?php echo e(Js::from($variantes)); ?>)" class="max-w-[1440px] mx-auto space-y-6">
         
         <!-- HEADER (Sin cambios lógicos, refinado visualmente) -->
@@ -137,7 +138,7 @@
                             <p class="text-xs font-black uppercase tracking-[0.18em] text-blue-600">Catálogo</p>
                             <h2 class="text-xl font-black text-slate-900 mt-1">Buscar y agregar</h2>
                         </div>
-                        <span class="text-xs font-bold text-slate-600 bg-slate-100 border border-slate-200 px-3 py-1.5 rounded-lg" x-text="variantesDisponibles.length + ' disponibles'"></span>
+                        <span x-show="busqueda === terminoVariantes" class="text-xs font-bold text-slate-600 bg-slate-100 border border-slate-200 px-3 py-1.5 rounded-lg" x-text="totalVariantes + (totalVariantes === 1 ? ' resultado' : ' resultados')"></span>
                     </div>
                     
                     <div class="relative">
@@ -190,7 +191,7 @@
 <?php $component = $__componentOriginalfd3a6f8f1730f577643b0c9e9ee5a212; ?>
 <?php unset($__componentOriginalfd3a6f8f1730f577643b0c9e9ee5a212); ?>
 <?php endif; ?></div>
-                    <div x-show="!buscando" :aria-busy="buscando" class="grid sm:grid-cols-2 gap-3 mt-4 max-h-60 overflow-y-auto pr-2">
+                    <div x-show="!buscando && busqueda === terminoVariantes" :aria-busy="buscando" class="grid sm:grid-cols-2 gap-3 mt-4 max-h-60 overflow-y-auto pr-2">
                         <template x-for="variante in variantesDisponibles" :key="variante.id">
                             <button type="button" @click="agregarVariante(variante)" :disabled="buscando || guardando" class="text-left rounded-xl border border-slate-200 bg-white hover:border-blue-400 hover:shadow-md hover:shadow-blue-500/5 px-4 py-3 transition-all group">
                                 <div class="flex items-center justify-between gap-3">
@@ -210,8 +211,13 @@
                                 </div>
                             </button>
                         </template>
-                        <p x-show="variantesDisponibles.length === 0 && !buscando && !errorBusqueda" class="sm:col-span-2 text-sm font-medium text-slate-400 py-6 text-center" style="display:none;">No se encontraron resultados.</p>
+                        <p x-show="variantesDisponibles.length === 0 && paginaVariantes >= ultimaPaginaVariantes && !errorBusqueda" class="sm:col-span-2 text-sm font-medium text-slate-400 py-6 text-center" style="display:none;">No quedan variantes para agregar.</p>
                     </div>
+                    <button type="button" x-show="paginaVariantes < ultimaPaginaVariantes && !buscando && busqueda === terminoVariantes" :disabled="buscando || guardando"
+                            @click="buscarEnServidor(busqueda, paginaVariantes + 1)" style="display:none;"
+                            class="mt-3 rounded-xl border border-slate-200 px-4 py-2 text-sm font-bold text-blue-700 hover:bg-blue-50">
+                        Cargar más variantes
+                    </button>
                 </div>
 
                 <!-- LA NUEVA TABLA (Minimalista) -->
@@ -331,4 +337,5 @@
 <?php if (isset($__componentOriginal7ae6b45c011e855a5545a671a7f3568e)): ?>
 <?php $component = $__componentOriginal7ae6b45c011e855a5545a671a7f3568e; ?>
 <?php unset($__componentOriginal7ae6b45c011e855a5545a671a7f3568e); ?>
-<?php endif; ?><?php /**PATH /home/edwin/Desktop/UES II-2026/Diseño II/Proyecto/Dise-o_Sistemas2/resources/views/compras/create.blade.php ENDPATH**/ ?>
+<?php endif; ?>
+<?php /**PATH /home/edwin/Desktop/UES II-2026/Diseño II/Proyecto/Dise-o_Sistemas2/resources/views/compras/create.blade.php ENDPATH**/ ?>

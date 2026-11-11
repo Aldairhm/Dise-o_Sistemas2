@@ -55,7 +55,7 @@ class ProductoController extends Controller
 
     public function create()
     {
-        $categorias = Categoria::all();
+        $categorias = Categoria::where('estado', 1)->get();
         $atributos = collect([]); // No mostramos los globales
         return view('productos.create', compact('categorias', 'atributos'));
     }

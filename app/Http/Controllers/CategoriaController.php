@@ -14,7 +14,7 @@ class CategoriaController extends Controller
     public function index(Request $request)
     {
         $search = $request->get('search', '');
-        $estado = $request->get('estado', 'activas'); // activas | inactivos | todas
+        $estado = $request->get('estado', 'todas'); // activas | inactivos | todas
 
         $query = Categoria::withCount('productos');
 

@@ -142,7 +142,7 @@
         </div>
 
         <!-- TABLA / CARDS -->
-        <div class="bg-white rounded-2xl border border-slate-200/80 shadow-xs overflow-hidden relative" id="tableContainer">
+        <div class="bg-white rounded-2xl border border-slate-200/80 shadow-xs overflow-hidden relative" id="tableContainer" data-estado="{{ $estado }}">
             <!-- Skeleton Loader Inteligente -->
             <div id="tableSkeletonCategorias" class="hidden">
                 <x-skeleton-table :rows="5" :cols="5" />

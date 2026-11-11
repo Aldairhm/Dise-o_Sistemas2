@@ -44,9 +44,8 @@ document.addEventListener('DOMContentLoaded', () => {
             if (!res.ok) throw new Error('No se pudieron recargar las variantes.');
             const data = await res.json();
             if (variantsRequest !== request) return;
-            const tbody = document.getElementById('tablaVariantes')?.querySelector('tbody');
             const grid = document.getElementById('variantsCardsGrid');
-            if (typeof data.table_html === 'string' && tbody) tbody.innerHTML = data.table_html;
+            if (typeof data.table_html === 'string' && wrapper) wrapper.innerHTML = data.table_html;
             if (typeof data.cards_html === 'string' && grid) grid.innerHTML = data.cards_html;
             window.applyFiltersVar?.();
         } catch (err) {
