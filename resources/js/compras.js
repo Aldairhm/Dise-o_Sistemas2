@@ -29,12 +29,20 @@ document.addEventListener("alpine:init", () => {
             this.buscando = true;
             this.errorBusqueda = '';
             try {
-                const response = await fetch(`/compras/buscar-variantes?q=${encodeURIComponent(termino)}`);
+                const searchUrl = document.querySelector('meta[name="compras-search-url"]')?.content;
+                if (!searchUrl) throw new Error('No se configuró la búsqueda de productos.');
+
+                const response = await fetch(`${searchUrl}?q=${encodeURIComponent(termino)}`, {
+                    headers: {
+                        Accept: 'application/json',
+                        'X-Requested-With': 'XMLHttpRequest',
+                    },
+                });
                 if (!response.ok) throw new Error('No se pudieron cargar las variantes.');
                 const result = await response.json();
                 if (solicitud !== this.solicitudBusqueda) return;
-                // Si es un paginador de Laravel, los datos están en result.data
-                this.variantes = result.data || []; 
+                if (!Array.isArray(result.data)) throw new Error('La respuesta de productos no es válida.');
+                this.variantes = result.data;
             } catch (error) {
                 if (solicitud === this.solicitudBusqueda) this.errorBusqueda = error.message;
             } finally {

@@ -1,5 +1,6 @@
 <x-app title="Registrar compra | AXStore">
     <meta name="compras-store-url" content="{{ route('compras.store') }}">
+    <meta name="compras-search-url" content="{{ route('compras.buscar-variantes') }}">
     <div x-data="registroCompra({{ Js::from($proveedores) }}, {{ Js::from($variantes) }})" class="max-w-[1440px] mx-auto space-y-6">
         
         <!-- HEADER (Sin cambios lógicos, refinado visualmente) -->
