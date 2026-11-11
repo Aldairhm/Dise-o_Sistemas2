@@ -108,7 +108,20 @@
                                 </td>
                                 <!-- FIN DE LÓGICA DE MONTO -->
 
-                                <td class="px-5 py-4 text-right">@if($devolucion->comprobante)<a href="{{ str_starts_with($devolucion->comprobante, 'http') ? $devolucion->comprobante : \Illuminate\Support\Facades\Storage::disk('s3')->url($devolucion->comprobante) }}" target="_blank" rel="noopener" class="inline-flex items-center gap-1.5 rounded-lg border border-blue-200 bg-blue-50 px-3 py-1.5 text-xs font-bold text-blue-700 hover:bg-blue-600 hover:text-white"><i class="fas fa-paperclip"></i> Ver archivo</a>@else<span class="text-xs text-slate-400">Sin evidencia</span>@endif</td>
+                                @php
+                                    $comprobanteExiste = $devolucion->comprobante
+                                        && (str_starts_with($devolucion->comprobante, 'http')
+                                            || \Illuminate\Support\Facades\Storage::disk('s3')->exists($devolucion->comprobante));
+                                @endphp
+                                <td class="px-5 py-4 text-right">
+                                    @if($comprobanteExiste)
+                                        <a href="{{ str_starts_with($devolucion->comprobante, 'http') ? $devolucion->comprobante : \Illuminate\Support\Facades\Storage::disk('s3')->url($devolucion->comprobante) }}" target="_blank" rel="noopener" class="inline-flex items-center gap-1.5 rounded-lg border border-blue-200 bg-blue-50 px-3 py-1.5 text-xs font-bold text-blue-700 hover:bg-blue-600 hover:text-white"><i class="fas fa-paperclip"></i> Ver archivo</a>
+                                    @elseif($devolucion->comprobante)
+                                        <span class="inline-flex items-center gap-1.5 rounded-lg border border-rose-200 bg-rose-50 px-3 py-1.5 text-xs font-bold text-rose-600" title="La ruta está registrada, pero el archivo no existe en el almacenamiento."><i class="fas fa-triangle-exclamation"></i> Archivo no disponible</span>
+                                    @else
+                                        <span class="text-xs text-slate-400">Sin evidencia</span>
+                                    @endif
+                                </td>
                                 <td class="px-5 py-4 text-right">
                                     @if($devolucion->estado === 'pendiente')
                                         <button type="button" onclick="document.getElementById('resolver-proveedor-{{ $devolucion->id }}').showModal()" class="inline-flex items-center gap-1.5 rounded-lg bg-amber-500 px-3 py-1.5 text-xs font-black text-white hover:bg-amber-600"><i class="fas fa-check"></i> Resolver</button>

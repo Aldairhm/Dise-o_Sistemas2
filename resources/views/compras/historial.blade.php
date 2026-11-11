@@ -157,7 +157,7 @@
                             @endforeach
                         </div>
                         <label class="mb-4 block text-xs font-bold uppercase tracking-wider text-slate-600">Motivo<textarea name="motivo" required rows="3" class="mt-1.5 w-full rounded-xl border border-slate-300 px-3 py-2.5 text-sm" placeholder="Describe el motivo de la devolución al proveedor"></textarea></label>
-                        <label class="mb-5 block text-xs font-bold uppercase tracking-wider text-slate-600">Comprobante / evidencia<input type="file" name="comprobante" accept="image/*,.pdf" class="mt-1.5 w-full rounded-xl border border-slate-300 bg-white px-3 py-2.5 text-sm"></label>
+                        <label class="mb-5 block text-xs font-bold uppercase tracking-wider text-slate-600">Comprobante / evidencia<input type="file" name="comprobante" accept="image/jpeg,image/png,image/webp,image/heic,image/heif,application/pdf,.jpg,.jpeg,.png,.webp,.heic,.heif,.pdf" class="mt-1.5 w-full rounded-xl border border-slate-300 bg-white px-3 py-2.5 text-sm"><span class="mt-1 block text-[11px] font-normal normal-case text-slate-400">Formatos permitidos: JPG, PNG, WEBP, HEIC, HEIF o PDF. Máximo 5 MB.</span></label>
                         <div class="flex justify-end gap-3 border-t border-slate-100 pt-4"><button type="button" onclick="this.closest('dialog').close()" class="rounded-xl border border-slate-200 px-4 py-2.5 text-sm font-bold text-slate-600 hover:bg-slate-50">Cancelar</button><button type="submit" class="rounded-xl bg-amber-500 px-5 py-2.5 text-sm font-black text-white hover:bg-amber-600"><i class="fas fa-truck-arrow-right mr-2"></i>Registrar devolución</button></div>
                     </form>
                 </dialog>

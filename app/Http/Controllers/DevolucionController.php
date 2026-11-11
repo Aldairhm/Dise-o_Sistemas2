@@ -396,12 +396,15 @@ class DevolucionController extends Controller
         $validated = $request->validate([
             'compra_id' => ['required', 'integer', 'exists:compra,id'],
             'motivo' => ['required', 'string', 'max:1000'],
-            'comprobante' => ['nullable', 'file', 'mimes:jpg,jpeg,png,webp,pdf', 'max:5120'],
+            'comprobante' => ['nullable', 'file', 'mimes:jpg,jpeg,png,webp,heic,heif,pdf', 'max:5120'],
             'productos' => ['required', 'array', 'min:1'],
             'productos.*.id_compra_detalle' => ['required', 'integer', 'distinct', 'exists:compra_detalle,id'],
             'productos.*.ubicaciones.stock' => ['required', 'integer', 'min:0'],
             'productos.*.ubicaciones.reserva' => ['required', 'integer', 'min:0'],
             'productos.*.ubicaciones.cuarentena' => ['required', 'integer', 'min:0'],
+        ], [
+            'comprobante.mimes' => 'La evidencia debe ser una imagen JPG, PNG, WEBP, HEIC, HEIF o un documento PDF.',
+            'comprobante.max' => 'La evidencia no debe superar los 5 MB.',
         ]);
 
         $productos = collect($validated['productos'])
