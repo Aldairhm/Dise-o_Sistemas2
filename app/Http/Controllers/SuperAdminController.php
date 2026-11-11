@@ -294,7 +294,17 @@ class SuperAdminController extends Controller
               ->orWhere('estado', 'Escalada');
         });
 
-        // Conteo base para las pestañas de estado
+        if ($request->filled('search')) {
+            $s = strtolower(trim($request->search));
+            $query->where(function ($q) use ($s) {
+                $q->whereRaw('LOWER(codigo_ticket) like ?', ["%{$s}%"])
+                  ->orWhereRaw('LOWER(titulo) like ?', ["%{$s}%"])
+                  ->orWhereRaw('LOWER(duda) like ?', ["%{$s}%"])
+                  ->orWhereRaw('LOWER(nombre_usuario) like ?', ["%{$s}%"]);
+            });
+        }
+
+        // Las cantidades deben coincidir con la búsqueda, sin limitarse al estado activo.
         $baseCounts = clone $query;
         $conteoEstados = [
             'todos'      => (clone $baseCounts)->count(),
@@ -307,18 +317,11 @@ class SuperAdminController extends Controller
 
         // Por defecto, siempre entra filtrando por 'Pendiente' para mayor autonomía
         $estadoTab = $request->query('estado', 'Pendiente');
-        if ($estadoTab !== 'todos' && in_array($estadoTab, SoporteTicket::ESTADOS, true)) {
-            $query->where('estado', $estadoTab);
+        if (!in_array($estadoTab, ['todos', ...SoporteTicket::ESTADOS], true)) {
+            $estadoTab = 'Pendiente';
         }
-
-        if ($request->filled('search')) {
-            $s = strtolower(trim($request->search));
-            $query->where(function ($q) use ($s) {
-                $q->whereRaw('LOWER(codigo_ticket) like ?', ["%{$s}%"])
-                  ->orWhereRaw('LOWER(titulo) like ?', ["%{$s}%"])
-                  ->orWhereRaw('LOWER(duda) like ?', ["%{$s}%"])
-                  ->orWhereRaw('LOWER(nombre_usuario) like ?', ["%{$s}%"]);
-            });
+        if ($estadoTab !== 'todos') {
+            $query->where('estado', $estadoTab);
         }
 
         $tickets = $query->orderBy('created_at', 'asc')

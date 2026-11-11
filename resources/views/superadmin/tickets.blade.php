@@ -122,7 +122,7 @@
             return {
                 estadoTab: config.estadoTab || 'Pendiente',
                 conteoEstados: config.conteoEstados || {},
-                filtroSearch: '{{ request('search') }}',
+                filtroSearch: @js(request('search', '')),
                 cargandoTickets: false,
                 solicitudCarga: 0,
                 errorCarga: '',
@@ -145,9 +145,7 @@
 
                 construirUrl(pagina = 1) {
                     const params = new URLSearchParams();
-                    if (this.estadoTab && this.estadoTab !== 'todos') {
-                        params.set('estado', this.estadoTab);
-                    }
+                    params.set('estado', this.estadoTab);
                     if (this.filtroSearch && this.filtroSearch.trim() !== '') {
                         params.set('search', this.filtroSearch.trim());
                     }

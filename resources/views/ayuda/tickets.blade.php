@@ -366,8 +366,8 @@
                 soloMisDudas: Boolean(config.soloMisDudas),
                 misDudasCount: config.misDudasCount || 0,
                 conteoEstados: config.conteoEstados || {},
-                filtroQ: '{{ request('q') }}',
-                filtroModulo: '{{ request('modulo') }}',
+                filtroQ: @js(request('q', '')),
+                filtroModulo: @js(request('modulo', '')),
                 cargandoTickets: false,
                 solicitudTickets: 0,
 

@@ -254,12 +254,6 @@ class AyudaController extends Controller
             // En bandeja general del Super Admin, ve todas o atiende desde el panel exclusivo
         }
 
-        // Filtro por estado
-        $estadoTab = $request->query('estado', 'todos');
-        if (in_array($estadoTab, SoporteTicket::ESTADOS, true)) {
-            $query->where('estado', $estadoTab);
-        }
-
         // Filtro por módulo
         if ($request->filled('modulo')) {
             $query->where('modulo', $request->query('modulo'));
@@ -283,15 +277,8 @@ class AyudaController extends Controller
             });
         }
 
-        // Conteos por estado para las pestañas
-        $baseCounts = SoporteTicket::query();
-        if ($soloMisDudas || $user->isVendedor()) {
-            $baseCounts->where('id_usuario', $user->id);
-        } elseif ($user->rol === 'admin') {
-            $baseCounts->where('nivel_escalamiento', 'admin')
-                       ->where('rol_usuario', 'vendedor')
-                       ->where('id_usuario', '!=', $user->id);
-        }
+        // Las pestañas cuentan la misma bandeja y filtros que la lista, antes de elegir un estado.
+        $baseCounts = clone $query;
 
         $misDudasCount = SoporteTicket::where('id_usuario', $user->id)->count();
 
@@ -303,6 +290,14 @@ class AyudaController extends Controller
             'Resuelta'   => (clone $baseCounts)->where('estado', 'Resuelta')->count(),
             'Cancelada'  => (clone $baseCounts)->where('estado', 'Cancelada')->count(),
         ];
+
+        $estadoTab = $request->query('estado', 'todos');
+        if (!in_array($estadoTab, ['todos', ...SoporteTicket::ESTADOS], true)) {
+            $estadoTab = 'todos';
+        }
+        if ($estadoTab !== 'todos') {
+            $query->where('estado', $estadoTab);
+        }
 
         $tickets = $query->paginate(15)->withQueryString();
         $modulos = config('ayuda');
