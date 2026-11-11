@@ -242,12 +242,15 @@ class AyudaController extends Controller
             $query->where('id_usuario', $user->id);
         }
         // 2. Administrador convencional en Bandeja de Equipo:
-        // SOLO debe atender dudas provenientes de usuarios subordinados (vendedores),
-        // NUNCA dudas de otros administradores ni sus propias dudas (las suyas van en 'Mis Dudas').
+        // Atiende dudas de vendedores y conserva el seguimiento de las que él mismo escaló.
+        // Las dudas de administradores se mantienen privadas (las propias van en 'Mis Dudas').
         elseif ($user->rol === 'admin') {
-            $query->where('nivel_escalamiento', 'admin')
-                  ->where('rol_usuario', 'vendedor')
-                  ->where('id_usuario', '!=', $user->id);
+            $query->where('rol_usuario', 'vendedor')
+                  ->where('id_usuario', '!=', $user->id)
+                  ->where(function ($sub) use ($user) {
+                      $sub->where('nivel_escalamiento', 'admin')
+                          ->orWhere('escalado_por', $user->id);
+                  });
         }
         // 3. Super Admin: en esta vista de equipo ve dudas operativas (o usa su panel exclusivo de Gobernanza)
         elseif ($user->isSuperAdmin()) {

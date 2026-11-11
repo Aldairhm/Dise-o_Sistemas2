@@ -70,6 +70,41 @@ class NotificationCenterTest extends TestCase
             'estado' => 'Pendiente', 'prioridad' => 'Media', 'nivel_escalamiento' => $level]);
     }
 
+    public function test_admin_can_filter_and_count_their_escalated_tickets_through_resolution(): void
+    {
+        $tickets = collect(range(1, 4))->map(fn () => $this->ticket($this->seller));
+        foreach ($tickets as $ticket) {
+            $this->actingAs($this->admin)->from(route('ayuda.tickets.index'))
+                ->post(route('ayuda.tickets.escalar', $ticket), ['justificacion' => 'Se requiere la revisión del superadministrador.'])
+                ->assertRedirect(route('ayuda.tickets.index'))->assertSessionHas('success');
+            $this->assertSame('super_admin', $ticket->fresh()->nivel_escalamiento);
+            $this->assertSame('Escalada', $ticket->fresh()->estado);
+        }
+
+        $listing = fn (User $user, array $filters = []) => $this->actingAs($user)
+            ->getJson(route('ayuda.tickets.index', $filters))->assertOk();
+        $response = $listing($this->admin, ['estado' => 'Escalada'])
+            ->assertJsonPath('conteoEstados.todos', 4)->assertJsonPath('conteoEstados.Escalada', 4);
+        foreach ($tickets as $ticket) {
+            $this->assertStringContainsString('#'.$ticket->codigo_ticket, $response->json('html'));
+        }
+        $listing($this->admin, ['q' => $tickets[0]->codigo_ticket, 'modulo' => 'ventas', 'estado' => 'Escalada'])
+            ->assertJsonPath('conteoEstados.todos', 1)->assertJsonPath('conteoEstados.Escalada', 1);
+        $listing($this->admin, ['mis_dudas' => 1])->assertJsonPath('conteoEstados.todos', 0);
+        $otherAdmin = $this->user('admin', 'unrelated-admin');
+        $listing($otherAdmin, ['estado' => 'Escalada'])->assertJsonPath('conteoEstados.todos', 0);
+
+        $this->actingAs($this->super)->patchJson(route('ayuda.tickets.estado', $tickets[0]), [
+            'estado' => 'Resuelta', 'resolucion' => 'Revisión finalizada por el superadministrador.',
+        ])->assertOk()->assertJsonPath('success', true);
+        $resolved = $listing($this->admin, ['estado' => 'Resuelta'])
+            ->assertJsonPath('conteoEstados.todos', 4)->assertJsonPath('conteoEstados.Escalada', 3)
+            ->assertJsonPath('conteoEstados.Resuelta', 1);
+        $this->assertStringContainsString('#'.$tickets[0]->codigo_ticket, $resolved->json('html'));
+        $this->assertStringNotContainsString('#'.$tickets[1]->codigo_ticket, $resolved->json('html'));
+        $listing($this->admin, ['estado' => 'todos'])->assertJsonPath('conteoEstados.todos', 4);
+    }
+
     private function feed(User $user)
     {
         return $this->actingAs($user)->getJson(route('notifications.feed'));
