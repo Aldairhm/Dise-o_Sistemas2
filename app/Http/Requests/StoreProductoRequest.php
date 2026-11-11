@@ -3,6 +3,7 @@
 namespace App\Http\Requests;
 
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Validation\Rule;
 
 class StoreProductoRequest extends FormRequest
 {
@@ -17,7 +18,7 @@ class StoreProductoRequest extends FormRequest
             'nombre' => 'required|string|max:150|unique:producto,nombre',
             'estado' => 'nullable|in:0,1',
             'marca' => 'nullable|string|max:100',
-            'id_categoria' => 'required|exists:categoria,id',
+            'id_categoria' => ['required', Rule::exists('categoria', 'id')->where('estado', 1)],
             'descripcion' => 'nullable|string|max:5000',
             'comision' => 'required|numeric|min:0|max:100',
             'imagen_principal' => 'nullable|image|mimes:jpeg,png,jpg,webp|max:2048',
@@ -32,7 +33,7 @@ class StoreProductoRequest extends FormRequest
             'nombre.max'      => 'El nombre no puede superar 150 caracteres.',
             'nombre.unique'   => 'Ya existe un producto con ese nombre.',
             'id_categoria.required' => 'Debes seleccionar una categoría.',
-            'id_categoria.exists' => 'La categoría seleccionada no existe.',
+            'id_categoria.exists' => 'La categoría seleccionada no está disponible. Elige una categoría activa.',
             'comision.required' => 'La comisión es obligatoria.',
             'comision.min' => 'La comisión no puede ser negativa.',
             'comision.max' => 'La comisión no puede superar el 100%.',

@@ -25,7 +25,8 @@ const CSRF = document
     .getAttribute("content");
 
 let currentView = localStorage.getItem("cat_view") || "table";
-let currentEstado = localStorage.getItem("cat_estado") || "todas";
+const estadoRenderizado = document.getElementById("tableContainer").dataset.estado;
+let currentEstado = localStorage.getItem("cat_estado") || estadoRenderizado;
 let sortableTable = null;
 let sortableCards = null;
 let currentEditProductosCount = 0;
@@ -59,7 +60,7 @@ function setView(view) {
     filterItems();
 }
 
-function setEstado(estado) {
+function setEstado(estado, recargar = true) {
     currentEstado = estado;
     localStorage.setItem("cat_estado", estado);
 
@@ -88,10 +89,13 @@ function setEstado(estado) {
         btnExport.href = `${ROUTES.export}?estado=${estado}`;
     }
 
-    refreshContent();
+    if (recargar) refreshContent();
 }
 
 function initSortable() {
+    const Sortable = window.Sortable;
+    if (typeof Sortable !== "function") return;
+
     const tbody = document.getElementById("categoriasBody");
     const grid = document.getElementById("cardsWrapper");
 
@@ -106,8 +110,8 @@ function initSortable() {
 
     sortableTable?.destroy();
     sortableCards?.destroy();
-    if (tbody) sortableTable = new Sortable(tbody, options);
-    if (grid) sortableCards = new Sortable(grid, options);
+    sortableTable = tbody ? new Sortable(tbody, options) : null;
+    sortableCards = grid ? new Sortable(grid, options) : null;
 }
 
 async function saveOrder() {
@@ -145,8 +149,9 @@ async function saveOrder() {
 
 document.addEventListener("DOMContentLoaded", () => {
     setView(currentView);
-    setEstado(currentEstado);
-    initSortable();
+    const recargar = currentEstado !== estadoRenderizado;
+    setEstado(currentEstado, recargar);
+    if (!recargar) initSortable();
 });
 
 function setNombreInputLocked(isLocked, count = 0) {
